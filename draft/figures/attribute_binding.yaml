@@ -1,0 +1,53 @@
+title: Attribute Binding and Derivation
+concept: Capture operation descriptors as @tr and @d, derive @new_d explicitly, and use it to configure the replacement dot.
+requirements:
+  - 'Apply the shared axis-group UI in tools/figure_style.md: canonical bordered chips, inline group colors, underscore notation, and contextual dimming. Preserve this figure''s content and frame dimensions.'
+  - Follow tools/figure_style.md; use an exact 500 × 600 px half-width frame with three compact stacked bands, 14 px side margins, and 12 px gaps.
+  - Top band shows Input graph → Rewritten graph. Middle band shows the compact rule. Bottom band retains the binding table with Binding, Attributes, and Origin columns.
+  - 'Use blue (#5479A8) for @tr, amber (#D4A65C) for @d, and green (#6A9F88) for @new_d, consistently across graph badges, rule references, and table rows.'
+  - Use 18 px labels/code/table text and 22 px headings. Keep graph operation names and descriptor badges side by side; use single-line attribute records in the table.
+  - Use a schematic unbatched dot with zero-based l_dim and r_dim attributes. The displayed transpose permutation and dimensions form one concrete example.
+  - f_transform is an explicit user-supplied transformation. The two captured bindings are inputs; @new_d is derived, not captured from the input graph.
+  - Graph nodes carry colored descriptor badges; the binding table supplies the detailed values. Avoid duplicating full attribute records on graph nodes.
+  - Keep graph operation bodies neutral; apply descriptor colors to the explicit @name references and derivation links.
+  - Match descriptor colors throughout to associate graph badges, rule bindings, and table rows. Add a compact bracket beside the table connecting the two captured rows to the derived row, labeled f_transform.
+  - Use neutral directed edges for tensor dataflow and the graph rewrite arrow; use colored descriptor references and derivation connectors for attribute relationships.
+
+children:
+  - name: graph_rewrite
+    type: image
+    pos: [0.028, 0.972, 0.023, 0.317]
+    requirements:
+      - Place Input graph on the left and Rewritten graph on the right, separated by a solid right arrow.
+      - On the left, A feeds transpose, then transpose and B feed dot as its left and right operands. Give transpose a blue @tr badge and dot an amber @d badge.
+      - On the right, A and B feed one dot as its left and right operands. Give dot a green @new_d badge.
+      - Keep the two dot nodes vertically aligned so removal of transpose is visually clear.
+
+  - name: rule
+    type: text
+    pos: [0.028, 0.972, 0.337, 0.628]
+    content: |-
+      Rule
+      (dot[@d] (transpose[@tr] A) B)
+      => (dot[@new_d] A B)
+      derive {
+        @new_d = f_transform(@d, @tr);
+      }
+
+  - name: binding_table
+    type: image
+    pos: [0.028, 0.972, 0.648, 0.975]
+    requirements:
+      - Head this band "Attribute binding table". Draw an editable three-column table using the entries below.
+      - Keep each descriptor's attributes on one line; use compact 34 px header and data rows.
+      - Use the corresponding binding color for each row label, with a pale tint on the derived row. Retain Origin text to distinguish capture from derivation in grayscale.
+      - Draw a small bracket in the right margin collecting the @tr and @d rows, then an arrow into the @new_d row. Place the label f_transform beneath the table with a short leader to this derivation connector.
+    children:
+      - name: entries
+        type: text
+        pos: [0.00, 0.92, 0.16, 0.85]
+        content: |-
+          Binding | Attributes             | Origin
+          @tr     | perm = [1,0,2]         | Captured
+          @d      | l_dim = 1, r_dim = 0   | Captured
+          @new_d  | l_dim = 0, r_dim = 0   | Derived

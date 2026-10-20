@@ -1,0 +1,419 @@
+title: Why TEPL? From Algebraic Rules to Practical Tensor Rewrites
+concept: Compare a bare algebraic pattern, custom rewrite logic, and TEPL's explicit and inferred attribute modes
+  using the same replacement graph and visible attribute badges.
+purpose: Show that TEPL retains concise algebraic rules while supplying the attribute handling required to implement
+  tensor rewrites.
+requirements:
+- 'Apply the shared axis-group UI in tools/figure_style.md: canonical bordered chips, inline group colors, underscore notation, and contextual dimming. Preserve this figure''s content and frame dimensions.'
+- Follow tools/figure_style.md; use an exact 1000 × 600 px frame, with four equal panels in one horizontal row beneath
+  the preserved shared rewriting rule.
+- Use 22 px family headings, 18 px panel labels and primary rules, and 16 px minimum for dense host/derive code
+  and graph labels. Emphasize the two aligned bottom checkpoints in 20 px bold text with 24 px line height. Restore
+  the full matching, dimension-mapping, RHS-construction, and explicit-derive steps; abbreviate only graph as g
+  and source metadata as m.
+- Use generalized-dot reassociation without batch axes, under arithmetic permitting reassociation. All four panels
+  describe the same rewrite; authoring code is schematic.
+- Amber (#D4A65C) denotes author-written attributes and dimension logic. Green (#6A9F88) denotes inferred attributes.
+  Neutral badges with question marks denote unspecified attributes.
+- Group the left pair under Traditional approaches with blue (#5479A8) labels and a pale blue background; group
+  the right pair under TEPL with green labels and a pale green background. Put one solid right arrow in the central
+  family gutter.
+- Give every panel equal heading, authoring-summary, attribute-flow, replacement-graph, and checkpoint regions.
+  Preserve identical RHS graph and badge positions.
+- 'Repeat a compact RHS graph: Y and Z feed U:dot, then X and U feed O′:dot. Each dot has one descriptor badge above
+  it; tensor edges remain neutral.'
+- Panel (a) has question-mark badges. Panels (b) and (c) feed amber author-written results directly into their badges.
+  Panel (d) feeds a reusable-operation-semantics card into a green TEPL compiler, then feeds both inferred outputs
+  into its badges.
+- In schematic host code, g denotes the graph and m denotes source metadata. Preserve compute_inner_dims, compute_final_dims,
+  and both build_dot calls, using labeled regions for author responsibilities. These functions are user-written
+  dimension logic, not TEPL inference builtins.
+- The two auto annotations denote independently inferred functions of source shapes and attributes; show that explanation.
+  Place a Reusable operation semantics card below the rule and feed it into the TEPL compiler.
+- 'Checkpoints summarize this example: the cross in (a) means the bare pattern leaves RHS attributes unspecified,
+  not that symbolic rewriting systems cannot represent attributes.'
+- Use matching red (#B84A48) callouts immediately above the replacement graphs in panels (a) and (b). Use 16 px
+  bold callout titles and 18 px red consequence text. Red describes missing information or authoring burden; keep
+  attribute expressions and manual output badges amber.
+- In panel (a), outline the question-mark badges in red and connect the missing-attributes callout to both badges.
+  In panel (b), mark the dimension-mapping region with a red bracket, associating it with the complexity callout;
+  preserve all code.
+- Use 20 px bold checkpoint labels and check/cross glyphs, with 18 px bold Manual/Automatic status words to fit the panel width. Use text check/cross glyphs rather than emoji. In the bottom checkpoint rows, color supported concise rules green
+  and missing features red; color manual attribute support amber and automatic attribute support green. Use pale
+  corresponding row fills and keep explicit status words for grayscale readability.
+- 'Place the schematic-code legend g: graph; m: metadata at the top right beside the preserved shared example.'
+children:
+- name: shared_example
+  type: text
+  pos:
+  - 0.016
+  - 0.984
+  - 0.013
+  - 0.097
+  content: |-
+    A short equation, but replacement dots need new attributes.
+    dot(dot(X, Y), Z) → dot(X, dot(Y, Z))
+- name: schematic_code_legend
+  type: text
+  pos:
+  - 0.75
+  - 0.984
+  - 0.015
+  - 0.09
+  content: |-
+    Schematic code
+    g: graph; m: metadata
+- name: comparison_families
+  type: image
+  pos:
+  - 0.016
+  - 0.984
+  - 0.11
+  - 0.987
+  requirements:
+  - Enclose panels (a) and (b) in the blue Traditional approaches family, and panels (c) and (d) in the green TEPL
+    family. Both family containers have equal dimensions.
+  - Put the family labels above their panel pairs and one solid right arrow between the two families, giving the
+    arrangement panel panel → panel panel.
+  children:
+  - name: traditional_label
+    type: text
+    pos:
+    - 0.0
+    - 0.483
+    - 0.008
+    - 0.061
+    content: Traditional approaches
+  - name: tepl_label
+    type: text
+    pos:
+    - 0.517
+    - 1.0
+    - 0.008
+    - 0.061
+    content: TEPL
+  - name: family_transition
+    type: image
+    pos:
+    - 0.483
+    - 0.517
+    - 0.008
+    - 0.061
+    requirements:
+    - Draw a solid right arrow from Traditional approaches toward TEPL.
+- name: algebraic_term
+  type: image
+  pos:
+  - 0.016
+  - 0.246
+  - 0.177
+  - 0.98
+  requirements:
+  - Head this panel "(a) Algebraic term".
+  - Restore the detailed authoring artifact below, with readable line wrapping. Align all four panels and keep the
+    shared reference examples in authoring_reference.
+  - The graph supplies structure only; both attribute badges remain neutral question marks.
+  children:
+  - name: authoring_artifact
+    type: text
+    pos:
+    - 0.022
+    - 0.978
+    - 0.06
+    - 0.616
+    content: |-
+      (dot (dot X Y) Z)
+      => (dot X
+           (dot Y Z))
+  - name: unspecified_explanation
+    type: text
+    pos:
+    - 0.022
+    - 0.978
+    - 0.3
+    - 0.49
+    content: |-
+      Supplies the RHS graph,
+      but leaves both dot
+      attributes unspecified.
+  - name: attribute_flow
+    type: text
+    pos:
+    - 0.022
+    - 0.978
+    - 0.62
+    - 0.707
+    content: |-
+      Attribute handling missing
+      Incomplete tensor rewrite
+  - name: replacement
+    type: image
+    pos:
+    - 0.022
+    - 0.978
+    - 0.712
+    - 0.886
+    requirements:
+    - Draw the common compact RHS graph with neutral ? and ? badges above U:dot and O′:dot. Keep node, tensor-edge,
+      and badge positions identical in all four panels.
+  - name: checkpoints
+    type: text
+    pos:
+    - 0.022
+    - 0.978
+    - 0.89
+    - 0.99
+    content: |-
+      Concise rule: ✓
+      Attributes: ✗
+- name: custom_logic
+  type: image
+  pos:
+  - 0.254
+  - 0.484
+  - 0.177
+  - 0.98
+  requirements:
+  - Head this panel "(b) Custom logic".
+  - Restore the detailed authoring artifact below, with readable line wrapping. Align all four panels and keep the
+    shared reference examples in authoring_reference.
+  - Label the matching/conditions, dimension-mapping, and RHS-construction regions. Highlight compute_inner_dims/compute_final_dims
+    and connect their outputs to full inner_dims/final_dims badges.
+  children:
+  - name: authoring_artifact
+    type: text
+    pos:
+    - 0.022
+    - 0.978
+    - 0.06
+    - 0.616
+    content: |-
+      match_nested_dots(g);
+      check_conditions(m);
+      inner_dims =
+      compute_inner_dims(m);
+      final_dims =
+      compute_final_dims(m);
+      U=build_dot(Y,Z,
+        inner_dims);
+      return build_dot(X,U,
+        final_dims);
+  - name: attribute_flow
+    type: text
+    pos:
+    - 0.022
+    - 0.978
+    - 0.62
+    - 0.707
+    content: |-
+      Manual code implementation
+      Complex and error-prone
+  - name: replacement
+    type: image
+    pos:
+    - 0.022
+    - 0.978
+    - 0.712
+    - 0.886
+    requirements:
+    - Draw the common compact RHS graph with amber inner_dims and final_dims badges above U:dot and O′:dot. Keep
+      node, tensor-edge, and badge positions identical in all four panels.
+  - name: checkpoints
+    type: text
+    pos:
+    - 0.022
+    - 0.978
+    - 0.89
+    - 0.99
+    content: |-
+      Concise rule: ✗
+      Attributes: ✓ Manual
+- name: tepl_explicit
+  type: image
+  pos:
+  - 0.516
+  - 0.746
+  - 0.177
+  - 0.98
+  requirements:
+  - Head this panel "(c) Explicit attributes".
+  - Restore the detailed authoring artifact below, with readable line wrapping. Align all four panels and keep the
+    shared reference examples in authoring_reference.
+  - Color the two descriptor expressions amber and connect each to its corresponding badge.
+  children:
+  - name: authoring_artifact
+    type: text
+    pos:
+    - 0.022
+    - 0.978
+    - 0.06
+    - 0.616
+    content: |-
+      (dot[@outer]
+       (dot[@inner] X Y) Z)
+      => (dot[@d_final] X
+          (dot[@d_U] Y Z))
+      derive {
+       @d_U = f_U(m);
+       @d_final=f_final(m);
+      }
+  - name: attribute_flow
+    type: text
+    pos:
+    - 0.022
+    - 0.978
+    - 0.62
+    - 0.707
+    content: |-
+      User-written expressions
+      m: source metadata
+  - name: replacement
+    type: image
+    pos:
+    - 0.022
+    - 0.978
+    - 0.712
+    - 0.886
+    requirements:
+    - Draw the common compact RHS graph with amber @d_U and @d_final badges above U:dot and O′:dot. Keep node, tensor-edge,
+      and badge positions identical in all four panels.
+  - name: checkpoints
+    type: text
+    pos:
+    - 0.022
+    - 0.978
+    - 0.89
+    - 0.99
+    content: |-
+      Concise rule: ✓
+      Attributes: ✓ Manual
+- name: tepl_inferred
+  type: image
+  pos:
+  - 0.754
+  - 0.984
+  - 0.177
+  - 0.98
+  requirements:
+  - Head this panel "(d) Inferred attributes".
+  - Restore the detailed authoring artifact below, with readable line wrapping. Align all four panels and keep the
+    shared reference examples in authoring_reference.
+  - Highlight both independent auto annotations in green. The compiler supplies both green descriptor badges; reusable
+    operation semantics remain a visible input.
+  children:
+  - name: authoring_artifact
+    type: text
+    pos:
+    - 0.022
+    - 0.978
+    - 0.06
+    - 0.616
+    content: |-
+      (dot (dot X Y) Z)
+      => (dot[auto] X
+           (dot[auto]
+             Y Z))
+  - name: inference_explanation
+    type: text
+    pos:
+    - 0.022
+    - 0.978
+    - 0.3
+    - 0.45
+    content: Each auto denotes an independent function of source shapes and attributes.
+  - name: reusable_semantics
+    type: text
+    pos:
+    - 0.022
+    - 0.978
+    - 0.52
+    - 0.613
+    content: |-
+      Reusable operation
+      semantics
+  - name: compiler
+    type: image
+    pos:
+    - 0.022
+    - 0.978
+    - 0.62
+    - 0.707
+    requirements:
+    - Place a pale green TEPL compiler box across this region; the reusable operation-semantics card above feeds
+      it downward, while the annotated rule also supplies compiler input. Connect both inferred outputs to their
+      corresponding green badges.
+    children:
+    - name: labels
+      type: text
+      pos:
+      - 0.0
+      - 1.0
+      - 0.0
+      - 1.0
+      content: |-
+        TEPL compiler
+        Infer attrs · check rewrite
+  - name: replacement
+    type: image
+    pos:
+    - 0.022
+    - 0.978
+    - 0.712
+    - 0.886
+    requirements:
+    - Draw the common compact RHS graph with green @d_U and @d_final badges above U:dot and O′:dot. Keep node, tensor-edge,
+      and badge positions identical in all four panels.
+  - name: checkpoints
+    type: text
+    pos:
+    - 0.022
+    - 0.978
+    - 0.89
+    - 0.99
+    content: |-
+      Concise rule: ✓
+      Attributes: ✓ Automatic
+authoring_reference:
+  algebraic_term: |-
+    (dot (dot X Y) Z)
+    => (dot X
+         (dot Y Z))
+  custom_logic: |-
+    match_nested_dots
+    (graph);
+    check_conditions
+    (metadata);
+    inner_dims =
+    compute_inner_dims
+    (metadata);
+    final_dims =
+    compute_final_dims
+    (metadata);
+    U = build_dot
+    (Y, Z,
+     inner_dims);
+    return build_dot
+    (X, U,
+     final_dims);
+  tepl_explicit: |-
+    (dot[@outer]
+      (dot[@inner]
+        X Y)
+      Z)
+    => (dot[@d_final]
+          X
+          (dot[@d_U]
+            Y Z))
+    derive {
+      @d_U =
+      f_U
+    (source_metadata);
+      @d_final =
+      f_final
+    (source_metadata);
+    }
+  tepl_inferred: |-
+    (dot (dot X Y) Z)
+    => (dot[auto] X
+         (dot[auto]
+           Y Z))
