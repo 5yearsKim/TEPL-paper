@@ -1,0 +1,70 @@
+TEPL first draft — review items
+
+Missing evidence
+1. Evaluation: all authoring, coverage, timing, memory, constructor-size,
+   application-cost, ablation, and reliability results remain TODO. The methods,
+   comparisons, denominators, boundary cases, and failure categories are drafted.
+2. Implementation: pin the compiler/shared-runtime revisions and supply builds,
+   operation/checker support inventory, generated-Rust validation, and independent
+   tests. This workspace contains the paper materials, not the implementation.
+   Implementation statements follow the authoritative outline, not a new audit.
+3. Production comparison: XLA is pinned to 9cb4e2005f963acc873dc95facd3b7d134dbf108.
+   Separate attribute logic from checks, profitability, and graph construction
+   before reporting a line count. No count is invented.
+4. Related work: complete systematic novelty and expressiveness comparisons.
+   Eleven references support the narrower claims used; source_audit.txt records
+   the primary sources. No “first” or general-completeness claim is made.
+5. Submission/artifact: replace author metadata; supply exact IR grammar,
+   operation denotations, numerical-law catalog, and versioned reproduction data.
+
+Substantive technical issues to confirm
+6. Algorithm 2's C[binding.attribute] is inherited from the outline. Multiple
+   replacement operations reuse attribute field names, so C must distinguish
+   operation/descriptor identity. The draft marks this as a TODO rather than
+   asserting an unverified implementation detail.
+7. Specify the arithmetic policies and the exact laws available for each dtype,
+   including coefficient arithmetic, overflow, reassociation, reduction order,
+   and zero-sized domains. The contract remains conditional; strict floating-
+   point equivalence is not claimed from algebraic normalization.
+8. Confirm the supported convolution, broadcasting, positive-size/positive-stride
+   slice, and zero-extent fragments. The draft preserves their stated limits.
+9. KeepAxes is explained per matched product and replacement subtree, with
+   required-set agreement across products. Clarify the exact supported handling
+   of shared replacement DAG nodes and repeated-read correspondence in a formal
+   specification; no general uniqueness/completeness guarantee is added.
+
+Artwork/outline conflicts resolved editorially (artwork and sources unchanged)
+10. Why TEPL shows reassociation, whereas its outline caption described
+    distribution. Caption/prose now describe unbatched dot reassociation.
+11. Attribute Binding shows transpose absorption, @tr/@d capture, and @new_d
+    derivation; the outline described descriptor reuse. Caption/prose now match
+    the supplied [1,0,2], l_dim=1 -> 0 instance and label short fields schematic.
+12. Symbolic Axis Mapping shows add(dot(X,Y),Z), while the prose walkthrough is
+    dot(add(X,Y),Z). Both are retained and explicitly distinguished in 5.2.1.
+13. Other mapping/construction figures omit batch axes. Captions distinguish
+    their unbatched examples from the surrounding guarded batched derivation;
+    group chips show membership, not physical order.
+
+Current figure layout
+14. All seven formerly half-width figures use 50% of text width, beside prose
+    using 46% (with a 4% gutter). The three formerly full-width figures use 100%.
+    All ten captions contain only the core message; details remain in the body.
+    Captions stay with their figures. At these requested scales, 16-point source
+    labels print at approximately 6.3 pt, and 18-point labels at 7.1 pt. Figure
+    artwork and aspect ratios are preserved.
+
+The missing soundness-proof document is neither required nor referenced. The
+correctness contract, checking explanation, assumptions, and limitations are
+preserved, with no proof or established implementation-soundness claim added.
+
+Validation completed
+- make: successful pdflatex/BibTeX/pdflatex/pdflatex build; 38 pages.
+- Ten automatically numbered figures, two algorithms, eleven bibliography entries.
+- No unresolved citations/references, overfull boxes, missing fonts,
+  or text spans outside the page. BibTeX reports no warnings.
+- The complete draft was rendered and inspected; all changed figure pages were
+  rechecked at the current sizes, including adjacent equations and captions.
+- ACM emits spacing advisories from boxed environments. No rendered overlap
+  or clipping remains. The requested artwork scales are recorded above.
+- Outline, storyboards, figure PDFs, and pre-existing research-note changes
+  were preserved. Make now tracks section files and figure PDF dependencies.

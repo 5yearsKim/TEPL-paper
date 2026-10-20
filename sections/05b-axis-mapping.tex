@@ -1,0 +1,185 @@
+\subsection{Symbolic Axis Mapping}
+\label{sec:axis-mapping}
+Mapping connects groups introduced by different operations through shared
+tensor interfaces, preserving coordinate order and operand pairing.
+
+\subsubsection{Building and Composing Mapping Tables}
+\label{sec:mapping-tables}
+A record $(P,G,p)$ satisfies Equation~\eqref{eq:mapping}. Mapping tables use
+tensor columns and group rows; entries are position expressions, and a dash
+indicates no mapping in that example. Write $\rho(G)=\operatorname{range}(|G|)$.
+Let $b_L,b_R$ and $c_L,c_R$ denote the consuming dot's batch and
+contraction lists, and $f_L,f_R$ their ordered complements.
+An operand's groups need not be contiguous. For example, its axes might
+appear as $[i,k_0,b,k_1]$, even though we describe its groups as $B,K,I$.
+The compiler reconstructs dimension order using the binding positions:
+\begin{equation}
+ \widehat S=\gath(B\catseq K\catseq I,
+             \operatorname{inverse}(b_L\catseq c_L\catseq f_L)).
+ \label{eq:rebuilt-interface}
+\end{equation}
+In this example the concatenated positions are $[2,1,3,0]$; their inverse
+reorders $[b,k_0,k_1,i]$ back to $[i,k_0,b,k_1]$. A valid complete binding
+makes the position list a permutation, so the inverse exists. This step
+changes the coordinate description used by the compiler while preserving
+the tensor's dimension order. An existing interface can be reused when it
+already satisfies the bindings.
+
+\begin{figuretext}{figures/Symbolic Axis Mapping.pdf}{Shared tensor interfaces connect local axis descriptions without changing tensor values or physical axis order.}{fig:axis-mapping}{Local dot and addition mapping tables are connected through their shared
+intermediate, producing a table whose axes use a common coordinate description.}
+Figure~\ref{fig:axis-mapping} connects local descriptions for
+\code{T=dot(X,Y); O=add(T,Z)}. Dot describes $T$ using $I\catseq J$;
+addition calls the same axes $S$. Their shared interface aligns these
+coordinates without changing tensor values or physical axis order.
+
+For the distribution example, the composition is reversed:
+\code{T=Add(X,Y); O=dot(T,Z)}. Addition initially gives $X,Y,T$ interface $S$.
+The dot's batch, contraction, and free bindings refine that description.
+Because addition preserves axis order, the dot's positions in $T$ also locate
+the corresponding axes in $X$ and $Y$. The resulting output interface is
+$B\catseq I\catseq J$. The table below makes this propagation explicit.
+\end{figuretext}
+In the distribution example, addition's output $T$ has the same axis order as $X$ and $Y$, so a position
+selected in $T$ selects the corresponding coordinate in either input:
+\begin{center}
+\begin{tabular}{@{}lccccc@{}}\toprule
+Group & $X$ & $Y$ & $T$ & $Z$ & $O$\\\midrule
+$B$ & $b_L$ & $b_L$ & $b_L$ & $b_R$ & $\rho(B)$\\
+$K$ & $c_L$ & $c_L$ & $c_L$ & $c_R$ & --\\
+$I$ & $f_L$ & $f_L$ & $f_L$ & -- & $|B|+\rho(I)$\\
+$J$ & -- & -- & -- & $f_R$ & $|B|+|I|+\rho(J)$\\\bottomrule
+\end{tabular}
+\end{center}
+Each entry is a position list, not an axis size. Adding a group length shifts
+every position in a list. The $K$ row connects the coordinates summed over
+in all three input tensors; its absence from $O$ records that the dot removes
+them. This is the correspondence needed to compose the value expressions in
+Section~\ref{sec:composition}.
+
+Mappings compose by selecting positions through existing positions:
+\begin{equation}
+ \gath(\gath(P,p),q)=\gath(P,\gath(p,q)).
+ \label{eq:gather-composition}
+\end{equation}
+Thus $(P,G,p)$ and $(G,H,q)$ locate $H$ in $P$ at $\gath(p,q)$.
+Lookup can derive such relationships on demand rather than enumerating every
+possible mapping. Composition through a producer with several groups also
+requires recording which portions a consumer selects.
+
+\FloatBarrier
+\subsubsection{Symbolic Axis Partitioning}
+\label{sec:partitioning}
+For reassociation $(XY)Z\to X(YZ)$, let the inner source dot produce
+$T$ with $P_T=B\catseq I\catseq J$, contracting $K$. The rule's guard
+\code{@outer.lhs_batching_dimensions == @inner->B} requires the outer
+left batch list to select the inner batch group in the same order.
+Incompatible routing can change the result; this guard restricts applicability
+without replacing completed-rule verification.
+
+The outer dot contracts group $L$ through lists
+$c_L^{\mathrm{outer}},c_R^{\mathrm{outer}}$. Its left list can interleave
+selections from $I$ and $J$. Figure~\ref{fig:axis-partitioning} shows why
+three positions must remain distinct: within the producer group, within the
+contraction list, and in the paired operand.
+
+\paperfigure{1}{figures/Symbolic Axis Partitioning (Dot Reassociation).pdf}{Partitioning selected axes by producer origin preserves their contraction partners for reassociation.}{fig:axis-partitioning}{Three panels show selecting producer output axes, splitting them by origin,
+and retaining contraction partners, followed by a subgroup mapping table.}
+For $G\in\{I,J\}$, let $p_G$ locate $G$ in $T$ and compute
+\begin{equation}
+\begin{aligned}
+ (u_G,v_G)&=\mpo(c_L^{\mathrm{outer}},p_G),\\
+ G_{\mathrm{sel}}&=\gath(G,v_G),\qquad
+ G_{\mathrm{rem}}=\gath(G,\ocomp(\rho(G),v_G)),\\
+ z_G&=\gath(c_R^{\mathrm{outer}},u_G).
+\end{aligned}
+\label{eq:z-partners}
+\end{equation}
+\code{matchPositions(a,b)} scans distinct-entry list $a$ in order and returns
+positions $u,v$ satisfying $\gath(a,u)=\gath(b,v)$. Here $u_G$ records
+contraction slots, $v_G$ positions within $G$, and $z_G$ the paired positions
+in $Z$. Selected axes retain contraction order; remaining axes retain producer
+order, so their concatenation need not reconstruct $G$.
+In the figure, left selection $[j_1,i_0]$ pairs with $Z$ positions $[2,0]$:
+$j_1$ uses slot 0 and $i_0$ slot 1. The refined source output is
+\begin{equation}
+ P_O=B\catseq\Irem\catseq\Jrem\catseq F.
+ \label{eq:source-output}
+\end{equation}
+The figure is unbatched; these equations retain $B$ for the guarded case.
+
+For the figure's selection, $i_0$ is at position $0$ within $I$ but at slot
+$1$ in the outer contraction list. Thus $v_I=[0]$ and $u_I=[1]$.
+Selecting slot $1$ from the right contraction list $[2,0]$ gives $z_I=[0]$.
+Likewise, $j_1$ gives $v_J=[1]$, $u_J=[0]$, and $z_J=[2]$.
+Using a within-group position to select from the right contraction list
+would lose this pairing. The distinction remains necessary when the lists
+have symbolic lengths and cannot be enumerated during rule compilation.
+
+The new mappings connect each selected subgroup both to its producer and
+to $Z$. For example, if $i_X$ locates $I$ in $X$, then
+$\gath(i_X,v_I)$ locates $\Isel$ in $X$, and $z_I$ locates its partners
+in $Z$. These entries will let synthesis construct a new contraction even
+though $X$ and $Z$ were not directly paired by the source inner dot.
+Appendix~\ref{app:mapping} gives the complete refined table.
+
+\FloatBarrier
+\subsubsection{General Construction Algorithm}
+\label{sec:mapping-algorithm}
+Construction processes producers before consumers. Its state
+$\Sigma=(V,M,\Pi)$ records each tensor's interface and value expression in
+$V[t]=(P_t,e_t)$, mappings in $M$, and complete disjoint partitions in $\Pi$.
+For every mapping,
+\begin{equation}
+ (P,G,p)\in M\ \Longrightarrow\ \gath(P,p)=G.
+ \label{eq:mapping-invariant}
+\end{equation}
+For a partition $\langle(G_1,p_1),\ldots,(G_m,p_m)\rangle$ of $P$, every
+member satisfies that invariant and $p_1\catseq\cdots\catseq p_m$ is a
+permutation of $\rho(P)$. Different partitions may overlap.
+
+The distinction between $M$ and $\Pi$ matters. If addition describes all of
+$T$ by $S=[i,j]$, $M$ locates $S$ at $[0,1]$, and $\Pi$ records that $S$
+covers the interface. A consumer may describe the same axes by $I=[i]$ and
+$J=[j]$. The compiler adds their individual positions to $M$ and their joint
+coverage to $\Pi$, retaining both descriptions. The shape and axis order of
+$T$ stay unchanged.
+
+Algorithm~\ref{alg:mapping} summarizes construction. Resolving a binding
+establishes its position validity and paired extents. Rebuilding an interface
+uses the inverse-position construction in Equation~\eqref{eq:rebuilt-interface}.
+Refinement compares partitions on the same interface and adds mappings for
+their overlaps. Transport expresses the producer's indexed reads in the
+consumer's coordinate description, so that composing their value expressions
+also composes the corresponding accesses.
+\begin{paperalgorithm}[H]
+\caption{Build interfaces, value expressions, and axis mappings.}
+\label{alg:mapping}
+\begin{lstlisting}[language=Python]
+def build_symbolic_axis_mapping(graph):
+    V = initialize_inputs(graph)
+    M, partitions = set(), {}
+    for op in producer_first(graph):
+        inputs = [V[t] for t in op.inputs]
+        groups, bindings = resolve_bindings(op, inputs)
+        aligned = []
+        for (P, value), binding in zip(inputs, bindings):
+            Q = build_interface(P, binding)
+            register_mappings(Q, binding, M)
+            refine_and_register(Q, binding, M, partitions)
+            value = transport(value, P, Q, M, partitions)
+            aligned.append((Q, value))
+        Pout = evaluate(op.output_axes, groups)
+        binding = output_positions(op, groups)
+        register_mappings(Pout, binding, M)
+        refine_and_register(Pout, binding, M, partitions)
+        V[op] = (Pout, compose(op.value, aligned, groups))
+    return V, M, partitions
+\end{lstlisting}
+\end{paperalgorithm}
+Here \code{register_mappings} adds an entry for each group and its positions;
+\code{aligned} holds each input interface and its transported value expression. The output
+interface and mappings follow from the operation's declared output order.
+Later queries can derive additional mappings using
+Equation~\eqref{eq:gather-composition}. Appendix~\ref{app:mapping} explains
+the helper operations in detail. These construction invariants do not
+replace verification of the completed rewrite.

@@ -1,0 +1,31 @@
+\FloatBarrier
+\section{Limitations and Future Work}
+\label{sec:limitations}
+Inference is incomplete. Ambiguous correspondence, unsupported constructions,
+and finite proof-work budgets can reject valid rules. Long operation chains
+can grow both partition relationships and normalized expressions; the planned
+scalability experiments will determine how these growth patterns affect the
+implementation.
+
+The semantic scope is restricted for convolutions and broadcasting, and slices
+use positive-size, positive-stride semantics. General padding, data-dependent
+indexing, coupled attribute equations, and unsupported numerical policies
+remain outside the stated scope. A rule may also require metadata computations
+or application conditions that the attribute language cannot express.
+\todo{Document the exact supported convolution, broadcasting, slice, and
+zero-extent fragments against a pinned implementation revision.}
+
+Executable expressions can extend beyond the semantic checker's supported
+fragment. Extending runtime evaluation alone therefore does not extend
+verification coverage. Future work includes broader expression verification
+and a smaller trusted verification kernel. Correct operation definitions,
+primitive checks, coordinate transport, checked arithmetic, and guard
+execution remain assumptions or obligations at the appropriate layer;
+sharing infrastructure between synthesis and verification deserves particular
+attention.
+
+Additional execution backends require validation that expression meanings,
+evaluation failures, and arithmetic behavior are preserved across paths.
+The greedy engine and generated Rust are the execution paths described in
+this draft. C++ generation and adapters to additional engines remain future
+work; the dashed branch in Figure~\ref{fig:architecture} is an extension point.

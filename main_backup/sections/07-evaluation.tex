@@ -1,0 +1,117 @@
+\FloatBarrier
+\section{Evaluation Plan}
+\label{sec:evaluation}
+The evaluation will measure the language's authoring benefit, the additional
+work removed by inference, and the coverage and cost of its supported
+reasoning. This section specifies methodology; no performance, coverage,
+reliability, or authoring-effort results have yet been measured for this draft.
+
+\FloatBarrier
+\subsection{Research Questions}
+\begin{enumerate}
+\item \textbf{RQ1---Authoring effort.} How much does TEPL simplify rewrite
+authoring, and how much additional attribute logic does inference remove?
+What explicit expressions, conditions, and semantic definitions remain?
+\item \textbf{RQ2---Coverage.} Which practical rewrites can be executed,
+verified, and synthesized, including rewrites requiring newly constructed
+rather than copied descriptors?
+\item \textbf{RQ3---Scalability.} How do composition depth, partition overlap,
+and expression size affect synthesis?
+\item \textbf{RQ4---Generality.} Can semantic definitions alone add support
+for new operations?
+\item \textbf{RQ5---Reliability.} Does checking reject incorrect explicit
+constructors, corrupted synthesized constructors, and invalid rewrites?
+\end{enumerate}
+
+\FloatBarrier
+\subsection{Workloads and Comparisons}
+We will select a production-derived corpus with documented inclusion and
+exclusion criteria. It will include distribution, transpose/dot transformations,
+guarded reassociation, reductions, broadcasts, slices, and supported
+convolution rewrites. Each entry will record its production origin and pinned
+revision, operation definitions, applicability guard, arithmetic policy,
+replacement graph, and whether attributes are reused or reconstructed.
+Selection must make unsupported cases visible rather than retaining only
+successful examples. \todo{Choose and publish the corpus, revision manifest,
+inclusion criteria, exclusions, and rule counts.}
+
+Each rewrite will have three aligned forms: a handwritten host-language
+implementation, TEPL with explicit \code{derive} expressions, and TEPL with
+inferred attributes. Applicability conditions and numerical policies will
+be aligned before comparing code size or coverage. The host-to-explicit-TEPL
+comparison isolates the language's contribution, while explicit-to-inferred
+TEPL measures the additional work removed by synthesis. Simple descriptor
+reuse and complex reconstruction will be reported separately. Production
+code will be classified into attribute transformation, profitability, graph
+construction, and unrelated infrastructure. The pinned XLA reassociation
+example in Section~\ref{sec:introduction} is a starting point, not a
+completed size measurement. \todo{Prepare equivalent implementations and
+review the source-code classifications for each baseline.}
+
+A feasible bounded-search baseline will assess synthesis cost, with explicit
+rank bounds, attribute domains, search budget, and failure classification.
+Its finite search space must be stated when comparing it to symbolic
+construction. Related verifiers will be compared only on shared expressible
+tasks, separating verification coverage from synthesis coverage. Required
+user guards and operation-definition effort will accompany rule-length
+comparisons. \todo{Select baselines, implement the bounded search, and
+identify the shared task subset and numerical assumptions.}
+
+\FloatBarrier
+\subsection{Measurements and Ablations}
+\paragraph{Authoring effort and semantic-definition cost.}
+For each rule, we will measure attribute-code size and count remaining explicit
+attribute expressions. We will also record user-supplied guards and the size
+of required operation definitions. Initial specification cost and reuse across
+rules will both be reported. Corpus-wide authored code is needed alongside
+per-rule savings to reveal logic moved into shared builtins or semantic
+definitions. Code size is an effort proxy and cannot by itself establish
+usability. \todo{Specify counting conventions and collect per-rule and
+corpus-wide authored-code measurements, including shared infrastructure.}
+
+\paragraph{Coverage and generality.}
+Execution, verification, and synthesis coverage will use separate denominators.
+Each attempted task will be classified as accepted, unsupported, invalid,
+or budget-limited, with the failed stage and diagnostic recorded. Attribute
+reconstruction will be distinguished from copying an existing descriptor.
+To address RQ4, we will document the definitions added for selected operations
+and any implementation changes required beyond those definitions.
+\todo{Populate coverage classifications and the operation-extension study;
+report all denominators and failed cases.}
+
+\paragraph{Cost and scalability.}
+We will measure synthesis time, verification time, peak memory, emitted
+constructor size, and matching-time cost in the greedy engine and generated
+Rust. Compilation costs and application costs will be reported separately,
+since a reusable constructor can be compiled once and evaluated many times.
+Scaling workloads will vary source composition depth, overlap structure,
+repeated factors, expression size, and concrete constructor inputs.
+\todo{Fix hardware, software versions, resource limits, repetitions, timing
+boundaries, and variability reporting; then collect times, memory, constructor
+sizes, and runtime costs.}
+
+Ablations will disable reusable interfaces, lazy refinement, and mapping
+caches individually to isolate their effects. Each ablation will use the same
+rules, budgets, and workload families, recording both successful cost and
+changes in completion rate. \todo{Implement the ablations, document their
+configuration, and collect results.}
+
+\paragraph{Reliability and boundary cases.}
+Independent numerical references will compare source and completed replacement
+computations on instantiated metadata. The test matrix will include interleaved
+selections, empty groups, multiple contractions, rank-zero tensors, and
+supported zero extents. Incorrect explicit constructors and mutations of
+synthesized constructors will test whether the checker detects broken position
+lists, pairings, accesses, or output layouts. Invalid rewrites and arithmetic
+policies that do not permit the needed laws will supply negative cases.
+Numerical testing is implementation evidence and supplements universal
+reasoning; it does not replace it. \todo{Define independent references,
+metadata generation, mutation operators, seeds, expected outcomes, and measured
+rejection results.}
+
+The planned result record will associate every rule with authored-code
+measurements, guard and semantics costs, the three coverage outcomes,
+constructor size, synthesis and verification cost, application cost, and a
+failure explanation where applicable. \todo{Populate this record and write
+the results and interpretation once measurements exist. All performance
+and coverage values are intentionally unfilled.}

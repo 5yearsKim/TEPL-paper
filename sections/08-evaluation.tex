@@ -1,0 +1,64 @@
+\section{XLA Evaluation}
+\label{sec:evaluation}
+We evaluate TEPL on 209 concrete rewrite cases adapted from XLA's algebraic
+simplifier, measuring operation-semantic coverage, verification with explicit
+RHS attributes, and automatic attribute inference. Counts refer to concrete
+cases, which may specialize broader catalog rules. Table~\ref{tab:xla-results}
+summarizes the three stages; their denominators differ as explained below.
+
+\begin{table}[htbp]
+\caption{XLA case coverage and conditional attribute inference.}
+\label{tab:xla-results}
+\centering
+\begin{tabular}{@{}lr@{}}\toprule
+Stage & Result\\\midrule
+Semantic coverage & 118/209\\
+Explicit verification & 86/118\\
+Auto inference (axis/extent) & 20/20 (100\%)\\\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Semantic coverage.}
+A case is eligible for verification when every required operation has a
+semantic definition in TEPL. This holds for 118 of the 209 cases; the remaining
+91 lack at least one required definition. Axis bindings, scalar expressions,
+reductions, and calculated operand reads describe value computations and
+supported coordinate transformations: transpose permutes axes, dot sums
+products over contraction axes, and static slice computes coordinates from
+starts and strides.
+
+Supported operations include elementwise arithmetic, transpose,
+axis-inserting broadcast, sum reduction, dot, reverse, and static slice with
+positive sizes and strides. Convolution uses fixed layouts, positive strides
+and dilations, and no padding or groups. General reshape, pad, concatenate,
+and dynamic slice require coordinate capabilities beyond current semantic
+support, as discussed in Section~\ref{sec:limitations}.
+
+\paragraph{Explicit verification.}
+We first supply RHS attributes through captured descriptors or handwritten
+constructions, without \code{auto}. TEPL checks evaluability, RHS legality,
+and agreement in output shape and values under the declared guards and
+arithmetic policy. The recorded full-corpus sweep verifies 86 of the 118
+eligible cases.
+
+The other 32 remain unproved. This does not establish that their rewrites
+are incorrect: TEPL may lack the required shape, axis, index, or scalar
+reasoning, or the rule may need an additional applicability condition.
+Successful verification is relative to the declared operation semantics and
+arithmetic policy, not every aspect of XLA's numerical behavior.
+
+\paragraph{Automatic inference.}
+Of the 86 verified cases, 63 have no RHS attributes to infer, and three
+require scalar settings such as comparison direction. The remaining 20
+require only axis or extent lists, including permutations, reduction
+dimensions, broadcast dimensions and extents, and slice parameters.
+
+For these 20, we replace RHS attribute specifications with \code{auto} and
+remove the corresponding handwritten constructions, retaining the same
+patterns, guards, and operation semantics. TEPL constructs every required
+attribute and verifies each completed rule in a fresh context. All 20 succeed
+without RHS attribute hints, including descriptor reuse and computed programs.
+
+Automatic inference succeeds on all 20 explicitly verified axis/extent cases.
+These constitute the verified subset of 38 semantically eligible axis/extent
+cases.

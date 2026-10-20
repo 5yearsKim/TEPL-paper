@@ -1,0 +1,129 @@
+TEPL expanded-method draft — review items
+
+Current revision
+- main.tex remains the entry point. Main text ends on page 21; references
+  occupy page 22; appendices begin on page 23. The full PDF has 41 pages.
+  The author accepts approximately 21–23 main-text pages for this revision.
+- main_backup/ is a standalone copy of the previous 38-page project, using
+  normal paths and file names. Its main.pdf is preserved byte for byte.
+  Copy its contents over the project (cp -a main_backup/. .) to restore
+  main.tex and its dependencies together. The snapshot was independently
+  rebuilt in a temporary folder. The shortened draft stays active at the root.
+- Section order now follows the updated outline: Section 7 is Limitations
+  and Future Work, Section 8 is XLA Evaluation, and Section 9 is Related Work.
+  The remaining nine figure placements are retained. Figure widths remain
+  100% and 50%, with short core-message captions and adjacent prose.
+- Architecture Figure 10 was removed from the active draft at the author's
+  request. Its essential explanation remains in Section 6; the figure PDF
+  and the original backup are unchanged.
+- Extended language examples, full Axes IR definitions and primitive tables,
+  and supplementary mapping/synthesis derivations are in Appendices A–D.
+  Algorithms 1 and 2 now appear in Sections 5.2.3 and 5.3.5, respectively;
+  appendix helper explanations refer back to them. The axis-preservation
+  decision table has also moved into Section 5.3.2. Appendices E (implementation/artifact details) and
+  F (the extended evaluation protocol) were removed at the author's request,
+  together with their main-text references.
+- Main prose consolidates repeated explanations. The correctness contract,
+  verification assumptions, arithmetic-policy caveat, incompleteness, and
+  implemented/proposed/planned distinctions remain in the main text.
+- The current outline supplies XLA results: 118/209 semantic coverage,
+  86/118 explicit verification, and 20/20 conditional axis/extent inference.
+  The last denominator is the verified subset of 38 eligible axis/extent
+  cases. Of the 86 verified cases, 63 need no RHS attributes and 3 require
+  scalar settings. The counts come from the author's outline, not a rerun
+  performed in this paper workspace.
+- Abstract, introduction, and conclusion distinguish the reported results
+  from still-unmeasured authoring, performance,
+  reliability, and scalability benefits. Section 5 now integrates the dot
+  semantics excerpt, mapping construction, partition example, preservation
+  decisions, source-only programs, slice composition, and verification table.
+
+Missing evidence
+1. Evaluation evidence: attach the 209-case corpus, per-case eligibility and
+   outcomes, XLA revision, TEPL revisions for the recorded full-corpus sweep
+   and current inference recheck, reproduction commands, guards, arithmetic
+   policies, and proof budgets. No raw result files accompany the outline.
+   Authoring, timing, memory, constructor-size, application-cost, ablation,
+   reliability, and systematic scaling results remain unmeasured. Their
+   former extended evaluation protocol is no longer part of the paper.
+2. Implementation: pin the compiler/shared-runtime revisions and supply builds,
+   operation/checker support inventory, generated-Rust validation, and independent
+   tests. This workspace contains the paper materials, not the implementation.
+   Implementation statements follow the authoritative outline, not a new audit.
+3. Production comparison: XLA is pinned to 9cb4e2005f963acc873dc95facd3b7d134dbf108.
+   Separate attribute logic from checks, profitability, and graph construction
+   before reporting a line count. No count is invented.
+4. Related work: complete systematic novelty and expressiveness comparisons.
+   The bibliography database retains eleven verified entries; source_audit.txt records
+   the primary sources. No “first” or general-completeness claim is made.
+5. Submission/artifact: replace author metadata; supply exact IR grammar,
+   operation denotations, numerical-law catalog, and versioned reproduction data.
+
+Substantive technical issues to confirm
+6. Algorithm 2 now uses C[op, binding.attribute] to make operation scope
+   explicit; the outline's C[binding.attribute] shorthand could collide for
+   the two replacement dots. This is an editorial clarification of the
+   algorithm's state, not an audit of implementation storage. Confirm that
+   the actual implementation preserves the same descriptor identity.
+7. Specify the arithmetic policies and the exact laws available for each dtype,
+   including coefficient arithmetic, overflow, reassociation, reduction order,
+   and zero-sized domains. The contract remains conditional; strict floating-
+   point equivalence is not claimed from algebraic normalization.
+8. The updated outline specifies axis-inserting broadcast, reverse, positive-
+   size/positive-stride static slice, and fixed-layout convolution with positive
+   strides/dilations and no padding or groups. The draft now states these limits.
+   Pin them to the evaluated implementation revisions and clarify zero extents.
+9. KeepAxes is explained per matched product and replacement subtree, with
+   required-set agreement across products. Clarify the exact supported handling
+   of shared replacement DAG nodes and repeated-read correspondence in a formal
+   specification; no general uniqueness/completeness guarantee is added.
+
+Artwork/outline conflicts resolved editorially (artwork and sources unchanged)
+10. Why TEPL shows reassociation, whereas its outline caption described
+    distribution. Caption/prose now describe unbatched dot reassociation.
+11. Attribute Binding shows transpose absorption, @tr/@d capture, and @new_d
+    derivation; the outline described descriptor reuse. Caption/prose now match
+    the supplied [1,0,2], l_dim=1 -> 0 instance and label short fields schematic.
+12. Symbolic Axis Mapping shows add(dot(X,Y),Z), while the prose walkthrough is
+    dot(add(X,Y),Z). Both are retained and explicitly distinguished in 5.2.1.
+13. Other mapping/construction figures omit batch axes. Captions distinguish
+    their unbatched examples from the surrounding guarded batched derivation;
+    group chips show membership, not physical order.
+
+Current figure layout
+14. All six remaining half-width figures use 50% of text width, beside prose
+    using 46% (with a 4% gutter). The three formerly full-width figures use 100%.
+    All nine captions contain only the core message; details remain in the body.
+    Captions stay with their figures. At these requested scales, 16-point source
+    labels print at approximately 6.3 pt, and 18-point labels at 7.1 pt. Figure
+    artwork and aspect ratios are preserved.
+
+Outline consistency resolved in this revision
+15. The outline's abstract still says results are to be measured, while its
+    new Section 8 supplies coverage and inference results. The paper abstract
+    now reports those counts and keeps the other measurements pending.
+16. Semantic coverage and explicit verification use the recorded full-corpus
+    sweep; conditional inference uses the current compiler recheck. Keep this
+    provenance for a brief experimental-setup note once revisions are pinned;
+    it was removed from the shortened results paragraph. Do not imply a single
+    same-revision run. The inference result is not 100% of all 38 eligible
+    axis/extent cases or of the full corpus.
+
+The missing soundness-proof document is neither required nor referenced. The
+correctness contract, checking explanation, assumptions, and limitations are
+preserved, with no proof or established implementation-soundness claim added.
+
+Validation completed
+- make: successful pdflatex/BibTeX/pdflatex/pdflatex build; 21 main-text
+  pages, 1 reference page, and 19 appendix pages (41 total).
+- Nine automatically numbered figures, two algorithms, 5 cited bibliography entries.
+- No unresolved citations/references, overfull boxes, missing fonts,
+  or text spans outside the page. BibTeX reports no warnings.
+- The complete shortened draft was rendered and inspected; figure pages were
+  rechecked at the current sizes, including adjacent equations and captions.
+  Code listings remain together; moved algorithms and tables have automatic
+  main/appendix cross-references. The final main-text page marker is 21.
+- ACM emits spacing advisories from boxed environments. No rendered overlap
+  or clipping remains. The requested artwork scales are recorded above.
+- Outline, storyboards, figure PDFs, and pre-existing research-note changes
+  were preserved. Make now tracks section files and figure PDF dependencies.

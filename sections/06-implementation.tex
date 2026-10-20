@@ -1,0 +1,15 @@
+\section{Implementation}
+\label{sec:implementation}
+TEPL is implemented in C++20 with ANTLR parsing. Rules and dialect semantics
+are compilation inputs; the graph to rewrite is supplied to runtime.
+Compilation resolves names and types, synthesizes missing
+attributes, verifies semantic rules, and produces executable programs that
+can be exported as JSON. Type-checked rules may retain holes; executable rules
+have completed constructors, guards, and replacement patterns.
+
+Runtime loads and validates compiled programs, matches LHS patterns,
+evaluates guards and constructors, and builds replacements. A failed guard or
+invalid evaluation skips the match. Generated Rust uses the shared runtime;
+C++ generation is unavailable. E-graph export is also implemented and well
+supported in TEPL, but is outside the scope of this paper.
+\FloatBarrier

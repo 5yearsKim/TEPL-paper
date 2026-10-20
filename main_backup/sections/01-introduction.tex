@@ -1,0 +1,102 @@
+\FloatBarrier
+\section{Introduction}
+\label{sec:introduction}
+\FloatBarrier
+\subsection{Motivation}
+Algebraic tensor rewriting is used to optimize tensor computations by replacing
+one computation graph with an equivalent graph. The equation describing a
+rewrite can be short even when its implementation is complex. For example,
+reassociating a product from $(XY)Z$ to $X(YZ)$ changes only the nesting of two
+dots in an algebraic expression. For generalized tensor dots, however, an
+implementation must also reconstruct which dimensions are batched or
+contracted, preserve their pairings, and arrange the output dimensions in the
+required order. XLA's \code{AssociativeReorderNestedDot} routine illustrates
+these tasks: it constructs new dimension descriptors and, when needed, an
+output permutation, alongside applicability and cost checks~\cite{xla-simplifier}.
+This observation concerns the kinds of work required, rather than a measured
+line-count comparison. \todo{Classify the pinned XLA routine's attribute logic
+separately from legality, profitability, and graph construction before
+reporting its size.}
+
+Symbolic rewriting frameworks such as egg support concise operation
+patterns~\cite{egg}. They can represent operation attributes, but their pattern
+matching does not itself derive attribute transformations from tensor
+semantics. For a tensor rewrite, the user must supply the additional
+expressions or custom host-language logic; egg's \code{Applier} interface, for
+example, permits application code to inspect analysis data and construct a
+replacement~\cite{egg-applier}. Merely matching the operations and attributes
+on the left-hand side (LHS) does not determine the attributes needed on the
+right-hand side (RHS).
+
+Manual attribute transformation is a major source of this complexity, although
+legality checks, numerical policy, and profitability also contribute. Cascaded
+operations change axis positions, operand pairings, and output order. Equal
+dimension sizes do not establish that two dimensions denote the same logical
+coordinate. Moreover, the transformation should work for tensors of arbitrary
+rank; working out a few concrete matrix or fixed-rank examples does not
+establish the general relationship.
+
+Our research question is therefore: \emph{What if we could design a language
+that makes tensor rewriting as easy and intuitive as writing its algebraic
+form, while leaving complex attribute transformation to the compiler?}
+TEPL pursues this goal through operation semantics, symbolic axis mapping,
+and automatic RHS attribute inference under explicit conditions.
+Figure~\ref{fig:why-tepl} compares the authoring choices for the same
+reassociation. A bare algebraic pattern supplies the replacement graph but
+leaves both replacement descriptors unspecified. Custom implementation code
+supplies them through handwritten dimension logic. TEPL supports both
+user-written descriptor expressions and compiler inference from reusable
+operation semantics. The example is unbatched and presupposes arithmetic
+that permits reassociation; it does not establish that every generalized-dot
+reassociation is valid.
+
+\paperfigure{1}{figures/Why TEPL_ From Algebraic Rules to Practical Tensor Rewrites.pdf}{TEPL combines concise tensor rewrite patterns with explicit or inferred replacement attributes.}{fig:why-tepl}{Four panels compare an algebraic pattern, custom implementation logic,
+explicit TEPL attribute expressions, and inferred TEPL attributes for the
+same nested-dot replacement graph.}
+
+\FloatBarrier
+\subsection{Central Thesis}
+TEPL describes tensor rewrites, their conditions, and their attribute changes
+together. Users can write attribute changes directly or ask the compiler to
+infer them from operation semantics. The compiler checks supported semantic
+rewrites for validity and equivalent results.
+
+The language lets users express algebraic patterns, applicability conditions,
+and attribute changes in one place. It supports user-defined dialects, each
+with its own operations, attributes, and semantics. An operation is defined
+once within a dialect and then imported and reused across rules. Tensor
+operations, graph patterns, attribute bindings, metadata conditions, and
+replacement-attribute expressions are represented directly in the language.
+
+The central technical advance pursued here is inference of omitted RHS
+attributes. Users may also request this inference explicitly with
+\code{auto}. Symbolic axis mapping constructs and checks reusable attribute
+programs for arbitrary-rank tensors within the supported semantics. The
+compiler reasons from operation legality and the user's stated conditions;
+when those assumptions do not establish correctness, the semantic rule is
+rejected as unproved. Inference does not silently add conditions to make a
+proposed rewrite succeed.
+
+\FloatBarrier
+\subsection{Proposed Contributions}
+This paper develops three connected contributions:
+\begin{enumerate}
+\item \textbf{A language for tensor rewrites.} TEPL supports user-defined
+dialects and operations and expresses rewrite patterns, applicability
+conditions, and attribute changes together. Users can capture and reuse
+descriptors or compute replacement attributes directly in the language.
+\item \textbf{Automatic attribute inference.} The compiler synthesizes omitted
+RHS attributes for supported rewrites as reusable functions of LHS metadata,
+without fixing tensor rank. Its Axes IR builds on prior aggregated-axis
+representations and adds explicit ordered interfaces, operand mappings,
+and value semantics for this synthesis task.
+\item \textbf{Symbolic axis mapping for composed operations.} The method tracks
+logical-axis correspondence across composed operations, splits and composes
+arbitrary-length groups while preserving coordinate order and pairings,
+and reuses established producer--consumer mappings for algebraic matching
+and attribute construction.
+\end{enumerate}
+These are the design and mechanism claims of this draft. The correctness
+contract is stated as an intended guarantee, and the practical benefits are
+questions for the planned evaluation, rather than established experimental
+results.

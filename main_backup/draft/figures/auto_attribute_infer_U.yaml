@@ -1,0 +1,135 @@
+title: Infer Axis Roles in U
+concept: Starting with axes used by Y and Z, preserve those needed by X or the final output; the remaining shared axes are contracted by U.
+purpose: Visualize KeepAxes(U) and determine the replacement dot's free and contraction groups from which operands contain each axis.
+requirements:
+  - 'Apply the shared axis-group UI in tools/figure_style.md: canonical bordered chips, inline group colors, underscore notation, and contextual dimming. Preserve this figure''s content and frame dimensions.'
+  - Follow tools/figure_style.md; use an exact 500 × 1000 px half-width frame with 14 px horizontal margins, 18 px vertical margins, and 14 px gaps between main bands.
+  - Preserve the source/replacement graphs, KeepAxes equation, input axis groups, both checks, remaining candidates, KEEP/CONTRACT results, and final role assignments.
+  - Use the unbatched dot reassociation example from symbolic_axis_partitioning.yaml, under arithmetic permitting reassociation.
+  - 'Color K amber (#D4A65C), I_sel/I_rem green (#6A9F88), and J_sel/J_rem purple (#9076AD). Keep F, graph operations, and check-card backgrounds neutral.'
+  - Use 18 px primary labels, 16 px compact annotations/chips, and consistent light borders, pale fills, small corner radii, and internal padding. Avoid heavy outlines and large empty cards.
+  - Reflow into two workflow columns, with the candidate stream on the left and one narrow KEEP collector on the right. Embed X and O axis-group references inside their respective check cards.
+  - The checks implement OR. Axes saved at the first check bypass the second; both saved branches join KEEP. Only unsaved candidates continue downward.
+  - Chip collections show which logical axes occur in each tensor; they do not specify physical order or fixed lengths. Deduplicate J_sel in the union of Y and Z while retaining input provenance for the final roles.
+  - Show I_rem with a pale outline and readable muted text in the X/O reference rows. It never enters the candidate stream; it arrives through X.
+  - Use short local arrows and repeat tensor labels to establish correspondence with the top graphs. Avoid connectors wrapping around the figure and crossing wires into the final summary.
+  - Keep both checks rectangular. Use the added height for card padding and 20–34 px gaps between filtering stages, leaving clear space for branch labels without shrinking text.
+  - Use a 552 px-tall filtering band, a 72 px equation band, and a 116 px final-role band. Align the KEEP entries with their branch destinations and give the union symbol generous vertical separation.
+  - Use colons, commas, or line breaks as separators; do not use middle dots.
+
+children:
+  - name: graph_transition
+    type: image
+    pos: [0.028, 0.972, 0.018, 0.150]
+    requirements:
+      - Draw compact Source and Replacement graphs side by side, separated by a right arrow.
+      - Source has X and Y feeding T = dot, then T and Z feeding O = dot.
+      - Replacement has Y and Z feeding U = dot, then X and U feeding O′ = dot. Mark U's unresolved axis roles with a question mark.
+      - Enclose Y, Z, and their dot U in a pale boundary labeled "Inside U". Use tensor labels to link these graphs conceptually to the axis-group cards below.
+
+  - name: keep_equation
+    type: text
+    pos: [0.028, 0.972, 0.164, 0.236]
+    content: |-
+      KeepAxes(U) = Axes_in(U) ∩
+      (Axes_out(U) ∪ Axes(O))
+
+  - name: filtering_process
+    type: image
+    pos: [0.028, 0.972, 0.250, 0.802]
+    requirements:
+      - Put the two input cards across the top. Below, use the left two-thirds for the downward stream and the remaining width for KEEP, separated by a narrow connector gutter.
+      - Flow through Axes inside U → Needed outside U? → Remaining candidates → Required for output? → CONTRACT.
+      - Send K and I_sel from the first check to KEEP, and J_rem and F from the second check to the same collector. Label saved branches Yes and continuing branches Not needed here.
+      - Embed the X and O reference chip rows within the corresponding check cards, beneath each question. They are reference sets, not remaining candidates.
+      - Make KEEP's union visible with a small union symbol between its two saved sets. Align its entries with the checks using short local orthogonal connectors.
+    children:
+      - name: input_Y
+        type: text
+        pos: [0.00, 0.487, 0.00, 0.123]
+        content: |-
+          Input Y
+          {K, J_sel, J_rem}
+      - name: input_Z
+        type: text
+        pos: [0.513, 1.00, 0.00, 0.123]
+        content: |-
+          Input Z
+          {I_sel, J_sel, F}
+      - name: inside_axes
+        type: text
+        pos: [0.00, 0.669, 0.159, 0.283]
+        content: |-
+          Axes inside U: Y ∪ Z
+          {K, I_sel, J_sel, J_rem, F}
+      - name: outside_check
+        type: text
+        pos: [0.00, 0.669, 0.326, 0.471]
+        content: |-
+          Needed outside U?
+          X: {K, I_sel, I_rem}
+      - name: remaining_candidates
+        type: text
+        pos: [0.00, 0.669, 0.533, 0.649]
+        content: |-
+          Remaining candidates
+          {J_sel, J_rem, F}
+      - name: output_check
+        type: text
+        pos: [0.00, 0.669, 0.692, 0.837]
+        content: |-
+          Required for output?
+          O: {I_rem, J_rem, F}
+      - name: keep_collector
+        type: text
+        pos: [0.729, 1.00, 0.326, 0.837]
+        content: |-
+          KEEP
+          Used by X
+          {K, I_sel}
+          ∪
+          Required by O
+          {J_rem, F}
+      - name: contract_result
+        type: text
+        pos: [0.00, 0.669, 0.899, 1.00]
+        content: |-
+          CONTRACT {J_sel}
+          Used only inside U
+
+  - name: role_assignment
+    type: image
+    pos: [0.028, 0.972, 0.816, 0.932]
+    requirements:
+      - Head this band "Inferred roles in U = dot(Y, Z)" and use three equal-width summary cells.
+      - Use short headings Left free, Contract, and Right free, with smaller provenance labels and the same colored chips as above.
+      - Color and labels establish correspondence with KEEP and CONTRACT; omit cross-column routing into this summary.
+    children:
+      - name: left_free
+        type: text
+        pos: [0.00, 0.322, 0.259, 1.00]
+        content: |-
+          Left free
+          from Y
+          {K, J_rem}
+      - name: contract
+        type: text
+        pos: [0.339, 0.661, 0.259, 1.00]
+        content: |-
+          Contract
+          shared by Y, Z
+          {J_sel}
+      - name: right_free
+        type: text
+        pos: [0.678, 1.00, 0.259, 1.00]
+        content: |-
+          Right free
+          from Z
+          {I_sel, F}
+
+  - name: notes
+    type: text
+    pos: [0.028, 0.972, 0.946, 0.982]
+    content: |-
+      I_rem arrives via X. Axis order is not shown.
+      No batch axes; position lists are constructed afterward.

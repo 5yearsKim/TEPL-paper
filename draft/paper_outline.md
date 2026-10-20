@@ -1491,43 +1491,107 @@ def synthesize_attribute_programs(rule):
 - The builder reuses captured nodes and constructs new RHS operations with the computed attributes. Construction takes place on a candidate graph, allowing the engine to validate operation contracts and output compatibility before committing the replacement.
 - After a successful replacement, the engine restarts its search. Rewriting stops when no candidate changes the graph, a configured limit is reached, or execution is cancelled.
 
-## 7. Evaluation Plan
+## 7. Limitations and Future Work
 
-### 7.1 Research Questions
+**Coordinate semantics for automatic inference.** TEPL supports coordinate
+transformations such as static slice and reverse, but its current semantic
+language cannot describe every tensor access pattern. Dynamic slice requires
+tensor-valued indices; pad and concatenate require coordinate-dependent
+branches; and general reshape requires coordinate flattening and unflattening
+using division and modulo. Without these operation semantics, TEPL cannot
+automatically infer attributes or semantically verify rewrites involving them.
+Extending the coordinate language and its associated reasoning is future work.
 
-- **RQ1 — Authoring effort:** How much does TEPL simplify writing rewrites, and how much additional attribute logic does inference remove? What explicit expressions, conditions, and semantic definitions remain necessary?
-- **RQ2 — Coverage:** Which practical rewrites can be executed, verified, and synthesized, including those that require newly constructed rather than copied descriptors?
-- **RQ3 — Scalability:** How do composition depth, partition overlap, and expression size affect synthesis?
-- **RQ4 — Generality:** Can new operations be supported through semantic definitions alone?
-- **RQ5 — Reliability:** Does verification reject incorrect user-written constructors, corrupted synthesized constructors, and invalid rewrites?
+These restrictions concern the semantic verification and inference machinery.
+Users can still express structural rewrites for these operations, specify
+applicability conditions, and construct RHS attributes explicitly using TEPL's
+attribute expressions. Manual rewrite authoring therefore remains useful
+beyond the automatic inference fragment: TEPL can match patterns, evaluate
+guards and attribute programs, and build replacement graphs. Such structural
+rewrites do not carry the tensor-equivalence guarantee of semantically verified
+rules.
 
-### 7.2 Workloads and Comparisons
+**No completeness guarantee.** TEPL does not guarantee that it can verify every
+valid rewrite or discover every valid attribute construction. A correct rule
+may remain unproved because coordinate correspondence is ambiguous or a
+required metadata relationship lies outside the supported reasoning. Likewise,
+verifying a manually supplied constructor does not guarantee that synthesis
+can discover it. The correctness argument concerns accepted rules; a proof
+of completeness is outside this paper's scope. Future work can expand the
+supported reasoning and establish completeness for a precisely defined
+fragment.
 
-- Select and document a production-derived corpus with explicit inclusion/exclusion criteria.
-- Include distribution, transpose/dot, guarded reassociation, reductions, broadcasts, slices, and supported convolution rewrites.
-- Compare equivalent rewrites in three forms: handwritten host-language implementations, TEPL with explicit `derive` expressions, and TEPL with inferred attributes. Keep applicability conditions and numerical policies aligned.
-- Use the explicit TEPL baseline to measure the language's benefit, then compare it with inference to measure the additional work synthesis removes.
-- Include simple descriptor reuse and complex attribute reconstruction; report them separately.
-- Use a feasible bounded-search baseline to assess synthesis cost, with its rank and attribute-domain limits stated.
-- Compare related verifiers on shared expressible tasks; distinguish verification coverage from synthesis coverage.
-- Report required user guards and semantic-definition effort, not only rule length.
-- Pin production examples to revisions; separate attribute transformation from profitability, graph construction, and unrelated infrastructure.
+**Reasoning cost and scalability.** Long rewrite compositions and overlapping
+axis relationships can increase the number of symbolic partitions and the
+size of normalized expressions. Verification and inference use finite proof
+budgets, so a rule may remain unresolved when the required reasoning exceeds
+those budgets. The XLA evaluation measures coverage; it does not establish
+scalability across arbitrary composition depths or expression sizes. Future
+work includes systematic scaling experiments and more efficient symbolic
+representations and proof search.
 
-### 7.3 Measurements and Ablations
+## 8. XLA Evaluation
 
-- Per-rule attribute-code size and remaining explicit attribute expressions; distinguish eliminated logic from logic moved into shared builtins or semantic definitions.
-- User-supplied guards and operation-definition size; report both initial semantic-specification cost and reuse across multiple rules.
-- Compare total authored code for a rule corpus as well as per-rule savings; treat code size as an effort proxy, not evidence of usability by itself.
-- Separate execution, verification, and synthesis coverage with explicit denominators; classify accepted, unsupported, invalid, and budget-limited cases.
-- Synthesis/verification time, peak memory, constructor size, and matching-time cost in the greedy engine and generated Rust.
-- Scale source composition depth, overlap patterns, repeated factors, and concrete constructor inputs.
-- Disable reusable interfaces, lazy refinement, or mapping caches to isolate their effects.
-- Test interleaved selections, empty groups, multiple contractions, rank-zero cases, and supported zero extents.
-- Use independent numerical references, incorrect explicit constructors, and synthesized-constructor mutation tests as implementation evidence.
-- Numerical testing supplements universal reasoning; it does not replace it.
-- Leave all performance and coverage numbers unfilled until measured.
+We evaluate TEPL on 209 concrete rewrite cases adapted from XLA's algebraic
+simplifier. The evaluation measures operation-semantic coverage, verification
+with explicit RHS attributes, and automatic attribute inference. Counts refer
+to concrete cases, which may specialize broader catalog rules.
 
-## 8. Related Work and Novelty Positioning
+| Stage | Result |
+|---|---:|
+| Semantic coverage | 118/209 |
+| Explicit verification | 86/118 |
+| Auto inference (axis/extent) | 20/20 (100%) |
+
+**Semantic coverage.** A case is eligible for verification when every required
+operation has a semantic definition in TEPL. This holds for 118 of the 209
+cases; the remaining 91 lack at least one required definition. TEPL combines
+axis bindings, scalar expressions, reductions, and calculated operand reads
+to describe both value computations and supported coordinate transformations.
+For example, transpose permutes axes, dot sums products over contracting axes,
+and static slice computes input coordinates from starts and strides.
+
+Supported operations include elementwise arithmetic, transpose, axis-inserting
+broadcast, sum reduction, dot, reverse, and static slice with positive sizes
+and strides. Convolution support uses fixed layouts, positive strides and
+dilations, and no padding or groups. General reshape is unsupported because
+it requires coordinate flattening and unflattening using division and modulo.
+Pad and concatenate require coordinate-dependent branches, while dynamic slice
+requires tensor-valued indices. These capabilities are outside the current
+semantic support.
+
+**Explicit verification.** We first supply RHS attributes through captured
+descriptors or handwritten attribute constructions, without using `auto`.
+TEPL checks that these constructions are evaluable, the RHS operations are
+legal, and both sides agree in output shape and values under the declared
+guards and arithmetic policy. The recorded full-corpus sweep verifies 86 of
+the 118 eligible cases.
+
+The other 32 cases remain unproved. This does not establish that their rewrites
+are incorrect: TEPL may lack the required shape, axis, index, or scalar
+reasoning, or the rule may need an additional applicability condition.
+Successful verification is relative to the declared operation semantics and
+arithmetic policy, rather than a claim about every aspect of XLA's numerical
+behavior.
+
+**Automatic inference.** Of the 86 verified cases, 63 have no RHS attributes
+to infer. Another three require scalar settings, such as comparison direction.
+The remaining 20 require only axis or extent lists, including permutations,
+reduction dimensions, broadcast dimensions and extents, and slice parameters.
+
+For these 20 cases, we replace the RHS attribute specifications with `auto`
+and remove the corresponding handwritten constructions while retaining the
+same patterns, guards, and operation semantics. TEPL constructs all required
+attributes and independently verifies each completed rule. All 20 succeed
+without RHS attribute hints, including both descriptor reuse and computed
+attribute programs.
+
+The 100% result measures inference conditional on explicit verification:
+these 20 cases are the verified subset of 38 eligible axis/extent cases.
+The verification count comes from the recorded full-corpus sweep; the
+inference result comes from the current compiler recheck.
+
+## 9. Related Work and Novelty Positioning
 
 - **TensorRight:** Aggregated axes and arbitrary-rank rewrite verification are prior work; axis grouping alone is not a novelty claim. [POPL 2025](https://doi.org/10.1145/3704865)
 - **Tensor rewrite synthesis and equality saturation:** Compare TASO/TENSAT on generated artifacts, semantic assumptions, and treatment of attributes; examine primary papers before asserting distinctions.
@@ -1536,17 +1600,6 @@ def synthesize_attribute_programs(rule):
 - **Rewrite DSLs and host callbacks:** Compare declarative authoring with manually implemented attribute transformations.
 - Candidate distinction to substantiate: compositional synthesis of reusable, rank-polymorphic attribute programs from user-defined tensor semantics.
 - Avoid “first” claims until a systematic literature review supports them.
-
-## 9. Limitations and Future Work
-
-- Incomplete inference; ambiguity and finite proof budgets can reject valid rules.
-- Partition and normalized-expression growth across long compositions.
-- Restricted convolution, broadcasting, and positive-size/positive-stride slice semantics.
-- General padding, data-dependent indexing, coupled attribute equations, and unsupported numerical policies.
-- Attribute computations and application conditions that the metadata language cannot express.
-- Executable expressions outside the semantic checker's supported fragment; extending runtime support alone does not extend verification coverage.
-- A smaller trusted verification kernel and broader expression verification.
-- Further backend support and validation that expression semantics are preserved across execution paths.
 
 ## 10. Conclusion
 

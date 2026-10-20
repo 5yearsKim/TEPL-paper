@@ -1,0 +1,19 @@
+\FloatBarrier
+\section{Background}
+\label{sec:background}
+TensorRight verifies tensor graph rewrites for tensors of arbitrary rank and
+size~\cite{tensorright}. Its aggregated axes represent groups containing an
+arbitrary number of named axes, allowing one rewrite specification to describe
+tensors with different ranks. Grouping related axes makes it possible to reason
+about a family of tensors without enumerating each dimension separately.
+
+This representation provides the background for TEPL's symbolic axis groups.
+TEPL retains the ability to describe arbitrary-length groups but represents
+them as ordered sequences and tracks their positions in tensor interfaces.
+The order matters for constructing concrete operation attributes: a pair of
+contraction lists specifies not only which axes are reduced, but which axes
+are paired and in what list order. The distinction between a logical axis,
+its extent, and its position is central to the method developed in
+Section~\ref{sec:method}. Axis grouping itself is prior work; the contribution
+pursued here is its use with ordered, compositional correspondence to
+construct reusable attribute programs.

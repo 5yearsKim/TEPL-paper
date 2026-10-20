@@ -1,0 +1,20 @@
+\FloatBarrier
+\section{Conclusion}
+\label{sec:conclusion}
+TEPL connects tensor rewrite authoring with attribute-program synthesis.
+Users specify rewrite patterns and conditions, then write attribute changes
+explicitly or leave them for the compiler to infer. Axes IR describes ordered
+coordinate interfaces and values; symbolic mapping composes and refines axis
+relationships; normalization supplies read correspondence; and position queries
+construct reusable functions of source metadata. The completed replacement
+is then checked for attribute evaluability, operation legality, value
+equivalence, and output agreement under the declared conditions and arithmetic
+policy.
+
+The central result this design seeks to establish is that semantic coordinate
+correspondence can generate executable attribute transformations. The draft
+presents that mechanism and its intended correctness contract, without claiming
+proved implementation soundness, general completeness, or measured practical
+benefits. The planned evaluation will test the authoring effort removed by
+inference, the semantic-definition work that remains, production-derived
+coverage, synthesis cost, and reliability.

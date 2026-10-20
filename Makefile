@@ -7,7 +7,7 @@ LATEX_FLAGS := -interaction=nonstopmode -halt-on-error -file-line-error
 
 all: $(PAPER).pdf
 
-$(PAPER).pdf: $(PAPER).tex acmart.cls ACM-Reference-Format.bst references.bib
+$(PAPER).pdf: $(PAPER).tex $(wildcard sections/*.tex) figures/*.pdf acmart.cls ACM-Reference-Format.bst references.bib
 	$(LATEX) $(LATEX_FLAGS) $(PAPER).tex
 	@if grep -q '\\citation{' $(PAPER).aux; then $(BIBTEX) $(PAPER); fi
 	$(LATEX) $(LATEX_FLAGS) $(PAPER).tex

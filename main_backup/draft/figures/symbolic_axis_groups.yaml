@@ -1,0 +1,105 @@
+title: Symbolic axis groups
+concept: Ordered, arbitrary-length axis groups bind to concrete tensor positions; binding order determines pairing and output construction.
+purpose: Show why TEPL retains ordered position mappings, including when paired axes appear in different physical orders.
+requirements:
+  - 'Apply the shared axis-group UI in tools/figure_style.md: canonical bordered chips, inline group colors, underscore notation, and contextual dimming. Preserve this figure''s content and frame dimensions.'
+  - Follow tools/figure_style.md; use a 500 px half-width frame, approximately 820 px tall, increasing height if needed.
+  - Stack three full-width sections for symbolic groups, one concrete binding, and output construction.
+  - Use 22 px headings, 18 px labels/positions/table expressions, and canonical 16 px compact axis/group chips; do not shrink the whole figure to fit.
+  - 'Color B and b_a/b_b/b blue (#5479A8), I and i0/i1 green (#6A9F88), K and k0/k1 amber (#D4A65C), and J and j0/j1/j2 purple (#9076AD).'
+  - Carry these four group colors through the role cards, concrete axis cells, mapping table labels, and output.
+  - Use pale fills and dark text; retain group letters and role labels for grayscale readability.
+  - Use commas, plus signs, or line breaks as separators; do not use middle dots.
+  - Ellipses indicate variable group length; the concrete axes below are one instance, not fixed group arities.
+  - Preserve physical operand order in the axis strips; grouping and binding do not transpose or flatten tensors.
+  - Pair selected axes in binding-list order, not by sorted positions or dimension sizes.
+  - Pair b_a with b_b as the same batch coordinate b; equal k labels identify paired contraction coordinates.
+  - Keep the example local to one dot operation; composition and partitioning belong in separate figures.
+
+children:
+  - name: symbolic_groups
+    type: image
+    pos: [0.04, 0.96, 0.02, 0.24]
+    requirements:
+      - Head this section "Ordered groups, arbitrary length".
+      - Draw four compact cards in one row with equal widths.
+      - 'Label the cards "B / Batch", "I / Left free", "K / Contract", and "J / Right free"; slash denotes a line break, not visible punctuation.'
+      - Within each card, show a miniature colored axis strip with a first-axis token and an ellipsis.
+      - Each strip depicts an ordered sequence; its physical width does not encode the number of axes.
+    children:
+      - name: symbolic_example
+        type: text
+        pos: [0.00, 1.00, 0.79, 1.00]
+        content: K = [k₀, …, kₙ₋₁], with arbitrary length n.
+
+  - name: concrete_binding
+    type: image
+    pos: [0.04, 0.96, 0.26, 0.81]
+    requirements:
+      - Head this section "dot(X, Y), one concrete binding".
+      - Draw X and Y as two horizontal rows of colored axis cells, aligned to a common left edge after the operand label.
+      - Show a zero-based position beneath every cell, aligned with its axis label; leave X one cell shorter than Y.
+      - Keep Y's k1 at position 2 and k0 at position 5; this reversal is intentional.
+      - Below the strips, show the batch-pairing note, then a full-width mapping table.
+      - Do not draw a web of connectors between the input strips and table; colors, labels, and positions identify the correspondence.
+    children:
+      - name: operand_axes
+        type: text
+        pos: [0.00, 1.00, 0.09, 0.38]
+        content: |-
+          X: [b_a, i0, k0, k1, i1]
+          Y: [b_b, j0, k1, j1, j2, k0]
+
+      - name: batch_pairing
+        type: text
+        pos: [0.00, 1.00, 0.41, 0.46]
+        content: b_a ↔ b_b share batch group B.
+
+      - name: mapping_table
+        type: image
+        pos: [0.00, 1.00, 0.48, 0.87]
+        requirements:
+          - Draw the entries below as a real three-column table, not a monospaced text block.
+          - Use a neutral header, canonical group chips in the row-label cells, and a pale amber highlight across the K row.
+          - Bold both K position lists to emphasize the ordered pairing [2, 3] ↔ [5, 2].
+          - Positions are zero-based; a dash means the group is absent.
+        children:
+          - name: entries
+            type: text
+            pos: [0.00, 1.00, 0.00, 1.00]
+            content: |-
+              Group | X positions | Y positions
+              B     | [0]         | [0]
+              I     | [1, 4]      | —
+              K     | [2, 3]      | [5, 2]
+              J     | —           | [1, 3, 4]
+
+      - name: ordered_pairing
+        type: text
+        pos: [0.00, 1.00, 0.88, 0.93]
+        content: 'K pairs: X[2] ↔ Y[5], then X[3] ↔ Y[2].'
+
+      - name: position_convention
+        type: text
+        pos: [0.00, 1.00, 0.95, 1.00]
+        content: Positions are zero-based; — means absent.
+
+  - name: output_construction
+    type: image
+    pos: [0.04, 0.96, 0.83, 0.98]
+    requirements:
+      - 'Head this section "Output: B ++ I ++ J", coloring B, I, and J consistently with their groups.'
+      - Draw one row of concrete output axis cells in the order given below; keep the cells the same size as the input cells.
+      - Use a blue batch cell, two green I cells, and three purple J cells.
+      - Below the output, add the amber note "Reduced over K"; K contributes no output axis.
+      - Separate this section from the binding table with a thin neutral divider; grouping is analysis and the output is the dot result.
+    children:
+      - name: output_axes
+        type: text
+        pos: [0.00, 1.00, 0.30, 0.64]
+        content: '[b, i0, i1, j0, j1, j2]'
+
+      - name: reduction
+        type: text
+        pos: [0.00, 1.00, 0.75, 1.00]
+        content: Reduced over K

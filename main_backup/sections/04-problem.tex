@@ -1,0 +1,86 @@
+\FloatBarrier
+\section{Problem Definition}
+\label{sec:problem}
+The compiler must construct reusable RHS attribute programs and establish that
+the completed rewrite is correct. Table~\ref{tab:notation} gives notation
+shared by these requirements. Element types are fixed in this formulation.
+\begin{table}[htbp]
+\caption{Common notation for attribute synthesis and checking.}
+\label{tab:notation}
+\begin{tabularx}{\linewidth}{@{}lY@{}}\toprule
+Symbol & Meaning \\\midrule
+$s$ & Source information: shapes and operation attributes available to the attribute program.\\
+$X$ & Input tensor values compatible with the shapes in $s$.\\
+$a$ & RHS attributes to construct.\\
+$\operatorname{LHS}(s,X)$ & Tensor computed by the LHS.\\
+$\operatorname{RHS}(s,a,X)$ & Tensor computed by the RHS using attributes $a$.\\
+$\operatorname{Guard}(s)$ & The user-written condition, evaluated successfully to \code{true}.\\\bottomrule
+\end{tabularx}
+\end{table}
+
+\FloatBarrier
+\subsection{What Must the Compiler Find?}
+\label{sec:find}
+Some RHS attributes are omitted or marked \code{auto}. Finding individual
+attribute values at matching time would have the advantage of known ranks,
+shapes, and source attributes. TEPL instead derives a formula before the
+matched tensors are known. Its inputs are the user-defined operation semantics,
+the rewrite rule, and any required conditions. Its output is a reusable program,
+rather than an attribute value for one concrete tensor.
+
+Formally, given the operation semantics, rewrite, and condition
+$\operatorname{Guard}$, the compiler seeks an attribute program $f$ such that
+\begin{equation}
+ a=f(s).
+ \label{eq:attribute-program}
+\end{equation}
+The program depends on source information, rather than tensor element values,
+and must satisfy Section~\ref{sec:contract}'s contract for every legal source
+instance satisfying the guard. For example, composing transposes with
+permutations \code{inner} and \code{outer} gives the reusable formula
+\code{result[i] = inner[outer[i]]}. Compilation derives the formula without
+concrete permutations; matching supplies their values later. An explicit
+constructor supplies $f$, while inference constructs it for omitted attributes.
+
+\FloatBarrier
+\subsection{What Makes the Result Correct?}
+\label{sec:contract}
+A completed replacement must have computable attributes, satisfy the RHS
+operations' requirements, and produce the same result whenever the rule's
+conditions hold. Both explicit constructors and inferred constructors require
+checking for semantic rules. The required contract is
+\begin{equation}
+\begin{aligned}
+\forall s.\quad &\operatorname{LegalLHS}(s)\land\operatorname{Guard}(s)\\
+\Longrightarrow\quad
+ &s\in\operatorname{dom}(f)\ \land\ \operatorname{LegalRHS}(s,f(s))\\
+ &{}\land\ \forall X\text{ compatible with }s.\quad
+ \operatorname{LHS}(s,X)=\operatorname{RHS}(s,f(s),X).
+\end{aligned}
+\label{eq:contract}
+\end{equation}
+In words, every legal LHS satisfying the conditions must yield a computable,
+legal RHS with the same result for every compatible input value. Membership
+in $\operatorname{dom}(f)$ requires, for example, that inverse permutations
+and position lookups be evaluable. Equality includes ordered output shape
+and element values under the selected arithmetic policy. Exact algebra alone
+does not establish equality under floating-point reassociation.
+
+The guard denotes successful evaluation to \code{true}; it is not an assumption
+that a failing computation nevertheless returns a Boolean. The formal account
+must respect ordered local evaluation, short-circuiting, indexing, checked
+arithmetic, and evaluation failures. These details matter because metadata
+programs can be partial. The compiler must establish the contract throughout
+the legal guarded domain; otherwise it rejects the semantic rule as unproved.
+
+\FloatBarrier
+\subsection{When Can the Compiler Accept a Rewrite?}
+The compiler accepts a semantic rewrite when the supported reasoning can show
+that replacement attributes are computable, RHS operations are valid, and the
+result is preserved under the stated conditions. The same standard applies
+to explicit \code{derive} programs and inferred attributes. A rule rejected
+as unproved may still be mathematically correct. It can be implemented
+manually, but its correctness then has to be established separately.
+The checks described below are intended to enforce
+Equation~\eqref{eq:contract}; this draft does not promote that intended
+contract to a proved soundness theorem for the implementation.

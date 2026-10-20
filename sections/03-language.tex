@@ -1,0 +1,112 @@
+\section{High-Level Language Design}
+\label{sec:language}
+\subsection{Dialects, Operations, and Attributes}
+\label{sec:dialects}
+A dialect defines reusable operations, their operand signatures, attributes,
+and semantics. Attributes configure operations independently of tensor values:
+a transpose, for example, carries \code{permutation: index[]}.
+Semantic blocks specify element-type behavior (\code{dtype}), coordinate
+bindings, legality, and output order (\code{axes}), and scalar element values
+(\code{semantics}). Transpose preserves element type and input values while
+changing output coordinate order; \code{yield input} therefore need not mean
+an unchanged tensor interface. Appendix~\ref{app:language} gives expanded syntax.
+
+\subsection{Imports and Rewrite Rules}
+Rules import dialects with \code{from "tensor.tepl" import TensorLang as t;}
+and select operations with \code{use t::{transpose};}.
+An LHS pattern precedes its RHS replacement. Nested operations describe
+producer--consumer edges, and repeated tensor captures identify the same
+matched value. This application graph is distinct from the semantic graph
+used to reason about coordinates and values. Our running rule replaces
+\code{(transpose (transpose X))} with \code{(transpose X)}.
+
+\subsection{Attribute Binding and Reuse}
+\label{sec:binding}
+\code{op[@name]} captures an LHS operation's descriptor. Omitted LHS
+annotations capture descriptors independently and anonymously; names make
+them accessible to conditions, derivations, and compatible RHS operations.
+Field access, such as \code{@outer.permutation}, selects one attribute.
+\begin{figuretext}{figures/Attribute Binding and Derivation.pdf}{Captured operation descriptors can be read and transformed to configure replacement operations.}{fig:attribute-binding}{An input graph with transpose and dot is replaced by a dot. Colored descriptor
+bindings connect the rule to a table with two captured rows and one derived row.}
+Reusing \code{@name} on a compatible RHS operation copies its descriptor;
+compatibility checks structure, not semantic correctness. A derived descriptor
+can configure an operation in the same way.
+
+Figure~\ref{fig:attribute-binding} illustrates a separate transpose-absorption
+instance: captured \code{@tr} and \code{@d} feed a user-written
+\code{f_transform} that produces \code{@new_d}. Absorbing permutation
+\code{[1,0,2]} changes the left contraction position from 1 to 0.
+The short fields \code{perm}, \code{l_dim}, and \code{r_dim} are schematic,
+rather than the generalized-dot schema used later. The figure shows descriptor
+dataflow; arbitrary absorption still requires semantic checking.
+\end{figuretext}
+\FloatBarrier
+\subsection{Writing Attribute Changes}
+Metadata expressions read captured attributes and available shape and dtype
+bindings without executing tensor computations. Lists, indexing, local
+bindings, conditionals, comprehensions, and builtins construct immutable
+descriptors. Runtime expressibility is broader than semantic checkability:
+an executable expression need not be one the checker can establish correct.
+
+\subsection{Conditions with \texorpdfstring{\code{where}}{where}}
+\label{sec:where}
+A \code{where} block contains optional \code{let} computations followed by
+its applicability condition; only the bindings end with semicolons.
+Conditions combine predicates with \code{&&} and \code{||}, and can express
+semantic requirements or application policy. TEPL does not infer profitability.
+For example, \code{@outer.lhs_batching_dimensions == @inner->B} constrains
+axis routing, as explained in Section~\ref{sec:partitioning}.
+
+\subsection{Attribute Construction with \texorpdfstring{\code{derive}}{derive}}
+A \code{derive} block computes named RHS descriptors. Composing inner
+permutation $p$ with outer permutation $q$ requires $r[i]=p[q[i]]$:
+\begin{codeblock}[H]
+\begin{lstlisting}[language=TEPL]
+rule compose_transposes_explicit {
+  (transpose[@outer] (transpose[@inner] X))
+  => (transpose[@combined] X)
+  derive {
+    @combined = {
+      permutation: gather(@inner.permutation, @outer.permutation)
+    };
+  }
+}
+\end{lstlisting}
+\end{codeblock}
+\code{where} decides applicability, \code{derive} constructs descriptors, and
+the RHS specifies the replacement. Separate local scopes prevent accidental
+sharing of temporary bindings; derivations can use captures and earlier
+derived descriptors. The explicit constructor is within the supported
+transpose-verification fragment; attribute typing alone is insufficient.
+
+\subsection{Automatic Attributes with \texorpdfstring{\code{auto}}{auto}}
+\label{sec:auto}
+Omitting an RHS descriptor, or writing \code{[auto]}, requests inference:
+\begin{codeblock}[H]
+\begin{lstlisting}[language=TEPL]
+rule compose_transposes_auto {
+  (transpose (transpose X)) => (transpose X)
+}
+\end{lstlisting}
+\end{codeblock}
+\begin{figuretext}{figures/Introducing auto.pdf}{\code{auto} becomes a reusable attribute function at compilation and is evaluated on matched metadata at runtime.}{fig:introducing-auto}{A vertical flow separates the user rule and operation semantics, compiler
+synthesis and verification, and runtime application of the generated function.}
+For this rule, compilation derives the same reusable permutation program
+$r[i]=p[q[i]]$. Each omitted descriptor is inferred independently;
+\code{[@name]} reuses a descriptor, and \code{[auto, field = value]} pins a
+field during inference. Users still supply semantics and required conditions.
+Unsupported inference produces a diagnostic.
+
+Figure~\ref{fig:introducing-auto} illustrates the compilation/runtime boundary
+using matrix transpose absorption. The compiler constructs and checks $f(p,q)$;
+each match supplies its transpose permutation and dot descriptor. Absorbing
+\code{[1,0]} changes the displayed left contraction position from 0 to 1.
+The figure shows only that changing field, not a complete dot definition.
+Construction happens once during compilation; runtime evaluates the program
+on matched metadata.
+\end{figuretext}
+\FloatBarrier
+\subsection{From \texorpdfstring{\code{auto}}{auto} to Attribute Synthesis}
+The compiler must turn known LHS metadata into reusable programs for missing
+RHS attributes across ranks and shapes, preserving the computation under the
+declared conditions. We now state that requirement precisely.

@@ -1,0 +1,47 @@
+\section{Problem Definition}
+\label{sec:problem}
+Let $s$ contain source shapes and operation attributes, $X$ compatible tensor
+values, and $a$ replacement attributes. Element types are fixed here.
+$\operatorname{LHS}(s,X)$ and $\operatorname{RHS}(s,a,X)$ denote the computed
+tensors; $\operatorname{Guard}(s)$ means successful evaluation of the user's
+condition to \code{true}.
+
+\subsection{What Must the Compiler Find?}
+\label{sec:find}
+Given operation semantics, a rewrite, and its guard, the compiler seeks a
+reusable attribute program
+\begin{equation}
+ a=f(s).
+ \label{eq:attribute-program}
+\end{equation}
+It constructs this program before concrete ranks and attributes are known,
+using source metadata rather than tensor elements. An explicit constructor
+supplies $f$; inference constructs it for omitted attributes.
+
+\subsection{What Makes the Result Correct?}
+\label{sec:contract}
+Both explicit and inferred constructors for semantic rules must satisfy
+\begin{equation}
+\begin{aligned}
+\forall s.\quad &\operatorname{LegalLHS}(s)\land\operatorname{Guard}(s)\\
+\Longrightarrow\quad
+ &s\in\operatorname{dom}(f)\ \land\ \operatorname{LegalRHS}(s,f(s))\\
+ &{}\land\ \forall X\text{ compatible with }s.\quad
+ \operatorname{LHS}(s,X)=\operatorname{RHS}(s,f(s),X).
+\end{aligned}
+\label{eq:contract}
+\end{equation}
+Thus every legal guarded source yields evaluable attributes and a legal RHS
+with identical ordered output shape and element values under the selected
+arithmetic policy. Algebraic reassociation alone does not establish strict
+floating-point equality. Domain membership includes valid position lookups
+and inverse permutations. Because metadata programs can be partial, checking
+must respect ordered evaluation, short-circuiting, indexing, checked
+arithmetic, and failures; a failed guard evaluation is not assumed true.
+
+\subsection{When Can the Compiler Accept a Rewrite?}
+A semantic rule is accepted only when supported reasoning establishes the
+contract throughout the legal guarded domain. Rejection as unproved need not
+mean mathematical invalidity. The checking procedure below is intended to
+enforce this contract; this draft does not establish an implementation
+soundness theorem.

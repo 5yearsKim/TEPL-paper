@@ -1,0 +1,20 @@
+\FloatBarrier
+\section{Proposed Method}
+\label{sec:method}
+The method turns operation semantics into programs that compute missing
+replacement attributes. It first expresses the source computation in Axes IR
+and connects the logical axes used by its operations. It then matches source
+reads with reads in the proposed replacement, determines which axes each
+replacement operation must preserve, and constructs its attributes from the
+recorded positions. Finally, it checks the completed rewrite.
+
+We introduce these steps with dot distribution and then follow dot
+reassociation through mapping, synthesis, and verification. Distribution
+illustrates attribute reuse; reassociation requires constructing new
+descriptors for a different intermediate tensor. All algebraic transformations
+in these examples require the stated guards and an arithmetic policy that
+permits the relevant laws.
+\input{sections/05a-axes-ir}
+\input{sections/05b-axis-mapping}
+\input{sections/05c-synthesis}
+\input{sections/05d-correctness}

@@ -1,69 +1,141 @@
 \documentclass[acmsmall,review,screen,nonacm]{acmart}
 
-% Draft mode omits publication metadata. Remove nonacm and add the venue's
-% required metadata when preparing a submission.
+% Preserve the repository's single-column ACM review layout.
+% TODO: Replace author metadata and add venue metadata and CCS concepts.
+\usepackage{amsmath,booktabs,tabularx,array}
+\usepackage{listings}
+\usepackage{placeins}
+\usepackage{float}
+\usepackage{microtype}
+\usepackage{needspace}
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{3}
+\lstdefinelanguage{TEPL}{
+  morekeywords={dialect,op,attrs,axes,semantics,dtype,bind,yield,let,rule,where,derive,from,import,as,use,auto,tensor,index},
+  sensitive=true,morecomment=[l]{//},morestring=[b]"
+}
+\lstset{basicstyle=\normalfont\ttfamily\small,keywordstyle=\bfseries,
+  commentstyle=\normalfont\ttfamily\color{black!60},
+  columns=fullflexible,keepspaces=true,showstringspaces=false,
+  breaklines=true,breakatwhitespace=true,frame=single,
+  framerule=0.3pt,rulecolor=\color{black!25},xleftmargin=4pt,xrightmargin=4pt,
+  aboveskip=8pt,belowskip=8pt,captionpos=b}
+\newcommand{\code}[1]{{\upshape\ttfamily\detokenize{#1}}}
+\newcommand{\todo}[1]{\textcolor{black!75}{\textbf{[TODO:} #1\textbf{]}}}
+\newcommand{\catseq}{\mathbin{+\!\!+}}
+\newcommand{\gath}{\operatorname{gather}}
+\newcommand{\ocomp}{\operatorname{ordered\_complement}}
+\newcommand{\pos}{\operatorname{positions}}
+\newcommand{\mpo}{\operatorname{matchPositions}}
+\newcommand{\Axes}{\operatorname{Axes}}
+\newcommand{\Keep}{\operatorname{KeepAxes}}
+\newcommand{\Isel}{I_{\mathrm{sel}}}
+\newcommand{\Irem}{I_{\mathrm{rem}}}
+\newcommand{\Jsel}{J_{\mathrm{sel}}}
+\newcommand{\Jrem}{J_{\mathrm{rem}}}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+% Float barriers keep every figure in its specified subsection.
+% Small artwork uses 50% of text width; large artwork uses 100%.
+\floatstyle{plaintop}
+\newfloat{paperalgorithm}{htbp}{loa}
+\floatstyle{plain}
+\newfloat{codeblock}{htbp}{loc}
+\floatname{paperalgorithm}{Algorithm}
+\newcommand{\paperfigure}[5]{%
+  \begin{figure}[!htbp]\centering
+  \captionsetup{width=#1\linewidth}
+  \includegraphics[width=#1\linewidth]{#2}
+  \caption{#3}\label{#4}\Description{#5}
+  \end{figure}}
+
+
+% Put 50%-width artwork beside prose occupying 46% of text width. Measuring both columns keeps
+% each pair on one page and prevents text or display math from crossing artwork.
+\newsavebox{\figuretextbody}
+\newsavebox{\figuretextart}
+\newlength{\figuretextheight}
+\newenvironment{figuretext}[4]{%
+  \FloatBarrier
+  \def\figuretextfile{#1}\def\figuretextcaption{#2}%
+  \def\figuretextlabel{#3}\def\figuretextdescription{#4}%
+  \begin{lrbox}{\figuretextbody}%
+  \begin{minipage}[t]{0.46\textwidth}\vspace{0pt}%
+  \emergencystretch=1em\noindent
+}{%
+  \end{minipage}\end{lrbox}%
+  \begin{lrbox}{\figuretextart}%
+  \begin{minipage}[t]{0.5\textwidth}\vspace{0pt}\centering
+    \captionsetup{type=figure,hypcap=false,justification=raggedright,singlelinecheck=false}%
+    \includegraphics[width=\linewidth]{\figuretextfile}%
+    \caption{\figuretextcaption}\label{\figuretextlabel}%
+    \Description{\figuretextdescription}%
+  \end{minipage}\end{lrbox}%
+  \setlength{\figuretextheight}{\dimexpr\ht\figuretextbody+\dp\figuretextbody\relax}%
+  \ifdim\dimexpr\ht\figuretextart+\dp\figuretextart\relax>\figuretextheight
+    \setlength{\figuretextheight}{\dimexpr\ht\figuretextart+\dp\figuretextart\relax}%
+  \fi
+  \typeout{SIDEFIG \figuretextlabel: \the\figuretextheight}%
+  \par\addvspace{\intextsep}%
+  \Needspace{\dimexpr\figuretextheight+\baselineskip\relax}%
+  \noindent\usebox{\figuretextbody}\hfill\usebox{\figuretextart}\par
+  \addvspace{\intextsep}%
+}
 
 \title[TEPL]{TEPL: Synthesizing Attribute Programs from Tensor Rewrite Semantics}
-
 \author{Author Name}
-\affiliation{%
-  \institution{Institution}
-  \city{City}
-  \country{Country}
-}
-% \email{author@example.com}
+\affiliation{\institution{Institution}\city{City}\country{Country}}
 
 \begin{document}
-
+\raggedbottom
 \begin{abstract}
-  % TODO: Summarize the problem, approach, and main results.
+Tensor rewrite rules are concise in algebraic form, but their implementations
+require substantial attribute-transformation logic. Rewrite rules written as
+tensor expressions describe how to change a computation, but matching alone
+does not compute the attributes needed by the replacement, such as permutations
+and contraction dimensions.
+TEPL (Tensor Equality Pattern Language) is a DSL(Domain-Specific Language) for
+describing tensor rewrites, explicit conditions, and attribute changes together.
+More importantly, TEPL can automatically synthesize replacement attributes
+from operation semantics. Its synthesis approach uses Axes IR and symbolic
+axis mapping to handle tensors of arbitrary rank within the supported rewrite
+fragment. Our intended guarantee is that every semantically verified rewrite
+has computable replacement attributes and produces a legal replacement with
+equivalent results under its stated conditions and arithmetic policy. 
+We evaluate TEPL on 209 XLA-derived tensor rewrite cases. TEPL supports the
+operation semantics needed for 118 cases and verifies 86 with explicit
+attributes. Attribute inference succeeds on all 20 verified axis/extent
+cases (100\%).
 \end{abstract}
-
-% TODO: Add CCS concepts and keywords when preparing a submission.
-
+\keywords{tensor rewrites, attribute synthesis, symbolic axis mapping, rewrite languages}
 \maketitle
 
-\section{Introduction}
-\label{sec:introduction}
-% TODO: Motivation, research question, and contributions.
-
-\section{Background}
-\label{sec:background}
-% TODO: Tensor rewrites and operation attributes.
-
-\section{Language Design}
-\label{sec:language}
-% TODO: Dialects, patterns, conditions, and attribute expressions.
-
-\section{Problem Definition}
-\label{sec:problem}
-% TODO: Formalize attribute synthesis and correctness requirements.
-
-\section{Method}
-\label{sec:method}
-% TODO: Symbolic axis mapping and automatic attribute inference.
-
-\section{Implementation}
-\label{sec:implementation}
-% TODO: Compiler architecture and supported operations.
-
-\section{Evaluation}
-\label{sec:evaluation}
-% TODO: Research questions, methodology, and results.
-
-\section{Related Work}
-\label{sec:related-work}
-% TODO: Position TEPL relative to existing approaches.
-
-\section{Limitations and Future Work}
-\label{sec:limitations}
-% TODO: Scope, limitations, and open questions.
-
-\section{Conclusion}
-\label{sec:conclusion}
-% TODO: Summarize the contributions and findings.
-
+\FloatBarrier
+\input{sections/01-introduction}
+\FloatBarrier
+\input{sections/02-background}
+\FloatBarrier
+\input{sections/03-language}
+\FloatBarrier
+\input{sections/04-problem}
+\FloatBarrier
+\input{sections/05-method}
+\FloatBarrier
+\input{sections/06-implementation}
+\FloatBarrier
+\input{sections/07-limitations}
+\FloatBarrier
+\input{sections/08-evaluation}
+\FloatBarrier
+\input{sections/09-related-work}
+\FloatBarrier
+\input{sections/10-conclusion}
+\FloatBarrier
+\label{main-text-end}
+\clearpage
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{references}
-
+\clearpage
+\appendix
+\FloatBarrier
+\input{sections/appendix-extended}
 \end{document}

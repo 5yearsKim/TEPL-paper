@@ -1,0 +1,92 @@
+TEPL first-draft source audit — checked 2026-10-19
+
+Scope: external claims were checked against primary papers, project documentation,
+and source code. This is a focused check of cited claims, not a systematic novelty
+review. No prior-system performance numbers are used in the paper.
+
+1. tensorright
+   Publisher DOI: https://doi.org/10.1145/3704865
+   Author artifact: https://github.com/ADAPT-uiuc/TensorRight
+   Checked: arbitrary-rank/size tensor rewrite verification; aggregated axes as
+   possibly unbounded sets of named axes. Author list and publication metadata
+   cross-checked with the publisher-deposited Crossref record.
+   Used in Sections 2, 5.1.1, and 8; grouping is explicitly credited as prior work.
+
+2. egg
+   Author paper: https://arxiv.org/abs/2004.03082
+   Author PDF: https://homes.cs.washington.edu/~cnandi/docs/popl21-cr.pdf
+   DOI: https://doi.org/10.1145/3434304
+   Checked: equality saturation, symbolic rewrites, e-class analyses, extensibility.
+   Used for framework context, without claiming it cannot represent attributes.
+
+3. egg-applier
+   https://docs.rs/egg/0.11.0/egg/trait.Applier.html
+   Checked: Applier can inspect analysis data and construct replacements.
+   The latest page identifies version 0.11.0; the versioned URL also returned
+   successfully by direct HTTP retrieval. Inference boundary is the paper's
+   interpretation of this API, not a quoted absence-of-feature theorem.
+
+4. xla-simplifier
+   Revision: 9cb4e2005f963acc873dc95facd3b7d134dbf108
+   Revision date: 2026-10-17
+   https://github.com/openxla/xla/blob/9cb4e2005f963acc873dc95facd3b7d134dbf108/xla/hlo/transforms/simplifiers/algebraic_simplifier.cc
+   Primary raw source retrieved directly from raw.githubusercontent.com at that
+   revision; revision selected through GitHub's commits API for the file.
+   Checked AssociativeReorderNestedDot, beginning at line 3830: construction of
+   new dimension descriptors, profitability checks, graph construction, and a
+   possible transpose/output permutation. No line count attributed to attribute
+   logic. Code attribution/classification remains TODO before an effort metric.
+
+5. spores
+   https://www.vldb.org/pvldb/vol13/p1919-wang.pdf
+   DOI: https://doi.org/10.14778/3407790.3407799
+   Checked Section 2.3, Definition 2.4: indexed atoms, summed products, and
+   weighted polynomial terms; relational translation and optimization.
+   The paper PDF identifies volume 13, issue 11 and pages 1919–1932.
+   Crossref's issue field says 12; references.bib follows the primary PDF's 11.
+   TEPL does not inherit SPORES's completeness claims.
+
+6. taso
+   Author PDF: https://www.cs.cmu.edu/~zhihaoj2/papers/sosp19.pdf
+   DOI: https://doi.org/10.1145/3341301.3359630
+   Checked abstract and substitution-generation/verification discussion:
+   generating candidate graphs, operator properties, formal checking, cost-based
+   search. Metadata checked against publisher-deposited Crossref record.
+   No broad claim that TASO lacks parameter handling or arbitrary-rank reasoning.
+
+7. tensat
+   https://proceedings.mlsys.org/paper_files/paper/2021/file/cc427d934a7f6c0663e5923f49eba531-Paper.pdf
+   Official record:
+   https://proceedings.mlsys.org/paper_files/paper/2021/hash/cc427d934a7f6c0663e5923f49eba531-Abstract.html
+   Official BibTeX: https://proceedings.mlsys.org/paper_files/paper/335-/bibtex
+   Checked Sections 1–3: equality saturation and extraction for graph optimization;
+   Table 2 includes stride/axis parameters and variable-length permutations.
+   BibTeX confirms volume 3, pages 255–268 (2021). Full author names follow PDF.
+
+8. souper
+   https://arxiv.org/abs/1711.04422
+   Checked the authors' abstract: synthesizing superoptimization for LLVM.
+   Cited as the verified 2017 arXiv report, without inventing conference metadata.
+
+9. ruler
+   https://arxiv.org/abs/2108.10436
+   Author record: https://ztatlock.net/pubs/2021-oopsla-ruler/
+   DOI: https://doi.org/10.1145/3485496
+   Checked: equality saturation for rewrite rule inference; metadata cross-checked
+   with publisher-deposited Crossref record (including author order).
+
+10. mlir-linalg
+    https://mlir.llvm.org/docs/Dialects/Linalg/
+    Checked: scalar payloads and indexing maps between iteration and operand
+    spaces in structured operations. The citation is to documentation accessed
+    in 2026; it does not assert a measured or historical comparison.
+
+11. mlir-drr
+    https://mlir.llvm.org/docs/DeclarativeRewrites/
+    Checked sections on attribute capture, NativeCodeCall, and custom op building.
+    Used to explain explicit host callbacks, without claiming their presence
+    prevents richer attribute reasoning in other systems.
+
+Still unresolved: systematic novelty/expressiveness comparison; shared task
+coverage with related verifiers; exact numerical-policy alignment; benchmark
+selection and effort metrics. These remain explicit TODOs in the paper.

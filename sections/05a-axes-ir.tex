@@ -1,0 +1,92 @@
+\subsection{Axes IR}
+\label{sec:axes-ir}
+Axes IR separates ordered coordinate relationships from scalar value
+computation. This shared representation lets the compiler compose operation
+semantics, construct attributes, and check completed rewrites.
+
+\subsubsection{Symbolic Axis Groups}
+\label{sec:axis-groups}
+A symbolic group is an ordered sequence of arbitrary length. Unlike
+TensorRight's set-based aggregated axes~\cite{tensorright}, TEPL records group
+order and positions for attribute construction. An interface
+$P=\langle a_0,\ldots,a_{n-1}\rangle$ lists a tensor's logical axes in dimension
+order. A zero-based position sequence $p$ locates an ordered group $G$:
+\begin{equation}
+ \gath(P,p)=G.
+ \label{eq:mapping}
+\end{equation}
+Axis identity is distinct from extent. A group preserves its constituent
+coordinates rather than flattening them, and can be empty where permitted.
+\begin{figuretext}{figures/Symbolic axis groups.pdf}{Ordered, arbitrary-length axis groups preserve operand pairings and determine output order.}{fig:axis-groups}{Four arbitrary-length groups for batch, left-free, contraction, and right-free
+axes are connected to operand position lists and an output-axis construction.}
+A \code{bind} associates a group with operand positions. Two operands binding
+the same group pair their selected axes in list order, requiring equal lengths
+and corresponding extents. Equal sizes alone do not establish pairing.
+
+Figure~\ref{fig:axis-groups} shows dot groups $B,I,K,J$ for batch, left-free,
+contraction, and right-free axes. Selecting \code{[2,3]} in \code{X} and
+\code{[5,2]} in \code{Y} identifies the same ordered $K$ despite different
+physical layouts. Reducing $K$ leaves output $B\catseq I\catseq J$.
+
+The dot's four attributes give batch and contraction positions in both
+operands. Ordered complements select free positions. The definition below
+connects these positions to the groups and the output computation.
+\end{figuretext}
+For brevity, let \code{lb}, \code{rb}, \code{lc}, and \code{rc} denote
+the left and right batch and contraction attributes. The following excerpt
+combines the dot's axis bindings and value semantics:
+\begin{codeblock}[H]
+\begin{lstlisting}[language=TEPL]
+axes {
+  let lf = ordered_complement(all_axes(lhs), lb ++ lc);
+  let rf = ordered_complement(all_axes(rhs), rb ++ rc);
+  bind B { lhs: lb, rhs: rb };
+  bind K { lhs: lc, rhs: rc };
+  bind I { lhs: lf };
+  bind J { rhs: rf };
+  yield B ++ I ++ J;
+}
+semantics {
+  yield Reduce(K, Product(lhs, rhs));
+}
+\end{lstlisting}
+\end{codeblock}
+Here \code{all_axes} lists operand positions, and \code{++} concatenates
+sequences. The two bindings of $K$ make corresponding entries in \code{lc}
+and \code{rc} refer to the same logical coordinates. The free lists retain
+operand order. The axis \code{yield} specifies the output order, while the
+value \code{yield} multiplies paired operand elements and sums over $K$.
+The same definition applies when these groups contain different numbers of
+axes; no rank is fixed by the excerpt. Appendix~\ref{app:axes} gives the full
+declaration, another concrete layout, and the primitive reference tables.
+\FloatBarrier
+\subsubsection{Expressing Tensor Computations}
+\label{sec:value-expressions}
+Value and index expressions separate scalar computation from access
+construction. Value primitives are operand reads, integer
+constants, addition, multiplication, summation \code{Reduce(G,e)}, and
+\code{Read(input,indices)} for calculated accesses. Ordinary reads use bound
+coordinates. Index expressions select coordinates, concatenate or add index
+sequences, and apply scaling and offsets. A slice, for example, reads at
+\code{starts + strides * output_indices}. Reduction holds output coordinates
+fixed while summing over every coordinate combination in its group;
+\code{Reduce} here means summation, not arbitrary reduction operators.
+
+Elementwise addition without broadcasting binds both operands to one group
+$S$ and yields \code{Add(lhs,rhs)}. Generalized dot binds $B,I,K,J$, yields
+output axes $B\catseq I\catseq J$, and computes
+\code{Reduce(K,Product(lhs,rhs))}. Supported slices and convolutions calculate
+access indices; broadcasting introduces output axes along which input values
+are reused. Output shape remains explicit even for constant-valued tensors.
+
+\subsubsection{Reasoning About Composed Operations}
+\label{sec:composition}
+Consider distribution without broadcasting:
+$\operatorname{dot}(X+Y,Z)\longleftrightarrow
+\operatorname{dot}(X,Z)+\operatorname{dot}(Y,Z)$, with identical dot descriptors.
+Substituting addition into the dot's value expression gives
+\code{Reduce(K,Product(Add(X,Y),Z))}, but arithmetic substitution alone does
+not identify addition's axes with $K$ or preserve their pairing with \code{Z}.
+Symbolic mapping establishes that correspondence. Aligned indexed reads then
+permit comparison of $\sum_K(X+Y)Z$ and $\sum_K XZ+\sum_K YZ$ under the
+selected distributive laws.

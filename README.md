@@ -1,8 +1,21 @@
 # TEPL Paper
 
-Start writing in `main.tex`. It contains a minimal ACM `acmsmall` review
-skeleton with section placeholders matching the paper outline. Replace the
-author and affiliation placeholders, write the abstract, and fill in the sections.
+The active shortened draft starts in `main.tex`, using the ACM `acmsmall`
+review layout. The original 38-page draft is a standalone project in
+`main_backup/`, with its own `main.tex` and all supporting files.
+
+## Restore the original draft
+
+Copy all contents of `main_backup/` into the project folder, replacing existing
+files. From the project root, the equivalent command is:
+
+```bash
+cp -a main_backup/. .
+```
+
+This restores `main.tex` and its dependencies together. You can also open
+`main_backup/` as a separate project and run `make` there. The shortened draft
+remains active at the root until you restore.
 
 The `nonacm` class option suppresses publication metadata while drafting.
 For submission, remove it and add the required venue metadata, CCS concepts,

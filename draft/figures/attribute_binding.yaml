@@ -1,8 +1,9 @@
 title: Attribute Binding and Derivation
 concept: Capture operation descriptors as @tr and @d, derive @new_d explicitly, and use it to configure the replacement dot.
 requirements:
-  - 'Apply the shared axis-group UI in tools/figure_style.md: canonical bordered chips, inline group colors, underscore notation, and contextual dimming. Preserve this figure''s content and frame dimensions.'
-  - Follow tools/figure_style.md; use an exact 500 × 600 px half-width frame with three compact stacked bands, 14 px side margins, and 12 px gaps.
+  - 'Apply the shared axis-group UI in tools/figure_style.md: canonical bordered chips, inline group colors, underscore notation, and contextual dimming. Preserve this figure''s content within the requested square frame.'
+  - Follow tools/figure_style.md; use an exact 500 × 500 px half-width frame with 14 px outer margins and 12 px gaps between three stacked bands.
+  - Allocate 160 px to the graph, 112 px to the rule, and 176 px to the binding table. Compact spacing and reflow text; do not scale down the typography.
   - Top band shows Input graph → Rewritten graph. Middle band shows the compact rule. Bottom band retains the binding table with Binding, Attributes, and Origin columns.
   - 'Use blue (#5479A8) for @tr, amber (#D4A65C) for @d, and green (#6A9F88) for @new_d, consistently across graph badges, rule references, and table rows.'
   - Use 18 px labels/code/table text and 22 px headings. Keep graph operation names and descriptor badges side by side; use single-line attribute records in the table.
@@ -16,36 +17,35 @@ requirements:
 children:
   - name: graph_rewrite
     type: image
-    pos: [0.028, 0.972, 0.023, 0.317]
+    pos: [0.028, 0.972, 0.028, 0.348]
     requirements:
       - Place Input graph on the left and Rewritten graph on the right, separated by a solid right arrow.
       - On the left, A feeds transpose, then transpose and B feed dot as its left and right operands. Give transpose a blue @tr badge and dot an amber @d badge.
       - On the right, A and B feed one dot as its left and right operands. Give dot a green @new_d badge.
       - Keep the two dot nodes vertically aligned so removal of transpose is visually clear.
+      - Keep each graph heading on one line, use compact operation boxes, and route B beside transpose to the left dot. Fit both graphs and the rewrite arrow within the 160 px band.
 
   - name: rule
     type: text
-    pos: [0.028, 0.972, 0.337, 0.628]
+    pos: [0.028, 0.972, 0.372, 0.596]
     content: |-
       Rule
       (dot[@d] (transpose[@tr] A) B)
       => (dot[@new_d] A B)
-      derive {
-        @new_d = f_transform(@d, @tr);
-      }
+      derive { @new_d = f_transform(@d, @tr); }
 
   - name: binding_table
     type: image
-    pos: [0.028, 0.972, 0.648, 0.975]
+    pos: [0.028, 0.972, 0.620, 0.972]
     requirements:
       - Head this band "Attribute binding table". Draw an editable three-column table using the entries below.
-      - Keep each descriptor's attributes on one line; use compact 34 px header and data rows.
+      - Keep each descriptor's attributes on one line; use 30 px header and data rows with 18 px text. Reserve 26 px for the heading, 6 px before the table, and 24 px below it for the derivation label.
       - Use the corresponding binding color for each row label, with a pale tint on the derived row. Retain Origin text to distinguish capture from derivation in grayscale.
-      - Draw a small bracket in the right margin collecting the @tr and @d rows, then an arrow into the @new_d row. Place the label f_transform beneath the table with a short leader to this derivation connector.
+      - Reserve 24 px at the right of this band for a small bracket collecting the @tr and @d rows, then an arrow into the @new_d row. Place the 16 px label f_transform beneath the table, right-aligned with a short leader to this derivation connector.
     children:
       - name: entries
         type: text
-        pos: [0.00, 0.92, 0.16, 0.85]
+        pos: [0.00, 0.949, 0.182, 0.864]
         content: |-
           Binding | Attributes             | Origin
           @tr     | perm = [1,0,2]         | Captured

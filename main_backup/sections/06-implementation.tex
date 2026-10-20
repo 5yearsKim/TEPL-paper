@@ -1,0 +1,113 @@
+\FloatBarrier
+\section{Implementation}
+\label{sec:implementation}
+\FloatBarrier
+\subsection{High-Level Architecture}
+Figure~\ref{fig:architecture} distinguishes TEPL's three inputs: a rule,
+a dialect defining operations and their semantics, and a graph to rewrite.
+Rules and dialects feed compilation, whereas the graph enters the runtime
+engine directly. The implementation separates rule compilation from rewrite
+execution. The additional-engine branch in the figure is an extension target,
+not an implemented e-graph integration.
+
+
+\begin{figuretext}{figures/TEPL architecture.pdf}{Rules and dialect semantics compile into reusable programs that a rewrite engine applies to input graphs.}{fig:architecture}{Rule and dialect cards feed the compiler and compiled JSON. A graph card
+bypasses compilation and enters a greedy rewrite loop. A dashed adapter
+connects compiled rules to a prospective additional engine.}
+TEPL is implemented in C++20 and uses ANTLR to parse operation definitions
+and rules. Compilation resolves names and checks types, constructs missing
+attributes, checks semantic rules, and lowers completed rules into an
+executable representation that can be exported as JSON:
+\begin{codeblock}[H]
+\begin{lstlisting}
+Rule compilation
+TEPL source
+  -> ANTLR parsing
+  -> Name resolution and type checking
+  -> Attribute synthesis and semantic verification
+  -> Executable rewrite program
+  -> JSON export
+\end{lstlisting}
+\end{codeblock}
+Type-checked rules may still contain holes; executable rules have completed
+attribute programs, guards, and replacement patterns. JSON serializes this
+executable representation for loading without repeating compilation or
+semantic verification.
+
+The rewrite engine loads and validates the program, searches the input graph
+for an LHS match, evaluates its guard, computes replacement attributes, and
+constructs and applies the RHS:
+\end{figuretext}
+
+\begin{codeblock}[H]
+\begin{lstlisting}
+Rewrite execution
+Compiled JSON + input graph
+  -> Load and validate
+  -> Find an LHS pattern match
+  -> Evaluate the guard
+  -> Compute replacement attributes
+  -> Construct and apply the RHS
+\end{lstlisting}
+\end{codeblock}
+A failed guard or invalid attribute evaluation skips the match. The engine
+rewrites greedily until no rule changes the graph or an execution limit is
+reached. As described in Section~\ref{sec:auto}, generated Rust provides
+another execution path with the shared runtime; C++ generation is unavailable.
+
+\FloatBarrier
+\subsection{Internal Representations}
+Symbolic groups and position expressions use immutable typed nodes.
+Types distinguish axes, positions, extents, integers, and Boolean conditions.
+Gather, concatenation, and inverse permutation remain symbolic until their
+inputs are known. Expression nodes can share subexpressions. Structural keys
+identify expressions with the same structure, and each proof context interns
+these keys to accelerate comparisons. Hashes support lookup, with structural
+comparison resolving collisions.
+
+Value nodes represent constants, operand reads, binary addition, binary
+multiplication, and reduction. A separate index-expression representation
+handles coordinate selection, concatenation, scaling, and offsets for
+calculated reads. Normalization produces a vector of terms, each storing
+an integer coefficient, a list of reads, and a symbolic reduction sequence,
+as in Section~\ref{sec:normalization}.
+
+\FloatBarrier
+\subsection{Mapping Storage and Lookup}
+Mapping entries store \code{(interface, group, positions)}. Separate indexes
+support interface/group lookup and reverse lookup by interface and position
+sequence. Partitions refer to entries through stable identifiers and retain
+their own position sequences when these differ from the table's preferred
+sequence. Overlap records retain the selected subgroup and positions in both
+parent groups.
+
+Lookup first checks existing mappings. If no direct mapping is available,
+it follows established relationships and composes position sequences.
+Concatenated groups combine component mappings. Traversal through registered
+origins uses breadth-first search and avoids revisiting an origin. Results
+are cached; registering mappings invalidates the mapping cache, and changes
+to established facts invalidate the corresponding reasoning caches. Later
+queries can therefore exploit newly discovered relationships.
+
+\FloatBarrier
+\subsection{Rule Execution}
+The engine searches reachable graph nodes for LHS matches, checking operation
+identity and operand structure and recording captured nodes, descriptors, and
+shape bindings. Repeated tensor captures must refer to the same node.
+The evaluator then processes the guard and replacement expressions using
+those bindings. Boolean conditions preserve short-circuit evaluation; a
+false guard or evaluation failure skips the match.
+
+The builder reuses captured nodes and constructs new RHS operations with
+the computed attributes. Construction occurs on a candidate graph, permitting
+operation-contract and output-compatibility validation before committing
+the replacement. After a successful replacement the engine restarts its
+search. It stops when no candidate changes the graph, a configured limit
+is reached, or execution is cancelled.
+
+The mechanisms in this section describe the implementation status recorded
+in the supplied system outline; they are separate from the intended universal
+contract and from unperformed experiments. \todo{Pin the implementation and
+runtime revisions and attach build, supported-operation, semantic-checker,
+and generated-Rust validation evidence. The paper repository contains no
+implementation artifact with which to independently audit these statements.}

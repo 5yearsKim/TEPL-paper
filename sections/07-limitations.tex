@@ -1,0 +1,38 @@
+\section{Limitations}
+\label{sec:limitations}
+\paragraph{Coordinate semantics for automatic inference.}
+TEPL supports coordinate transformations such as static slice and reverse,
+but its current semantic language cannot describe every tensor access pattern.
+Dynamic slice requires tensor-valued indices; pad and concatenate require
+coordinate-dependent branches; and general reshape requires coordinate
+flattening and unflattening using division and modulo. Without these operation
+semantics, TEPL cannot automatically infer attributes or semantically verify
+rewrites involving them. Extending the coordinate language and its associated
+reasoning is future work.
+
+These restrictions concern semantic verification and inference. Users can
+still express structural rewrites for these operations, specify applicability
+conditions, and construct RHS attributes explicitly using TEPL's attribute
+expressions. Manual authoring therefore remains useful beyond the automatic
+inference fragment: TEPL can match patterns, evaluate guards and attribute
+programs, and build replacement graphs. Such structural rewrites do not carry
+the tensor-equivalence guarantee of semantically verified rules.
+
+\paragraph{No completeness guarantee.}
+TEPL does not guarantee that it can verify every valid rewrite or discover
+every valid attribute construction. A correct rule may remain unproved because
+coordinate correspondence is ambiguous or a required metadata relationship
+lies outside supported reasoning. Verifying a manually supplied constructor
+does not guarantee that synthesis can discover it. The correctness argument
+concerns accepted rules; a proof of completeness is outside this paper's scope.
+Future work can expand the reasoning and establish completeness for a
+precisely defined fragment.
+
+\paragraph{Reasoning cost and scalability.}
+Long compositions and overlapping axis relationships can increase symbolic
+partitions and normalized-expression size. Verification and inference use
+finite proof budgets, so a rule may remain unresolved when reasoning exceeds
+those budgets. The XLA evaluation in Section~\ref{sec:evaluation} measures
+coverage; it does not establish scalability across arbitrary composition
+depths or expression sizes. Future work includes systematic scaling experiments
+and more efficient symbolic representations and proof search.

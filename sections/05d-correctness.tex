@@ -1,0 +1,61 @@
+\subsection{Correctness and Scope}
+\label{sec:correctness}
+Synthesis proposes attributes; mapping queries alone do not establish their
+evaluability, operation legality, or tensor equivalence.
+
+\subsubsection{Checking the Completed Rewrite}
+The verifier substitutes the emitted programs and reconstructs the completed
+rule in a fresh context. Table~\ref{tab:verification-checks} separates the
+four requirements. Reconstructing the rule means deriving its coordinate
+relationships and values from the emitted programs, instead of assuming
+the intermediate conclusions used during synthesis.
+\begin{table}[!htbp]
+\caption{Checks required for a completed semantic rewrite.}
+\label{tab:verification-checks}
+\begin{tabularx}{\linewidth}{@{}lY@{}}\toprule
+Check & Required property\\\midrule
+Attribute computation & Every constructor uses only source metadata, has no
+holes, and is evaluable whenever the rule applies.\\
+RHS legality & Constructed attributes satisfy operation contracts, including
+valid positions, paired extents, reduction domains, and access bounds.\\
+Value equivalence & Fully lowered expressions agree in indexed reads,
+coefficients, and reduction domains under the selected arithmetic policy.\\
+Output agreement & Results have identical ordered output shapes and
+compatible fixed dtype.\\\bottomrule
+\end{tabularx}
+\end{table}
+\FloatBarrier
+Read matching against a skeleton assists construction but does not establish
+value equivalence. Explicit attribute programs receive the same checks.
+Only source legality and the declared guard may be assumed; additional
+construction conditions must follow from them.
+
+\subsubsection{Correctness Guarantee}
+\label{sec:guarantee}
+The intended guarantee is Equation~\eqref{eq:contract} for every legal guarded
+source instance and every compatible tensor value, under the selected
+arithmetic policy. Strict floating-point equivalence does not follow from
+algebraic reassociation. This contract is not a soundness theorem established
+in this draft, and the current C++ implementation is not claimed formally
+proved sound.
+
+Assumptions include correct operation definitions, sound primitive metadata
+and index checks, admissible coordinate frames, and faithful evaluation of
+partial attribute programs. Checked arithmetic, coordinate transport, and
+guard evaluation are implementation obligations. Fresh-context checking
+separates verification from construction conclusions, but both paths share
+semantic infrastructure; that separation alone establishes no implementation
+soundness result.
+
+\subsubsection{Scope and Limitations}
+The method is incomplete. Ambiguous read correspondence, unsupported coupled
+or inverse equations, executable expressions beyond the reasoning fragment,
+unavailable arithmetic laws, and bounded normalization or coordinate work
+can prevent acceptance. Several read-coordinate assignments must remain
+unresolved unless agreement is established. TEPL claims neither all valid
+attribute programs nor weakest sufficient guards.
+
+Diagnostics should distinguish malformed rules, unsupported or unresolved
+reasoning, and exhausted work budgets. Rejection as unproved is not a
+counterexample. Structural rules receive structural checks and do not carry
+the intended semantic-equivalence guarantee.

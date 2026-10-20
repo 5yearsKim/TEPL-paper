@@ -1,135 +1,224 @@
 title: Introducing auto
-concept: The compiler turns auto into an attribute function; each runtime match supplies captured metadata to f(p, q) and receives replacement dot attributes.
+concept: The compiler turns auto into an attribute function; each runtime match supplies captured metadata to f(p,
+  q) and receives replacement dot attributes.
 purpose: Introduce compile-time function generation and runtime application through transpose absorption into dot.
 requirements:
-  - 'Apply the shared axis-group UI in tools/figure_style.md: canonical bordered chips, inline group colors, underscore notation, and contextual dimming. Preserve this figure''s content and frame dimensions.'
-  - Follow tools/figure_style.md; use a 500 px half-width frame, approximately 920 px tall, increasing height if needed.
-  - Stack user inputs, an enclosing TEPL compiler, and runtime application vertically.
-  - Use 22 px headings and 18 px code and labels; keep all text editable and avoid shrinking it.
-  - Use blue for user rules and operation semantics, green for auto, the generated function, its runtime application, and generated attributes.
-  - Use pale fills, dark text, neutral tensor edges, and solid information-flow arrows.
-  - Use commas, plus signs, or line breaks as separators; do not use middle dots.
-  - Use a matrix-dot example with rank-2 inputs and no batch axes; absorbing a transpose preserves the order of the single free axis from each operand.
-  - p denotes the captured transpose permutation and q the captured dot descriptor; these are metadata, not tensor values.
-  - The function signature is explanatory notation, not a user-written derive clause or a complete function body.
-  - Synthesis and verification happen inside the compiler; runtime applies the exported function.
-  - Concrete numbers appear only at runtime; show only the changing left contraction axis, keeping the other dot fields implicit.
-  - For the runtime instance use A of shape [m, k], B of shape [k, n], p = [1, 0], and q with left and right contraction axes both 0.
-  - The result has left contraction axis 1 and unchanged right contraction axis 0; both graphs produce shape [m, n].
-
+- Apply tools/figure_style.md for editable text, literal underscore notation, neutral tensor edges, and the figure's
+  declared user-input and compiler colors. Preserve the example and use the requested compact frame below.
+- Use an exact 500 × 650 px half-width frame with 16 px outer margins and a 468 px content width.
+- Stack user inputs, an enclosing TEPL compiler, and runtime application vertically.
+- Use 22 px headings and 18 px code and primary labels; the compact auto request annotation may use 16 px. Keep
+  all text editable and reflow the layout without scaling it.
+- Use blue for user rules and operation semantics, green for auto, the generated function, its runtime application,
+  and generated attributes.
+- Use pale fills, dark text, neutral tensor edges, and solid information-flow arrows.
+- Use commas, plus signs, or line breaks as separators; do not use middle dots.
+- Use a matrix-dot example with rank-2 inputs and no batch axes; absorbing a transpose preserves the order of the
+  single free axis from each operand.
+- p denotes the captured transpose permutation and q the captured dot descriptor; these are metadata, not tensor
+  values.
+- The function signature is explanatory notation, not a user-written derive clause or a complete function body.
+- Synthesis and verification happen inside the compiler; runtime applies the exported function.
+- Concrete numbers appear only at runtime; show only the changing left contraction axis, keeping the other dot fields
+  implicit.
+- For the runtime instance use A of shape [m, k], B of shape [k, n], p = [1, 0], and q with left and right contraction
+  axes both 0.
+- The result has left contraction axis 1 and unchanged right contraction axis 0; both graphs produce shape [m, n].
+- Use a 342 px compile-time band, an 18 px phase divider, and a 258 px runtime band. Use 8 px gaps within the phase
+  bands.
+- Put Compile time and Generated once per rule on one 26 px header row. Put Runtime and Evaluate on each match on
+  another shared header row, with the frequency notes right aligned.
+- Use 128 px source cards and one 156 px compiler enclosure. Combine TEPL compiler and Synthesize + verify on its
+  header row; retain a short downward dependency into the generated-function card.
+- Use a 104 px generated-function card with just its heading, the function signature, and a single combined parameter-definition
+  line. Keep this entire card inside the compiler enclosure.
+- 'Keep the explicit runtime flow prominent: 160 px captured-input card, 20 px arrow gap, 108 px function-application
+  card, 20 px arrow gap, and 160 px result card. Each card is 88 px tall.'
+- Use a compact 160 × 98 px replacement graph beside its explanation. Keep tensor edges on the outer sides of the
+  central descriptor badge, with no crossings.
+- Replace the two bottom notation lines with the single explanatory sentence Only the left contraction axis is shown.
 children:
-  - name: compile_time
+- name: compile_time
+  type: image
+  pos:
+  - 0.032
+  - 0.968
+  - 0.0246
+  - 0.5508
+  requirements:
+  - Put Compile time at the left of the header and Generated once per rule at the right.
+  - Put the user rule and operation semantics in two blue cards above the compiler enclosure.
+  - Connect both blue source cards to the compiler header containing Synthesize + verify.
+  children:
+  - name: generation_frequency
+    type: text
+    pos:
+    - 0.466
+    - 1
+    - 0
+    - 0.076
+    content: Generated once per rule
+  - name: rule
+    type: text
+    pos:
+    - 0
+    - 0.658
+    - 0.099
+    - 0.474
+    content: "User rule (matrix example)\n(dot[@d]\n  (transpose[@tr] A) B)\n=> (dot[auto] A B)"
+  - name: auto_callout
+    type: text
+    pos:
+    - 0.019
+    - 0.639
+    - 0.395
+    - 0.453
+    content: 'auto: generate attributes'
+  - name: operation_semantics
+    type: text
+    pos:
+    - 0.692
+    - 1
+    - 0.099
+    - 0.474
+    content: 'Operation
+
+      semantics
+
+      transpose
+
+      dot'
+  - name: compiler
     type: image
-    pos: [0.04, 0.96, 0.02, 0.563]
+    pos:
+    - 0
+    - 1
+    - 0.544
+    - 1
     requirements:
-      - Head this section "Compile time".
-      - Put the user rule and operation semantics in two blue cards above the compiler enclosure.
-      - Connect both source cards to the compiler's synthesis stage.
+    - Keep the outer enclosure labeled TEPL compiler, with Synthesize + verify right aligned on the same 26 px header
+      row.
+    - Keep a short downward arrow from the header into the generated-function card. Source inputs feed the compiler,
+      and the compiled function is exported to runtime.
+    - Nest the complete generated function, including its heading, signature, and parameter definitions, inside
+      this enclosure.
     children:
-      - name: rule
+    - name: generated_function
+      type: image
+      pos:
+      - 0.0188
+      - 0.9812
+      - 0.2744
+      - 0.9411
+      requirements:
+      - Use a prominent green 104 px-tall card headed Generated attribute function in 22 px bold text.
+      - Move the frequency note to the Compile time header; do not repeat it inside this card.
+      - Show the explanatory signature and combined parameter line in 18 px monospace, separated by 4 px gaps. The
+        compiler produces a reusable function, not the concrete runtime descriptor.
+      children:
+      - name: signature
         type: text
-        pos: [0.00, 0.65, 0.06, 0.30]
-        content: |-
-          User rule (matrix example)
-          (dot[@d]
-            (transpose[@tr] A) B)
-          => (dot[auto] A B)
-
-      - name: auto_callout
+        pos:
+        - 0.021
+        - 0.976
+        - 0.413
+        - 0.625
+        content: f(p, q) → replacement dot attrs
+      - name: parameters
         type: text
-        pos: [0.00, 0.65, 0.31, 0.35]
-        content: 'auto: generate attributes'
+        pos:
+        - 0.021
+        - 0.976
+        - 0.663
+        - 0.875
+        content: p = @tr.permutation; q = @d
+- name: phase_boundary
+  type: image
+  pos:
+  - 0.032
+  - 0.968
+  - 0.5508
+  - 0.5785
+  requirements:
+  - Draw a thin horizontal divider between Compile time and Runtime.
+  - Carry the compiled function from generated_function across the divider into the runtime f(p, q) box.
+  - Route this handoff vertically between the runtime heading and its right-aligned frequency note, clear of all
+    text.
+- name: runtime
+  type: image
+  pos:
+  - 0.032
+  - 0.968
+  - 0.5785
+  - 0.9754
+  requirements:
+  - Put Runtime at the left of one header row and Evaluate on each match right aligned on that same row.
+  - Arrange captured_inputs, function_application, and generated_attributes in one row, connected by right arrows.
+  - Use a neutral input card and green application and result cards; make the f(p, q) invocation explicit.
+  - Below this row, draw a small replacement graph with A and B feeding one dot node.
+  - Connect generated_attributes downward to an @new_d badge attached to that dot.
+  - Tensor edges are neutral and attribute edges are green; the transpose is absent from the replacement graph.
+  children:
+  - name: per_match_frequency
+    type: text
+    pos:
+    - 0.466
+    - 1
+    - 0
+    - 0.101
+    content: Evaluate on each match
+  - name: captured_inputs
+    type: text
+    pos:
+    - 0
+    - 0.342
+    - 0.132
+    - 0.473
+    content: 'Captured attrs
 
-      - name: operation_semantics
-        type: text
-        pos: [0.69, 1.00, 0.06, 0.35]
-        content: |-
-          Operation
-          semantics
-          transpose
-          dot
+      p = [1, 0]
 
-      - name: compiler
-        type: image
-        pos: [0.00, 1.00, 0.43, 1.00]
-        requirements:
-          - Label the outer enclosure "TEPL compiler".
-          - Place a "Synthesize + verify" stage above generated_function, with a downward arrow between them.
-          - Nest generated_function inside this enclosure, including its heading and all parameter definitions.
-        children:
-          - name: generated_function
-            type: image
-            pos: [0.025, 0.975, 0.40, 0.96]
-            requirements:
-              - Use a prominent green card headed "Generated attribute function".
-              - Add the sublabel "Generated once for this rule".
-              - The compiler produces one reusable function, not the concrete descriptor shown below.
-            children:
-              - name: signature
-                type: text
-                pos: [0.03, 0.97, 0.44, 0.60]
-                content: f(p, q) → replacement dot attrs
+      q: left axis = 0'
+  - name: function_application
+    type: text
+    pos:
+    - 0.385
+    - 0.615
+    - 0.132
+    - 0.473
+    content: 'Apply f
 
-              - name: parameters
-                type: text
-                pos: [0.03, 0.97, 0.65, 0.96]
-                content: |-
-                  p = @tr.permutation
-                  q = @d
+      f(p, q)'
+  - name: generated_attributes
+    type: text
+    pos:
+    - 0.658
+    - 1
+    - 0.132
+    - 0.473
+    content: 'New dot attrs
 
-  - name: phase_boundary
+      left axis = 1
+
+      @new_d'
+  - name: replacement
     type: image
-    pos: [0.04, 0.96, 0.563, 0.597]
+    pos:
+    - 0
+    - 1
+    - 0.504
+    - 0.884
     requirements:
-      - Draw a thin horizontal divider between Compile time and Runtime.
-      - Carry the compiled function from generated_function across the divider into the runtime f(p, q) box.
-      - Route this handoff to the right of the runtime headings, clear of all text.
-
-  - name: runtime
-    type: image
-    pos: [0.04, 0.96, 0.597, 0.98]
-    requirements:
-      - Head this section "Runtime", followed by "Evaluate on each match".
-      - Arrange captured_inputs, function_application, and generated_attributes in one row, connected by right arrows.
-      - Use a neutral input card and green application and result cards; make the f(p, q) invocation explicit.
-      - Below this row, draw a small replacement graph with A and B feeding one dot node.
-      - Connect generated_attributes downward to an @new_d badge attached to that dot.
-      - Tensor edges are neutral and attribute edges are green; the transpose is absent from the replacement graph.
-    children:
-      - name: captured_inputs
-        type: text
-        pos: [0.00, 0.34, 0.19, 0.49]
-        content: |-
-          Captured attrs
-          p = [1, 0]
-          q: left axis = 0
-
-      - name: function_application
-        type: text
-        pos: [0.40, 0.62, 0.19, 0.49]
-        content: |-
-          Apply f
-          f(p, q)
-
-      - name: generated_attributes
-        type: text
-        pos: [0.68, 1.00, 0.19, 0.49]
-        content: |-
-          New dot attrs
-          left axis = 1
-          @new_d
-
-      - name: replacement
-        type: image
-        pos: [0.00, 1.00, 0.54, 0.85]
-        requirements:
-          - Label the left side "Apply replacement", show "(dot[@new_d] A B)", and add "Transpose removed".
-          - On the right, place A and B above the dot, with a green @new_d badge between the input nodes and the dot.
-          - Keep the attribute connector centered and the tensor edges on either side so that edges do not cross.
-
-      - name: notation
-        type: text
-        pos: [0.00, 1.00, 0.88, 1.00]
-        content: |-
-          Left axis = left contraction axis.
-          Only the changing dot field is shown.
+    - Label the left side "Apply replacement", show "(dot[@new_d] A B)", and add "Transpose removed".
+    - On the right, place A and B above the dot, with a green @new_d badge between the input nodes and the dot.
+    - Keep the attribute connector centered and the tensor edges on either side so that edges do not cross.
+    - Within the 160 × 98 px graph, put A and B at the top, the @new_d badge at y=34 px, and the 104 × 28 px dot
+      node at y=70 px. Keep the attribute edge centered and tensor edges outside the badge.
+  - name: notation
+    type: text
+    pos:
+    - 0
+    - 1
+    - 0.915
+    - 1
+    content: Only the left contraction axis is shown.
