@@ -51,13 +51,15 @@
 
 % Put 50%-width artwork beside prose occupying 46% of text width. Measuring both columns keeps
 % each pair on one page and prevents text or display math from crossing artwork.
+% The optional argument scales artwork within its column; the default is 1.
 \newsavebox{\figuretextbody}
 \newsavebox{\figuretextart}
 \newlength{\figuretextheight}
-\newenvironment{figuretext}[4]{%
+\newenvironment{figuretext}[5][1]{%
   \FloatBarrier
-  \def\figuretextfile{#1}\def\figuretextcaption{#2}%
-  \def\figuretextlabel{#3}\def\figuretextdescription{#4}%
+  \def\figuretextscale{#1}%
+  \def\figuretextfile{#2}\def\figuretextcaption{#3}%
+  \def\figuretextlabel{#4}\def\figuretextdescription{#5}%
   \begin{lrbox}{\figuretextbody}%
   \begin{minipage}[t]{0.46\textwidth}\vspace{0pt}%
   \emergencystretch=1em\noindent
@@ -66,7 +68,7 @@
   \begin{lrbox}{\figuretextart}%
   \begin{minipage}[t]{0.5\textwidth}\vspace{0pt}\centering
     \captionsetup{type=figure,hypcap=false,justification=raggedright,singlelinecheck=false}%
-    \includegraphics[width=\linewidth]{\figuretextfile}%
+    \includegraphics[width=\figuretextscale\linewidth]{\figuretextfile}%
     \caption{\figuretextcaption}\label{\figuretextlabel}%
     \Description{\figuretextdescription}%
   \end{minipage}\end{lrbox}%
@@ -115,8 +117,6 @@ cases (100\%).
 
 \FloatBarrier
 \input{sections/01-introduction}
-\FloatBarrier
-\input{sections/02-background}
 \FloatBarrier
 \input{sections/03-language}
 \FloatBarrier

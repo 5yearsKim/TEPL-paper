@@ -4,13 +4,20 @@
 
 \paragraph{Comparison with TensorRight.}
 TensorRight verifies tensor graph rewrites for tensors of arbitrary rank and
-size. It uses aggregated axes to represent an unbounded number of dimensions
-and reduces verification to a finite set of bounded proof obligations checked
-by an SMT solver~\cite{tensorright}.
+size. Its aggregated axes group an arbitrary number of named axes, allowing
+one rewrite specification to describe tensors with different ranks without
+enumerating each dimension separately. It reduces verification to a finite
+set of bounded proof obligations checked by an SMT solver~\cite{tensorright}.
+
 TEPL focuses on automatically constructing the replacement attributes for a
-user-specified rewrite. Its Axes IR and symbolic axis mapping track axis order
-and position correspondences to synthesize attribute programs, such as
-permutations and contraction-dimension lists, from source metadata. TEPL then
-checks the completed rewrite using its operation semantics. Arbitrary-rank
-verification and axis grouping are established by prior work; this paper's
-focus is attribute synthesis for executable tensor rewrites.
+user-specified rewrite. It builds on axis grouping but represents groups as
+ordered sequences and tracks their positions in tensor interfaces. This
+distinguishes logical axis identity, extent, and position: contraction lists
+must specify both which axes are reduced and how operand axes are paired in
+list order. Axes IR and symbolic axis mapping use these ordered,
+compositional correspondences to synthesize reusable attribute programs,
+such as permutations and contraction-dimension lists, from source metadata
+(Section~\ref{sec:method}). TEPL then checks the completed rewrite using its
+operation semantics. Arbitrary-rank verification and axis grouping are
+established by prior work; this paper's focus is attribute synthesis for
+executable tensor rewrites.
