@@ -1,0 +1,56 @@
+\section{Proof of Axis Exactness}
+\label{app:axis-exactness}
+We prove Lemma~\ref{lem:axis-exactness} for legal read-once components $L,R$
+at fixed metadata, under Section~\ref{sec:formal-scope}'s assumptions.
+Every logical axis contains an input port, contains at most one port from
+each input, and appears at most once in a node's output. These properties
+follow because contraction pairs distinct axes from disjoint input subtrees;
+permutation reorders axes, and summation removes them from the output.
+Removed axes cannot reappear, and separate axes in one child cannot later
+merge with each other.
+
+\subsection{Forward Direction}
+Suppose $N(L)=N(R)$. The same ordered output classes give the same output
+shape. At any output coordinate, both computations select the same input
+entries and sum their products over the same remaining indices. Under
+exact real arithmetic, the order of these operations does not affect the
+result. Thus $L(X)=R(X)$ for every input $X$.
+
+\subsection{Converse Direction}
+Suppose $N(L)\ne N(R)$. We construct inputs for which the results differ.
+
+\paragraph{Find a different connection.}
+Different output shapes already imply inequivalence. Otherwise, add a port
+for each output position and connect it to its class. This makes output
+order part of the connection relation. The representations must differ on
+some pair of ports: swapping $L,R$ if needed, choose $u,w$ with
+$u\sim_L w$ but $u\not\sim_R w$.
+
+\paragraph{Choose inputs.}
+In $R$, assign index 1 to the class of $w$ and index 0 to every other class,
+including that of $u$. These indices exist because extents are at least two.
+Set each input to 1 at the selected coordinate and 0 elsewhere; set scalar
+inputs to 1. Call these inputs $X^*$, and let $y$ be the selected output
+coordinate.
+
+\paragraph{Compare results.}
+In $R$, exactly one summand is 1: changing any summed index selects a zero
+input entry, since every class contains an input port. In $L$, a nonzero
+summand would require index 0 at $u$ and index 1 at $w$, as fixed by $X^*$
+and $y$. Their connection forbids this, so every summand is zero. Hence
+\begin{equation}
+ L(X^*)[y]=0\ne1=R(X^*)[y].
+\end{equation}
+Thus equal results for all inputs require equal representations.
+
+\subsection{Example: A Dot Product and Two Independent Sums}
+A dot product shares an index; two independent sums do not. With
+$A^*=(1,0)$ and $B^*=(0,1)$,
+\begin{equation}
+\begin{aligned}
+ L(A^*,B^*)&=\sum_k A^*_k B^*_k=1\cdot0+0\cdot1=0,\\
+ R(A^*,B^*)&=\left(\sum_i A^*_i\right)
+             \left(\sum_j B^*_j\right)=(1+0)(0+1)=1.
+\end{aligned}
+\end{equation}
+The extents agree, but the different connections produce different results.

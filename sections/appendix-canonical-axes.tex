@@ -1,0 +1,86 @@
+\section{Example: Mandatory Axes and Axes Kept}
+\label{app:canonical-axes-example}
+Consider a rewrite that moves a row sum from an input to the result of
+batched matrix multiplication:
+\begin{equation}
+ \operatorname{dot}(\operatorname{sum}_i(A),B)
+ \;\Rightarrow\;
+ \operatorname{sum}_i(\operatorname{dot}(A,B)).
+\end{equation}
+Here $\operatorname{dot}$ preserves the shared batch axis $b$ and contracts
+axis $k$, while $\operatorname{sum}_i$ removes row axis $i$. The LHS sums
+the rows of $A$ before multiplication; the RHS multiplies first and sums
+the resulting rows. We apply Section~\ref{sec:canonical-axes} to the RHS,
+where multiplication must keep $i$ until the final summation even though
+it is not needed in the final output.
+
+\subsection{Inputs and Logical Axes}
+Let $A,B$ have shapes $(s,m,n)$ and $(s,n,p)$, with all extents at least two.
+Their ordered logical axes are
+\begin{equation}
+ I_A=(b,i,k),\qquad I_B=(b,k,j).
+\end{equation}
+Axes $b,k$ connect the inputs, while $i,j$ occur in only one input each:
+\begin{equation}
+ \sigma(b)=\sigma(k)=\{A,B\},\qquad
+ \sigma(i)=\{A\},\qquad \sigma(j)=\{B\}.
+\end{equation}
+In indexed form, the source $L$, RHS intermediate $T$, and RHS output $Y$ are
+\begin{equation}
+\begin{aligned}
+ L_{bj}&=\sum_k\left(\sum_i A_{bik}\right)B_{bkj},\\
+ T_{bij}&=\sum_k A_{bik}B_{bkj},\qquad
+ Y_{bj}=\sum_i T_{bij}.
+\end{aligned}
+\end{equation}
+Both computations have output order $F=(b,j)$ and agree under exact real
+arithmetic. The RHS nodes are $A,B,T,Y$.
+
+\subsection{Mandatory Axes and Axes Kept}
+At input $A$, axis $b$ is required in the output and $k$ must connect to $B$.
+In particular, $\sigma(k)=\{A,B\}\nsubseteq U_A=\{A\}$: an input
+containing $k$ lies outside this subtree. Axis $i$ is not mandatory, but
+an input node keeps all its axes. Thus $M_A=\{b,k\}$ while
+$P_A=\{b,i,k\}$.
+
+At $T$, both inputs are inside the subtree, so only the final output axes
+are mandatory: $M_T=\{b,j\}$. Multiplication sums out $k$, but cannot
+sum out $i$, which appears only in its left operand. It must keep $i$ as
+a free axis, giving
+\begin{equation}
+ M_T=\{b,j\}\subsetneq P_T=\{b,i,j\}.
+\end{equation}
+The final unary summation removes $i$. Table~\ref{tab:matmul-axis-sets}
+lists the sets at every RHS node.
+\begin{table}[!htbp]
+\caption{Mandatory and retained axes for batched multiplication followed
+by a row sum.}
+\label{tab:matmul-axis-sets}
+\begin{tabularx}{\linewidth}{@{}lYll@{}}\toprule
+Node & Inputs in subtree & Mandatory axes & Axes kept\\\midrule
+$A$ & $\{A\}$ & $\{b,k\}$ & $\{b,i,k\}$\\
+$B$ & $\{B\}$ & $\{b,k,j\}$ & $\{b,k,j\}$\\
+$T=AB$ & $\{A,B\}$ & $\{b,j\}$ & $\{b,i,j\}$\\
+$Y=\operatorname{sum}_i(T)$ & $\{A,B\}$ & $\{b,j\}$ & $\{b,j\}$\\\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Batch, Contraction, and Free Axes}
+At $T$, the operands share $b,k$. Axis $b$ is mandatory and stays as batch;
+$k$ is not mandatory and is summed out. Axes $i,j$ remain free.
+Table~\ref{tab:matmul-axis-roles} lists the four roles.
+\begin{table}[!htbp]
+\caption{Axis roles at the multiplication node $T$.}
+\label{tab:matmul-axis-roles}
+\begin{tabularx}{\linewidth}{@{}llY@{}}\toprule
+Role & Axis set & Reason\\\midrule
+Batch & $B_T=\{b\}$ & Shared and required in the final output.\\
+Contraction & $K_T=\{k\}$ & Shared and no longer needed.\\
+Left-free & $LF_T=\{i\}$ & Present only in $A$; multiplication must keep it.\\
+Right-free & $RF_T=\{j\}$ & Present only in $B$; required in the final output.\\\bottomrule
+\end{tabularx}
+\end{table}
+Thus $P_T=B_T\cup LF_T\cup RF_T=\{b,i,j\}$. At the root, unary
+summation keeps $P_Y=P_T\cap M_Y=\{b,j\}=\operatorname{set}(F)$.
+The extra axis $i$ survives multiplication only because that operation
+cannot remove it.

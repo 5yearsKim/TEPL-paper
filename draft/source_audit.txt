@@ -87,6 +87,12 @@ review. No prior-system performance numbers are used in the paper.
     Used to explain explicit host callbacks, without claiming their presence
     prevents richer attribute reasoning in other systems.
 
+12. numpy-einsum (checked 2026-10-25)
+    https://numpy.org/doc/stable/reference/generated/numpy.einsum.html
+    Official NumPy API documentation. Checked subscript labels as operand
+    dimensions, repeated-label summation, explicit output ordering, and the
+    matrix-multiplication interpretation used in Section 4.1.
+
 Still unresolved: systematic novelty/expressiveness comparison; shared task
 coverage with related verifiers; exact numerical-policy alignment; benchmark
 selection and effort metrics. These remain explicit TODOs in the paper.

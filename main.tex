@@ -19,7 +19,7 @@
   columns=fullflexible,keepspaces=true,showstringspaces=false,
   breaklines=true,breakatwhitespace=true,frame=single,
   framerule=0.3pt,rulecolor=\color{black!25},xleftmargin=4pt,xrightmargin=4pt,
-  aboveskip=8pt,belowskip=8pt,captionpos=b}
+  captionpos=b}
 \newcommand{\code}[1]{{\upshape\ttfamily\detokenize{#1}}}
 \newcommand{\todo}[1]{\textcolor{black!75}{\textbf{[TODO:} #1\textbf{]}}}
 \newcommand{\catseq}{\mathbin{\Vert}}
@@ -40,10 +40,11 @@
 \newfloat{paperalgorithm}{htbp}{loa}
 \floatstyle{plain}
 \newfloat{codeblock}{htbp}{loc}
+% Let the codeblock wrapper control spacing around its listings.
+\floatevery{codeblock}{\lstset{aboveskip=0pt,belowskip=0pt}}
 \floatname{paperalgorithm}{Algorithm}
 \newcommand{\paperfigure}[5]{%
   \begin{figure}[!htbp]\centering
-  \captionsetup{width=#1\linewidth}
   \includegraphics[width=#1\linewidth]{#2}
   \caption{#3}\label{#4}\Description{#5}
   \end{figure}}
@@ -67,7 +68,7 @@
   \end{minipage}\end{lrbox}%
   \begin{lrbox}{\figuretextart}%
   \begin{minipage}[t]{0.5\textwidth}\vspace{0pt}\centering
-    \captionsetup{type=figure,hypcap=false,justification=raggedright,singlelinecheck=false}%
+    \captionsetup{type=figure,hypcap=false}%
     \includegraphics[width=\figuretextscale\linewidth]{\figuretextfile}%
     \caption{\figuretextcaption}\label{\figuretextlabel}%
     \Description{\figuretextdescription}%
@@ -78,7 +79,9 @@
   \fi
   \typeout{SIDEFIG \figuretextlabel: \the\figuretextheight}%
   \par\addvspace{\intextsep}%
-  \Needspace{\dimexpr\figuretextheight+\baselineskip\relax}%
+  % Initialize the page goal before checking space after pending top floats.
+  \nointerlineskip\vbox{}\nointerlineskip
+  \Needspace{\figuretextheight}%
   \noindent\usebox{\figuretextbody}\hfill\usebox{\figuretextart}\par
   \addvspace{\intextsep}%
 }
@@ -88,7 +91,6 @@
 \affiliation{\institution{Institution}\city{City}\country{Country}}
 
 \begin{document}
-\raggedbottom
 \begin{abstract}
 Tensor rewrite rules are concise in algebraic form, but their implementations
 require substantial attribute-transformation logic. Rewrite rules written as
@@ -125,7 +127,6 @@ cases (100\%).
 \input{sections/04a-axis-model}
 \FloatBarrier
 \input{sections/04b-mathematical-synthesis}
-\FloatBarrier
 \input{sections/04c-formal-correctness}
 \FloatBarrier
 \input{sections/05-method}
@@ -150,4 +151,12 @@ cases (100\%).
 \appendix
 \FloatBarrier
 \input{sections/appendix-extended}
+\FloatBarrier
+\input{sections/appendix-axis-exactness}
+\FloatBarrier
+\input{sections/appendix-canonical-axes}
+\FloatBarrier
+\input{sections/appendix-canonicalization}
+\FloatBarrier
+\input{sections/appendix-completeness}
 \end{document}

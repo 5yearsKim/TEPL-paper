@@ -1,0 +1,136 @@
+\section{Proof of Correctness and Completeness}
+\label{app:completeness-proof}
+We prove Theorem~\ref{thm:complete-synthesis} under the assumptions of
+Section~\ref{sec:formal-scope}. The proof has three parts: every valid
+assignment passes the checks; passing the checks gives a valid construction;
+and the restricted additive fragment separates into independent components.
+
+\subsection{Necessity}
+\begin{lemma}[Necessity]
+\label{lem:necessity}
+For one component,
+$\exists\beta:\operatorname{Valid}(p,\beta)\Rightarrow\operatorname{check}(p)$.
+\end{lemma}
+\begin{proof}
+Suppose $\beta$ is valid. Lemma~\ref{lem:canonicalization} gives a valid
+canonical assignment $\beta'$ with live set $P_v$ at every node. Its final
+output agrees with the LHS, so
+$P_{\mathrm{root}}=\operatorname{set}(F)$.
+
+Starting with the root requirement $F$, prove from parents to children that
+each canonical output contains $Req_v$ as a subsequence. A contraction's
+output consists of batch, left-free, and right-free blocks in that order.
+Any subsequence of that output must follow the same block order, giving
+Equation~\eqref{eq:block-order}. Each free subsequence must occur in the
+corresponding child. Batch order can be chosen independently of child order.
+
+Unary summation preserves the order of surviving axes, so its child contains
+the same required subsequence. A permutation imposes no child requirement.
+These are exactly the propagation rules of
+Section~\ref{sec:ordering-feasibility}. At an input, the propagated
+requirement must be a subsequence of its actual order, $Req_v\preceq I_v$.
+All clauses of Equation~\eqref{eq:feasibility} therefore hold.
+\end{proof}
+
+\subsection{Sufficiency}
+\begin{lemma}[Sufficiency]
+\label{lem:sufficiency}
+For one component,
+$\operatorname{check}(p)\Rightarrow
+\operatorname{Valid}(p,\operatorname{build}(p))$.
+\end{lemma}
+\begin{proof}
+Assume the checks pass. First prove Equation~\eqref{eq:order-invariant}
+by structural induction on the RHS. An input uses its fixed order, which
+passes the input subsequence check. A permutation freely arranges its axes.
+Unary summation removes exactly the specified axes and preserves the rest.
+
+At a contraction, the construction uses $B_v,K_v,LF_v,RF_v$.
+The block-order check ensures that placing required batch axes first and
+inheriting the child free orders satisfies $Req_v$. The output axes are
+exactly $P_v$. Each selected axis occurs once in its child, so all position
+lookups are defined. Paired axes have equal extents because they belong to
+the same LHS class. Batch and contraction sets are disjoint. Thus all
+constructed attributes are legal.
+
+We also maintain a partition invariant: at node $v$, the constructed port
+partition equals the LHS partition restricted to input ports from $U_v$.
+Classes already removed from the output remain recorded in this partition.
+
+At an input, distinct axes belong to distinct classes. Permutation and
+unary summation do not merge ports. At a contraction, any LHS class with
+support in both child subtrees is mandatory in both children, so it appears
+in both live sets. The contraction connects these two occurrences and never
+connects distinct LHS classes. The combined partition is therefore exactly
+the LHS partition restricted to the current subtree.
+
+A class is removed only when it is absent from the final output and all its
+support is already inside the subtree. The partition invariant ensures that
+its supporting ports have been connected, so no later connection is lost.
+At the root, the full input partition consequently agrees with the LHS.
+
+Finally, $P_{\mathrm{root}}=\operatorname{set}(F)$ and
+$F\preceq\operatorname{Ord}_{\mathrm{root}}$. The output has exactly these
+axes, each once, so $\operatorname{Ord}_{\mathrm{root}}=F$. Hence
+$N(L)=N(R)$. Lemma~\ref{lem:axis-exactness} gives equality for all input
+values. Together with legality, this proves
+$\operatorname{Valid}(p,\operatorname{build}(p))$.
+\end{proof}
+
+\subsection{Extension to Addition}
+\label{sec:addition-proof}
+Under Section~\ref{sec:formal-scope}'s additive restrictions, write
+\begin{equation}
+ L=\sum_{t\in J}L_t,\qquad R=\sum_{t\in J}R_t.
+\end{equation}
+Expanding the LHS preserves captured attributes and replaces operands with
+summands of the same shape. It therefore preserves operation legality and
+output shape.
+
+To see why equality separates by component, multiply each input $X_i$ by
+an independent real scalar $z_i$. Read-once components are multilinear, so
+\begin{equation}
+ L_t((z_iX_i)_i)=\left(\prod_{X_i\in U_t}z_i\right)L_t(X).
+\end{equation}
+The same identity holds for $R_t$. Fix tensor values and an output
+coordinate, and compare the two sides as polynomials in the $z_i$.
+Distinct input sets $U_t$ give distinct monomials. Uniqueness of polynomial
+coefficients therefore gives, for legal expressions with equal output shape,
+\begin{equation}
+ \forall X,\ L(X)=R(X)
+ \quad\iff\quad
+ \forall t\in J,\ \forall X,\ L_t(X)=R_t(X).
+ \label{eq:additive-separation}
+\end{equation}
+Apply the component algorithm independently and combine the results:
+\begin{equation}
+ \operatorname{check}(p)=\bigwedge_{t\in J}\operatorname{check}_t(p),
+ \qquad
+ \operatorname{build}(p)=\bigcup_{t\in J}\operatorname{build}_t(p).
+ \label{eq:additive-construction}
+\end{equation}
+The RHS components use disjoint attribute identifiers, so the assignments
+cannot conflict. Each successful construction has its LHS component's
+output shape. LHS expansion preserves shape, so all these shapes agree
+with the overall LHS, making the RHS additions legal.
+
+Each component has its own axis partition. Inputs may appear in several
+terms, but addition only aligns output coordinates; it does not merge input
+port classes across terms.
+
+The restrictions are necessary for this argument. Terms with the same
+input set cannot be separated by the scaling variables. Shared unknowns
+can also prevent component solutions from combining. For independent square
+matrices $A,B$, consider
+\begin{equation}
+ A+\operatorname{transpose}(B)
+ \quad\Rightarrow\quad
+ \operatorname{transpose}_{\pi}(A)+\operatorname{transpose}_{\pi}(B).
+\end{equation}
+The first component requires identity and the second requires swap. Each
+has a solution separately, but they cannot share the same unknown $\pi$.
+
+Lemmas~\ref{lem:necessity} and~\ref{lem:sufficiency} prove the theorem for
+one component. Equation~\eqref{eq:additive-separation} and the independent
+assignment construction extend both directions to the additive fragment.
+This completes the proof of Theorem~\ref{thm:complete-synthesis}.

@@ -8,73 +8,83 @@ enumerate possible attribute assignments.
 
 \subsection{Canonical Intermediate Axes}
 \label{sec:canonical-axes}
-For each RHS node $v$, let $U_v$ be the inputs in its subtree. For a logical
-axis $a$, let $\sigma(a)$ be the inputs containing a port in that class.
-First determine the \emph{mandatory axes} $M_v$: axes used inside the subtree
-that must reach the final output or connect to an input outside the subtree.
+The question is how to decide which axes each intermediate RHS result must
+keep. An axis must remain if it is needed in the final output or must connect
+to another input later. Otherwise, we remove it as soon as the operation
+allows.
+
+We first identify the axes that must be kept, called the \emph{mandatory
+axes}. For a node $v$, let $U_v$ be the inputs in its subtree, and let
+$\sigma(a)$ be the inputs that contain logical axis $a$. The mandatory
+set $M_v$ contains axes used in this subtree that are also needed in the
+final output $F$ or in an input outside the subtree:
 \begin{equation}
  M_v=\left\{a\in\mathcal A\;\middle|\;
- \begin{aligned}
- &\sigma(a)\cap U_v\ne\varnothing\ \land\\[-2pt]
- &(a\in\operatorname{set}(F)\ \lor\ \sigma(a)\nsubseteq U_v)
- \end{aligned}\right\}.
+ \sigma(a)\cap U_v\ne\varnothing
+ \land (a\in\operatorname{set}(F)\lor\sigma(a)\nsubseteq U_v)
+ \right\}.
  \label{eq:mandatory-axes}
 \end{equation}
-These axes cannot be removed at $v$. However, an operation may also have to
-retain an axis that is no longer needed. A contraction, for example, cannot
-sum away an axis found in only one operand: that axis is free.
+An operation may also have to keep an axis that is no longer needed.
+For example, a contraction cannot sum out an axis present in only one
+operand; it must keep that axis as a free axis.
 
-Let $P_v$ be the \emph{canonical live set}, the axes actually retained at
-$v$ by our algorithm. Always $M_v\subseteq P_v$. The choice is canonical
-because we remove each unnecessary axis at the earliest operation that can
-legally remove it. Here $P$ is the set of all input ports, while $P_v$ is a
-set of logical-axis classes; they are different objects.
+Let $P_v$ be the axes that our algorithm keeps in the output of node
+$v$.\footnote{$P_v$ is a set of logical axes; $P$ in
+Section~\ref{sec:axis-model} is the set of input ports.}
+This set includes every mandatory axis, so $M_v\subseteq P_v$.
+We call it the \emph{canonical live set} because the algorithm follows one
+fixed rule: remove each unneeded axis at the first operation that can
+legally remove it.
 
-Let $I_X$ list the axes of input $X$ in their actual order, using LHS class
-names. For matrix multiplication, $I_A=(i,k)$ and $I_B=(k,j)$. Process the
-RHS from children to parents using Table~\ref{tab:canonical-live}.
+We compute these sets from the RHS inputs toward the root, using
+Table~\ref{tab:canonical-live}. Here $I_X$ lists the axes of input $X$ in
+their original order, using the logical axes identified on the LHS.
 \begin{table}[!htbp]
-\caption{Canonical live sets. A unary node has child $u$.}
+\caption{Axes kept at each RHS node. A unary node has child $u$.}
 \label{tab:canonical-live}
 \begin{tabularx}{\linewidth}{@{}llY@{}}\toprule
-Node & $P_v$ & Reason\\\midrule
+Node & Axes kept ($P_v$) & Reason\\\midrule
 Input $X$ & $\operatorname{set}(I_X)$ & Start with all input axes.\\
-Permutation & $P_u$ & Change order, not membership.\\
-Unary summation & $P_u\cap M_v$ & Retain only mandatory axes.\\
-Contraction & $B_v\cup LF_v\cup RF_v$ & Retain batch and free axes.\\\bottomrule
+Permutation & $P_u$ & Keep all axes and change their order.\\
+Unary summation & $P_u\cap M_v$ & Keep only mandatory axes.\\
+Contraction & $B_v\cup LF_v\cup RF_v$ & Keep batch and free axes.\\\bottomrule
 \end{tabularx}
 \end{table}
-For a contraction with children $\ell,r$, define
+For a contraction, a shared axis is kept as a batch axis if it is mandatory;
+otherwise, it is summed out. Axes present in only one operand remain free.
+For children $\ell,r$, the batch, contraction, left-free, and right-free
+axis sets are therefore
 \begin{equation}
-\begin{aligned}
- B_v&=P_\ell\cap P_r\cap M_v,&
- K_v&=(P_\ell\cap P_r)\setminus M_v,\\
- LF_v&=P_\ell\setminus P_r,&
- RF_v&=P_r\setminus P_\ell.
-\end{aligned}
+B_v=P_\ell\cap P_r\cap M_v,\quad
+K_v=(P_\ell\cap P_r)\setminus M_v,\quad
+LF_v=P_\ell\setminus P_r,\quad
+RF_v=P_r\setminus P_\ell.
 \label{eq:canonical-roles}
 \end{equation}
-These are the batch, contraction, left-free, and right-free axes. A shared
-axis stays as batch if it is mandatory, and is contracted otherwise. An
-axis is \emph{complete} in a subtree when all its supporting inputs are
-inside it. Thus contraction removes shared, complete, non-output classes;
-unary summation can remove any remaining complete, non-output classes.
-One-sided axes remain free even when they are no longer mandatory.
+An axis is \emph{complete} in a subtree when all inputs containing it are
+inside that subtree. Only complete axes absent from the final output can
+be removed. Contraction removes such axes when they are shared; unary
+summation can remove any such axis in its input.
 
-Induction from the inputs shows $M_v\subseteq P_v$ and that every class in
-$P_v$ has support in $U_v$. At the root, check
+Applying these rules from the inputs upward keeps every mandatory axis,
+and every retained axis comes from an input in the subtree. At the root,
+the remaining axes must be exactly those required by the LHS output:
 \begin{equation}
  P_{\mathrm{root}}=\operatorname{set}(F).
  \label{eq:root-live}
 \end{equation}
 Extra axes may survive intermediate nodes, but none may remain in the final
-output.
+output. Appendix~\ref{app:canonical-axes-example} provides a concrete example
+of how these axis sets are computed for batched matrix multiplication
+followed by a row sum, including a case where $M_v\subsetneq P_v$.
 
 \subsection{Why the Canonical Choice Does Not Lose Solutions}
 \label{sec:canonicalization}
-For an assignment $\beta$, write $\operatorname{Ord}_v(\beta)$ for the
-output axis order at node $v$. For a sequence $S$ and a set $Q$, $S|_Q$
-keeps only members of $Q$, in their original order. By
+Let $\operatorname{Ord}_v(\beta)$ be the ordered list of logical axes
+in node $v$'s output when the RHS attributes are assigned by $\beta$.
+The notation $S|_Q$ denotes the subsequence obtained by removing from $S$
+every element not in $Q$, while preserving the order of the remaining elements. By
 Lemma~\ref{lem:axis-exactness}, any valid RHS has the LHS partition, so its
 intermediate axes can be named using LHS classes.
 
@@ -87,9 +97,9 @@ If a valid assignment $\beta$ exists, a valid assignment $\beta'$ exists with
  \label{eq:canonicalization}
 \end{equation}
 \end{lemma}
-The lemma does not say that every solution has the same intermediate axes.
-It says that whenever a solution exists, one exists with our canonical live
-sets and the same relative order of surviving axes.
+The lemma guarantees that whenever a valid assignment exists, one also
+exists that keeps exactly $P_v$ at each node while preserving the relative
+order of retained axes.
 
 For example, let $A,B$ have shape $[2]$ and consider the RHS
 $\operatorname{sum}(\operatorname{dot}(A,B))$. A valid assignment can keep
@@ -106,80 +116,34 @@ $\beta'$ & $([],[],[0],[0])$ & $[]$ & $[]$\\\bottomrule
 \end{table}
 Summation over an empty list leaves its input unchanged.
 
-\begin{proof}
-Starting from $\beta$, remove only axes outside $P_v$ and preserve the order
-of the others. We prove two properties together, from children to parents:
-\begin{equation}
-\begin{gathered}
- P_v\subseteq\operatorname{set}(\operatorname{Ord}_v(\beta)),\\
- \operatorname{Ord}_v(\beta)|_{P_v}
- \text{ can be realized by legal attributes.}
-\end{gathered}
-\end{equation}
-Mandatory axes must survive in the original assignment too: a removed axis
-cannot later reconnect to another input or become an output axis.
+For TEPL, this means that synthesis can fix the intermediate axis sets
+before determining their order and attributes, without losing feasible
+rewrites within the defined fragment.
 
-Inputs remain unchanged. A permutation can arrange the child's surviving
-axes in the required order. Unary summation retains exactly
-$P_v=P_u\cap M_v$. These axes also survive in the original output, and
-summation preserves their relative order.
-
-At a contraction, consider three cases.
-\begin{enumerate}
-\item \emph{Shared axes must connect here.} Every axis in $P_\ell\cap P_r$
-also occurs in both original children. The original assignment must connect
-these two occurrences at this node. Otherwise they become two separate
-axes in the same subtree, and no later operation can merge them.
-\item \emph{Mandatory shared axes stay; the others can be summed now.}
-Every axis in $B_v$ is needed later, so it is also a batch axis in the original
-assignment. Every axis in $K_v$ is complete and absent from the final output.
-It can be contracted now even if the original assignment kept it as batch.
-\item \emph{Free axes keep their roles.} Suppose $a\in LF_v$ also occurred
-in the original right child's output. It then has support in both children,
-so it must be mandatory in the right child: $a\in M_r\subseteq P_r$.
-This contradicts $a\in P_\ell\setminus P_r$. Thus it was left-free in the
-original assignment too. The right-free case is the same.
-\end{enumerate}
-Consequently $P_v=B_v\cup LF_v\cup RF_v$ is a subset of the original output
-axes, with the same surviving roles. Order $B_v$ as in the original batch
-list, and list $K_v$ in the same order on both sides. Free axes inherit the
-filtered child orders. The result is exactly
-$\operatorname{Ord}_v(\beta)|_{P_v}$.
-
-Each selected axis occurs once, corresponding extents agree, and batch and
-contraction positions are disjoint. The attributes are therefore legal.
-Only occurrences of the same LHS class connect, and a class is removed only
-after all its input connections are complete. Moving these finite sums
-earlier preserves the represented computation under exact arithmetic.
-
-At the root, the mandatory axes and the original output axes are both
-$\operatorname{set}(F)$. The inclusion just proved gives
-\begin{equation}
- \operatorname{set}(F)\subseteq P_{\mathrm{root}}
- \subseteq\operatorname{set}(F).
-\end{equation}
-The final order remains $F$ and the port connections are unchanged.
-Lemma~\ref{lem:axis-exactness} therefore makes $\beta'$ valid.
-\end{proof}
+The proof is given in Appendix~\ref{app:canonicalization-proof}.
 
 \subsection{Ordering Feasibility}
 \label{sec:ordering-feasibility}
 Choosing axis sets is not enough. Each operation also restricts output
 order. Let $Req_v$ be an ordered subsequence that the output at $v$ must
 contain. Write $A\preceq B$ when $A$ is a subsequence of $B$, and
-$A\Vert B$ for concatenation. Propagate requirements from root to inputs:
-\begin{align}
- Req_{\mathrm{root}}&=F,\\
- Req_u&=[] &&\text{at a permutation},\\
- Req_u&=Req_v &&\text{at unary summation},\\
- Req_\ell&=Req_v|_{LF_v},\qquad
- Req_r=Req_v|_{RF_v} &&\text{at contraction}.
-\end{align}
-A permutation can impose any output order, so it passes no order requirement
-to its child. Summation preserves order, so it passes the same requirement.
-A contraction inherits free-axis order from its children, but chooses batch
-order through its own attribute lists. Batch-order requirements therefore
-stay at the contraction.
+$A\Vert B$ for concatenation. Propagate requirements from root to inputs
+using Table~\ref{tab:order-requirements}.
+\begin{table}[!htbp]
+\caption{Propagation of required axis orders. A unary node has child $u$;
+a contraction has children $\ell,r$.}
+\label{tab:order-requirements}
+\begin{tabularx}{\linewidth}{@{}llY@{}}\toprule
+Location & Required order & Reason\\\midrule
+Root & $Req_{\mathrm{root}}=F$ & Match the LHS output order.\\
+Permutation & $Req_u=[]$ & The permutation can rearrange axes.\\
+Unary summation & $Req_u=Req_v$ & Summation preserves the order of surviving axes.\\
+Contraction & \begin{tabular}[t]{@{}l@{}}$Req_\ell=Req_v|_{LF_v}$\\$Req_r=Req_v|_{RF_v}$\end{tabular}
+& Free-axis order comes from the corresponding operand.\\\bottomrule
+\end{tabularx}
+\end{table}
+Batch-axis order is chosen at the contraction itself through its attribute
+lists.
 
 At each contraction, the required sequence must respect its three output
 blocks:
@@ -202,24 +166,32 @@ Combining these with the root live-set check gives
 \end{aligned}
 \label{eq:feasibility}
 \end{equation}
-These checks are functions of source metadata: it determines the LHS
+These checks depend only on source metadata, which determines the LHS
 classes, input orders, and target output order.
+
+In TEPL, the rule's \code{where} condition (Section~\ref{sec:where}) must
+imply $\operatorname{check}(p)$ for every legal LHS match within this
+fragment. Section~\ref{sec:condition-suggestions} explains how TEPL verifies
+this requirement and suggests additional conditions.
 
 \subsection{Constructing Attributes}
 \label{sec:formal-construction}
-When $\operatorname{check}(p)$ is true, process the RHS from inputs to root.
-Write $\operatorname{Ord}_v$ for the order produced by the constructed
-assignment. Maintain
+Once $\operatorname{check}(p)$ succeeds, the remaining task is to turn
+the selected axes and ordering requirements into RHS attributes.
+The $\operatorname{build}$ program processes the RHS from inputs to root,
+using each child's output order to determine the required axis positions.
+
+At each node $v$, we choose an output order $\operatorname{Ord}_v$
+that contains exactly the axes in $P_v$ and satisfies the required
+relative order $Req_v$:
 \begin{equation}
  \operatorname{set}(\operatorname{Ord}_v)=P_v,
  \qquad Req_v\preceq\operatorname{Ord}_v.
  \label{eq:order-invariant}
 \end{equation}
-Thus the output contains exactly the selected live axes and respects every
-required relative order.
-
 \paragraph{Input.}
-Use $\operatorname{Ord}_v=I_v$.
+Use the input's existing axis order, $\operatorname{Ord}_v=I_v$.
+No attributes are needed.
 
 \paragraph{Permutation.}
 Place $Req_v$ first, then append the remaining child axes in their current
@@ -230,11 +202,18 @@ Set $\operatorname{Ord}_v=\operatorname{Ord}_u|_{P_v}$. The summation
 attribute lists the positions of $P_u\setminus P_v$ in the child.
 
 \paragraph{Contraction.}
-Form batch sequence $b$ by putting $Req_v|_{B_v}$ first, followed by the
-remaining batch axes in a fixed order. List $K_v$ in a fixed order $k$.
-For sequences $S,A$, let $\operatorname{pos}(S,A)$ list the zero-based
-positions of $A$'s axes in $S$, in $A$'s order. For example,
-$\operatorname{pos}((i,k,j),(j,i))=[2,0]$. Construct
+Construct the attributes and output order in three steps:
+\begin{enumerate}
+\item \emph{Choose axis orders.}
+Form the batch sequence $b$ by placing $Req_v|_{B_v}$ first, then appending
+the remaining batch axes in a fixed order. List the contraction axes
+$K_v$ in a fixed order $k$. Use the same sequences for both operands.
+
+\item \emph{Convert axes to operand positions.}
+The notation $\operatorname{pos}(S,A)$ denotes the list of zero-based
+positions of the axes in $A$ within $S$, following the order in $A$.
+For example, $\operatorname{pos}((i,k,j),(j,i))=[2,0]$.
+The four attribute lists are
 \begin{equation}
 \begin{aligned}
  b_\ell&=\operatorname{pos}(\operatorname{Ord}_\ell,b),&
@@ -244,19 +223,21 @@ $\operatorname{pos}((i,k,j),(j,i))=[2,0]$. Construct
 \end{aligned}
 \label{eq:formal-attributes}
 \end{equation}
-Both operands use the same class order for each paired list. The resulting
-output order is
+\item \emph{Determine the output order.}
+The output lists batch axes first, then left-free axes, then right-free
+axes. Free axes keep their order from the corresponding operand:
 \begin{equation}
  \operatorname{Ord}_v=b\Vert
  (\operatorname{Ord}_\ell|_{LF_v})\Vert
  (\operatorname{Ord}_r|_{RF_v}).
  \label{eq:constructed-order}
 \end{equation}
-Combining the assignments at all nodes yields
-$\beta=\operatorname{build}(p)$.
+\end{enumerate}
 
-The rewrite tree is fixed, but list lengths are not. Its passes can therefore
-be emitted as \code{check} and \code{build} programs operating on finite
-metadata lists at any rank in the fragment. This establishes a mathematical
-program construction. The symbolic groups and expression generation used by
-TEPL are described separately in Section~\ref{sec:method}.
+Together, these attribute assignments form
+$\beta=\operatorname{build}(p)$. The rewrite tree is fixed, but the
+attribute lists may vary in length, so the same program handles different
+input ranks and shapes within the defined fragment. Both $\operatorname{check}$
+and $\operatorname{build}$ operate on finite metadata lists.
+This is a mathematical program construction; Section~\ref{sec:method}
+describes TEPL's symbolic groups and expression generation.

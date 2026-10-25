@@ -1,13 +1,12 @@
 \section{Axis-Based Representation}
 \label{sec:axis-model}
-Within the read-once fragment, a computation is determined by which input
-axes share a coordinate and which axes remain in the output, in what order.
-This section makes that observation precise. All statements use
-Section~\ref{sec:formal-scope}'s assumptions.
+Within the defined scope (Section~\ref{sec:formal-scope}), each computation
+component is determined by its input axis connections and output axis order.
 
-\subsection{Logical Axes}
+\subsection{Logical Axis Representation}
 A logical axis groups input axes that use the same index. For example, in
-\code{einsum('ik,kj->ij', A, B)}, the two axes named \code{k} share an index.
+\code{einsum('ik,kj->ij', A, B)}~\cite{numpy-einsum}, the two axes named
+\code{k} share an index.
 We record this relation using input \emph{ports}. Port $(X,d)$ is dimension
 $d$ of input $X$. For a component with input set $\mathcal X$, let
 \begin{equation}
@@ -21,7 +20,6 @@ indirectly, to use the same index. A logical axis is one equivalence class:
 Equal extents do not establish axis identity. We also retain the classes of
 axes removed by summation: they still record how input coordinates connect.
 
-\subsection{The Representation}
 For an expression $T$ with assigned attributes, define
 \begin{equation}
  N(T)=(P,\sim,F),
@@ -42,7 +40,7 @@ Thus
 \end{equation}
 The class $k$ is absent from the output, giving $T_{ij}=\sum_k A_{ik}B_{kj}$.
 
-\subsection{When the Representation Determines Equivalence}
+\subsection{Equivalence of Axis Representations}
 \begin{lemma}[Axis exactness]
 \label{lem:axis-exactness}
 For two legal components $L,R$ over the same inputs at fixed source metadata,
@@ -51,48 +49,13 @@ For two legal components $L,R$ over the same inputs at fixed source metadata,
  \label{eq:axis-exactness}
 \end{equation}
 \end{lemma}
-Equality of representations means the same connections between input ports
-and the same class at each output position, regardless of the names assigned
-to classes. Tensor equality includes the ordered output shape.
+That is, within the defined scope, two computations produce the same output
+shape and values for every input exactly when their input-axis connections
+and output-axis order agree. The names assigned to logical axes do not matter.
 
-We use three properties of read-once trees. Every class contains an input
-port, no class contains two ports of the same input, and a logical axis
-appears at most once in any node's output. Contraction connects axes from
-disjoint input subtrees. If two separate axes survive in the same child,
-a later operation cannot merge them with each other. A removed axis cannot
-reappear. These properties also support the synthesis algorithm below.
-
-\begin{proof}
-If $N(L)=N(R)$, each output coordinate selects the same input entries and
-sums over the same index combinations. The resulting sums of products agree.
-
-For the converse, suppose $N(L)\ne N(R)$. Different output shapes already
-show inequivalence, so consider equal shapes. Add a port for each output
-position and connect it to its class. Output-order differences now appear
-as differences in connections too. There are two ports connected in one
-representation but separate in the other. Swapping $L,R$ if necessary, call
-them $u,w$ with $u\sim_L w$ and $u\not\sim_R w$.
-
-In $R$, assign index 0 to the class of $u$, index 1 to the class of $w$,
-and index 0 to every other class. These indices exist because extents are
-at least two. Set each input to a one-hot tensor $X^*$ with value 1 only at
-the selected coordinate, and choose output coordinate $y$ the same way.
-Set rank-zero inputs to 1. Every class has an input port, so exactly one
-summand of $R(X^*)[y]$ is 1. In $L$, the connected ports would require
-indices 0 and 1 at once, making every summand zero. Therefore
-\begin{equation}
- R(X^*)[y]=1\ne0=L(X^*)[y].
-\end{equation}
-This proves the contrapositive of the converse.
-\end{proof}
-
-For example, a dot product differs from multiplying two independent sums.
-The one-hot inputs $A^*=(1,0)$ and $B^*=(0,1)$ distinguish them:
-\begin{equation}
-\begin{aligned}
- L(A^*,B^*)&=\sum_k A^*_k B^*_k=1\cdot0+0\cdot1=0,\\
- R(A^*,B^*)&=\left(\sum_i A^*_i\right)
-             \left(\sum_j B^*_j\right)=(1+0)(0+1)=1.
-\end{aligned}
-\end{equation}
-The axis extents are the same; the connections are different.
+For TEPL, this gives attribute synthesis a concrete target: choose legal RHS
+attributes that reproduce the LHS axis representation. The lemma establishes
+that matching this representation is both necessary and sufficient for
+equivalence, providing the basis for the synthesis algorithm in
+Section~\ref{sec:mathematical-synthesis}. Appendix~\ref{app:axis-exactness}
+gives the proof and a concrete example.

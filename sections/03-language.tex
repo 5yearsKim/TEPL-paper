@@ -18,8 +18,6 @@ in \code{derive} and \code{where} blocks.
 
 \subsection{Attribute Binding and Transformation}
 \label{sec:binding}
-\begingroup
-\setlength{\intextsep}{0pt}
 \begin{figuretext}[0.9]{figures/Attribute Binding and Derivation.pdf}{Captured operation attributes can be read in \code{where} and \code{derive} blocks. The \code{derive} block explicitly defines RHS attribute transformation logic using these captured attributes.}{fig:attribute-binding}{An input graph with transpose and dot is replaced by a dot. Colored descriptor
 bindings connect the rule to a table with two captured rows and one derived row.}
 LHS operation attributes are captured automatically at match time. Naming an operation
@@ -40,7 +38,6 @@ transformation logic.
 
 
 \end{figuretext}
-\endgroup
 
 Although our mathematical synthesis algorithm is complete for the defined
 fragment, TEPL may still be unable to verify a rewrite with explicit

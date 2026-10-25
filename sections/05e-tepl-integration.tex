@@ -67,10 +67,25 @@ extension on the exact path remain implementation work.
 
 \subsection{Verification and Condition Suggestions}
 \label{sec:condition-suggestions}
-Let $C(p)$ be the user's \code{where} condition and $f$ the generated
-constructor. TEPL checks Equation~\eqref{eq:contract}, including defined
-evaluation, RHS legality, output shape, dtype, and the selected arithmetic
-policy. An undefined $f(p)$ does not satisfy the contract.
+Let $C(p)$ be the user's \code{where} condition and $f$ the attribute program
+used by the rule. The difference from \code{build} in
+Section~\ref{sec:find} is that $f$ can be written explicitly by the user or
+inferred, while \code{build} is produced by the mathematical synthesis
+algorithm. Given source metadata $p$, the program computes
+\begin{equation}
+ \beta=f(p).
+ \label{eq:attribute-program}
+\end{equation}
+TEPL checks Equation~\eqref{eq:contract}, requiring defined attribute
+computation, RHS legality, matching output shape and dtype, and equivalent
+values under the arithmetic laws permitted by the selected policy.
+
+$C(p)$ means that evaluating \code{where} successfully returns \code{true}.
+Whenever this condition holds, computing the RHS attributes must succeed
+without errors, including invalid lookups, out-of-range indexing, or invalid
+permutation inversions. Evaluation follows the language's ordering and
+short-circuiting rules. If evaluating \code{where} fails, the rule does not
+apply. An undefined $f(p)$ does not satisfy the contract.
 
 Within the theorem's assumptions and compatible dtype and arithmetic
 conditions, using its constructor reduces the obligation to
@@ -82,9 +97,12 @@ conditions, using its constructor reduces the obligation to
 This is a statement about all metadata satisfying the guard. Deciding
 feasibility at each concrete $p$ does not itself provide a complete proof
 procedure for this universal implication. Broader operations require direct
-verification of the completed RHS.
+verification of the completed RHS. The theorem concerns the mathematical
+algorithm; implementation soundness is a separate obligation
+(Section~\ref{sec:guarantee}).
 
 If TEPL cannot establish sufficiency, it rejects the rule as unproved.
+Failure to prove a rule does not establish that it is incorrect.
 With \code{--suggest-where}, it searches for an extra condition $G(p)$,
 reruns synthesis, and independently checks the new constructor under
 \begin{equation}

@@ -1,10 +1,10 @@
 \section{Problem Definition}
 \label{sec:problem}
-The language lets a user leave RHS attributes to \code{auto}. We first give a
-mathematical model of this task. Within the fragment defined below, we can
-both decide whether suitable attributes exist and construct them. Later
-sections explain TEPL's symbolic representation and its broader, incomplete
-synthesis procedure.
+This section defines the attribute synthesis problem and the correctness
+requirements for its solutions. Given a rewrite's LHS metadata, the goal is
+to construct RHS attributes that make the replacement legal and preserve
+its result under the declared conditions. We also specify the mathematical
+fragment for which we establish correctness and completeness.
 
 \subsection{Tensor Expressions and Rewrites}
 Let $\mathcal X=\{X_1,\ldots,X_n\}$ be the input tensor names. Each $X_i$ has
@@ -35,12 +35,10 @@ entries of $X$.
 An assignment must make every RHS operation legal and preserve both ordered
 output shape and values:
 \begin{equation}
-\begin{aligned}
- \operatorname{Valid}(p,\beta)\iff{}&
- \operatorname{Legal}_R(p,\beta)\\
- &{}\land\operatorname{Shape}_L(p)=\operatorname{Shape}_R(p,\beta)\\
- &{}\land\forall X,\quad L_p(X)=R_{p,\beta}(X).
-\end{aligned}
+ \operatorname{Valid}(p,\beta)\iff
+ \operatorname{Legal}_R(p,\beta)
+ \land\operatorname{Shape}_L(p)=\operatorname{Shape}_R(p,\beta)
+ \land\forall X,\; L_p(X)=R_{p,\beta}(X).
 \label{eq:valid}
 \end{equation}
 Here $X$ ranges over all values with the shapes in $p$.
@@ -51,7 +49,10 @@ choice for each tensor value.
 
 \subsection{What Must Synthesis Produce?}
 \label{sec:find}
-From a symbolic rewrite, the mathematical algorithm produces two programs:
+Our goal is to synthesize two reusable programs, \code{check} and
+\code{build}, from a symbolic rewrite. Given source metadata $p$,
+\code{check} decides whether valid RHS attributes exist, and \code{build}
+constructs them whenever \code{check} succeeds. The programs must satisfy:
 \begin{align}
  \operatorname{check}(p)&\iff\exists\beta:\operatorname{Valid}(p,\beta),
  \label{eq:check-goal}\\
@@ -59,50 +60,43 @@ From a symbolic rewrite, the mathematical algorithm produces two programs:
  \operatorname{Valid}(p,\operatorname{build}(p)).
  \label{eq:build-goal}
 \end{align}
-The first decides feasibility. The second constructs a solution when one
-exists. These properties must hold for every legal source metadata instance
-in the fragment. The goal is a reusable program for varying ranks and
-shapes, not one attribute list for one example.
+Both programs depend only on source metadata and must satisfy these
+requirements for every legal instance in the defined fragment, across
+varying ranks and shapes.
 
 \subsection{Scope and Assumptions of the Completeness Theorem}
 \label{sec:formal-scope}
-Sections~\ref{sec:axis-model}--\ref{sec:formal-correctness} use the following
+Sections~\ref{sec:axis-model} and~\ref{sec:mathematical-synthesis} use the following
 assumptions. TEPL also handles operations and rules outside this model;
 Section~\ref{sec:broader-operators} explains that separate path.
 
 \paragraph{Operation contracts.}
-Table~\ref{tab:formal-operations} gives the complete contracts used by the
-proof. Empty attribute lists are allowed. There are no further layout or
-backend-specific restrictions. Unary summation means addition of elements;
-it does not include other reducers or \code{keepdims}.
+The proof uses exactly the operation contracts in
+Table~\ref{tab:formal-operations}. Empty attribute lists are permitted.
 \begin{table}[!htbp]
 \caption{Operations in the mathematical model.}
 \label{tab:formal-operations}
-\begin{tabularx}{\linewidth}{@{}lY@{}}\toprule
-Operation & Attributes, legality, and output rule\\\midrule
-Permutation & A full permutation $\pi$ of input positions. Output position
-$j$ selects input position $\pi_j$.\\
-Unary summation & A list $d$ of distinct, in-range input positions. Sum over
-these axes and remove them, preserving the relative order of the others.\\
-Contraction & Four ordered lists $(b_\ell,b_r,k_\ell,k_r)$ for left/right
-batch and contraction positions. Every list has distinct, in-range entries.
-Batch and contraction positions are disjoint in each operand. Paired lists
-have equal lengths and corresponding extents. Multiply values at paired
-coordinates and sum over contraction axes. Output order is the batch-list
-order, then unselected left axes in operand order, then unselected right
-axes in operand order.\\
-Addition & Elementwise addition of operands with the same ordered shape.
-There are no attributes and no broadcasting.\\\bottomrule
+\begin{tabularx}{\linewidth}{@{}p{0.17\linewidth}YY@{}}\toprule
+Operation & Attributes and legality & Computation and output\\\midrule
+Permutation & A full permutation $\pi$ of input positions.
+& Output axis $j$ selects input axis $\pi_j$.\\
+Unary\newline summation & Distinct, in-range positions $d$.
+& Sum over $d$, remove those axes, and preserve the remaining axis order.\\
+Contraction & Ordered batch lists $(b_\ell,b_r)$ and contraction lists $(k_\ell,k_r)$.
+For each operand, all listed positions are distinct and in range.
+Corresponding left/right lists have equal lengths and pair axes of equal extent.
+& Multiply at paired coordinates and sum over contraction axes. Output order:
+batch-list order, then left-free axes, then right-free axes; free axes retain
+operand order.\\
+Addition & No attributes. Operands have identical ordered shapes; no broadcasting.
+& Add corresponding elements and preserve the operand shape and axis order.\\\bottomrule
 \end{tabularx}
 \end{table}
 
 \paragraph{Inputs and arithmetic.}
-Ranks are arbitrary finite numbers, including zero. Every existing input
-axis has extent at least two. Input values vary independently; we assume
-neither symmetry nor sparsity. Arithmetic is over exact real numbers, so
-finite sums can be reordered and multiplication distributes over addition.
-This does not establish strict floating-point equality. Metadata $p$ makes
-all intermediate LHS operations legal.
+Inputs have arbitrary finite ranks, including zero, and axis extents
+of at least two. Input values vary independently over the reals,
+and arithmetic is exact.
 
 \paragraph{Expression structure.}
 A \emph{read-once component} is a contraction/permutation/unary-summation
@@ -115,46 +109,26 @@ components, $R=\sum_t R_t$. Each $L_t,R_t$ is read-once and uses the same
 input set $U_t$. Different terms have different input sets, although these
 sets may overlap.
 
-\paragraph{Freedom of the unknown attributes.}
-Every RHS attribute is an independent unknown, constrained only by
-Table~\ref{tab:formal-operations}. Fixed attributes and unknowns shared by
-several operations are outside this theorem. Expanding the LHS preserves
-the values and sharing of captured attributes. Expanding the RHS must not
-turn one shared unknown into several independent unknowns.
+\paragraph{RHS attributes.}
+Each RHS operation has its own attributes for the compiler to infer,
+subject only to Table~\ref{tab:formal-operations}. The theorem excludes
+attributes fixed in advance or required to be shared between RHS operations.
+Expanding expressions must preserve captured LHS attributes and their
+sharing, without splitting a shared RHS attribute into separate choices.
 
-Rule structure and attribute restrictions are checked syntactically before
-synthesis; shapes and source legality are checked from metadata. Zero or
-singleton extents, repeated inputs within a component, several terms with
-the same input set, constants, subtraction, cancellation, and operations
-outside the table are excluded. Exclusion does not mean that a rewrite is
-invalid; it means the completeness theorem does not decide it.
+The completeness theorem applies only to this fragment.
+Section~\ref{sec:limitations} discusses cases outside its scope.
 
 \subsection{The Contract Exposed by TEPL}
 \label{sec:contract}
-A user supplies a \code{where} condition $C(p)$. A constructor, written
-explicitly or inferred, is a metadata program
+Whenever a legal computation matches the LHS and satisfies \code{where},
+the rule's attribute program must successfully compute RHS attributes that
+produce a legal, equivalent replacement. This applies whether the program
+is written explicitly or inferred. Writing $C(p)$ for the condition and $f$
+for the attribute program, TEPL seeks to establish
 \begin{equation}
- \beta=f(p).
- \label{eq:attribute-program}
-\end{equation}
-For semantic rules, TEPL seeks to establish
-\begin{equation}
-\begin{aligned}
- \forall p.\quad &\operatorname{Legal}_L(p)\land C(p)\\
- \Longrightarrow\quad &p\in\operatorname{dom}(f)
+ \forall p.\quad \operatorname{Legal}_L(p)\land C(p)
+ \Longrightarrow p\in\operatorname{dom}(f)
  \land\operatorname{Valid}(p,f(p)).
-\end{aligned}
 \label{eq:contract}
 \end{equation}
-For this language-level contract, element types and the selected arithmetic
-policy are part of the semantic context. $C(p)$ means that guard evaluation
-successfully returns \code{true}. Domain membership includes defined
-position lookups and inverse permutations. Checking partial metadata
-programs must respect evaluation order, short-circuiting, indexing, checked
-arithmetic, and failures. A failed guard is not assumed true.
-
-A rule is accepted only when supported reasoning establishes this contract
-throughout its legal guarded domain. Failure to prove it is not a
-counterexample. The completeness theorem below concerns the mathematical
-algorithm; it does not prove the C++ implementation sound or make guard
-reasoning complete. Section~\ref{sec:tepl-integration} connects the two levels.

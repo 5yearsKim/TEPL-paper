@@ -22,8 +22,10 @@ the tensor-equivalence guarantee of semantically verified rules.
 Theorem~\ref{thm:complete-synthesis} establishes completeness for the exact-real,
 read-once fragment in Section~\ref{sec:formal-scope}. It excludes zero and
 singleton extents, fixed or shared RHS unknowns, repeated inputs within a
-component, unrestricted addition, and broader operations. TEPL's language
-allows more than this fragment, including explicit and pinned attributes.
+component, additive terms with identical input sets, constants, subtraction,
+cancellation, and operations outside Table~\ref{tab:formal-operations}.
+TEPL's language allows more than this fragment, including explicit attribute
+derivations and descriptor reuse.
 These features do not inherit its completeness guarantee.
 
 The ordered implementation currently specializes the model to contraction
