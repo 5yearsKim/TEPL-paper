@@ -1,4 +1,4 @@
-title: 'Auto attribute matching: from rules to attributes'
+title: 'Attribute synthesis: from rules to attributes'
 concept: Lower a distribution rule to Axes IR, normalize source semantics and the RHS arithmetic skeleton, then
   match operand reads, reuse their coordinates, and query symbolic axis positions to construct both missing descriptors.
 purpose: Introduce the compilation procedure and its intermediate representations, while distinguishing coordinate
@@ -12,11 +12,11 @@ requirements:
   and at least 16 px dense formulas and explanations.
 - Use elementwise add without broadcasting, unbatched generalized dot, and arithmetic permitting distribution. Add
   preserves paired operand axis order, so both inferred dot descriptors equal the source descriptor in this example.
-- Use blue (#5479A8) for representations, amber (#D4A65C) for unresolved auto holes and unknown groups, and green
+- Use blue (#5479A8) for representations, amber (#D4A65C) for unresolved attribute holes and unknown groups, and green
   (#6A9F88) for constructed attributes and verification. Use pale fills with dark readable text; keep tensor identities
   explicit.
 - I, J, and K denote ordered logical axis groups. A[I,K], B[I,K], and C[K,J] abbreviate indexed reads in group coordinates;
-  they do not assert contiguous groups in physical tensor layouts. P_T denotes the ordered interface of tensor T.
+  they do not assert contiguous groups in physical tensor layouts. I_T denotes the ordered interface of tensor T.
 - The reusable operation definitions feed semantic lowering and composition. Preserve source and RHS labels in both
   the Axes IR and normalized representations.
 - Normalize the RHS arithmetic skeleton before its attributes are available. Write ? for unresolved axis information,
@@ -24,7 +24,7 @@ requirements:
 - Show read cards for both matched term pairs. Within each pair connect source A to RHS A, source B to RHS B, and
   each source C occurrence to its corresponding RHS C with dashed coordinate-transfer connectors. Retain multiplicities
   and tensor identities.
-- Keep the two auto occurrences independent. The result gives @d₁ = @d and @d₂ = @d because the elementwise addition
+- Keep the two omitted RHS attribute records as separate synthesis unknowns. The result gives left.attrs = d.attrs and right.attrs = d.attrs because the elementwise addition
   preserves axis order. Symbolic mapping queries select K in each original input and construct contraction fields;
   they are not a separate full mapping-construction algorithm.
 - Matching supplies coordinate correspondence and candidate attributes. Verify operation legality, values, and ordered
@@ -38,8 +38,7 @@ children:
   - 0.032
   - 0.176
   requirements:
-  - Place the rule on the left and reusable operation semantics on the right. Highlight the two auto annotations
-    amber. Feed both inputs into Axes IR below.
+  - Place the rule on the left and reusable operation semantics on the right. Highlight only dot and add operation tokens in blue (#5479A8) throughout the input rule. Keep node labels, tensor inputs, punctuation, and rewrite arrows neutral; node labels do not disable inference. Feed both inputs into Axes IR below.
   children:
   - name: rule
     type: text
@@ -50,8 +49,8 @@ children:
     - 1
     content: |-
       Rule: distribute dot over add
-      (dot[@d] (add A B) C)
-      → (add (dot[auto] A C) (dot[auto] B C))
+      (d: dot (add A B) C)
+      => (add (left: dot A C) (right: dot B C))
   - name: operation_semantics
     type: text
     pos:
@@ -174,7 +173,7 @@ children:
       - 0.925
       content: |-
         Term = (weight, reads, axes)
-        P_T: ordered axes of tensor T.
+        I_T: ordered axes of tensor T.
         ?: unresolved axis information
   - name: attribute_matching
     type: image
@@ -251,9 +250,9 @@ children:
       content: |-
         Construct attributes
         Contract K; preserve I ++ J.
-        A → positions(P_A,K)
-        B → positions(P_B,K)
-        C → positions(P_C,K)
+        A → pos(I_A,K)
+        B → pos(I_B,K)
+        C → pos(I_C,K)
   - name: stage_arrows
     type: image
     pos:
@@ -271,8 +270,9 @@ children:
   - 0.812
   - 0.968
   requirements:
-  - Place the constructed replacement on the left, linked from the attribute-matching stage. Put verification in
+  - Place the constructed replacement on the left, linked from the attribute-matching stage. Label its records "Separate holes"; the equalities below are synthesis results, not user-written derive assignments. Put verification in
     a separate right-hand box with a short connecting arrow in the gutter. Use green accents and pale fills.
+  - 'In the constructed replacement syntax, highlight only dot and add operation tokens in green (#6A9F88). Keep left:, right:, tensor inputs, and punctuation neutral. Attribute-result equalities retain their green synthesis color.'
   children:
   - name: constructed_replacement
     type: text
@@ -283,8 +283,8 @@ children:
     - 1
     content: |-
       Constructed replacement
-      (add (dot[@d₁] A C) (dot[@d₂] B C))
-      @d₁ = @d; @d₂ = @d    Independent holes
+      (add (left: dot A C) (right: dot B C))
+      left.attrs=d.attrs; right.attrs=d.attrs
   - name: verification
     type: text
     pos:

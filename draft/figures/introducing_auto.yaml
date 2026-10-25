@@ -1,27 +1,26 @@
-title: Introducing auto
-concept: The compiler turns auto into an attribute function; each runtime match supplies captured metadata to f(p,
-  q) and receives replacement dot attributes.
+title: Automatic Attribute Inference
+concept: The compiler synthesizes omitted RHS attributes as an attribute function; each runtime match supplies captured metadata to f(p) and receives replacement dot attributes.
 purpose: Introduce compile-time function generation and runtime application through transpose absorption into dot.
 requirements:
 - Apply tools/figure_style.md for editable text, literal underscore notation, neutral tensor edges, and the figure's
   declared user-input and compiler colors. Preserve the example and use the requested compact frame below.
 - Use an exact 500 × 650 px half-width frame with 16 px outer margins and a 468 px content width.
 - Stack user inputs, an enclosing TEPL compiler, and runtime application vertically.
-- Use 22 px headings and 18 px code and primary labels; the compact auto request annotation may use 16 px. Keep
+- Use 22 px headings and 18 px code and primary labels; the compact inference-by-omission annotation may use 16 px. Keep
   all text editable and reflow the layout without scaling it.
-- Use blue for user rules and operation semantics, green for auto, the generated function, its runtime application,
+- Use blue for user-input cards and operation semantics, green for the inference request, the generated function, its runtime application,
   and generated attributes.
+- 'In both the user rule and completed replacement syntax, highlight only dot and transpose operation tokens in green (#6A9F88), matching the inference theme. Keep node names, tensor inputs, punctuation, and rewrite arrows neutral.'
 - Use pale fills, dark text, neutral tensor edges, and solid information-flow arrows.
 - Use commas, plus signs, or line breaks as separators; do not use middle dots.
 - Use a matrix-dot example with rank-2 inputs and no batch axes; absorbing a transpose preserves the order of the
   single free axis from each operand.
-- p denotes the captured transpose permutation and q the captured dot descriptor; these are metadata, not tensor
-  values.
+- 'p denotes all source metadata: shapes and captured attributes. The transpose permutation π and dot descriptor δ are parts of this metadata.'
 - The function signature is explanatory notation, not a user-written derive clause or a complete function body.
 - Synthesis and verification happen inside the compiler; runtime applies the exported function.
 - Concrete numbers appear only at runtime; show only the changing left contraction axis, keeping the other dot fields
   implicit.
-- For the runtime instance use A of shape [m, k], B of shape [k, n], p = [1, 0], and q with left and right contraction
+- For the runtime instance use A of shape [m, k], B of shape [k, n], π = [1, 0], and δ with left and right contraction
   axes both 0.
 - The result has left contraction axis 1 and unchanged right contraction axis 0; both graphs produce shape [m, n].
 - Use a 342 px compile-time band, an 18 px phase divider, and a 258 px runtime band. Use 8 px gaps within the phase
@@ -65,15 +64,15 @@ children:
     - 0.658
     - 0.099
     - 0.474
-    content: "User rule (matrix example)\n(dot[@d]\n  (transpose[@tr] A) B)\n=> (dot[auto] A B)"
-  - name: auto_callout
+    content: "User rule (matrix example)\n(d: dot\n  (tr: transpose A) B)\n=> (out: dot A B)"
+  - name: inference_callout
     type: text
     pos:
     - 0.019
     - 0.639
     - 0.395
     - 0.453
-    content: 'auto: generate attributes'
+    content: 'Omitted attrs → inference'
   - name: operation_semantics
     type: text
     pos:
@@ -123,7 +122,7 @@ children:
         - 0.976
         - 0.413
         - 0.625
-        content: f(p, q) → replacement dot attrs
+        content: f(p) → replacement dot attrs
       - name: parameters
         type: text
         pos:
@@ -131,7 +130,7 @@ children:
         - 0.976
         - 0.663
         - 0.875
-        content: p = @tr.permutation; q = @d
+        content: 'p: shapes and captured attrs'
 - name: phase_boundary
   type: image
   pos:
@@ -141,7 +140,7 @@ children:
   - 0.5785
   requirements:
   - Draw a thin horizontal divider between Compile time and Runtime.
-  - Carry the compiled function from generated_function across the divider into the runtime f(p, q) box.
+  - Carry the compiled function from generated_function across the divider into the runtime f(p) box.
   - Route this handoff vertically between the runtime heading and its right-aligned frequency note, clear of all
     text.
 - name: runtime
@@ -154,9 +153,9 @@ children:
   requirements:
   - Put Runtime at the left of one header row and Evaluate on each match right aligned on that same row.
   - Arrange captured_inputs, function_application, and generated_attributes in one row, connected by right arrows.
-  - Use a neutral input card and green application and result cards; make the f(p, q) invocation explicit.
+  - Use a neutral input card and green application and result cards; make the f(p) invocation explicit.
   - Below this row, draw a small replacement graph with A and B feeding one dot node.
-  - Connect generated_attributes downward to an @new_d badge attached to that dot.
+  - Connect generated_attributes downward to an out.attrs badge attached to that dot.
   - Tensor edges are neutral and attribute edges are green; the transpose is absent from the replacement graph.
   children:
   - name: per_match_frequency
@@ -176,9 +175,9 @@ children:
     - 0.473
     content: 'Captured attrs
 
-      p = [1, 0]
+      π = [1, 0]
 
-      q: left axis = 0'
+      δ: left axis = 0'
   - name: function_application
     type: text
     pos:
@@ -188,7 +187,7 @@ children:
     - 0.473
     content: 'Apply f
 
-      f(p, q)'
+      f(p)'
   - name: generated_attributes
     type: text
     pos:
@@ -200,7 +199,7 @@ children:
 
       left axis = 1
 
-      @new_d'
+      out.attrs'
   - name: replacement
     type: image
     pos:
@@ -209,10 +208,10 @@ children:
     - 0.504
     - 0.884
     requirements:
-    - Label the left side "Apply replacement", show "(dot[@new_d] A B)", and add "Transpose removed".
-    - On the right, place A and B above the dot, with a green @new_d badge between the input nodes and the dot.
+    - Label the left side "Apply replacement", show "(out: dot A B)", and add "Transpose removed".
+    - On the right, place A and B above the dot, with a green out.attrs badge between the input nodes and the dot.
     - Keep the attribute connector centered and the tensor edges on either side so that edges do not cross.
-    - Within the 160 × 98 px graph, put A and B at the top, the @new_d badge at y=34 px, and the 104 × 28 px dot
+    - Within the 160 × 98 px graph, put A and B at the top, the out.attrs badge at y=34 px, and the 104 × 28 px dot
       node at y=70 px. Keep the attribute edge centered and tensor edges outside the badge.
   - name: notation
     type: text

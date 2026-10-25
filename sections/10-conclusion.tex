@@ -5,8 +5,13 @@ attributes. Ordered symbolic groups, composed mappings, refinement, and
 normalized reads provide coordinate correspondence for reusable attribute
 programs. The completed replacement is then checked against legality, output
 agreement, and value semantics under declared conditions and arithmetic laws.
-The intended correctness contract remains conditional on the stated
-assumptions; this draft does not establish implementation soundness.
+A separate mathematical algorithm decides attribute feasibility and
+constructs solutions for the stated read-once fragment, including its
+restricted additive extension. The proof accounts for logical-axis identity,
+canonical intermediate axes, and output order. The symbolic implementation
+currently covers part of this complete algorithm; the broader checking
+contract remains conditional on its semantic assumptions, and this paper
+does not establish implementation soundness.
 Of 209 XLA-derived cases, 118 have semantic coverage and 86 verify explicitly.
 All 20 verified axis/extent cases succeed with automatic attributes, conditional
 on verification and within 38 eligible axis/extent cases. Authoring savings,

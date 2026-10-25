@@ -22,13 +22,13 @@
   aboveskip=8pt,belowskip=8pt,captionpos=b}
 \newcommand{\code}[1]{{\upshape\ttfamily\detokenize{#1}}}
 \newcommand{\todo}[1]{\textcolor{black!75}{\textbf{[TODO:} #1\textbf{]}}}
-\newcommand{\catseq}{\mathbin{+\!\!+}}
+\newcommand{\catseq}{\mathbin{\Vert}}
 \newcommand{\gath}{\operatorname{gather}}
 \newcommand{\ocomp}{\operatorname{ordered\_complement}}
-\newcommand{\pos}{\operatorname{positions}}
+\newcommand{\pos}{\operatorname{pos}}
 \newcommand{\mpo}{\operatorname{matchPositions}}
 \newcommand{\Axes}{\operatorname{Axes}}
-\newcommand{\Keep}{\operatorname{KeepAxes}}
+
 \newcommand{\Isel}{I_{\mathrm{sel}}}
 \newcommand{\Irem}{I_{\mathrm{rem}}}
 \newcommand{\Jsel}{J_{\mathrm{sel}}}
@@ -93,12 +93,16 @@ require substantial attribute-transformation logic. Rewrite rules written as
 tensor expressions describe how to change a computation, but matching alone
 does not compute the attributes needed by the replacement, such as permutations
 and contraction dimensions.
-TEPL (Tensor Equality Pattern Language) is a DSL(Domain-Specific Language) for
+TEPL (Tensor Equality Pattern Language) is a domain-specific language for
 describing tensor rewrites, explicit conditions, and attribute changes together.
 More importantly, TEPL can automatically synthesize replacement attributes
 from operation semantics. Its synthesis approach uses Axes IR and symbolic
 axis mapping to handle tensors of arbitrary rank within the supported rewrite
-fragment. Our intended guarantee is that every semantically verified rewrite
+fragment. We give a mathematical synthesis algorithm and prove constructive
+completeness for a read-once fragment of contraction, permutation, and unary
+summation, with a restricted additive extension. The theorem concerns this
+algorithm; the current implementation covers only part of the fragment.
+Our intended guarantee is that every semantically verified rewrite
 has computable replacement attributes and produces a legal replacement with
 equivalent results under its stated conditions and arithmetic policy. 
 We evaluate TEPL on 209 XLA-derived tensor rewrite cases. TEPL supports the
@@ -118,7 +122,15 @@ cases (100\%).
 \FloatBarrier
 \input{sections/04-problem}
 \FloatBarrier
+\input{sections/04a-axis-model}
+\FloatBarrier
+\input{sections/04b-mathematical-synthesis}
+\FloatBarrier
+\input{sections/04c-formal-correctness}
+\FloatBarrier
 \input{sections/05-method}
+\FloatBarrier
+\input{sections/05e-tepl-integration}
 \FloatBarrier
 \input{sections/06-implementation}
 \FloatBarrier

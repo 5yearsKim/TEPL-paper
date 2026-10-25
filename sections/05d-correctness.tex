@@ -1,4 +1,4 @@
-\subsection{Correctness and Scope}
+\subsection{Checking Completed TEPL Rules}
 \label{sec:correctness}
 Synthesis proposes attributes; mapping queries alone do not establish their
 evaluability, operation legality, or tensor equivalence.
@@ -35,9 +35,9 @@ construction conditions must follow from them.
 The intended guarantee is Equation~\eqref{eq:contract} for every legal guarded
 source instance and every compatible tensor value, under the selected
 arithmetic policy. Strict floating-point equivalence does not follow from
-algebraic reassociation. This contract is not a soundness theorem established
-in this draft, and the current C++ implementation is not claimed formally
-proved sound.
+algebraic reassociation. Theorem~\ref{thm:complete-synthesis} proves constructive soundness for the
+mathematical algorithm. The current C++ implementation, its broader verifier,
+and the full symbolic translation are not claimed formally proved sound.
 
 Assumptions include correct operation definitions, sound primitive metadata
 and index checks, admissible coordinate frames, and faithful evaluation of
@@ -48,7 +48,7 @@ semantic infrastructure; that separation alone establishes no implementation
 soundness result.
 
 \subsubsection{Scope and Limitations}
-The method is incomplete. Ambiguous read correspondence, unsupported coupled
+The general TEPL synthesis and verification procedures remain incomplete. Ambiguous read correspondence, unsupported coupled
 or inverse equations, executable expressions beyond the reasoning fragment,
 unavailable arithmetic laws, and bounded normalization or coordinate work
 can prevent acceptance. Several read-coordinate assignments must remain

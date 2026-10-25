@@ -1,0 +1,167 @@
+\section{Connecting the Model to TEPL}
+\label{sec:tepl-integration}
+Three steps connect the theorem to the language: recognize operation
+contracts, represent the mathematical construction with symbolic metadata
+expressions, and verify the resulting program under the user's condition.
+These steps have different proof obligations.
+
+\subsection{From Operation Declarations to the Model}
+\label{sec:declaration-adapters}
+A TEPL declaration supplies an attribute schema, an \code{axes} block for
+connections and output order, and a \code{semantics} block for element
+values. An operation qualifies for the formal model by the structure of
+this declaration, not by a name such as \code{dot} or \code{transpose}.
+
+For contraction, check that its four fields, bindings, output order, and
+value expression match Table~\ref{tab:formal-operations}. Check for extra
+restrictions as well. A declaration with additional constraints is not an
+unrestricted instance of the model.
+
+Let $\rho_v$ map a declaration's fields to the model's standard roles. In
+an admitted declaration, the fields are distinct and cover all roles.
+Consequently the combined RHS adapter is a bijection between declared
+attribute assignments and model assignments. The LHS adapter reads captured
+values and preserves their sharing.
+
+The preservation argument follows the expression tree. At an input, the
+shape and values are unchanged. At an operation, assume preservation for
+the children. Matching the operation contract preserves attribute legality,
+the ordered output shape, and the element calculation. Induction therefore
+preserves these properties for the entire expression. The bijective adapter
+neither loses nor introduces attribute solutions. Recognizing the supported
+templates is a finite structural check; it does not require deciding whether
+an arbitrary declaration is semantically equivalent to a template.
+
+\subsection{From Logical Axes to Symbolic Programs}
+\label{sec:symbolic-bridge}
+The proof uses individual port classes, finite axis sets, and sequences.
+TEPL uses symbolic ordered groups and position expressions so that one rule
+can describe many ranks. A symbolic interface $\mathsf I_v$ denotes an axis
+order; at a concrete match it corresponds to $\operatorname{Ord}_v$.
+An input interface corresponds to $I_X$. For a canonical construction,
+its class set must be $P_v$, and its order must contain $Req_v$.
+
+A mapping record $(\mathsf I,G,q)$ represents
+$\operatorname{gather}(\mathsf I,q)=G$. The expression $q$ computes positions
+from source metadata. Refinement splits groups while preserving their
+members, order, and paired positions. Position queries implement the
+$\operatorname{pos}$ operation in Equation~\eqref{eq:formal-attributes}.
+Resolving intermediate queries into source-only expressions produces the
+executable constructor.
+
+These correspondences identify what a full implementation proof must show:
+source extraction represents $N(L)$ faithfully; symbolic membership and
+ordering operations agree with the mathematical passes; emitted expressions
+evaluate to the constructed positions; and the recognized operation adapters
+preserve the resulting computation. The declaration argument above covers
+the adapter step. Theorem~\ref{thm:complete-synthesis} alone does not prove
+all the other steps or establish completeness of symbolic proof search.
+
+The current ordered synthesis path implements the contraction/permutation
+specialization. It derives ordering requirements before construction and
+leaves them as obligations under the written guard. If admission or bounded
+reasoning does not support this path, TEPL can try the general synthesis
+procedure in Algorithm~\ref{alg:synthesis}. Both paths check completed
+candidates in a fresh context. Unary summation and the full separated-addition
+extension on the exact path remain implementation work.
+
+\subsection{Verification and Condition Suggestions}
+\label{sec:condition-suggestions}
+Let $C(p)$ be the user's \code{where} condition and $f$ the generated
+constructor. TEPL checks Equation~\eqref{eq:contract}, including defined
+evaluation, RHS legality, output shape, dtype, and the selected arithmetic
+policy. An undefined $f(p)$ does not satisfy the contract.
+
+Within the theorem's assumptions and compatible dtype and arithmetic
+conditions, using its constructor reduces the obligation to
+\begin{equation}
+ \forall p,\quad
+ \operatorname{Legal}_L(p)\land C(p)\Rightarrow\operatorname{check}(p).
+ \label{eq:guard-feasibility}
+\end{equation}
+This is a statement about all metadata satisfying the guard. Deciding
+feasibility at each concrete $p$ does not itself provide a complete proof
+procedure for this universal implication. Broader operations require direct
+verification of the completed RHS.
+
+If TEPL cannot establish sufficiency, it rejects the rule as unproved.
+With \code{--suggest-where}, it searches for an extra condition $G(p)$,
+reruns synthesis, and independently checks the new constructor under
+\begin{equation}
+\begin{aligned}
+ \forall p,\quad &\operatorname{Legal}_L(p)\land C(p)\land G(p)\\
+ &\Rightarrow p\in\operatorname{dom}(f)\land\operatorname{Valid}(p,f(p)).
+\end{aligned}
+ \label{eq:suggested-condition}
+\end{equation}
+A concrete legal metadata witness also checks that the proposed domain is
+nonempty. Search is bounded: it need not find a condition, and it need not
+find the weakest one. A suggestion does not accept the original rule or
+silently add a runtime guard. The user must add it to \code{where}, after
+which ordinary checking runs again. At runtime, verified attribute programs
+use the metadata supplied by each match.
+
+\subsection{Example: Reassociation with a Suggested Condition}
+\label{sec:suggested-reassociation}
+Consider this rule with omitted RHS attributes and no \code{where} block.
+Imports of \code{TensorLang} and the \code{use} declaration are omitted.
+\begin{codeblock}[H]
+\begin{lstlisting}[language=TEPL]
+rule reassociate {
+  (source: dot (inner: dot A B) C)
+  => (dot A (dot B C))
+}
+\end{lstlisting}
+\end{codeblock}
+The unrestricted generalized-dot rule cannot be accepted merely from
+algebraic associativity: axis routing and output order also matter. Save the example in the file
+named by this suggestion command:
+\begin{lstlisting}[language=bash]
+tepl check examples/semantic/reassociate.tepl \
+  --semantic-policy=algebraic --suggest-where --rule reassociate
+\end{lstlisting}
+A sufficient restriction used by the reassociation example is
+\begin{codeblock}[H]
+\begin{lstlisting}[language=TEPL]
+where {
+  source.attrs.lhs_batching_dimensions == inner.axes.B.positions
+}
+\end{lstlisting}
+\end{codeblock}
+Here \code{source} and \code{inner} name operation nodes. The \code{B} in
+\code{inner.axes.B} names the batch group, not input tensor \code{B}.
+The condition requires the outer dot's left batch positions to be exactly
+the inner dot's batch output positions, in the same order. It is the same
+routing restriction used in Section~\ref{sec:partitioning}, expressed
+through named nodes instead of descriptor captures.
+
+Initially $C(p)=\top$; the proposed restriction is $G(p)$. After the user
+adds this condition and checks again, synthesis fills the two omitted dot
+descriptors and verification checks the result. A suggestion alone leaves
+the original rule unproved. This condition is a verified sufficient
+restriction, not a claim to the necessary-and-sufficient feasibility
+condition of Equation~\eqref{eq:feasibility}.
+
+\subsection{Broader Operations and Their Checking Contract}
+\label{sec:broader-operators}
+TEPL also supports operations outside the completeness theorem, including
+broadcast, slice, convolution, reverse, negate, subtract, and
+\code{zero_like}. Reverse changes element order within an axis; negate
+changes signs; subtract permits cancellation; and \code{zero_like}
+constructs a zero tensor of the same shape.
+
+These operations involve coordinate transformations, negative coefficients,
+or cancellation that the theorem's axis representation does not capture.
+TEPL constructs candidates and independently checks their legality, ordered
+output shape, and values under the written guard. For example, composing
+two slices requires computing starts and strides and checking that the
+combined access selects the same elements within bounds, as in
+Section~\ref{sec:emit-programs}.
+
+The intended guarantee for accepted rules is the same correctness contract,
+without a completeness guarantee for discovering attributes. Failure to
+synthesize or verify does not establish that no valid RHS exists. This
+checking discipline is not a formal soundness proof of the current compiler;
+Section~\ref{sec:guarantee} records the implementation obligations.
+
+\input{sections/05d-correctness}

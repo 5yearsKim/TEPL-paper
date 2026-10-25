@@ -9,10 +9,10 @@ semantics, construct attributes, and check completed rewrites.
 A symbolic group is an ordered sequence of arbitrary length. Unlike
 TensorRight's set-based aggregated axes~\cite{tensorright}, TEPL records group
 order and positions for attribute construction. An interface
-$P=\langle a_0,\ldots,a_{n-1}\rangle$ lists a tensor's logical axes in dimension
-order. A zero-based position sequence $p$ locates an ordered group $G$:
+$\mathsf{I}=\langle a_0,\ldots,a_{n-1}\rangle$ lists a tensor's logical axes in dimension
+order. A zero-based position sequence $q$ locates an ordered group $G$:
 \begin{equation}
- \gath(P,p)=G.
+ \gath(\mathsf{I},q)=G.
  \label{eq:mapping}
 \end{equation}
 Axis identity is distinct from extent. A group preserves its constituent
@@ -74,8 +74,8 @@ fixed while summing over every coordinate combination in its group;
 
 Elementwise addition without broadcasting binds both operands to one group
 $S$ and yields \code{Add(lhs,rhs)}. Generalized dot binds $B,I,K,J$, yields
-output axes $B\catseq I\catseq J$, and computes
-\code{Reduce(K,Product(lhs,rhs))}. Supported slices and convolutions calculate
+output axes $B\catseq I\catseq J$, and computes a sum of products:
+\begin{center}\code{Reduce(K,Product(lhs,rhs))}.\end{center} Supported slices and convolutions calculate
 access indices; broadcasting introduces output axes along which input values
 are reused. Output shape remains explicit even for constant-valued tensors.
 
@@ -90,3 +90,9 @@ not identify addition's axes with $K$ or preserve their pairing with \code{Z}.
 Symbolic mapping establishes that correspondence. Aligned indexed reads then
 permit comparison of $\sum_K(X+Y)Z$ and $\sum_K XZ+\sum_K YZ$ under the
 selected distributive laws.
+
+For the formal additive extension, each normalized component has its own
+port partition. Shared symbolic group names describe aligned coordinates
+across terms; they do not merge the input-port classes of different terms.
+For example, distribution uses input sets $\{X,Z\}$ and $\{Y,Z\}$, and
+Section~\ref{sec:addition-proof} reasons about their partitions separately.

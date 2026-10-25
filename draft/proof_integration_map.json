@@ -1,0 +1,315 @@
+{
+  "source": "draft/complete_attribute_synthesis_proof_kr.md",
+  "source_sha256": "6c09b1f20db2ea8cc07d9bc7e4dd6904782f57befdb2b88fba6b98c0e6ca93d6",
+  "policy": "Expanded main-text integration. Preserve all substantive content; do not impose the 20-page limit. Proof notation is authoritative.",
+  "sections": [
+    {
+      "source_section": "2.1",
+      "concept": "Tensor expressions",
+      "destination": "sections/04-problem.tex",
+      "label": "sec:problem",
+      "preserved_details": [
+        "input names and symbolic shapes",
+        "operation grammar"
+      ]
+    },
+    {
+      "source_section": "2.2",
+      "concept": "Tensor rewrite",
+      "destination": "sections/04-problem.tex",
+      "label": "eq:metadata",
+      "preserved_details": [
+        "L and R",
+        "s, alpha, p, beta",
+        "matching supplies metadata"
+      ]
+    },
+    {
+      "source_section": "2.3",
+      "concept": "Valid assignment",
+      "destination": "sections/04-problem.tex",
+      "label": "eq:valid",
+      "preserved_details": [
+        "intermediate legality",
+        "ordered shape",
+        "exists beta before forall X"
+      ]
+    },
+    {
+      "source_section": "2.4",
+      "concept": "Synthesis problem",
+      "destination": "sections/04-problem.tex",
+      "label": "sec:find",
+      "preserved_details": [
+        "exact feasibility",
+        "constructive soundness",
+        "programs across ranks"
+      ]
+    },
+    {
+      "source_section": "2.5",
+      "concept": "Scope and assumptions",
+      "destination": "sections/04-problem.tex",
+      "label": "sec:formal-scope",
+      "preserved_details": [
+        "complete operation contracts",
+        "empty lists",
+        "rank zero; extents at least two",
+        "independent inputs; exact real arithmetic",
+        "read-once structure",
+        "explicit independent RHS additive terms",
+        "distinct input supports",
+        "fixed/shared unknown exclusions",
+        "captured LHS sharing",
+        "syntactic admission; metadata legality",
+        "all excluded cases"
+      ]
+    },
+    {
+      "source_section": "3.1",
+      "concept": "Logical axes",
+      "destination": "sections/04a-axis-model.tex",
+      "label": "sec:axis-model",
+      "preserved_details": [
+        "einsum interpretation",
+        "ports and equivalence classes",
+        "identity distinct from extent",
+        "removed classes retained"
+      ]
+    },
+    {
+      "source_section": "3.2",
+      "concept": "Axis representation",
+      "destination": "sections/04a-axis-model.tex",
+      "label": "eq:axis-representation",
+      "preserved_details": [
+        "P, relation, F",
+        "sum-product interpretation",
+        "matrix multiplication example"
+      ]
+    },
+    {
+      "source_section": "3.3",
+      "concept": "Axis exactness",
+      "destination": "sections/04a-axis-model.tex",
+      "label": "lem:axis-exactness",
+      "preserved_details": [
+        "both proof directions",
+        "read-once invariants",
+        "output ports",
+        "one-hot witness",
+        "rank-zero inputs",
+        "dot versus independent sums example"
+      ]
+    },
+    {
+      "source_section": "4.1",
+      "concept": "Canonical intermediate axes",
+      "destination": "sections/04b-mathematical-synthesis.tex",
+      "label": "sec:canonical-axes",
+      "preserved_details": [
+        "support and subtree sets",
+        "mandatory versus live axes",
+        "all operation rules",
+        "batch/contraction/free sets",
+        "completed classes",
+        "root check"
+      ]
+    },
+    {
+      "source_section": "4.2",
+      "concept": "Canonicalization",
+      "destination": "sections/04b-mathematical-synthesis.tex",
+      "label": "lem:canonicalization",
+      "preserved_details": [
+        "order filtering",
+        "batch-then-sum example",
+        "joint induction",
+        "three contraction cases",
+        "legality and partition preservation",
+        "root conclusion",
+        "does not claim all solutions identical"
+      ]
+    },
+    {
+      "source_section": "4.3",
+      "concept": "Ordering feasibility",
+      "destination": "sections/04b-mathematical-synthesis.tex",
+      "label": "sec:ordering-feasibility",
+      "preserved_details": [
+        "subsequence and filter notation",
+        "root/permutation/sum/contraction propagation",
+        "batch order local",
+        "block order",
+        "input order",
+        "combined check"
+      ]
+    },
+    {
+      "source_section": "4.4",
+      "concept": "Construction",
+      "destination": "sections/04b-mathematical-synthesis.tex",
+      "label": "sec:formal-construction",
+      "preserved_details": [
+        "live-set/order invariant",
+        "input/permutation/sum/contraction constructors",
+        "pos example",
+        "paired lists",
+        "constructed output order",
+        "combined assignment",
+        "finite metadata programs"
+      ]
+    },
+    {
+      "source_section": "5",
+      "concept": "Main theorem",
+      "destination": "sections/04c-formal-correctness.tex",
+      "label": "thm:complete-synthesis",
+      "preserved_details": [
+        "exact feasibility",
+        "constructive soundness",
+        "component and additive scope"
+      ]
+    },
+    {
+      "source_section": "5.1",
+      "concept": "Necessity",
+      "destination": "sections/04c-formal-correctness.tex",
+      "label": "lem:necessity",
+      "preserved_details": [
+        "canonicalization",
+        "root condition",
+        "top-down order induction",
+        "all feasibility checks"
+      ]
+    },
+    {
+      "source_section": "5.2",
+      "concept": "Sufficiency",
+      "destination": "sections/04c-formal-correctness.tex",
+      "label": "lem:sufficiency",
+      "preserved_details": [
+        "structural induction",
+        "defined lookups and legality",
+        "partition invariant with removed classes",
+        "root order and exactness"
+      ]
+    },
+    {
+      "source_section": "5.3",
+      "concept": "Addition",
+      "destination": "sections/04c-formal-correctness.tex",
+      "label": "sec:addition-proof",
+      "preserved_details": [
+        "shape-preserving LHS expansion",
+        "independent scalar scaling",
+        "distinct monomials",
+        "component equivalence",
+        "check conjunction",
+        "disjoint assignment union",
+        "addition legality",
+        "separate port partitions",
+        "same-support restriction",
+        "shared permutation counterexample"
+      ]
+    },
+    {
+      "source_section": "6.1",
+      "concept": "Declaration adapters",
+      "destination": "sections/05e-tepl-integration.tex",
+      "label": "sec:declaration-adapters",
+      "preserved_details": [
+        "structural recognition",
+        "extra restrictions",
+        "rho_v bijection",
+        "captured sharing",
+        "legality/shape/value induction",
+        "finite templates, no semantic oracle"
+      ]
+    },
+    {
+      "source_section": "6.2",
+      "concept": "Guards and suggestions",
+      "destination": "sections/05e-tepl-integration.tex",
+      "label": "sec:condition-suggestions",
+      "preserved_details": [
+        "C(p) and f(p)",
+        "dtype/arithmetic context",
+        "definedness",
+        "guard implies feasibility",
+        "bounded suggestion G",
+        "fresh synthesis and verification",
+        "nonempty witness",
+        "no weakest-guard claim",
+        "no silent strengthening",
+        "runtime metadata evaluation"
+      ]
+    },
+    {
+      "source_section": "6.3",
+      "concept": "Reassociation example",
+      "destination": "sections/05e-tepl-integration.tex",
+      "label": "sec:suggested-reassociation",
+      "preserved_details": [
+        "named-node rule",
+        "suggest-where command",
+        "batch-routing guard",
+        "batch group versus input B",
+        "original true guard",
+        "sufficient not necessary condition",
+        "acceptance requires adding guard"
+      ]
+    },
+    {
+      "source_section": "6.4",
+      "concept": "Broader operators",
+      "destination": "sections/05e-tepl-integration.tex",
+      "label": "sec:broader-operators",
+      "preserved_details": [
+        "broadcast/slice/convolution/reverse/negate/subtract/zero_like",
+        "coordinate and cancellation limitations",
+        "completed-rule checking",
+        "slice example cross-reference",
+        "contraction/permutation implementation; full extension unfinished"
+      ]
+    }
+  ],
+  "claim_reconciliation": [
+    "The mathematical algorithm is proved sound and complete in its stated fragment; this is not an implementation soundness theorem.",
+    "The older blanket no-completeness statement is replaced by a precise scope and implementation distinction.",
+    "The earlier KeepAxes rule is expressed as mandatory axes M_v; one-sided contraction axes cannot be dropped.",
+    "The proof example path is presented as a suggested save location, because that old file path is absent in the current compiler checkout.",
+    "The exact symbolic implementation currently covers contraction/permutation, not all unary-summation and additive cases.",
+    "General candidate ordering remains distinguished from the complete mathematical ordering algorithm."
+  ],
+  "retained_paper_content": [
+    "Language declarations, capture/reuse, where, derive, auto, pinned fields, and runtime boundary",
+    "Axes IR declarations and primitive explanations",
+    "Mapping tables, composition, interface rebuilding, partition refinement, and algorithm",
+    "Normalization, read matching, reassociation derivations, and source-only program emission",
+    "General synthesis pseudocode, calculated accesses, and slice composition",
+    "Fresh-context verification and four checking obligations",
+    "Implementation, limitations, XLA counts, related work, conclusion, and extended appendix",
+    "All existing figures retained; six figure PDFs and corresponding storyboards receive notation updates"
+  ],
+  "notation": {
+    "metadata": "p=(s,alpha)",
+    "RHS attributes": "beta",
+    "port set": "P",
+    "logical axes": "A=P/~",
+    "output order": "F",
+    "mandatory axes": "M_v",
+    "canonical live set": "P_v",
+    "required sequence": "Req_v",
+    "constructed order": "Ord_v",
+    "symbolic interface": "sans-serif I_t",
+    "mapping table": "calligraphic M",
+    "constructor table": "calligraphic C",
+    "mapping positions": "q (h for a second selection)",
+    "declaration adapter": "rho_v",
+    "position range": "iota(G)",
+    "example outer contraction group": "D",
+    "example final free group": "H",
+    "position query": "pos"
+  }
+}

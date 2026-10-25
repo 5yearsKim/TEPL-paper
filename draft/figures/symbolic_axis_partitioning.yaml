@@ -15,9 +15,9 @@ requirements:
   - Colors identify axis origins, not analysis stages; tensor axes stay in their original physical order.
   - Use commas, plus signs, or line breaks as separators; do not use middle dots.
   - Keep I above J in the partition panel and mapping table; the pairing panel follows contraction-slot order, which is J then I.
-  - Clearly distinguish v_G positions within a producer group, u_G slots in L, and gather(c_R, u_G) positions in Z.
-  - Use c_L = [3, 0] and c_R = [2, 0], with physical Z axes [z₀, f, z₁], so contraction slots and Z positions differ.
-  - Zero-based positions are explicit beneath tensor axes; c_L and c_R denote the outer dot's left and right contraction lists.
+  - Clearly distinguish v_G positions within a producer group, u_G slots in D, and gather(k_r, u_G) positions in Z.
+  - Use k_ℓ = [3, 0] and k_r = [2, 0], with physical Z axes [z₀, f, z₁], so contraction slots and Z positions differ.
+  - Zero-based positions are explicit beneath tensor axes; k_ℓ and k_r denote the outer dot's left and right contraction lists.
   - Ellipses are unnecessary in this concrete instance; the symbolic mapping table applies to arbitrary-length groups.
   - Keep matchPositions construction formulas in the paper text; the figure contains the resulting mappings.
 
@@ -27,7 +27,7 @@ children:
     pos: [0.02, 0.98, 0.028, 0.128]
     content: |-
       dot(dot(X, Y), Z) → dot(X, dot(Y, Z))
-      T = dot(X, Y), O = dot(T, Z). Inner dot contracts K; outer dot contracts L.
+      T = dot(X, Y), O = dot(T, Z). Inner dot contracts K; outer dot contracts D.
 
   - name: select_axes
     type: image
@@ -35,8 +35,8 @@ children:
     requirements:
       - Head this panel "1. Select axes".
       - Draw T as four axis cells with I and J group brackets above the first and last pair.
-      - Use canonical origin-colored cells for all four axes; c_L, the selection connectors, and the selected/remaining view labels identify i₀ and j₁ as selected.
-      - Show the selection L below T in list order j₁ then i₀, with slot labels 0 and 1 beneath its two cells.
+      - Use canonical origin-colored cells for all four axes; k_ℓ, the selection connectors, and the selected/remaining view labels identify i₀ and j₁ as selected.
+      - Show the selection D below T in list order j₁ then i₀, with slot labels 0 and 1 beneath its two cells.
       - Color the selected cells consistently; the selection is a view, not a physical transpose of T.
     children:
       - name: original_tensor
@@ -50,8 +50,8 @@ children:
         type: text
         pos: [0.00, 1.00, 0.51, 0.83]
         content: |-
-          c_L = [3, 0]
-          L: [j₁, i₀]
+          k_ℓ = [3, 0]
+          D: [j₁, i₀]
           Slots: [0, 1]
 
       - name: order_note
@@ -96,7 +96,7 @@ children:
       - Head this panel "3. Preserve pairings".
       - Label the input strip "Physical Z axes" and draw z₀, f, z₁ with positions 0, 1, 2 beneath them.
       - Color z₀ green and z₁ purple according to their I and J partners; keep f neutral and outside the paired contraction slots.
-      - Below c_R, align each left/right pair in a row indexed by its contraction slot; show its Z position in the last column.
+      - Below k_r, align each left/right pair in a row indexed by its contraction slot; show its Z position in the last column.
       - Use a short pairing connector between From T and From Z; slot 0 pairs j₁ with z₁, and slot 1 pairs i₀ with z₀.
     children:
       - name: right_tensor
@@ -105,7 +105,7 @@ children:
         content: |-
           Z: [z₀, f, z₁]
           Positions: [0, 1, 2]
-          c_R = [2, 0]
+          k_r = [2, 0]
 
       - name: slot_table
         type: text
@@ -135,13 +135,13 @@ children:
         type: text
         pos: [0.00, 1.00, 0.263, 1.00]
         content: |-
-          Selected group | Producer positions | Slots in L | Partner positions in Z
-          I_sel          | v_I                | u_I        | gather(c_R, u_I)
-          J_sel          | v_J                | u_J        | gather(c_R, u_J)
+          Selected group | Producer positions | Slots in D | Partner positions in Z
+          I_sel          | v_I                | u_I        | gather(k_r, u_I)
+          J_sel          | v_J                | u_J        | gather(k_r, u_J)
 
   - name: reassociation_payoff
     type: text
     pos: [0.02, 0.98, 0.884, 0.972]
     content: |-
       U = dot(Y, Z) contracts J_sel; final dot contracts I_sel + K.
-      U retains K and I_sel's partners. Output: I_rem ++ J_rem ++ F (F = [f]).
+      U retains K and I_sel's partners. Output: I_rem ++ J_rem ++ H (H = [f]).

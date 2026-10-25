@@ -14,7 +14,7 @@ requirements:
   - Show a visible compilation/runtime boundary below the compiled artifact.
   - Keep the figure architectural; omit implementation languages, parser libraries, and detailed inference algorithms.
   - Users supply operation definitions and semantics, not Axes IR; the compiler performs semantic lowering and composition.
-  - Runtime evaluates compiled attribute programs on matched metadata; synthesis and semantic verification happen during compilation.
+  - Omitted RHS attributes request inference unless supplied by derive or inline reuse. Runtime evaluates compiled attribute programs on matched metadata; synthesis and semantic verification happen during compilation.
   - The additional engine is an extension target through an adapter; e-graph is an example of a possible target, not an implemented integration.
 
 children:
@@ -34,7 +34,8 @@ children:
           Rule
           Patterns
           Guards
-          Attributes / auto
+          Explicit /
+          inferred attrs
 
       - name: dialect
         type: text

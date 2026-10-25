@@ -11,12 +11,13 @@ requirements:
   the 60 px header.
 - Use 22 px family headings, 18 px panel labels and primary rules, and 16 px minimum for dense host/derive code
   and graph labels. Emphasize the two aligned bottom checkpoints in 20 px bold text with 24 px line height. Restore
-  the full matching, dimension-mapping, RHS-construction, and explicit-derive steps; abbreviate only graph as g
-  and source metadata as m.
+  the full matching, dimension-mapping, RHS-construction, and explicit-derive steps; abbreviate graph as g.
 - Use generalized-dot reassociation without batch axes, under arithmetic permitting reassociation. All four panels
   describe the same rewrite; authoring code is schematic.
 - Amber (#D4A65C) denotes author-written attributes and dimension logic. Green (#6A9F88) denotes inferred attributes.
   Neutral badges with question marks denote unspecified attributes.
+- Highlight only dot operation tokens, using each panel's theme on both the LHS and RHS. Use blue (#5479A8) in panels (a) and (c), and green (#6A9F88) in inferred panel (d). Match graph operation tokens to their TEPL panel's color. Keep node labels, operands, punctuation, and rewrite arrows neutral. Attribute expressions, badges, and compiler outputs retain their manual/inferred colors; the shared header equation stays neutral.
+- Number dots in computation order: d1 and d2 are the source dots; d3 and d4 are the replacement intermediate and result. Panel (c) names these operations in code; both TEPL graphs use d3:dot and d4:dot. The inferred rule needs no explicit node names.
 - Group the left pair under Traditional approaches with blue (#5479A8) labels and a pale blue background; group
   the right pair under TEPL with green labels and a pale green background. Put one solid right arrow in the central
   family gutter.
@@ -24,13 +25,14 @@ requirements:
   Preserve identical RHS graph and badge positions.
 - 'Repeat a compact RHS graph: Y and Z feed U:dot, then X and U feed O′:dot. Each dot has one descriptor badge above
   it; tensor edges remain neutral.'
+- Panels (a) and (d) use identical rule text; distinguish a bare pattern from a TEPL rule through explicit panel labels, operation semantics, and compiler flow.
 - Panel (a) has question-mark badges. Panels (b) and (c) feed amber author-written results directly into their badges.
   Panel (d) feeds a reusable-operation-semantics card into a green TEPL compiler, then feeds both inferred outputs
   into its badges.
-- In schematic host code, g denotes the graph and m denotes source metadata. Preserve compute_inner_dims, compute_final_dims,
+- In schematic host code, g denotes the graph; helpers read the matched attributes from g. Preserve compute_inner_dims, compute_final_dims,
   and both build_dot calls, using labeled regions for author responsibilities. These functions are user-written
   dimension logic, not TEPL inference builtins.
-- The two auto annotations denote independently inferred functions of source shapes and attributes; show that explanation.
+- The two omitted RHS attribute records are separate synthesis unknowns; show that each is inferred from source shapes and attributes.
   Place a Reusable operation semantics card below the rule and feed it into the TEPL compiler.
 - 'Checkpoints summarize this example: the cross in (a) means the bare pattern leaves RHS attributes unspecified,
   not that symbolic rewriting systems cannot represent attributes.'
@@ -44,7 +46,7 @@ requirements:
   the panel width. Use text check/cross glyphs rather than emoji. In the bottom checkpoint rows, color supported
   concise rules green and missing features red; color manual attribute support amber and automatic attribute support
   green. Use pale corresponding row fills and keep explicit status words for grayscale readability.
-- 'Place the schematic-code legend g: graph; m: metadata at the top right beside the preserved shared example.'
+- 'Place the schematic-code legend g: graph at the top right beside the preserved shared example.'
 - 'Preserve the user-edited header hierarchy: the reassociation equation comes first in 24 px bold monospace with
   30 px line height; put the explanatory sentence below in 16 px regular information text with 24 px line height
   and a 6 px gap.'
@@ -88,7 +90,7 @@ children:
   - 0.08
   content: 'Schematic code
 
-    g: graph; m: metadata'
+    g: graph'
 - name: comparison_families
   type: image
   pos:
@@ -213,8 +215,7 @@ children:
     - 0.977
     - 0.062143
     - 0.597857
-    content: "match_nested_dots(g);\ncheck_conditions(m);\ninner_dims =\ncompute_inner_dims(m);\nfinal_dims =\n\
-      compute_final_dims(m);\nU=build_dot(Y,Z,\n  inner_dims);\nreturn build_dot(X,U,\n  final_dims);"
+    content: "match_nested_dots(g);\ncheck_conditions(g);\ninner_dims =\ncompute_inner_dims(g);\nfinal_dims =\ncompute_final_dims(g);\nU=build_dot(Y,Z,\n  inner_dims);\nreturn build_dot(X,U,\n  final_dims);"
   - name: attribute_flow
     type: text
     pos:
@@ -256,9 +257,9 @@ children:
   - Head this panel "(c) Explicit attributes".
   - Restore the detailed authoring artifact below, with readable line wrapping. Align all four panels and keep the
     shared reference examples in authoring_reference.
-  - Color the two descriptor expressions amber and connect each to its corresponding badge.
-  - Separate the Rule label, rule, derive block, and schematic-dimension-logic note. Use 22 px line height for the
-    16 px rule and derive code, and an 8 px gap between the derive label and code.
+  - Color dot operation tokens blue and keep d1/d2/d3/d4 node names neutral. Color the manually authored attribute targets and helper function names amber and connect each result to its corresponding badge. Keep d1 and d2 helper arguments neutral.
+  - Separate the Rule label, rule, derive block, and schematic-dimension-logic note. Use 16 px rule and derive code at 20 px line height, a one-line User-written attributes label, and an 8 px gap before the derive code. Give the derive code the full 220 px content width. Put each assignment target on a two-space-indented line and its complete helper call on the next line, indented four spaces.
+  - f_U and f_final are schematic user-written transformations, not TEPL builtins. Pass the named source nodes d1 and d2 as helper arguments, omitting .attrs in those arguments; keep the d3.attrs and d4.attrs assignment targets explicit.
   children:
   - name: authoring_artifact
     type: text
@@ -267,8 +268,17 @@ children:
     - 0.977
     - 0.062143
     - 0.597857
-    content: "(dot[@outer]\n (dot[@inner] X Y) Z)\n=> (dot[@d_final] X\n    (dot[@d_U] Y Z))\nderive {\n @d_U =\
-      \ f_U(m);\n @d_final=f_final(m);\n}"
+    content: |-
+      (d2: dot
+       (d1: dot X Y) Z)
+      => (d4: dot X
+          (d3: dot Y Z))
+      derive {
+        d3.attrs =
+          f_U(d1, d2);
+        d4.attrs =
+          f_final(d1, d2);
+      }
   - name: attribute_flow
     type: text
     pos:
@@ -278,7 +288,7 @@ children:
     - 0.697857
     content: 'User-written expressions
 
-      m: source metadata'
+      Read LHS attributes'
   - name: replacement
     type: image
     pos:
@@ -287,7 +297,7 @@ children:
     - 0.705
     - 0.862143
     requirements:
-    - Draw the common compact RHS graph with amber @d_U and @d_final badges above U:dot and O′:dot. Keep node, tensor-edge,
+    - Draw the common compact RHS graph with amber d3.attrs and d4.attrs badges above d3:dot and d4:dot. Keep node, tensor-edge,
       and badge positions identical in all four panels.
   - name: checkpoints
     type: text
@@ -310,7 +320,7 @@ children:
   - Head this panel "(d) Inferred attributes".
   - Restore the detailed authoring artifact below, with readable line wrapping. Align all four panels and keep the
     shared reference examples in authoring_reference.
-  - Highlight both independent auto annotations in green. The compiler supplies both green descriptor badges; reusable
+  - Color every LHS and RHS dot operation token green, using the same operator-only highlighting convention as panel (c), and explain inference by omission. Keep node names and tensor inputs neutral. The compiler supplies both green attribute-record badges; reusable
     operation semantics remain a visible input.
   - Place reusable semantics in a padded 56 px card near the bottom of the authoring region. Use a 52 px compiler
     card with padding and separated title and information lines; retain both rule and semantics inputs.
@@ -322,7 +332,7 @@ children:
     - 0.977
     - 0.062143
     - 0.597857
-    content: "(dot (dot X Y) Z)\n=> (dot[auto] X\n     (dot[auto]\n       Y Z))"
+    content: "(dot (dot X Y) Z)\n=> (dot X\n     (dot Y Z))"
   - name: inference_explanation
     type: text
     pos:
@@ -330,7 +340,10 @@ children:
     - 0.977
     - 0.319286
     - 0.437143
-    content: Each auto denotes an independent function of source shapes and attributes.
+    content: |-
+      Omitted RHS attributes
+      are inferred separately
+      from source metadata.
   - name: reusable_semantics
     type: text
     pos:
@@ -350,7 +363,7 @@ children:
     - 0.697857
     requirements:
     - Place a pale green TEPL compiler box across this region; the reusable operation-semantics card above feeds
-      it downward, while the annotated rule also supplies compiler input. Connect both inferred outputs to their
+      it downward, while the rule with omitted RHS attributes also supplies compiler input. Connect both inferred outputs to their
       corresponding green badges.
     children:
     - name: labels
@@ -371,7 +384,7 @@ children:
     - 0.705
     - 0.862143
     requirements:
-    - Draw the common compact RHS graph with green @d_U and @d_final badges above U:dot and O′:dot. Keep node, tensor-edge,
+    - Draw the common compact RHS graph with green d3.attrs and d4.attrs badges above d3:dot and d4:dot. Keep node, tensor-edge,
       and badge positions identical in all four panels.
   - name: checkpoints
     type: text
@@ -385,9 +398,16 @@ children:
       Attributes: ✓ Automatic'
 authoring_reference:
   algebraic_term: "(dot (dot X Y) Z)\n=> (dot X\n     (dot Y Z))"
-  custom_logic: "match_nested_dots\n(graph);\ncheck_conditions\n(metadata);\ninner_dims =\ncompute_inner_dims\n\
-    (metadata);\nfinal_dims =\ncompute_final_dims\n(metadata);\nU = build_dot\n(Y, Z,\n inner_dims);\nreturn build_dot\n\
-    (X, U,\n final_dims);"
-  tepl_explicit: "(dot[@outer]\n  (dot[@inner]\n    X Y)\n  Z)\n=> (dot[@d_final]\n      X\n      (dot[@d_U]\n \
-    \       Y Z))\nderive {\n  @d_U =\n  f_U\n(source_metadata);\n  @d_final =\n  f_final\n(source_metadata);\n}"
-  tepl_inferred: "(dot (dot X Y) Z)\n=> (dot[auto] X\n     (dot[auto]\n       Y Z))"
+  custom_logic: "match_nested_dots(g);\ncheck_conditions(g);\ninner_dims =\ncompute_inner_dims(g);\nfinal_dims =\ncompute_final_dims(g);\nU=build_dot(Y,Z,\n  inner_dims);\nreturn build_dot(X,U,\n  final_dims);"
+  tepl_explicit: |-
+    (d2: dot
+     (d1: dot X Y) Z)
+    => (d4: dot X
+        (d3: dot Y Z))
+    derive {
+      d3.attrs =
+        f_U(d1, d2);
+      d4.attrs =
+        f_final(d1, d2);
+    }
+  tepl_inferred: "(dot (dot X Y) Z)\n=> (dot X\n     (dot Y Z))"

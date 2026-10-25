@@ -3,65 +3,77 @@
 \subsection{Motivation}
 Algebraic tensor rewriting is used to optimize tensor computations. A rewrite
 rule can be simple in algebraic form, but complex to implement. For example,
-dot reassociation changes $(XY)Z$ into $X(YZ)$. The equation shows how to
+consider the dot reassociation rule, $(XY)Z \Rightarrow X(YZ)$. The equation shows how to
 rearrange the computation, but general tensor dot operations also need
 attributes specifying their batch and contraction dimensions. The rewrite
-must compute these attributes for the new operations while preserving the
-output axis order. XLA's \code{AssociativeReorderNestedDot} routine illustrates
-this work: it includes dimension-mapping logic as well as checks on when the
-rewrite applies and whether it is beneficial~\cite{xla-simplifier}.
+must compute how these attributes are transformed from the left-hand side (LHS)
+to the right-hand side (RHS). For example, in XLA, this single transformation is implemented by the
+\code{AssociativeReorderNestedDot} routine in approximately 320 nonblank lines
+of C++~\cite{xla-simplifier}, including logic for attribute transformation and
+checking applicability. This illustrates the substantial implementation complexity
+hidden behind a seemingly simple algebraic rewrite rule.
 
-Computing these replacement attributes is a major source of complexity.
-Matching the operations and attributes on the left-hand side identifies the
-source computation, but does not determine the attributes needed on the
-right-hand side. Users must write additional expressions or custom code to
-compute them. This requires tracking how axis positions, operand pairings,
+A key difficulty is that matching the LHS does not determine the
+attributes needed on the RHS. Users must therefore write
+additional expressions or custom code to compute them. This requires
+tracking how axis positions, operand pairings,
 and output order change across composed operations. Two axes with the same
 size can still represent different coordinates, so sizes alone are not enough
 to determine their correspondence. The transformation must also work for
 tensors of arbitrary rank; checking a few fixed-rank examples does not
-establish that it works in general. Legality checks and the selected numerical
-policy impose further requirements on the completed rewrite.
+establish that it works in general.
 
 Our research question is: \emph{What if we could design a language that makes
 tensor rewriting as easy and intuitive as writing its algebraic form, while
 leaving complex attribute transformation to the compiler?}
 TEPL pursues this goal by using operation semantics and symbolic axis mapping
 to infer replacement attributes under explicit conditions.
-Figure~\ref{fig:why-tepl} illustrates the idea with dot reassociation. It
-compares a symbolic rewrite pattern, handwritten attribute logic, and two
-ways to write the rule in TEPL: computing attributes explicitly or letting
-the compiler infer them. The example has no batch axes and assumes an
-arithmetic policy that permits reassociation. The completed rewrite must
-still pass the applicability and semantic checks.
+Figure~\ref{fig:why-tepl} illustrates the idea with a dot reassociation example.
+TEPL lets users write rewrite rules in simple algebraic form and provides tools for
+explicitly deriving attribute transformation logic. It also lets the compiler
+infer this logic automatically.
 
-\paperfigure{1}{figures/Why TEPL_ From Algebraic Rules to Practical Tensor Rewrites.pdf}{TEPL combines concise tensor rewrite patterns with explicit or inferred replacement attributes.}{fig:why-tepl}{Four panels compare an algebraic pattern, custom implementation logic,
+\paperfigure{1}{figures/Why TEPL_ From Algebraic Rules to Practical Tensor Rewrites.pdf}{Four ways to express the same dot reassociation rewrite.
+(a) A concise algebraic pattern specifies the RHS graph but leaves its
+attributes unspecified. (b) A custom implementation computes these attributes
+but requires complex handwritten logic. (c) TEPL preserves readable algebraic
+rewrite rules and provides a \code{derive} section with tools for explicitly
+computing replacement attributes. (d) When attribute derivations are omitted,
+TEPL automatically infers attribute transformation logic from reusable
+operation semantics and source metadata.}{fig:why-tepl}{Four panels compare an algebraic pattern, custom implementation logic,
 explicit TEPL attribute expressions, and inferred TEPL attributes for the
 same nested-dot replacement graph.}
 \FloatBarrier
 \subsection{Central Thesis}
-TEPL describes algebraic patterns, applicability conditions, and attribute
-changes together. Users define operations once in reusable dialects, then
-write replacement descriptors or request inference with \code{auto}.
-The central technical advance pursued here is construction of reusable RHS
-attribute programs from semantics and ordered coordinate correspondence.
-Reasoning uses operation legality and declared conditions; inference does
-not silently strengthen the guard when correctness cannot be established.
+We introduce TEPL, a DSL for practical tensor rewriting that provides
+syntactic features for expressing algebraic patterns, applicability
+conditions, and attribute transformations together. Our central research
+question is how complex, manually written attribute transformation logic
+can be delegated to the compiler, and under what conditions the resulting
+rewrites can be guaranteed correct.
 
-\subsection{Proposed Contributions}
+\subsection{Contributions}
 \begin{enumerate}
-\item \textbf{A language for tensor rewrites.} User-defined dialects express
-operations and semantics; rules combine patterns, conditions, descriptor
-capture, reuse, and explicit attribute computation.
-\item \textbf{Automatic attribute inference.} For supported rewrites, the
-compiler constructs reusable functions of source metadata without fixing
-rank. Axes IR combines arbitrary-length groups with ordered interfaces,
-operand mappings, and value semantics.
-\item \textbf{Symbolic axis mapping for composed operations.} Compositional
-mappings and group refinement preserve logical coordinate identity, order,
-and pairings for read matching and attribute construction.
+\item \textbf{A practical language design for tensor rewriting.}
+TEPL provides syntactic structures and tools for expressing tensor
+rewrite rules concisely and intuitively.
+\item \textbf{Automatic attribute inference.}
+For supported rewrites, the compiler constructs reusable functions that
+compute RHS attributes from source metadata, integrating attribute
+synthesis into tensor rewrite rules.
+\item \textbf{Symbolic axis mapping for composed operations.}
+We propose an algorithm that maps symbolic axis groups across composed
+operations using operation semantics, enabling attribute matching for
+input tensors of arbitrary rank.
+\item \textbf{Correctness and completeness guarantees for a defined fragment.}
+For read-once contraction, permutation, and unary summation, with a restricted
+additive extension, we prove that our mathematical synthesis algorithm
+constructs valid RHS attributes whenever they exist. The constructed
+attributes ensure that the replacement is legal and equivalent to the
+original computation under the stated assumptions.
 \end{enumerate}
-These are design and mechanism claims, with the correctness contract stated
-as an intended guarantee. Section~\ref{sec:evaluation} reports XLA-derived
-coverage and conditional inference results; authoring and performance benefits
-remain evaluation questions.
+Together, these contributions support concise tensor rewrite rules,
+automatic attribute synthesis, and formal guarantees for a defined
+mathematical fragment. Section~\ref{sec:evaluation} evaluates TEPL on
+XLA-derived rewrite cases, examining semantic coverage and the
+effectiveness of automatic attribute inference.

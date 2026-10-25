@@ -1,12 +1,12 @@
 title: Infer Axis Roles in U
 concept: Starting with axes used by Y and Z, preserve those needed by X or the final output; the remaining shared axes are contracted by U.
-purpose: Visualize KeepAxes(U) and determine the replacement dot's free and contraction groups from which operands contain each axis.
+purpose: Visualize M_U and determine the replacement dot's free and contraction groups from which operands contain each axis.
 requirements:
   - 'Apply the shared axis-group UI in tools/figure_style.md: canonical bordered chips, inline group colors, underscore notation, and contextual dimming. Preserve this figure''s content and frame dimensions.'
   - Follow tools/figure_style.md; use an exact 500 × 1000 px half-width frame with 14 px horizontal margins, 18 px vertical margins, and 14 px gaps between main bands.
-  - Preserve the source/replacement graphs, KeepAxes equation, input axis groups, both checks, remaining candidates, KEEP/CONTRACT results, and final role assignments.
+  - Preserve the source/replacement graphs, mandatory-axis equation, input axis groups, both checks, remaining candidates, KEEP/CONTRACT results, and final role assignments.
   - Use the unbatched dot reassociation example from symbolic_axis_partitioning.yaml, under arithmetic permitting reassociation.
-  - 'Color K amber (#D4A65C), I_sel/I_rem green (#6A9F88), and J_sel/J_rem purple (#9076AD). Keep F, graph operations, and check-card backgrounds neutral.'
+  - 'Color K amber (#D4A65C), I_sel/I_rem green (#6A9F88), and J_sel/J_rem purple (#9076AD). Keep H, graph operations, and check-card backgrounds neutral.'
   - Use 18 px primary labels, 16 px compact annotations/chips, and consistent light borders, pale fills, small corner radii, and internal padding. Avoid heavy outlines and large empty cards.
   - Reflow into two workflow columns, with the candidate stream on the left and one narrow KEEP collector on the right. Embed X and O axis-group references inside their respective check cards.
   - The checks implement OR. Axes saved at the first check bypass the second; both saved branches join KEEP. Only unsaved candidates continue downward.
@@ -31,7 +31,7 @@ children:
     type: text
     pos: [0.028, 0.972, 0.164, 0.236]
     content: |-
-      KeepAxes(U) = Axes_in(U) ∩
+      M_U = Axes_in(U) ∩
       (Axes_out(U) ∪ Axes(O))
 
   - name: filtering_process
@@ -40,7 +40,7 @@ children:
     requirements:
       - Put the two input cards across the top. Below, use the left two-thirds for the downward stream and the remaining width for KEEP, separated by a narrow connector gutter.
       - Flow through Axes inside U → Needed outside U? → Remaining candidates → Required for output? → CONTRACT.
-      - Send K and I_sel from the first check to KEEP, and J_rem and F from the second check to the same collector. Label saved branches Yes and continuing branches Not needed here.
+      - Send K and I_sel from the first check to KEEP, and J_rem and H from the second check to the same collector. Label saved branches Yes and continuing branches Not needed here.
       - Embed the X and O reference chip rows within the corresponding check cards, beneath each question. They are reference sets, not remaining candidates.
       - Make KEEP's union visible with a small union symbol between its two saved sets. Align its entries with the checks using short local orthogonal connectors.
     children:
@@ -55,13 +55,13 @@ children:
         pos: [0.513, 1.00, 0.00, 0.123]
         content: |-
           Input Z
-          {I_sel, J_sel, F}
+          {I_sel, J_sel, H}
       - name: inside_axes
         type: text
         pos: [0.00, 0.669, 0.159, 0.283]
         content: |-
           Axes inside U: Y ∪ Z
-          {K, I_sel, J_sel, J_rem, F}
+          {K, I_sel, J_sel, J_rem, H}
       - name: outside_check
         type: text
         pos: [0.00, 0.669, 0.326, 0.471]
@@ -73,13 +73,13 @@ children:
         pos: [0.00, 0.669, 0.533, 0.649]
         content: |-
           Remaining candidates
-          {J_sel, J_rem, F}
+          {J_sel, J_rem, H}
       - name: output_check
         type: text
         pos: [0.00, 0.669, 0.692, 0.837]
         content: |-
           Required for output?
-          O: {I_rem, J_rem, F}
+          O: {I_rem, J_rem, H}
       - name: keep_collector
         type: text
         pos: [0.729, 1.00, 0.326, 0.837]
@@ -89,7 +89,7 @@ children:
           {K, I_sel}
           ∪
           Required by O
-          {J_rem, F}
+          {J_rem, H}
       - name: contract_result
         type: text
         pos: [0.00, 0.669, 0.899, 1.00]
@@ -125,7 +125,7 @@ children:
         content: |-
           Right free
           from Z
-          {I_sel, F}
+          {I_sel, H}
 
   - name: notes
     type: text

@@ -1,14 +1,14 @@
 title: Constructing Dot Attributes from Axis Mappings
-concept: Query the same ordered contraction group in both operands, establish the intermediate interface P_U, and use its mappings to construct the final dot's attributes.
-purpose: Preserve the symbolic construction while making the P_U dependency and the two paired queries visually explicit.
+concept: Query the same ordered contraction group in both operands, establish the intermediate interface I_U, and use its mappings to construct the final dot's attributes.
+purpose: Preserve the symbolic construction while making the I_U dependency and the two paired queries visually explicit.
 requirements:
   - 'Apply the shared axis-group UI in tools/figure_style.md: canonical bordered chips, inline group colors, underscore notation, and contextual dimming. Preserve this figure''s content and frame dimensions.'
   - Follow tools/figure_style.md; use a 500 × 1000 px half-width portrait frame, devoting the added height to the interface bridge.
   - Use 22 px headings, 18 px labels/fields/expressions, and canonical 16 px group chips; reflow formulas rather than scaling the previous wide figure.
-  - Preserve the unbatched generalized-dot reassociation example, all four contraction queries, both ordered complements, the P_U expression, and the final attribute table.
+  - Preserve the unbatched generalized-dot reassociation example, all four contraction queries, both ordered complements, the I_U expression, and the final attribute table.
   - Use symbolic groups and position expressions throughout; do not add concrete ranks, axes, or example position lists.
   - Stack a compact replacement graph, U attributes, the interface bridge, final attributes, and the result table.
-  - 'Color J_sel/J_rem purple (#9076AD), I_sel green (#6A9F88), and K amber (#D4A65C); F, operation nodes, interfaces, and attribute fields remain neutral.'
+  - 'Color J_sel/J_rem purple (#9076AD), I_sel green (#6A9F88), and K amber (#D4A65C); H, operation nodes, interfaces, and attribute fields remain neutral.'
   - Use pale fills, dark text, thin borders, and flat editable shapes; the interface bridge and final table have stronger outlines than supporting query cards.
   - Use commas, plus signs, or line breaks as separators; do not use middle dots.
   - The two query stages use identical layouts, with a common ordered-group header and aligned operand, query, and field rows.
@@ -16,7 +16,7 @@ requirements:
   - Define G = I_sel ++ K once and use G consistently in subsequent queries and the final table.
   - Arrange preserved-group chips in one labeled horizontal row below the interface result; show which groups are preserved without implying a physical order or concatenation.
   - Keep expressions as editable native Figma text. Use 18 px monospace for the bridge calculations and result, with 22 px line height and deliberate two-line function calls.
-  - Solid arrows show tensor flow in the small graph and dependencies between construction stages; use one clear side route from the P_U bridge to the final U lookup.
+  - Solid arrows show tensor flow in the small graph and dependencies between construction stages; use one clear side route from the I_U bridge to the final U lookup.
   - Match final-table fields to the query-card field tags; omit the previous page-length arrows from individual queries to table cells.
   - End at the symbolic attribute table and notation; source-dependent program resolution and verification occur afterward.
 
@@ -27,14 +27,14 @@ children:
     requirements:
       - Draw a compact graph approximately 80 px tall, with Y and Z feeding U, then X and U feeding O′.
       - Put stage markers 1 and 3 in the U and O′ nodes, matching the construction headings below.
-      - Label the two descriptors @d_U and @d_final; U is the first target and O′ is the final target.
+      - Label the attribute records u.attrs and out.attrs; node u produces tensor U and node out produces O′. U is the first target and O′ is the final target.
       - Keep this graph as context; the table remains the construction result.
 
   - name: construct_U_attributes
     type: image
     pos: [0.04, 0.96, 0.108, 0.252]
     requirements:
-      - Head the stage "1. U attributes", with @d_U aligned at the right.
+      - Head the stage "1. U attributes", with u.attrs aligned at the right.
       - Use a shared header "Same ordered group" with a purple J_sel chip.
       - Place Y and Z lookup cards side by side; align their operand labels, position queries, and field tags.
       - Both queries use exactly the same ordered J_sel group.
@@ -44,58 +44,58 @@ children:
         type: text
         pos: [0.00, 0.487, 0.40, 1.00]
         content: |-
-          Y, P_Y
-          positions(P_Y, J_sel)
+          Y, I_Y
+          pos(I_Y, J_sel)
           → lhs_contract
 
       - name: rhs_lookup
         type: text
         pos: [0.513, 1.00, 0.40, 1.00]
         content: |-
-          Z, P_Z
-          positions(P_Z, J_sel)
+          Z, I_Z
+          pos(I_Z, J_sel)
           → rhs_contract
 
   - name: construct_U_interface
     type: image
     pos: [0.04, 0.96, 0.260, 0.590]
     requirements:
-      - Use one full-width neutral bridge card headed "2. Establish P_U".
+      - Use one full-width neutral bridge card headed "2. Establish I_U".
       - Stack the two ordered-complement calculations at full width, with 10 px between them. Keep each assignment and function name together on the first line, with both arguments together on an indented second line.
-      - Below the calculations, place the bold P_U result in a full-width white box with a thin outline, padding, and a caption.
+      - Below the calculations, place the bold I_U result in a full-width white box with a thin outline, padding, and a caption.
       - Put the preserved-group row beneath the result box. Label it "Preserved groups" and use no plus signs or arrows between its chips.
-      - Put "Extend axis mappings to U" beneath the P_U result.
-      - Route a prominent dependency arrow from the P_U result box along the right margin into the final U lookup.
-      - The P_U expression preserves surviving operand order, including possible interleaving.
+      - Put "Extend axis mappings to U" beneath the I_U result.
+      - Route a prominent dependency arrow from the I_U result box along the right margin into the final U lookup.
+      - The I_U expression preserves surviving operand order, including possible interleaving.
     children:
       - name: left_free_positions
         type: text
         pos: [0.028, 0.972, 0.148, 0.282]
         content: |-
           f_Y = ordered_complement(
-              ρ(P_Y), @d_U.lhs_contract)
+              ι(I_Y), u.attrs.lhs_contract)
 
       - name: right_free_positions
         type: text
         pos: [0.028, 0.972, 0.312, 0.445]
         content: |-
           f_Z = ordered_complement(
-              ρ(P_Z), @d_U.rhs_contract)
+              ι(I_Z), u.attrs.rhs_contract)
 
       - name: output_interface
         type: text
         pos: [0.048, 0.952, 0.503, 0.636]
         content: |-
-          P_U = gather(P_Y, f_Y)
-                ++ gather(P_Z, f_Z)
+          I_U = gather(I_Y, f_Y)
+                ++ gather(I_Z, f_Z)
 
       - name: preserved_groups
         type: image
         pos: [0.028, 0.972, 0.779, 0.936]
         requirements:
           - Use the exact heading "Preserved groups".
-          - Put K, J_rem, I_sel, and F in one evenly spaced horizontal row below the heading.
-          - Use canonical bordered group chips with dark text, including the neutral F chip; the row shows which groups are preserved, with no physical ordering implied.
+          - Put K, J_rem, I_sel, and H in one evenly spaced horizontal row below the heading.
+          - Use canonical bordered group chips with dark text, including the neutral H chip; the row shows which groups are preserved, with no physical ordering implied.
 
       - name: extend_mappings
         type: text
@@ -106,26 +106,26 @@ children:
     type: image
     pos: [0.04, 0.96, 0.598, 0.742]
     requirements:
-      - Head the stage "3. Final attributes", with @d_final aligned at the right.
+      - Head the stage "3. Final attributes", with out.attrs aligned at the right.
       - Repeat the shared header "Same ordered group" and show G = I_sel ++ K, coloring I_sel green and K amber.
       - Use G in both position queries, retaining the stated order.
       - Repeat the exact two-column layout of stage 1, with X on the left and U on the right.
-      - Give the U card a stronger outline and receive the dependency arrow from the P_U bridge at its operand header.
+      - Give the U card a stronger outline and receive the dependency arrow from the I_U bridge at its operand header.
     children:
       - name: lhs_lookup
         type: text
         pos: [0.00, 0.487, 0.40, 1.00]
         content: |-
-          X, P_X
-          positions(P_X, G)
+          X, I_X
+          pos(I_X, G)
           → lhs_contract
 
       - name: rhs_lookup
         type: text
         pos: [0.513, 1.00, 0.40, 1.00]
         content: |-
-          U, P_U
-          positions(P_U, G)
+          U, I_U
+          pos(I_U, G)
           → rhs_contract
 
   - name: final_attribute_table
@@ -133,7 +133,7 @@ children:
     pos: [0.04, 0.96, 0.750, 0.928]
     requirements:
       - Head the result "Constructed contraction attributes".
-      - Use an editable three-column table with Attribute, @d_U, and @d_final headers.
+      - Use an editable three-column table with Attribute, u.attrs, and out.attrs headers.
       - Match field labels exactly to the tags in the paired query cards.
       - Wrap each query after its comma onto two lines; use mathematical label typography for readable expressions.
       - Give the table a stronger outline to identify it as the final artifact; color only group tokens in expressions.
@@ -142,13 +142,13 @@ children:
         type: text
         pos: [0.00, 1.00, 0.18, 1.00]
         content: |-
-          Attribute    | @d_U                  | @d_final
-          lhs_contract | positions(P_Y, J_sel) | positions(P_X, G)
-          rhs_contract | positions(P_Z, J_sel) | positions(P_U, G)
+          Attribute    | u.attrs                  | out.attrs
+          lhs_contract | pos(I_Y, J_sel) | pos(I_X, G)
+          rhs_contract | pos(I_Z, J_sel) | pos(I_U, G)
 
   - name: notation
     type: text
     pos: [0.04, 0.96, 0.936, 0.980]
     content: |-
-      positions(P, G) returns p with gather(P, p) = G.
-      ρ(P) = range(|P|); ++ concatenates sequences.
+      pos(I, G) returns q with gather(I, q) = G.
+      ι(I) = range(|I|); ++ concatenates sequences.

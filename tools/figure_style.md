@@ -10,7 +10,7 @@ Use literal underscore notation for qualified group names such as `I_sel` and `J
 
 ## Axis-group palette
 
-Color identifies axis origin, including when an axis changes its role in a replacement operation. Subgroups inherit their parent's color. Composite groups such as `G`, `L`, and `S` stay neutral unless the figure explicitly establishes another meaning.
+Color identifies axis origin, including when an axis changes its role in a replacement operation. Subgroups inherit their parent's color. Composite groups such as `G`, `D`, and `S` stay neutral unless the figure explicitly establishes another meaning.
 
 | Origin | Border / connector | Pale chip fill | Inline text |
 | --- | --- | --- | --- |
@@ -18,7 +18,7 @@ Color identifies axis origin, including when an axis changes its role in a repla
 | I, I_sel, I_rem | `#6A9F88` | `#EEF5F1` | `#396F59` |
 | K | `#D4A65C` | `#FBF4E7` | `#9A702B` |
 | J, J_sel, J_rem | `#9076AD` | `#F3EFF8` | `#71538F` |
-| F / neutral axes | `#A7B2BB` | `#F3F5F7` | `#52616B` |
+| H / neutral axes | `#A7B2BB` | `#F3F5F7` | `#52616B` |
 
 Tensor identities are separate from axis-group names: a tensor named `B` does not receive the batch group's color.
 
@@ -33,9 +33,11 @@ Tensor identities are separate from axis-group names: a tensor named `B` does no
 
 ## Other semantic categories
 
-Use neutral graph-operation boxes and supporting cards. Descriptor badges retain explicit `@name` labels and their figure's declared capture/manual/inferred colors; they are not axis groups.
+Use neutral graph-operation boxes and supporting cards. Attribute-record badges use explicit `node.attrs` labels (for example, `tr.attrs`, `u.attrs`, and `out.attrs`) and their figure's declared capture/manual/inferred colors; they are not axis groups. Name operations with `(node: op ...)`; field reads use `node.attrs.field`. Omitted RHS attributes request inference unless supplied by `derive` or inline reuse such as `(op[source.attrs] ...)`. Do not display the removed `[@name]` or `[auto]` syntax.
 
 Scope colors and compiler/manual status colors are local categories with explicit labels. Keep scope bodies and borders neutral when colored axis groups occur inside; retain restrained colored title bands or accents to identify the scopes. Never recolor an axis group to match its surrounding scope or compiler stage.
+
+In pattern/replacement syntax, highlight operation tokens such as `dot`, `transpose`, and `add`. Keep node labels (`d1:`, `tr:`, `out:`), tensor inputs, punctuation, and rewrite arrows neutral. Use each figure or panel's declared theme color; consistency means highlighting the same syntactic category, not imposing one hue everywhere. For example, explicit/manual rules may use amber and inferred rules green. Attribute expressions in `derive`, concrete attribute values, badges, and symbolic axis groups retain their separate semantic colors.
 
 Keep purposeful emphasis such as a contraction row or newly derived mapping cells, with an explanatory label or established context. Such emphasis does not change the group's token style.
 
@@ -49,3 +51,13 @@ Keep purposeful emphasis such as a contraction row or newly derived mapping cell
 ## Verification
 
 Check the same group across chips, table labels, and inline expressions in neighboring figures. Verify contextual dimming, readable text, clipping, connector alignment, and the original frame dimensions. Synchronize conti instructions with Figma styling so regeneration preserves the convention.
+
+## Formal-model notation
+
+Use `M_U` for mandatory axes and `I_T` for the symbolic ordered interface of
+tensor T (typeset as sans-serif I in the paper). Reserve P for input ports and
+P_v for canonical live sets. Use H for the example's final free-axis group,
+D for its outer contraction group, and F for the full target output order.
+Use `pos(I, G)` for ordered position lookup and `ι(G)` for `range(|G|)`.
+The constructor reads `p = (s, α)`; individual captured descriptors are parts
+of α. Language code still uses its actual builtins and `++` syntax.

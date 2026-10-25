@@ -1,47 +1,160 @@
 \section{Problem Definition}
 \label{sec:problem}
-Let $s$ contain source shapes and operation attributes, $X$ compatible tensor
-values, and $a$ replacement attributes. Element types are fixed here.
-$\operatorname{LHS}(s,X)$ and $\operatorname{RHS}(s,a,X)$ denote the computed
-tensors; $\operatorname{Guard}(s)$ means successful evaluation of the user's
-condition to \code{true}.
+The language lets a user leave RHS attributes to \code{auto}. We first give a
+mathematical model of this task. Within the fragment defined below, we can
+both decide whether suitable attributes exist and construct them. Later
+sections explain TEPL's symbolic representation and its broader, incomplete
+synthesis procedure.
 
-\subsection{What Must the Compiler Find?}
-\label{sec:find}
-Given operation semantics, a rewrite, and its guard, the compiler seeks a
-reusable attribute program
+\subsection{Tensor Expressions and Rewrites}
+Let $\mathcal X=\{X_1,\ldots,X_n\}$ be the input tensor names. Each $X_i$ has
+symbolic shape $s_i$; a match supplies its concrete shape. Let $\mathcal O$
+be the operations. An operation $o\in\mathcal O$ has $k$ inputs and an
+attribute descriptor $a$. Tensor expressions have the form
 \begin{equation}
- a=f(s).
- \label{eq:attribute-program}
+ T ::= X_i \mid o_a(T_1,\ldots,T_k).
 \end{equation}
-It constructs this program before concrete ranks and attributes are known,
-using source metadata rather than tensor elements. An explicit constructor
-supplies $f$; inference constructs it for omitted attributes.
-
-\subsection{What Makes the Result Correct?}
-\label{sec:contract}
-Both explicit and inferred constructors for semantic rules must satisfy
+A rewrite is $L\Rightarrow R$. Its LHS attributes are known, and its RHS
+attributes are to be constructed. We use the following notation throughout:
 \begin{equation}
 \begin{aligned}
-\forall s.\quad &\operatorname{LegalLHS}(s)\land\operatorname{Guard}(s)\\
-\Longrightarrow\quad
- &s\in\operatorname{dom}(f)\ \land\ \operatorname{LegalRHS}(s,f(s))\\
- &{}\land\ \forall X\text{ compatible with }s.\quad
- \operatorname{LHS}(s,X)=\operatorname{RHS}(s,f(s),X).
+ s&=(s_1,\ldots,s_n) &&\text{input shapes},\\
+ \alpha&=\text{LHS attributes},\\
+ p&=(s,\alpha) &&\text{source metadata},\\
+ \beta&=\text{RHS attributes}.
+\end{aligned}
+\label{eq:metadata}
+\end{equation}
+Metadata $p$ is concrete at a match and makes every LHS operation legal.
+Writing $X=(X_1,\ldots,X_n)$ for the input values, the two computations are
+$L_p(X)$ and $R_{p,\beta}(X)$. An attribute program reads $p$, never the
+entries of $X$.
+
+\subsection{Valid Attribute Assignments}
+\label{sec:valid}
+An assignment must make every RHS operation legal and preserve both ordered
+output shape and values:
+\begin{equation}
+\begin{aligned}
+ \operatorname{Valid}(p,\beta)\iff{}&
+ \operatorname{Legal}_R(p,\beta)\\
+ &{}\land\operatorname{Shape}_L(p)=\operatorname{Shape}_R(p,\beta)\\
+ &{}\land\forall X,\quad L_p(X)=R_{p,\beta}(X).
+\end{aligned}
+\label{eq:valid}
+\end{equation}
+Here $X$ ranges over all values with the shapes in $p$.
+$\operatorname{Legal}_R$ includes every intermediate operation, and a shape
+is an ordered vector. The same $\beta$ must work for every compatible $X$:
+the quantifier order is $\exists\beta\,\forall X$, not a separate attribute
+choice for each tensor value.
+
+\subsection{What Must Synthesis Produce?}
+\label{sec:find}
+From a symbolic rewrite, the mathematical algorithm produces two programs:
+\begin{align}
+ \operatorname{check}(p)&\iff\exists\beta:\operatorname{Valid}(p,\beta),
+ \label{eq:check-goal}\\
+ \operatorname{check}(p)&\Rightarrow
+ \operatorname{Valid}(p,\operatorname{build}(p)).
+ \label{eq:build-goal}
+\end{align}
+The first decides feasibility. The second constructs a solution when one
+exists. These properties must hold for every legal source metadata instance
+in the fragment. The goal is a reusable program for varying ranks and
+shapes, not one attribute list for one example.
+
+\subsection{Scope and Assumptions of the Completeness Theorem}
+\label{sec:formal-scope}
+Sections~\ref{sec:axis-model}--\ref{sec:formal-correctness} use the following
+assumptions. TEPL also handles operations and rules outside this model;
+Section~\ref{sec:broader-operators} explains that separate path.
+
+\paragraph{Operation contracts.}
+Table~\ref{tab:formal-operations} gives the complete contracts used by the
+proof. Empty attribute lists are allowed. There are no further layout or
+backend-specific restrictions. Unary summation means addition of elements;
+it does not include other reducers or \code{keepdims}.
+\begin{table}[!htbp]
+\caption{Operations in the mathematical model.}
+\label{tab:formal-operations}
+\begin{tabularx}{\linewidth}{@{}lY@{}}\toprule
+Operation & Attributes, legality, and output rule\\\midrule
+Permutation & A full permutation $\pi$ of input positions. Output position
+$j$ selects input position $\pi_j$.\\
+Unary summation & A list $d$ of distinct, in-range input positions. Sum over
+these axes and remove them, preserving the relative order of the others.\\
+Contraction & Four ordered lists $(b_\ell,b_r,k_\ell,k_r)$ for left/right
+batch and contraction positions. Every list has distinct, in-range entries.
+Batch and contraction positions are disjoint in each operand. Paired lists
+have equal lengths and corresponding extents. Multiply values at paired
+coordinates and sum over contraction axes. Output order is the batch-list
+order, then unselected left axes in operand order, then unselected right
+axes in operand order.\\
+Addition & Elementwise addition of operands with the same ordered shape.
+There are no attributes and no broadcasting.\\\bottomrule
+\end{tabularx}
+\end{table}
+
+\paragraph{Inputs and arithmetic.}
+Ranks are arbitrary finite numbers, including zero. Every existing input
+axis has extent at least two. Input values vary independently; we assume
+neither symmetry nor sparsity. Arithmetic is over exact real numbers, so
+finite sums can be reordered and multiplication distributes over addition.
+This does not establish strict floating-point equality. Metadata $p$ makes
+all intermediate LHS operations legal.
+
+\paragraph{Expression structure.}
+A \emph{read-once component} is a contraction/permutation/unary-summation
+tree that uses every tensor in a nonempty input set exactly once. The LHS
+and RHS of a component use the same input set.
+
+For addition, expand the LHS using linearity and bilinearity into
+$L=\sum_t L_t$. The actual RHS must already be an explicit sum of matching
+components, $R=\sum_t R_t$. Each $L_t,R_t$ is read-once and uses the same
+input set $U_t$. Different terms have different input sets, although these
+sets may overlap.
+
+\paragraph{Freedom of the unknown attributes.}
+Every RHS attribute is an independent unknown, constrained only by
+Table~\ref{tab:formal-operations}. Fixed attributes and unknowns shared by
+several operations are outside this theorem. Expanding the LHS preserves
+the values and sharing of captured attributes. Expanding the RHS must not
+turn one shared unknown into several independent unknowns.
+
+Rule structure and attribute restrictions are checked syntactically before
+synthesis; shapes and source legality are checked from metadata. Zero or
+singleton extents, repeated inputs within a component, several terms with
+the same input set, constants, subtraction, cancellation, and operations
+outside the table are excluded. Exclusion does not mean that a rewrite is
+invalid; it means the completeness theorem does not decide it.
+
+\subsection{The Contract Exposed by TEPL}
+\label{sec:contract}
+A user supplies a \code{where} condition $C(p)$. A constructor, written
+explicitly or inferred, is a metadata program
+\begin{equation}
+ \beta=f(p).
+ \label{eq:attribute-program}
+\end{equation}
+For semantic rules, TEPL seeks to establish
+\begin{equation}
+\begin{aligned}
+ \forall p.\quad &\operatorname{Legal}_L(p)\land C(p)\\
+ \Longrightarrow\quad &p\in\operatorname{dom}(f)
+ \land\operatorname{Valid}(p,f(p)).
 \end{aligned}
 \label{eq:contract}
 \end{equation}
-Thus every legal guarded source yields evaluable attributes and a legal RHS
-with identical ordered output shape and element values under the selected
-arithmetic policy. Algebraic reassociation alone does not establish strict
-floating-point equality. Domain membership includes valid position lookups
-and inverse permutations. Because metadata programs can be partial, checking
-must respect ordered evaluation, short-circuiting, indexing, checked
-arithmetic, and failures; a failed guard evaluation is not assumed true.
+For this language-level contract, element types and the selected arithmetic
+policy are part of the semantic context. $C(p)$ means that guard evaluation
+successfully returns \code{true}. Domain membership includes defined
+position lookups and inverse permutations. Checking partial metadata
+programs must respect evaluation order, short-circuiting, indexing, checked
+arithmetic, and failures. A failed guard is not assumed true.
 
-\subsection{When Can the Compiler Accept a Rewrite?}
-A semantic rule is accepted only when supported reasoning establishes the
-contract throughout the legal guarded domain. Rejection as unproved need not
-mean mathematical invalidity. The checking procedure below is intended to
-enforce this contract; this draft does not establish an implementation
-soundness theorem.
+A rule is accepted only when supported reasoning establishes this contract
+throughout its legal guarded domain. Failure to prove it is not a
+counterexample. The completeness theorem below concerns the mathematical
+algorithm; it does not prove the C++ implementation sound or make guard
+reasoning complete. Section~\ref{sec:tepl-integration} connects the two levels.

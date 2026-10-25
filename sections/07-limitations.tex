@@ -18,15 +18,23 @@ inference fragment: TEPL can match patterns, evaluate guards and attribute
 programs, and build replacement graphs. Such structural rewrites do not carry
 the tensor-equivalence guarantee of semantically verified rules.
 
-\paragraph{No completeness guarantee.}
-TEPL does not guarantee that it can verify every valid rewrite or discover
-every valid attribute construction. A correct rule may remain unproved because
-coordinate correspondence is ambiguous or a required metadata relationship
-lies outside supported reasoning. Verifying a manually supplied constructor
-does not guarantee that synthesis can discover it. The correctness argument
-concerns accepted rules; a proof of completeness is outside this paper's scope.
-Future work can expand the reasoning and establish completeness for a
-precisely defined fragment.
+\paragraph{Completeness of the model and limits of the implementation.}
+Theorem~\ref{thm:complete-synthesis} establishes completeness for the exact-real,
+read-once fragment in Section~\ref{sec:formal-scope}. It excludes zero and
+singleton extents, fixed or shared RHS unknowns, repeated inputs within a
+component, unrestricted addition, and broader operations. TEPL's language
+allows more than this fragment, including explicit and pinned attributes.
+These features do not inherit its completeness guarantee.
+
+The ordered implementation currently specializes the model to contraction
+and permutation. Extending its exact path to unary summation and separated
+additive components remains work, as does a formal proof connecting the
+symbolic compiler to the mathematical algorithm. A correct rule can remain
+unproved because coordinate correspondence is ambiguous, a metadata relation
+is unsupported, or the verifier cannot establish the guard implication.
+Verifying a manually supplied constructor does not guarantee that general
+synthesis can discover it. Future work can expand this reasoning and the
+implemented fragment without changing the theorem's stated scope.
 
 \paragraph{Reasoning cost and scalability.}
 Long compositions and overlapping axis relationships can increase symbolic

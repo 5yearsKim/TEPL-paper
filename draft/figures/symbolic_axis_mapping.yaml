@@ -111,9 +111,9 @@ children:
       - 1
       content: |-
         Tensor | I          | K              | J
-        X      | ρ(I) / [0] | |I|+ρ(K) / [1] | —
-        Y      | —          | ρ(K) / [0]     | |K|+ρ(J) / [1]
-        T      | ρ(I) / [0] | —              | |I|+ρ(J) / [1]
+        X      | ι(I) / [0] | |I|+ι(K) / [1] | —
+        Y      | —          | ι(K) / [0]     | |K|+ι(J) / [1]
+        T      | ι(I) / [0] | —              | |I|+ι(J) / [1]
   - name: add_table
     type: image
     pos:
@@ -133,9 +133,9 @@ children:
       - 1
       content: |-
         Tensor | S
-        T      | ρ(S) / [0, 1]
-        Z      | ρ(S) / [0, 1]
-        O      | ρ(S) / [0, 1]
+        T      | ι(S) / [0, 1]
+        Z      | ι(S) / [0, 1]
+        O      | ι(S) / [0, 1]
 - name: mapping_transition
   type: image
   pos:
@@ -185,11 +185,11 @@ children:
     - 1
     content: |-
       Tensor | I          | K              | J
-      X      | ρ(I) / [0] | |I|+ρ(K) / [1] | —
-      Y      | —          | ρ(K) / [0]     | |K|+ρ(J) / [1]
-      T      | ρ(I) / [0] | —              | |I|+ρ(J) / [1]
-      Z      | ρ(I) / [0] | —              | |I|+ρ(J) / [1]
-      O      | ρ(I) / [0] | —              | |I|+ρ(J) / [1]
+      X      | ι(I) / [0] | |I|+ι(K) / [1] | —
+      Y      | —          | ι(K) / [0]     | |K|+ι(J) / [1]
+      T      | ι(I) / [0] | —              | |I|+ι(J) / [1]
+      Z      | ι(I) / [0] | —              | |I|+ι(J) / [1]
+      O      | ι(I) / [0] | —              | |I|+ι(J) / [1]
 - name: takeaway_and_notation
   type: text
   pos:
@@ -200,5 +200,5 @@ children:
   content: |-
     Aligned coordinates enable algebraic rewriting.
     Symbolic above gray zero-based positions; — absent.
-    ρ(G) = range(|G|); ++ concatenates axis groups.
+    ι(G) = range(|G|); ++ concatenates axis groups.
     Adding |I| or |K| shifts every position.

@@ -62,3 +62,12 @@ without RHS attribute hints, including descriptor reuse and computed programs.
 Automatic inference succeeds on all 20 explicitly verified axis/extent cases.
 These constitute the verified subset of 38 semantically eligible axis/extent
 cases.
+
+\paragraph{Relation to the theorem.}
+These measurements evaluate the implementation's broader supported fragment,
+not completeness of the mathematical algorithm. In particular, broadcast
+and slice cases lie outside Theorem~\ref{thm:complete-synthesis}. The current
+corpus results do not separately classify every case against the theorem's
+structural, extent, and attribute restrictions. The 20/20 result remains
+conditional on explicit verification; it does not establish completeness
+of symbolic inference or guard reasoning.

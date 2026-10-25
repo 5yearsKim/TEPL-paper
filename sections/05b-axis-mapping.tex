@@ -5,17 +5,17 @@ tensor interfaces, preserving coordinate order and operand pairing.
 
 \subsubsection{Building and Composing Mapping Tables}
 \label{sec:mapping-tables}
-A record $(P,G,p)$ satisfies Equation~\eqref{eq:mapping}. Mapping tables use
+A record $(\mathsf{I},G,q)$ satisfies Equation~\eqref{eq:mapping}. Mapping tables use
 tensor columns and group rows; entries are position expressions, and a dash
-indicates no mapping in that example. Write $\rho(G)=\operatorname{range}(|G|)$.
-Let $b_L,b_R$ and $c_L,c_R$ denote the consuming dot's batch and
-contraction lists, and $f_L,f_R$ their ordered complements.
+indicates no mapping in that example. Write $\iota(G)=\operatorname{range}(|G|)$.
+Let $b_\ell,b_r$ and $k_\ell,k_r$ denote the consuming dot's batch and
+contraction lists, and $f_\ell,f_r$ their ordered complements.
 An operand's groups need not be contiguous. For example, its axes might
 appear as $[i,k_0,b,k_1]$, even though we describe its groups as $B,K,I$.
 The compiler reconstructs dimension order using the binding positions:
 \begin{equation}
  \widehat S=\gath(B\catseq K\catseq I,
-             \operatorname{inverse}(b_L\catseq c_L\catseq f_L)).
+             \operatorname{inverse}(b_\ell\catseq k_\ell\catseq f_\ell)).
  \label{eq:rebuilt-interface}
 \end{equation}
 In this example the concatenated positions are $[2,1,3,0]$; their inverse
@@ -44,10 +44,10 @@ selected in $T$ selects the corresponding coordinate in either input:
 \begin{center}
 \begin{tabular}{@{}lccccc@{}}\toprule
 Group & $X$ & $Y$ & $T$ & $Z$ & $O$\\\midrule
-$B$ & $b_L$ & $b_L$ & $b_L$ & $b_R$ & $\rho(B)$\\
-$K$ & $c_L$ & $c_L$ & $c_L$ & $c_R$ & --\\
-$I$ & $f_L$ & $f_L$ & $f_L$ & -- & $|B|+\rho(I)$\\
-$J$ & -- & -- & -- & $f_R$ & $|B|+|I|+\rho(J)$\\\bottomrule
+$B$ & $b_\ell$ & $b_\ell$ & $b_\ell$ & $b_r$ & $\iota(B)$\\
+$K$ & $k_\ell$ & $k_\ell$ & $k_\ell$ & $k_r$ & --\\
+$I$ & $f_\ell$ & $f_\ell$ & $f_\ell$ & -- & $|B|+\iota(I)$\\
+$J$ & -- & -- & -- & $f_r$ & $|B|+|I|+\iota(J)$\\\bottomrule
 \end{tabular}
 \end{center}
 Each entry is a position list, not an axis size. Adding a group length shifts
@@ -58,10 +58,10 @@ Section~\ref{sec:composition}.
 
 Mappings compose by selecting positions through existing positions:
 \begin{equation}
- \gath(\gath(P,p),q)=\gath(P,\gath(p,q)).
+ \gath(\gath(\mathsf{I},q),h)=\gath(\mathsf{I},\gath(q,h)).
  \label{eq:gather-composition}
 \end{equation}
-Thus $(P,G,p)$ and $(G,H,q)$ locate $H$ in $P$ at $\gath(p,q)$.
+Thus $(\mathsf{I},G,q)$ and $(G,H,h)$ locate $H$ in $\mathsf{I}$ at $\gath(q,h)$.
 Lookup can derive such relationships on demand rather than enumerating every
 possible mapping. Composition through a producer with several groups also
 requires recording which portions a consumer selects.
@@ -70,27 +70,27 @@ requires recording which portions a consumer selects.
 \subsubsection{Symbolic Axis Partitioning}
 \label{sec:partitioning}
 For reassociation $(XY)Z\to X(YZ)$, let the inner source dot produce
-$T$ with $P_T=B\catseq I\catseq J$, contracting $K$. The rule's guard
+$T$ with $\mathsf{I}_T=B\catseq I\catseq J$, contracting $K$. The rule's guard
 \code{@outer.lhs_batching_dimensions == @inner->B} requires the outer
 left batch list to select the inner batch group in the same order.
 Incompatible routing can change the result; this guard restricts applicability
 without replacing completed-rule verification.
 
-The outer dot contracts group $L$ through lists
-$c_L^{\mathrm{outer}},c_R^{\mathrm{outer}}$. Its left list can interleave
+The outer dot contracts group $D$ through lists
+$k_\ell^{\mathrm{outer}},k_r^{\mathrm{outer}}$. Its left list can interleave
 selections from $I$ and $J$. Figure~\ref{fig:axis-partitioning} shows why
 three positions must remain distinct: within the producer group, within the
 contraction list, and in the paired operand.
 
 \paperfigure{1}{figures/Symbolic Axis Partitioning (Dot Reassociation).pdf}{Partitioning selected axes by producer origin preserves their contraction partners for reassociation.}{fig:axis-partitioning}{Three panels show selecting producer output axes, splitting them by origin,
 and retaining contraction partners, followed by a subgroup mapping table.}
-For $G\in\{I,J\}$, let $p_G$ locate $G$ in $T$ and compute
+For $G\in\{I,J\}$, let $q_G$ locate $G$ in $T$ and compute
 \begin{equation}
 \begin{aligned}
- (u_G,v_G)&=\mpo(c_L^{\mathrm{outer}},p_G),\\
+ (u_G,v_G)&=\mpo(k_\ell^{\mathrm{outer}},q_G),\\
  G_{\mathrm{sel}}&=\gath(G,v_G),\qquad
- G_{\mathrm{rem}}=\gath(G,\ocomp(\rho(G),v_G)),\\
- z_G&=\gath(c_R^{\mathrm{outer}},u_G).
+ G_{\mathrm{rem}}=\gath(G,\ocomp(\iota(G),v_G)),\\
+ z_G&=\gath(k_r^{\mathrm{outer}},u_G).
 \end{aligned}
 \label{eq:z-partners}
 \end{equation}
@@ -102,7 +102,7 @@ order, so their concatenation need not reconstruct $G$.
 In the figure, left selection $[j_1,i_0]$ pairs with $Z$ positions $[2,0]$:
 $j_1$ uses slot 0 and $i_0$ slot 1. The refined source output is
 \begin{equation}
- P_O=B\catseq\Irem\catseq\Jrem\catseq F.
+ \mathsf{I}_O=B\catseq\Irem\catseq\Jrem\catseq H.
  \label{eq:source-output}
 \end{equation}
 The figure is unbatched; these equations retain $B$ for the guarded case.
@@ -126,21 +126,21 @@ Appendix~\ref{app:mapping} gives the complete refined table.
 \subsubsection{General Construction Algorithm}
 \label{sec:mapping-algorithm}
 Construction processes producers before consumers. Its state
-$\Sigma=(V,M,\Pi)$ records each tensor's interface and value expression in
-$V[t]=(P_t,e_t)$, mappings in $M$, and complete disjoint partitions in $\Pi$.
+$\Sigma=(V,\mathcal M,\Pi)$ records each tensor's interface and value expression in
+$V[t]=(\mathsf{I}_t,e_t)$, mappings in $\mathcal M$, and complete disjoint partitions in $\Pi$.
 For every mapping,
 \begin{equation}
- (P,G,p)\in M\ \Longrightarrow\ \gath(P,p)=G.
+ (\mathsf{I},G,q)\in \mathcal M\ \Longrightarrow\ \gath(\mathsf{I},q)=G.
  \label{eq:mapping-invariant}
 \end{equation}
-For a partition $\langle(G_1,p_1),\ldots,(G_m,p_m)\rangle$ of $P$, every
-member satisfies that invariant and $p_1\catseq\cdots\catseq p_m$ is a
-permutation of $\rho(P)$. Different partitions may overlap.
+For a partition $\langle(G_1,q_1),\ldots,(G_m,q_m)\rangle$ of $\mathsf{I}$, every
+member satisfies that invariant and $q_1\catseq\cdots\catseq q_m$ is a
+permutation of $\iota(\mathsf{I})$. Different partitions may overlap.
 
-The distinction between $M$ and $\Pi$ matters. If addition describes all of
-$T$ by $S=[i,j]$, $M$ locates $S$ at $[0,1]$, and $\Pi$ records that $S$
+The distinction between $\mathcal M$ and $\Pi$ matters. If addition describes all of
+$T$ by $S=[i,j]$, $\mathcal M$ locates $S$ at $[0,1]$, and $\Pi$ records that $S$
 covers the interface. A consumer may describe the same axes by $I=[i]$ and
-$J=[j]$. The compiler adds their individual positions to $M$ and their joint
+$J=[j]$. The compiler adds their individual positions to $\mathcal M$ and their joint
 coverage to $\Pi$, retaining both descriptions. The shape and axis order of
 $T$ stay unchanged.
 
@@ -157,23 +157,23 @@ also composes the corresponding accesses.
 \begin{lstlisting}[language=Python]
 def build_symbolic_axis_mapping(graph):
     V = initialize_inputs(graph)
-    M, partitions = set(), {}
+    mappings, partitions = set(), {}
     for op in producer_first(graph):
         inputs = [V[t] for t in op.inputs]
         groups, bindings = resolve_bindings(op, inputs)
         aligned = []
-        for (P, value), binding in zip(inputs, bindings):
-            Q = build_interface(P, binding)
-            register_mappings(Q, binding, M)
-            refine_and_register(Q, binding, M, partitions)
-            value = transport(value, P, Q, M, partitions)
-            aligned.append((Q, value))
-        Pout = evaluate(op.output_axes, groups)
+        for (axes, value), binding in zip(inputs, bindings):
+            aligned_axes = build_interface(axes, binding)
+            register_mappings(aligned_axes, binding, mappings)
+            refine_and_register(aligned_axes, binding, mappings, partitions)
+            value = transport(value, axes, aligned_axes, mappings, partitions)
+            aligned.append((aligned_axes, value))
+        out_axes = evaluate(op.output_axes, groups)
         binding = output_positions(op, groups)
-        register_mappings(Pout, binding, M)
-        refine_and_register(Pout, binding, M, partitions)
-        V[op] = (Pout, compose(op.value, aligned, groups))
-    return V, M, partitions
+        register_mappings(out_axes, binding, mappings)
+        refine_and_register(out_axes, binding, mappings, partitions)
+        V[op] = (out_axes, compose(op.value, aligned, groups))
+    return V, mappings, partitions
 \end{lstlisting}
 \end{paperalgorithm}
 Here \code{register_mappings} adds an entry for each group and its positions;
