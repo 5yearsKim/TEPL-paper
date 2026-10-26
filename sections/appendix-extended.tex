@@ -1,96 +1,20 @@
 \section{Axes IR Definitions and Examples}
 \label{app:axes}
-Axes IR is TEPL's intermediate representation of tensor computations. It
-describes how operations use tensor axes and compute output values.
-Translating operation definitions into this shared representation lets the
-compiler track axis relationships across operations, infer replacement
-attributes, and check whether completed rewrites preserve the result.
 
-
-\subsection{Symbolic Axis Groups}
+\subsection{Concrete Axis Binding Example}
 \label{extended:sec:axis-groups}
-A symbolic axis group represents an ordered sequence of axes without fixing
-its length. One group can, for example, describe all contraction axes of an
-operation. This representation borrows arbitrary-rank grouping from
-TensorRight's aggregated axes~\cite{tensorright}. TensorRight represents an
-aggregated axis as a set of named axes; TEPL uses an ordered sequence and
-tracks position mappings from groups to tensor axes for attribute construction.
-
-
-TEPL declares a group with \code{bind}, associating it with axis positions in
-one or more operands. When two operands bind the same group, their selected
-axes are paired in list order. Attributes determine those positions, allowing
-the same definition to describe different ranks and layouts. The two selections
-must have equal length and equal sizes at corresponding positions. Matching
-sizes alone do not establish pairing: the binding specifies which coordinates
-correspond.
-
-Figure~\ref{fig:axis-groups} illustrates arbitrary-length groups, one concrete
-dot binding, and output construction. In that instance, the contraction axes
-appear in different physical orders in the two operands. Selecting \code{[2,3]}
-in \code{X} and \code{[5,2]} in \code{Y} nevertheless identifies the same
-ordered contraction group. Reducing it leaves the ordered output
-$B\catseq I\catseq J$.
-
-
-We use four related notions. A tensor's ordered axes form an interface
-$\mathsf{I}=\langle a_0,\ldots,a_{n-1}\rangle$ in dimension order, together with established
-mappings from groups into $\mathsf{I}$. Axis labels denote logical coordinates, rather
-than sizes. A group $G=\langle g_0,\ldots,g_{m-1}\rangle$ is an ordered
-sequence whose order can differ from dimension order. A position sequence
-$q=\langle q_0,\ldots,q_{m-1}\rangle$, with $0\leq q_j<n$, locates that
-group by $g_j=a_{q_j}$. Positions are zero-based. Finally, $\gath(\mathsf{I},q)$
-selects axes in the order specified by $q$, so a mapping records
-\begin{equation}
- \gath(\mathsf{I},q)=G.
- \label{extended:eq:mapping}
-\end{equation}
-
-
-The following \code{dot_general} definition declares four attributes and their
-axis bindings. Dtype and value semantics are omitted from this excerpt:
-
-\begin{codeblock}[H]
-\begin{lstlisting}[language=TEPL]
-op dot_general(lhs: tensor, rhs: tensor) -> tensor {
-  attrs {
-    lhs_batching_dimensions: index[];
-    rhs_batching_dimensions: index[];
-    lhs_contracting_dimensions: index[];
-    rhs_contracting_dimensions: index[];
-  }
-  axes {
-    let lb = attrs.lhs_batching_dimensions;
-    let rb = attrs.rhs_batching_dimensions;
-    let lc = attrs.lhs_contracting_dimensions;
-    let rc = attrs.rhs_contracting_dimensions;
-    let lf = ordered_complement(all_axes(lhs), lb ++ lc);
-    let rf = ordered_complement(all_axes(rhs), rb ++ rc);
-    bind B { lhs: lb, rhs: rb };
-    bind K { lhs: lc, rhs: rc };
-    bind I { lhs: lf };
-    bind J { rhs: rf };
-    yield B ++ I ++ J;
-  }
-}
-\end{lstlisting}
-\end{codeblock}
-Here, \code{all_axes(t)} lists all positions of tensor \code{t}, and \code{++}
-concatenates sequences. The builtin \code{ordered_complement} selects remaining
-positions in operand order. The axis \code{yield} specifies output order.
-
-As a second concrete instance, smaller than the one in
-Figure~\ref{fig:axis-groups}, consider:
+Using the attributes in Listing~\ref{lst:dot-declaration}, consider these
+operand layouts and bindings:
 \begin{codeblock}[H]
 \begin{lstlisting}
 lhs:    [i, k0, b, k1]
 rhs:    [k1, j, k0, b]
 output: [b, i, j]
 
-lhs_batching_dimensions = [2]
-rhs_batching_dimensions = [3]
-lhs_contracting_dimensions = [1, 3]
-rhs_contracting_dimensions = [2, 0]
+lb = [2]
+rb = [3]
+lc = [1, 3]
+rc = [2, 0]
 \end{lstlisting}
 \end{codeblock}
 The batch binding pairs position $2$ of \code{lhs} with position $3$ of
@@ -111,28 +35,23 @@ Consequently,
  \gath(\mathsf{I}_{\mathrm{lhs}},q_{\mathrm{lhs}})
  =K=\gath(\mathsf{I}_{\mathrm{rhs}},q_{\mathrm{rhs}}).
 \end{equation}
-Although $K$ has two axes here, neither group length nor position values need
-be known at rule-compilation time. Grouping preserves the axes separately and
-in order; it does not flatten them into one dimension. Groups can be empty
-where an operation permits it, such as an unbatched dot's batch group. Their
-identities are scoped so that unrelated coordinates with equal extents remain
-distinct. Mappings let the compiler recover where each logical group occurs
-and use those positions as replacement attributes.
+The resulting computation is
+\begin{equation}
+ \operatorname{out}[b,i,j]
+ =\sum_{k_0,k_1}\operatorname{lhs}[i,k_0,b,k_1]
+                    \operatorname{rhs}[k_1,j,k_0,b].
+\end{equation}
+Paired selections must have equal lengths and corresponding extents,
+but equal extents alone do not identify axes. Grouping keeps each axis's
+coordinate separate; it does not flatten the axes into one dimension.
+Groups may also be empty, as with an unbatched dot's batch group.
 
-
-\subsection{Expressing Tensor Computations}
+\subsection{Value and Index Expressions}
 \label{extended:sec:value-expressions}
-The \code{axes} block defines relationships and output order, while
-\code{semantics} defines each output element's value. Axes IR distinguishes
-\emph{value expressions}, which compute scalar tensor elements, from
-\emph{index expressions}, which calculate the indices used to read them.
-Ordinary operand references use coordinates established by bindings. Explicit
-index expressions handle calculated accesses, including slices and
-convolutions. \code{Read} connects the two kinds of expression by reading an
-operand at explicitly calculated indices. A \code{semantics} block returns a
-value expression with \code{yield}.
+The following examples and tables supplement
+Section~\ref{sec:value-expressions}'s value and index expressions.
 
-For example, elementwise addition without broadcasting binds every axis of
+Elementwise addition without broadcasting binds every axis of
 \code{lhs} to the corresponding axis of \code{rhs}, preserving that group:
 \begin{codeblock}[H]
 \begin{lstlisting}[language=TEPL]
@@ -196,83 +115,6 @@ Expression & Meaning\\\midrule
 \end{tabularx}
 \end{table}
 
-Value and index expressions share the groups declared in \code{axes}.
-Bindings determine participating operand elements; references bound to the
-same group use corresponding coordinates. A reduction ranges over its group
-while holding the remaining output coordinates fixed. Because a group can
-have variable length, one expression can sum over different numbers of
-dimensions. The value semantics completing the previous dot definition are:
-\begin{codeblock}[H]
-\begin{lstlisting}[language=TEPL]
-semantics {
-  yield Reduce(K, Product(lhs, rhs));
-}
-\end{lstlisting}
-\end{codeblock}
-The product reads coordinates determined by $B,I,J,K$, and the reduction sums
-over $K$. Output coordinates belong to $B,I,J$, in the declared output order.
-The smaller concrete example therefore computes
-\begin{equation}
- \operatorname{out}[b,i,j]
- =\sum_{k_0,k_1}\operatorname{lhs}[i,k_0,b,k_1]
-                    \operatorname{rhs}[k_1,j,k_0,b].
-\end{equation}
-
-These primitives describe elementwise operations, transpose, summation,
-and dot products. Slices and supported convolutions calculate input indices;
-broadcasting adds output axes while reusing input values along them. Output
-shape remains separate from element computation: a tensor filled with zeros,
-for example, still needs a specified shape.
-
-
-\subsection{Reasoning About Composed Operations}
-\label{extended:sec:composition}
-Value semantics provide a common language for tensor rewrites. Different
-operations lower to scalar addition, multiplication, and summation, so laws
-over these primitives can relate expressions built from different tensor
-operations. TEPL normalizes both sides under the arithmetic laws permitted
-by the selected policy.
-
-Consider distributing a generalized dot over elementwise addition without
-broadcasting, with identical dot descriptors on both sides:
-\begin{equation}
- \operatorname{dot\_general}(X+Y,Z)
- \;\longleftrightarrow\;
- \operatorname{dot\_general}(X,Z)+\operatorname{dot\_general}(Y,Z).
-\end{equation}
-Addition's local value expression is \code{Add(X, Y)} under group $S$.
-The dot's local expression is \code{Reduce(K, Product(lhs, Z))} under its own
-batch, contraction, and free groups. Substituting the arithmetic expression
-for \code{lhs} gives the expected shape of the computation, but does not
-establish how positions in $S$ correspond to $K$ or retain their pairing with
-\code{Z}'s contraction axes.
-
-Symbolic axis mapping supplies this missing correspondence. The dot's
-contraction attribute selects positions in addition's output. Since addition
-preserves axis order, those positions identify corresponding axes in both
-\code{X} and \code{Y}. The compiler records this relationship, and similarly
-connects batch and free axes, even when group lengths are unknown. With fixed
-output coordinates and indexed reads abbreviated, the two expressions become
-\begin{equation}
- \sum_K(X+Y)Z
- \qquad\text{and}\qquad
- \sum_K XZ+\sum_K YZ.
-\end{equation}
-In the value language they are
-\begin{codeblock}[H]
-\begin{lstlisting}[language=TEPL]
-Reduce(K, Product(Add(X, Y), Z))
-
-Add(Reduce(K, Product(X, Z)),
-    Reduce(K, Product(Y, Z)))
-\end{lstlisting}
-\end{codeblock}
-Here, operand names abbreviate reads under aligned bindings, and $K$ is the
-corresponding contraction group on both sides. Distribution of multiplication
-and summation over addition brings the expressions to a common form when
-the arithmetic policy permits those laws. Section~\ref{sec:axis-mapping}
-explains how the required mappings are represented, composed, and refined.
-
 
 \section{Mapping Derivations and Construction Algorithm}
 \label{app:mapping}
@@ -283,49 +125,26 @@ expressions while preserving axis order and operand pairings.
 
 \subsection{Building and Composing Mapping Tables}
 \label{extended:sec:mapping-tables}
-Each record $(\mathsf{I},G,q)$ satisfies Equation~\eqref{extended:eq:mapping}. We display records
-in tables whose columns denote tensors, whose first row gives the current
-interface, and whose other rows give group positions. A dash means that the
-example has no mapping for that group. Tables can include both registered
-and derivable mappings.
+This appendix derives the complete axis mapping for
+$T=\operatorname{add}(X,Y)$ and $O=\operatorname{dot\_general}(T,Z)$,
+including how operand positions preserve axis order. Unlike
+Figure~\ref{fig:axis-mapping}, this example places addition before dot.
+We assume no broadcasting; ranks and position attributes remain symbolic.
+Write $\rho(G)=\operatorname{range}(|G|)$ for all positions in group $G$.
 
-
-Figure~\ref{fig:axis-mapping} first illustrates the principle with
-\code{T = dot(X,Y);} \code{O = add(T,Z)}. The dot describes its output using $I$ and
-$J$, while addition describes that same interface using $S$. Connecting
-$S\leftrightarrow I\catseq J$ through $T$ aligns the coordinate descriptions
-without changing the arithmetic expression or physical axis order. The
-concrete matrix positions below the symbolic expressions are examples,
-rather than fixed-rank restrictions on the method. Unlike the following
-worked example, the figure places the dot inside the addition; both require
-connecting local descriptions through a shared tensor.
-
-
-We now work through the distribution example
-\code{T = Add(X,Y);} \code{O = dot_general(T,Z)} from
-Section~\ref{extended:sec:composition}. Let $\iota(G)=\operatorname{range}(|G|)$ denote
-all positions in $G$. Ranks and position attributes remain symbolic.
-\paragraph{1. Build addition's interface.}
+\paragraph{1. Establish addition's shared axis order.}
 Addition binds \code{X} and \code{Y} to one ordered group $S$ and yields $S$.
-Its reads and result thus have these mappings:
-\begin{center}
-\begin{tabular}{@{}lccc@{}}\toprule
-Interface/group & $X$ & $Y$ & $T$\\\midrule
-Axis interface & $S$ & $S$ & $S$\\
-$S$ & $\iota(S)$ & $\iota(S)$ & $\iota(S)$\\\bottomrule
-\end{tabular}
-\end{center}
+Thus $X,Y,T$ share the same ordered axis interface, with $S$ located at
+$\rho(S)$ in each tensor.
 
-
-
-\paragraph{2. Establish the dot's operand layouts.}
+\paragraph{2. Locate the dot groups while preserving operand order.}
 The dot introduces batch group $B$, contraction group $K$, and free groups
 $I,J$. Let $b_\ell,b_r$ be its batch attributes, $k_\ell,k_r$ its contraction
 attributes, and $S_Z$ the initial interface of \code{Z}. Free positions are
 \begin{equation}
 \begin{aligned}
- f_\ell&=\ocomp(\iota(S),b_\ell\catseq k_\ell),\\
- f_r&=\ocomp(\iota(S_Z),b_r\catseq k_r).
+ f_\ell&=\ocomp(\rho(S),b_\ell\catseq k_\ell),\\
+ f_r&=\ocomp(\rho(S_Z),b_r\catseq k_r).
 \end{aligned}
 \end{equation}
 Bindings require valid position lists and matching paired extents and must
@@ -341,6 +160,12 @@ Instead, binding positions restore the original order:
 \end{aligned}
 \label{extended:eq:rebuilt-interfaces}
 \end{equation}
+Here $\widehat S$ describes the same ordered axes as $S$ using the dot's
+groups; it does not transpose the tensor. The same holds for
+$\widehat S_Z$ and $S_Z$.
+For example, if the left operand's axes are $[i,k_0,b,k_1]$, concatenating
+$B,K,I$ gives $[b,k_0,k_1,i]$ at positions $[2,1,3,0]$. The inverse
+position list restores the original order $[i,k_0,b,k_1]$.
 Each concatenated position sequence is a permutation because the bindings
 form a complete disjoint partition. Thus
 \begin{equation}
@@ -350,23 +175,10 @@ form a complete disjoint partition. Thus
  \gath(\widehat S,f_\ell)&=I.
 \end{aligned}
 \end{equation}
-The right interface satisfies analogous bindings. Registering these mappings
-and partitions gives
-\begin{center}
-\begin{tabular}{@{}lcc@{}}\toprule
-Interface/group & $T$ & $Z$\\\midrule
-Axis interface & $\widehat S$ & $\widehat S_Z$\\
-$B$ & $b_\ell$ & $b_r$\\
-$K$ & $k_\ell$ & $k_r$\\
-$I$ & $f_\ell$ & --\\
-$J$ & -- & $f_r$\\\bottomrule
-\end{tabular}
-\end{center}
-The interfaces describe the operands in dot coordinates; they do not change
-physical axis order. An existing producer interface is reused when it already
-satisfies the bindings.
+The right interface satisfies analogous bindings. An existing producer
+interface is reused when it already satisfies the bindings.
 
-\paragraph{3. Apply the dot's mappings to \code{X} and \code{Y}.}
+\paragraph{3. Propagate those positions to \code{X} and \code{Y}.}
 Addition describes \code{T} using $S$, whereas the dot describes those same
 axes using $\widehat S$. Since addition preserves order, each axis of its
 output corresponds to the same-position axes in \code{X} and \code{Y}.
@@ -375,150 +187,90 @@ $b_\ell,k_\ell,f_\ell$ in all three tensors. The compiler can now compose
 \code{Reduce(K, Product(Add(X,Y), Z))}, with $K$ referring to corresponding
 coordinates in \code{X}, \code{Y}, and \code{Z}.
 
-\paragraph{4. Extend the table to the output.}
-A later consumer sees the dot's output, where surviving axes occur in output
-order and $K$ is absent. Registering the order $B\catseq I\catseq J$ extends
-the table as follows. The row $\widehat S$ denotes addition's whole-axis group
-after coordinate transport.
+These positions can also be derived through existing mappings. If $q_X$
+locates $\widehat S$ in $X$, Equation~\eqref{eq:gather-composition} locates
+$K$ in $X$ at $\gath(q_X,k_\ell)$. For addition, $q_X$ lists all positions
+in order, so the result simplifies to $k_\ell$.
+
+\paragraph{4. Construct the complete mapping table.}
+The dot yields $B\catseq I\catseq J$, with $K$ summed out. Combining these
+output positions with the operand mappings gives the table below.
+Columns denote tensors; the first row gives each axis interface, and the
+remaining rows give group positions. A dash indicates no mapping in this
+example. The row $\widehat S$ represents addition's whole-axis group using
+the dot's coordinate description.
 \begin{center}
 \begin{tabular}{@{}lccccc@{}}\toprule
 Interface/group & $X$ & $Y$ & $T$ & $Z$ & $O$\\\midrule
 Axis interface & $\widehat S$ & $\widehat S$ & $\widehat S$ & $\widehat S_Z$ & $B\catseq I\catseq J$\\
-$\widehat S$ & $\iota(\widehat S)$ & $\iota(\widehat S)$ & $\iota(\widehat S)$ & -- & --\\
-$B$ & $b_\ell$ & $b_\ell$ & $b_\ell$ & $b_r$ & $\iota(B)$\\
+$\widehat S$ & $\rho(\widehat S)$ & $\rho(\widehat S)$ & $\rho(\widehat S)$ & -- & --\\
+$B$ & $b_\ell$ & $b_\ell$ & $b_\ell$ & $b_r$ & $\rho(B)$\\
 $K$ & $k_\ell$ & $k_\ell$ & $k_\ell$ & $k_r$ & --\\
-$I$ & $f_\ell$ & $f_\ell$ & $f_\ell$ & -- & $|B|+\iota(I)$\\
-$J$ & -- & -- & -- & $f_r$ & $|B|+|I|+\iota(J)$\\\bottomrule
+$I$ & $f_\ell$ & $f_\ell$ & $f_\ell$ & -- & $|B|+\rho(I)$\\
+$J$ & -- & -- & -- & $f_r$ & $|B|+|I|+\rho(J)$\\\bottomrule
 \end{tabular}
 \end{center}
-Adding a length to a position sequence shifts each entry. The entries for
-\code{X} and \code{Y} follow from transporting the dot partition into
-addition's reads; output entries follow from the declared order.
-
-\paragraph{5. Find positions through existing mappings.}
-Not every relationship needs to be stored directly. Suppose $q_X$ locates
-$\widehat S$ in \code{X}, and $k_\ell$ locates $K$ in $\widehat S$:
-\begin{equation}
- \gath(\mathsf{I}_X,q_X)=\widehat S,\qquad \gath(\widehat S,k_\ell)=K.
-\end{equation}
-Composing the selections yields
-\begin{equation}
-\begin{aligned}
- K&=\gath(\widehat S,k_\ell)\\
-  &=\gath(\gath(\mathsf{I}_X,q_X),k_\ell)\\
-  &=\gath(\mathsf{I}_X,\gath(q_X,k_\ell)).
-\end{aligned}
-\label{extended:eq:gather-composition}
-\end{equation}
-Thus the $K,X$ entry is $\gath(q_X,k_\ell)$. For addition, $q_X$ lists all
-positions in order, simplifying this expression to $k_\ell$. Repeated composition
-recovers positions through longer chains. Addition's single group makes the
-correspondence straightforward; selecting across several producer groups
-requires partitioning them to expose finer relationships.
+Adding a length to a position sequence shifts each entry. These output
+offsets therefore follow directly from the declared group order.
 
 
 \subsection{Symbolic Axis Partitioning}
 \label{extended:sec:partitioning}
-Figure~\ref{fig:axis-partitioning} illustrates the information retained when a
-consumer selects across producer groups. Three positions must be distinguished:
-a selected axis's position within its producer group, its slot in the
-consumer's contraction list, and its partner's position in the other operand.
+This appendix derives the subgroup positions, operand pairings, and complete
+mapping table for the dot-reassociation example in
+Section~\ref{sec:partitioning}. Figure~\ref{fig:axis-partitioning} supplies
+the concrete example used throughout.
 
-
-
-\paragraph{1. Why reassociation requires splitting groups.}
-Dot reassociation changes $(XY)Z$ to $X(YZ)$. For generalized dots it must also
-specify the axes contracted by each replacement. Consider this rule, using
-\code{dot} for a dialect's generalized dot:
-\begin{codeblock}[H]
-\begin{lstlisting}[language=TEPL]
-rule associate {
-  (dot[@outer] (dot[@inner] X Y) Z)
-  => (dot[auto] X (dot[auto] Y Z))
-  where {
-    @outer.lhs_batching_dimensions == @inner->B
-  }
-}
-\end{lstlisting}
-\end{codeblock}
-Incompatible batch routing can change a reassociation's result. The guard
-requires the outer dot's left batch list to equal the positions of the inner
-dot's batch group in its result, in the same order. The expression
-\code{@inner->B} denotes those positions. This restricts applicability;
-the completed replacement still requires the checks in
-Sections~\ref{sec:synthesis} and~\ref{sec:correctness}.
-
-Let $T=\operatorname{dot\_general}(X,Y)$. The inner dot contracts $K$ and
+\paragraph{1. Set up the source mappings.}
+Let $T=\operatorname{dot\_general}(X,Y)$ and
+$O=\operatorname{dot\_general}(T,Z)$. The inner dot contracts $K$ and
 yields $\mathsf{I}_T=B\catseq I\catseq J$, with free groups $I$ from \code{X} and
-$J$ from \code{Y}. Write $k_\ell^{\mathrm{outer}},k_r^{\mathrm{outer}}$ for the
+$J$ from \code{Y}. We assume that the \code{where} guard requires the outer
+dot's left batch list to equal the positions of $B$ in $T$, in the same
+order. This restricts applicability; the completed rewrite still requires
+verification. Write $k_\ell^{\mathrm{outer}},k_r^{\mathrm{outer}}$ for the
 outer contraction lists in \code{T} and \code{Z}. Their shared group is
 \begin{equation}
  D=\gath(\mathsf{I}_T,k_\ell^{\mathrm{outer}}).
 \end{equation}
-Since $B$ remains batch, the left contraction selects only from $I,J$.
-Unlike addition's single group, this producer has groups from different
-operands. The outer dot can select part of each, mixing the selected axes
-in $D$. To build \code{dot_general(Y,Z)}, the compiler must separate the
-portion from $J$, which can be contracted there, from the partners of $I$,
-which must survive for the final dot with \code{X}.
+Since $B$ remains batch, $D$ selects only from $I,J$. In the replacement
+\code{dot_general(Y,Z)}, the selected $J$ axes can be contracted, while
+the partners of selected $I$ axes must survive for the final dot with \code{X}.
 
 \paragraph{2. Find the selected part of each producer group.}
-For each producer group, retain both within-group positions and contraction
-slots. Group $I$ occupies
+Write $\rho(G)=\operatorname{range}(|G|)$ for the positions within group $G$.
+The producer groups occupy
 \begin{equation}
- q_I=|B|+\iota(I)
+ q_I=|B|+\rho(I),\qquad q_J=|B|+|I|+\rho(J)
 \end{equation}
-in $\mathsf{I}_T$. Compare this list to the outer selection using
+in $\mathsf{I}_T$. Adding an offset to a position list adds it to every entry.
+For each $G\in\{I,J\}$, compare its positions with the outer contraction list:
 \begin{equation}
- (u_I,v_I)=\mpo(k_\ell^{\mathrm{outer}},q_I).
+ (u_G,v_G)=\mpo(k_\ell^{\mathrm{outer}},q_G).
 \end{equation}
 For distinct-entry sequences $a,b$, the operation
 $\mpo(a,b)=(u,v)$ scans $a$ in order. Whenever $a_i=b_j$, it appends $i$ to
 $u$ and $j$ to $v$. It returns positions in the input lists, rather than
 the shared values. Hence $\gath(a,u)=\gath(b,v)$, with both results empty
-when there is no overlap. For example,
+when there is no overlap. Thus $u_G$ records contraction-list positions,
+while $v_G$ records positions within $G$.
+
+In the figure, $T$ has axes $[i_0,i_1,j_0,j_1]$ and
+$k_\ell^{\mathrm{outer}}=[3,0]$ selects $[j_1,i_0]$.
+Matching against $q_I=[0,1]$ gives $u_I=[1]$, $v_I=[0]$;
+matching against $q_J=[2,3]$ gives $u_J=[0]$, $v_J=[1]$.
+The selected and remaining subgroups are
 \begin{equation}
 \begin{aligned}
- a&=\langle3,0,4\rangle,&b&=\langle0,2,3\rangle,\\
- u&=\langle0,1\rangle,&v&=\langle2,0\rangle.
+ G_{\mathrm{sel}}&=\gath(G,v_G)=\gath(D,u_G),\\
+ w_G&=\ocomp(\rho(G),v_G),\qquad
+ G_{\mathrm{rem}}=\gath(G,w_G).
 \end{aligned}
 \end{equation}
-The two gathers produce $\langle3,0\rangle$, retaining $a$'s order.
-For symbolic inputs, the results remain position expressions until they can
-be evaluated or simplified.
-
-Here $u_I$ locates the selected axes in the contraction list, and $v_I$
-locates them within $I$:
-\begin{equation}
- \gath(k_\ell^{\mathrm{outer}},u_I)=\gath(q_I,v_I).
-\end{equation}
-The selected subgroup is therefore
-\begin{equation}
- \Isel=\gath(I,v_I)=\gath(D,u_I).
-\end{equation}
-The remaining view uses an ordered complement:
-\begin{equation}
- w_I=\ocomp(\iota(I),v_I),\qquad \Irem=\gath(I,w_I).
-\end{equation}
-The selected view follows outer contraction order, whereas the remaining
-view follows $I$'s original order. Their concatenation need not reproduce
-$I$, so the position sequences must be retained. The same construction
-applies to $J$ using $q_J=|B|+|I|+\iota(J)$. For either $G\in\{I,J\}$,
-$u_G,v_G$ locate its selected portion, and
-$w_G=\ocomp(\iota(G),v_G)$ locates its remaining portion. The lengths and
-selected portions remain symbolic.
-
-Partitioning adds the following relationships:
-\begin{center}
-\begin{tabular}{@{}lcccc@{}}\toprule
-Group & In $\mathsf{I}_T$ & In $I$ & In $J$ & In $D$\\\midrule
-$\Isel$ & $\gath(q_I,v_I)$ & $v_I$ & -- & $u_I$\\
-$\Irem$ & $\gath(q_I,w_I)$ & $w_I$ & -- & --\\
-$\Jsel$ & $\gath(q_J,v_J)$ & -- & $v_J$ & $u_J$\\
-$\Jrem$ & $\gath(q_J,w_J)$ & -- & $w_J$ & --\\\bottomrule
-\end{tabular}
-\end{center}
-The $D$ column supplies the connection to \code{Z} through contraction slots.
+Here $\Isel=[i_0]$, $\Irem=[i_1]$, $\Jsel=[j_1]$, and $\Jrem=[j_0]$.
+Selected subgroups follow contraction order; remaining subgroups preserve
+producer order. Their concatenation need not restore the original group.
+For symbolic inputs, these computations remain expressions over position lists.
 
 \paragraph{3. Map selected axes to \code{Z}.}
 The outer dot pairs its left and right lists entry by entry. Selecting slots
@@ -529,24 +281,14 @@ paired with the selected subgroups:
  z_J=\gath(k_r^{\mathrm{outer}},u_J).
 \label{extended:eq:z-partners}
 \end{equation}
-In Figure~\ref{fig:axis-partitioning}, \code{Z} has axes $[z_0,f,z_1]$ and
-right contraction positions $[2,0]$. The left list selects $[j_1,i_0]$.
-Axis $j_1$ occupies contraction slot $0$ and pairs with $z_1$ at position $2$;
-$i_0$ occupies slot $1$ and pairs with $z_0$ at position $0$.
-The selected groups thus retain all three descriptions:
-\begin{center}
-\begin{tabular}{@{}lccc@{}}\toprule
-Selected group & In producer group & Slots in $D$ & In $Z$\\\midrule
-$\Isel$ & $v_I$ & $u_I$ & $z_I$\\
-$\Jsel$ & $v_J$ & $u_J$ & $z_J$\\\bottomrule
-\end{tabular}
-\end{center}
-Combining these entries with producer mappings describes the original
-computation in terms of the refined groups without losing operand pairings.
+In the figure, \code{Z} has axes $[z_0,f,z_1]$ and
+$k_r^{\mathrm{outer}}=[2,0]$. The positions from step 2 give
+$z_I=[0]$ and $z_J=[2]$: $i_0$ pairs with $z_0$, and $j_1$ with $z_1$.
+Using contraction-list positions $u_G$, rather than within-group positions
+$v_G$, preserves these pairings.
 
 \paragraph{4. Extend the original mapping table.}
-The original graph is $T=\operatorname{dot\_general}(X,Y)$ followed by
-$O=\operatorname{dot\_general}(T,Z)$. Write $b_X,k_X,i_X$ for the known
+Write $b_X,k_X,i_X$ for the known
 positions of $B,K,I$ in \code{X}, and $b_Y,k_Y,j_Y$ for those of $B,K,J$ in
 \code{Y}. Composition locates each subgroup: for example,
 $\gath(i_X,v_I)$ locates $\Isel$ in \code{X}. In \code{Z}, let $b_Z$ be the
@@ -566,9 +308,9 @@ entries readable, define
  j_s&=\gath(j_Y,v_J),&j_r&=\gath(j_Y,w_J),\\
  t_{Is}&=\gath(q_I,v_I),&t_{Ir}&=\gath(q_I,w_I),\\
  t_{Js}&=\gath(q_J,v_J),&t_{Jr}&=\gath(q_J,w_J),\\
- o_I&=|B|+\iota(\Irem),\\
- o_J&=|B|+|\Irem|+\iota(\Jrem),\\
- o_H&=|B|+|\Irem|+|\Jrem|+\iota(H).
+ o_I&=|B|+\rho(\Irem),\\
+ o_J&=|B|+|\Irem|+\rho(\Jrem),\\
+ o_H&=|B|+|\Irem|+|\Jrem|+\rho(H).
 \end{aligned}
 \end{equation}
 These are abbreviations for the position expressions, not additional
@@ -582,7 +324,7 @@ this example.}
 \begin{tabular}{@{}lccccc@{}}\toprule
 Group/interface & $X$ & $Y$ & $T$ & $Z$ & $O$\\\midrule
 Axis interface & $\mathsf{I}_X$ & $\mathsf{I}_Y$ & $\mathsf{I}_T$ & $\mathsf{I}_Z$ & $\mathsf{I}_O$\\
-$B$ & $b_X$ & $b_Y$ & $\iota(B)$ & $b_Z$ & $\iota(B)$\\
+$B$ & $b_X$ & $b_Y$ & $\rho(B)$ & $b_Z$ & $\rho(B)$\\
 $K$ & $k_X$ & $k_Y$ & -- & -- & --\\
 $\Isel$ & $i_s$ & -- & $t_{Is}$ & $z_I$ & --\\
 $\Irem$ & $i_r$ & -- & $t_{Ir}$ & -- & $o_I$\\
@@ -600,12 +342,39 @@ disjoint, while groups in different partitions can overlap.
 
 \subsection{General Construction Algorithm}
 \label{extended:sec:mapping-algorithm}
-Algorithm~\ref{alg:mapping} in Section~\ref{sec:mapping-algorithm} processes producers before consumers, connects each
+Algorithm~\ref{alg:mapping} expands the procedure outlined in
+Section~\ref{sec:mapping-algorithm}. It processes producers before consumers, connects each
 operation's bindings to its inputs, and extends mappings to the output.
 Overlap introduces the finer subgroup relationships described above.
 The input is a source graph and its operation definitions; the output comprises
 tensor interfaces, composed value expressions, established mappings,
 and partitions.
+
+\begin{paperalgorithm}[H]
+\caption{Build interfaces, value expressions, and axis mappings.}
+\label{alg:mapping}
+\begin{lstlisting}[language=Python]
+def build_symbolic_axis_mapping(graph):
+    V = initialize_inputs(graph)
+    mappings, partitions = set(), {}
+    for op in producer_first(graph):
+        inputs = [V[t] for t in op.inputs]
+        groups, bindings = resolve_bindings(op, inputs)
+        aligned = []
+        for (axes, value), binding in zip(inputs, bindings):
+            aligned_axes = build_interface(axes, binding)
+            register_mappings(aligned_axes, binding, mappings)
+            refine_and_register(aligned_axes, binding, mappings, partitions)
+            value = transport(value, axes, aligned_axes, mappings, partitions)
+            aligned.append((aligned_axes, value))
+        out_axes = evaluate(op.output_axes, groups)
+        binding = output_positions(op, groups)
+        register_mappings(out_axes, binding, mappings)
+        refine_and_register(out_axes, binding, mappings, partitions)
+        V[op] = (out_axes, compose(op.value, aligned, groups))
+    return V, mappings, partitions
+\end{lstlisting}
+\end{paperalgorithm}
 
 \paragraph{State.}
 The state is $\Sigma=(V,\mathcal M,\Pi)$. For each tensor $t$,
@@ -635,7 +404,7 @@ Every mapping must select its group in the stated order:
  \label{extended:eq:mapping-invariant}
 \end{equation}
 Every partition member satisfies the same invariant, and
-$q_1\catseq\cdots\catseq q_m$ must be a permutation of $\iota(\mathsf{I})$.
+$q_1\catseq\cdots\catseq q_m$ must be a permutation of $\rho(\mathsf{I})$.
 Thus each axis occurs exactly once within one partition, although different
 partitions may overlap. In the addition example,
 $\gath(\langle i,j\rangle,\langle0,1\rangle)=S$, and $\langle0,1\rangle$
@@ -681,7 +450,7 @@ Lookup can return $\gath(q,h)$ or register the corresponding entry. Some
 relationships propagate during construction and others are derived when
 queried; enumerating every possible mapping in advance is unnecessary.
 Local bindings and output order establish local mappings, paired position
-matches establish overlaps, and Equation~\eqref{extended:eq:gather-composition}
+matches establish overlaps, and Equation~\eqref{eq:gather-composition}
 composes them. These operations are designed to maintain the invariant;
 they do not dispense with checking the completed rewrite.
 
@@ -802,6 +571,8 @@ value equivalence still have to be checked after attributes are known.
 
 \subsection{Determine Which Axes Each Operation Preserves}
 \label{extended:sec:keep-axes}
+
+
 After read matching, the logical axes in each RHS input are known, but their
 roles in the replacement may change. The source inner dot contracts $K$;
 the source outer dot contracts $D$, partitioned into $\Isel$ and $\Jsel$.
@@ -812,6 +583,24 @@ To build $U$, the compiler must classify these axes as batch, contraction,
 left-free, or right-free. In particular, $K$ must survive $U$ for a later
 contraction with \code{X}.
 
+\begin{figuretext}{figures/Infer Axis Roles in U.pdf}{An intermediate preserves axes needed outside its computation or in the final output and reduces the remaining shared axes. The figure applies the mandatory-axis rule to the unbatched replacement intermediate $U$.}{fig:infer-u}{A flow compares axes inside the replacement intermediate with axes needed
+outside it and in the output, retaining required axes and contracting the rest.}
+
+
+Here $\Axes(x)$ denotes the set of logical axes in tensor $x$'s interface.
+For one matched product, $\Axes_{\mathrm{in}}(v)$ and
+$\Axes_{\mathrm{out}}(v)$ collect axes used by reads inside and outside
+RHS node $v$'s subtree. Within the read-once fragment, the mandatory-axis
+definition in Equation~\eqref{eq:mandatory-axes} can be written as
+\begin{equation}
+ M_v=\Axes_{\mathrm{in}}(v)\cap
+ \bigl(\Axes_{\mathrm{out}}(v)\cup\Axes(O)\bigr).
+ \label{eq:keep-axes}
+\end{equation}
+This is the same mandatory set $M_v$ used in Section~\ref{sec:canonical-axes};
+the live set $P_v$ may additionally include axes that the operation cannot
+remove. In the general matching path, requirements for a shared intermediate
+must agree across matched products.
 
 Figure~\ref{fig:infer-u} shows the decision for an unbatched instance.
 Starting with axes in \code{Y} or \code{Z}, it first preserves those needed
@@ -819,14 +608,17 @@ by \code{X}, then those required by the final output. The remaining shared
 group, $\Jsel$, can be reduced inside $U$. The figure omits batch group $B$;
 the equations below retain it for the guarded general case.
 
-Apply the mandatory-axis definition in Equation~\eqref{eq:mandatory-axes}
-and the live-set rules in Section~\ref{sec:canonical-axes} to this example.
-Here $\Axes(x)$ is the set of logical axes in tensor $x$'s interface;
-$\Axes_{\mathrm{in}}(U)$ and $\Axes_{\mathrm{out}}(U)$ collect axes used by
-reads inside and outside $U$'s subtree.
-
 For $U$, the inside set is $\Axes(Y)\cup\Axes(Z)$ and the outside set is
-$\Axes(X)$. Using group names as shorthand for all their constituent axes,
+$\Axes(X)$.
+
+Group $K$ occurs inside and outside and so is preserved. $\Jsel$ is needed
+only inside and can be contracted. Although $\Irem$ belongs to the final
+output, it occurs outside $U$ and reaches the final dot through \code{X}.
+At the final dot, $K$ and $\Isel$ are shared by \code{X} and $U$ but absent
+from $O$, so they are reduced together.
+\end{figuretext}
+
+Using group names as shorthand for all their constituent axes,
 \begin{equation}
 \begin{aligned}
  \Axes_{\mathrm{in}}(U)
@@ -837,20 +629,14 @@ $\Axes(X)$. Using group names as shorthand for all their constituent axes,
  M_{U}&=\{B,K,\Isel,\Jrem,H\}.
 \end{aligned}
 \end{equation}
-Group $K$ occurs inside and outside and so is preserved. $\Jsel$ is needed
-only inside and can be contracted. Although $\Irem$ belongs to the final
-output, it occurs outside $U$ and reaches the final dot through \code{X}.
-The resulting decisions are summarized in Table~\ref{tab:keep-decisions}.
-At the final dot, $K$ and $\Isel$ are shared by \code{X} and $U$ but absent
-from $O$, so they are reduced together.
 
 
 
 \paragraph{From required axes to operation groups.}
 The mandatory set identifies coordinates that must survive. Assigning coordinates to
 operation groups additionally uses which operands contain them and whether
-the declared value expression reduces the group. For an operation producing
-$t$ from $x_1,\ldots,x_m$, let $\Axes_i=\Axes(x_i)$, and let $E_g$ be the
+the declared value expression reduces the group. For an RHS node $v$ with
+operands $x_1,\ldots,x_m$, let $\Axes_i=\Axes(x_i)$, and let $E_g$ be the
 nonempty set of operands bound to declared group $g$. Axes appearing in exactly
 those operands form
 \begin{equation}
@@ -860,15 +646,15 @@ those operands form
 For roles that can reduce or preserve those coordinates, a candidate rule is
 \begin{equation}
  \Axes_g=\begin{cases}
- D_g\setminus M_{t},&\text{if the value definition reduces }g,\\
- D_g\cap M_{t},&\text{otherwise.}
+ D_g\setminus M_v,&\text{if the value definition reduces }g,\\
+ D_g\cap M_v,&\text{otherwise.}
  \end{cases}
  \label{extended:eq:group-assignment}
 \end{equation}
 This candidate rule is subject to the full operation contract; it is not a
-replacement for the canonical live-set rules. For a dot, shared axes in $M_t$
-are batch and shared axes outside $M_t$ are contracted. All left-only and
-right-only axes remain free, even if they are outside $M_t$. In this example,
+replacement for the canonical live-set rules. For a dot, shared axes in $M_v$
+are batch and shared axes outside $M_v$ are contracted. All left-only and
+right-only axes remain free, even if they are outside $M_v$. In this example,
 the free axes are mandatory too, giving the following assignments:
 \begin{center}
 \begin{tabular}{@{}lcccc@{}}\toprule
@@ -915,9 +701,9 @@ so both lists select $\Jsel$ in the same order. Free positions are
 \begin{equation}
 \begin{aligned}
  f_Y^U&=\\
- &\ocomp(\iota(\mathsf{I}_Y),b_Y\catseq k_\ell^U),\\
+ &\ocomp(\rho(\mathsf{I}_Y),b_Y\catseq k_\ell^U),\\
  f_Z^U&=\\
- &\ocomp(\iota(\mathsf{I}_Z),b_Z\catseq k_r^U),
+ &\ocomp(\rho(\mathsf{I}_Z),b_Z\catseq k_r^U),
 \end{aligned}
 \end{equation}
 and the dot's output order constructs
@@ -956,7 +742,7 @@ descriptors.
 \begin{tabularx}{\linewidth}{@{}lYY@{}}\toprule
 Attribute & $U=\operatorname{dot}(Y,Z)$ & $O'=\operatorname{dot}(X,U)$\\\midrule
 Left batch & $b_Y$ & $b_X$\\
-Right batch & $b_Z$ & $\iota(B)$\\
+Right batch & $b_Z$ & $\rho(B)$\\
 Left contraction & $\gath(j_Y,v_J)$ & $\gath(i_X,v_I)\catseq k_X$\\
 Right contraction & $z_J$ & $\pos(\mathsf{I}_U,\Isel)$\newline $\catseq\pos(\mathsf{I}_U,K)$\\\bottomrule
 \end{tabularx}
@@ -978,7 +764,7 @@ contraction list, for example,
 \begin{equation}
 \begin{aligned}
  u_J&=\mpo\bigl(k_\ell^{\mathrm{outer}},
-                   |B|+|I|+\iota(J)\bigr)_1,\\
+                   |B|+|I|+\rho(J)\bigr)_1,\\
  k_r^U&=\gath(k_r^{\mathrm{outer}},u_J),
 \end{aligned}
 \label{extended:eq:source-only-example}
@@ -1002,7 +788,8 @@ have the candidate attributes
                   \mathrm{stride}_{\mathrm{outer}}.
 \end{aligned}
 \end{equation}
-These expressions must also satisfy resulting access bounds. Coupled or
+These expressions must also satisfy resulting access bounds and output shape.
+Coupled or
 inverse equations outside the supported fragment remain unresolved.
 
 \paragraph{Check the completed replacement.}
@@ -1032,11 +819,49 @@ leave the rule unresolved.
 
 \subsection{General Synthesis Algorithm}
 \label{extended:sec:synthesis-algorithm}
-Algorithm~\ref{alg:synthesis} in Section~\ref{sec:synthesis-algorithm} uses each operation's declared groups, value expression, and
+\label{sec:synthesis-algorithm}
+Algorithm~\ref{alg:synthesis} describes the general candidate-and-check
+procedure, not the complete mathematical algorithm of
+Section~\ref{sec:mathematical-synthesis}. The ordered contraction/permutation
+path derives ordering requirements before construction, as explained in
+Section~\ref{sec:symbolic-bridge}. The general procedure uses each operation's declared groups, value expression, and
 output order, rather than requiring the replacement to contain dots. Its
 inputs are a rule's source graph, replacement graph with attribute holes,
 operation definitions, and declared conditions. It returns checked attribute
 programs or an unresolved result.
+
+\begin{paperalgorithm}[htbp]
+\caption{Synthesize and check replacement attribute programs.}
+\label{alg:synthesis}
+\begin{lstlisting}[language=Python]
+def synthesize_attribute_programs(rule):
+    V, mappings, partitions = build_symbolic_axis_mapping(rule.lhs)
+    source = normalize(V[rule.lhs].value)
+    skeleton = normalize(arithmetic_skeleton(rule.rhs))
+    match = correspond(source, skeleton)
+    required = required_output_axes(match, V[rule.lhs].axes)
+    bind_replacement_reads(V, match)
+    constructors = {}
+    for op in producer_first(rule.rhs):
+        if op.is_input:
+            continue
+        inputs = [V[t] for t in op.inputs]
+        if op.has_attribute_holes:
+            groups = select_groups(op.definition, inputs, required[op])
+            groups = order_groups(groups, op, source, inputs)
+            for binding in op.unresolved_axis_bindings:
+                axes = inputs[binding.operand].axes
+                G = groups[binding.group]
+                constructors[op, binding.attribute] = positions(axes, G, mappings, partitions)
+            complete_other_attributes(op, inputs, groups, match, constructors)
+        completed = substitute_attributes(op, constructors)
+        V[op] = lower_and_check(completed, inputs, mappings, partitions)
+    check_equivalence(V[rule.lhs], V[rule.rhs])
+    programs = source_only_expressions(constructors)
+    verify_in_fresh_context(rule, programs)
+    return programs
+\end{lstlisting}
+\end{paperalgorithm}
 
 The state retains $(V,\mathcal M,\Pi)$ and adds a table $\mathcal C$ of proposed attribute
 expressions indexed by operation and attribute. In the pseudocode, \code{.axes} and \code{.value} denote the two
@@ -1050,7 +875,7 @@ checked after completion.
 
 
 \code{correspond} matches normalized reads, and \code{required_output_axes}
-computes $M_{t}$ for each replacement intermediate. \code{select_groups}
+computes $M_v$ for each replacement intermediate. \code{select_groups}
 uses operand membership and reduction roles as in
 Section~\ref{extended:sec:keep-axes}. Explicit output-domain groups are separate: they
 come from required output axes absent from every operand, and their sizes

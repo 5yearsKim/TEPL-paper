@@ -1,14 +1,18 @@
-\subsection{Checking Completed TEPL Rules}
+\subsection{Verifying Completed Rewrites}
 \label{sec:correctness}
-Synthesis proposes attributes; mapping queries alone do not establish their
-evaluability, operation legality, or tensor equivalence.
+\label{sec:broader-operators}
+Let $C(p)$ be the rule's \code{where} condition and $f$ its attribute program,
+so that $\beta=f(p)$. Unlike \code{build} in Section~\ref{sec:find}, which
+comes from the mathematical algorithm, $f$ may be user-written or inferred.
+Both receive the same checks under the contract in Equation~\eqref{eq:contract}.
 
-\subsubsection{Checking the Completed Rewrite}
-The verifier substitutes the emitted programs and reconstructs the completed
-rule in a fresh context. Table~\ref{tab:verification-checks} separates the
-four requirements. Reconstructing the rule means deriving its coordinate
-relationships and values from the emitted programs, instead of assuming
-the intermediate conclusions used during synthesis.
+The verifier substitutes the attribute programs and reconstructs the completed
+rewrite in a fresh context. It derives coordinate relationships and values
+from those programs, rather than assuming conclusions used during synthesis.
+Table~\ref{tab:verification-checks} lists the requirements. Only source
+legality and the declared guard may be assumed; any additional conditions
+needed by construction must follow from them.
+
 \begin{table}[!htbp]
 \caption{Checks required for a completed semantic rewrite.}
 \label{tab:verification-checks}
@@ -24,38 +28,25 @@ Output agreement & Results have identical ordered output shapes and
 compatible fixed dtype.\\\bottomrule
 \end{tabularx}
 \end{table}
-\FloatBarrier
-Read matching against a skeleton assists construction but does not establish
-value equivalence. Explicit attribute programs receive the same checks.
-Only source legality and the declared guard may be assumed; additional
-construction conditions must follow from them.
 
-\subsubsection{Correctness Guarantee}
-\label{sec:guarantee}
-The intended guarantee is Equation~\eqref{eq:contract} for every legal guarded
-source instance and every compatible tensor value, under the selected
-arithmetic policy. Strict floating-point equivalence does not follow from
-algebraic reassociation. Theorem~\ref{thm:complete-synthesis} proves constructive soundness for the
-mathematical algorithm. The current C++ implementation, its broader verifier,
-and the full symbolic translation are not claimed formally proved sound.
+Here $C(p)$ means that evaluating \code{where} successfully returns
+\code{true}. Whenever it holds, the attribute program must evaluate without
+errors, respecting the language's evaluation order and short-circuiting
+rules. Undefined attribute computation cannot satisfy the contract.
 
-Assumptions include correct operation definitions, sound primitive metadata
-and index checks, admissible coordinate frames, and faithful evaluation of
-partial attribute programs. Checked arithmetic, coordinate transport, and
-guard evaluation are implementation obligations. Fresh-context checking
-separates verification from construction conclusions, but both paths share
-semantic infrastructure; that separation alone establishes no implementation
-soundness result.
+Within the theorem's assumptions and compatible dtype and arithmetic
+conditions, using its constructor reduces the obligation to
+\begin{equation}
+ \forall p,\quad
+ \operatorname{Legal}_L(p)\land C(p)\Rightarrow\operatorname{check}(p).
+ \label{eq:guard-feasibility}
+\end{equation}
+This implication must hold for every legal match satisfying the guard.
+Deciding feasibility for individual metadata instances does not provide
+a complete procedure for proving this universal implication.
 
-\subsubsection{Scope and Limitations}
-The general TEPL synthesis and verification procedures remain incomplete. Ambiguous read correspondence, unsupported coupled
-or inverse equations, executable expressions beyond the reasoning fragment,
-unavailable arithmetic laws, and bounded normalization or coordinate work
-can prevent acceptance. Several read-coordinate assignments must remain
-unresolved unless agreement is established. TEPL claims neither all valid
-attribute programs nor weakest sufficient guards.
-
-Diagnostics should distinguish malformed rules, unsupported or unresolved
-reasoning, and exhausted work budgets. Rejection as unproved is not a
-counterexample. Structural rules receive structural checks and do not carry
-the intended semantic-equivalence guarantee.
+Broader operations, including slice, convolution, and operations involving
+cancellation, use the same verification contract without the theorem's
+completeness guarantee for discovering attributes. Their completed RHS
+is checked directly. Appendix~\ref{extended:sec:emit-programs} illustrates
+attribute construction and checking for composed slices.

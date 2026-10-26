@@ -1,27 +1,21 @@
 \FloatBarrier
-\section{Symbolic Axis Mapping and Attribute Programs}
+\section{From Mathematical Synthesis to Symbolic Programs}
 \label{sec:method}
 The preceding sections define and prove a mathematical synthesis algorithm.
-We now describe TEPL's symbolic machinery: Axes IR represents ordered groups
-of arbitrary length, mapping connects coordinates across operations, and
-program generation expresses replacement attributes using source metadata.
-This machinery is a separate contribution from the completeness theorem.
-The general synthesis path also handles cases outside that theorem.
+The implementation challenge is to perform this reasoning before concrete
+tensor ranks and source attribute values are known.
+Following Section~\ref{sec:mathematical-synthesis}, the compiler must
+determine which axes each RHS operation retains, their output order,
+and their positions in its operands. These decisions must be expressed
+symbolically to produce attribute programs that work across different
+input ranks and source attribute values.
 
-For notation, $\mathsf I_t$ is a symbolic ordered interface, while $P_v$
-remains the mathematical live-axis set. Mapping records use position lists
-$q$ and a table $\mathcal M$; $p$ remains source metadata. We write
-$\iota(G)=\operatorname{range}(|G|)$, reserving $\rho_v$ for declaration
-adapters. The reassociation example uses $D$ for the outer contraction group
-and $H$ for the final free group, leaving $L,R$ for rewrite expressions and
-$F$ for the entire target output order.
-
-We introduce these steps with dot distribution and then follow dot
-reassociation through mapping, synthesis, and verification. Distribution
-illustrates attribute reuse; reassociation requires constructing new
-descriptors for a different intermediate tensor. All algebraic transformations
-in these examples require the stated guards and an arithmetic policy that
-permits the relevant laws.
+TEPL addresses this through three mechanisms. Axes IR represents varying
+numbers of axes as ordered symbolic groups. Symbolic axis mapping connects
+these groups across operations while preserving their positions and pairings.
+Attribute program synthesis uses these mappings to generate expressions
+that compute replacement attributes from source metadata.
+The following subsections explain these mechanisms through concrete examples.
 \input{sections/05a-axes-ir}
 \input{sections/05b-axis-mapping}
 \input{sections/05c-synthesis}

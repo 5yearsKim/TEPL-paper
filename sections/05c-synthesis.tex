@@ -1,327 +1,121 @@
 \subsection{Attribute Program Synthesis}
 \label{sec:synthesis}
-Synthesis matches value expressions, determines which axes each replacement
-operation preserves or reduces, and queries mappings for its attributes.
-Figure~\ref{fig:auto-matching} previews distribution: matching reads in the
-normalized source and RHS arithmetic skeleton supplies coordinate
-correspondence before replacement attributes are known. With no broadcasting
-and order-preserving addition, both replacement dots reuse the source
-descriptor. The figure's $A[I,K],B[I,K],C[K,J]$ abbreviate group coordinates,
-not necessarily contiguous layouts; question marks denote unresolved
-reductions. Construction precedes equivalence checking.
+Section~\ref{sec:mathematical-synthesis} establishes how to select intermediate
+axes, satisfy ordering requirements, and construct attributes. This section
+explains how TEPL expresses these decisions using symbolic groups and mappings
+to generate reusable attribute programs. We retain its notation: $M_v$ denotes
+mandatory axes, $P_v$ the canonical live set, and $Req_v$ the required axis order.
+Symbolic groups represent these axes without fixing their number.
 
-\paperfigure{1}{figures/Attribute synthesis_ from rules to attributes.pdf}{Matching normalized operand reads supplies coordinate correspondences for constructing replacement attributes.}{fig:auto-matching}{Three stages connect a distribution rule and operation semantics to normalized
-terms, read matching, position queries, and completed replacement descriptors.}
-For reconstruction beyond reuse, continue reassociation with source
-$T=\operatorname{dot}(X,Y)$, replacement $U=\operatorname{dot}(Y,Z)$,
-and final outputs $O,O'$.
-
-\FloatBarrier
-\Needspace{7\baselineskip}
-\subsubsection{Value Expression Normalization}
+\subsubsection{Match Source and Replacement Computations}
 \label{sec:normalization}
-A normalized expression is a sum of terms with coefficients, indexed reads,
-and symbolic reduction sequences, similar in representation to SPORES's
-R-polynomials~\cite[Section~2.3, Definition~2.4]{spores}:
+The compiler first identifies which source coordinates correspond to each
+RHS operand read. It normalizes value expressions into sums of products,
+similar to SPORES's R-polynomial representation~\cite[Section~2.3, Definition~2.4]{spores}.
+Each term records a coefficient, indexed reads, and reduction axes:
 \begin{equation}
  t=(c,[r_1,\ldots,r_m],\mathcal D),\qquad
- \operatorname{value}(t)=\sum_{\mathcal D} c\prod_{i=1}^{m}r_i.
+ \operatorname{value}(t)=\sum_{\mathcal D}c\prod_{i=1}^{m}r_i.
  \label{eq:normalized-term}
 \end{equation}
-Reads retain tensor identity and coordinates. The empty product is 1, an empty
-reduction sequence means no summation, and an empty term list denotes zero.
-The representation similarity transfers no completeness claim.
-For reassociation, $\sum_D(\sum_K XY)Z$ normalizes to $\sum_{D,K}XYZ$
-only after establishing that $Z$ is independent of $K$, the reduction groups
-are disjoint, and the selected arithmetic policy permits the required laws.
+The reads retain tensor identity and coordinates. For reassociation,
+normalization combines the nested reductions into $\sum_{D,K}XYZ$ under
+the permitted arithmetic laws, with $Z$ independent of $K$ and the reduction
+groups disjoint.
 
-Normalization separates the grouping of arithmetic operations from the
-coordinates of their reads. For example, $X(Y+Z)$ produces two terms with
-reads $[X,Y]$ and $[X,Z]$, while the reassociation example produces one term
-with reads $[X,Y,Z]$. In the latter case the compiler proceeds as follows:
-\begin{equation}
- \sum_D\left(\sum_K XY\right)Z
- \;=\;\sum_D\sum_K XYZ
- \;=\;\sum_{D,K}XYZ.
-\end{equation}
-The inner dot contributes $X,Y$ and reduction group $K$; multiplication
-adds the read of $Z$; the outer dot contributes $D$. The normalized term
-therefore retains both the reads and the full reduction sequence $D\catseq K$.
-Operand names here abbreviate indexed reads with the source mappings already
-established.
+Unknown RHS attributes leave its reduction axes and read coordinates
+unspecified. The compiler therefore matches the source against an
+\emph{arithmetic skeleton} of the RHS, which expands the declared value
+operations while temporarily omitting axis information. Matching corresponding
+reads supplies the source coordinates used for construction; it does not yet
+establish equivalence of the completed rewrite.
 
-Unknown RHS attributes leave its reductions and coordinates unavailable.
-Synthesis therefore normalizes an \emph{arithmetic skeleton} that expands
-value operations while temporarily omitting axes. The skeleton of $X(YZ)$
-contains reads $[X,Y,Z]$ and coefficient 1; its empty reduction sequence does
-not assert that the completed RHS has no reductions. Corresponding terms and
-reads reuse source coordinates. Multiple possible assignments must be shown
-to agree or remain unresolved. Read correspondence guides construction;
-coefficients, reduction domains, and full equivalence are checked afterward.
+\paperfigure{1}{figures/Attribute synthesis_ from rules to attributes.pdf}{Matching normalized operand reads supplies coordinate correspondences for constructing replacement attributes. In dot distribution without broadcasting, both replacement dots reuse the source attributes. Group labels denote logical coordinates, and question marks indicate unresolved reductions.}{fig:auto-matching}{Three stages connect a distribution rule and operation semantics to normalized
+terms, read matching, position queries, and completed replacement descriptors.}
+Figure~\ref{fig:auto-matching} illustrates matching for dot distribution.
+For the reassociation example, the same process identifies $Y,Z$ as the
+inputs to the new intermediate $U=\operatorname{dot}(Y,Z)$ and $X$ as
+the other input to the final dot $O'=\operatorname{dot}(X,U)$.
+Their logical axes come from the source mappings in
+Section~\ref{sec:partitioning}. Appendix~\ref{extended:sec:normalization}
+details normalization and read matching.
 
-For $X(YZ)$, matching identifies the reads of $Y$ and $Z$ as inputs to the
-new intermediate $U$, and the read of $X$ as an input to the final dot.
-Each read receives the corresponding source coordinates. This establishes
-which logical axes occur in each replacement input, but leaves their new
-roles open: an axis reduced by one source operation may need to survive a
-different operation in the replacement.
-
-\subsubsection{Determine Which Axes Each Operation Preserves}
+\FloatBarrier
+\subsubsection{Apply Axis Selection and Attribute Construction}
 \label{sec:keep-axes}
-Read correspondence identifies the logical axes used by each replacement subtree.
-An intermediate must preserve coordinates needed outside its replacement
-subtree or in the final output. For one matched product, let
-$\Axes_{\mathrm{in}}(t)$ and $\Axes_{\mathrm{out}}(t)$ collect logical axes
-used by reads inside and outside that subtree; $\Axes(O)$ denotes source
-output axes. The required set is
-\begin{equation}
-\begin{aligned}
- M_{t}&=\Axes_{\mathrm{in}}(t)\cap\\
- &\quad(\Axes_{\mathrm{out}}(t)\cup\Axes(O)).
-\end{aligned}
-\label{eq:keep-axes}
-\end{equation}
-For one read-once component, this is $M_t$ from
-Equation~\eqref{eq:mandatory-axes}. It is the mandatory set, not necessarily
-the actual live set $P_t$: an operation may be unable to remove an unnecessary
-axis. Use Equation~\eqref{eq:canonical-roles} for contraction roles and
-Section~\ref{sec:ordering-feasibility} for the complete algorithm's order
-checks. In the general matching path, shared intermediate requirements must
-agree across matched products. Axes used only inside can be reduced where semantics
-permit; axes used only outside need not pass through $t$.
-
-The preservation rule follows from what reduction removes. Once an
-intermediate sums over an axis, its consumers can no longer select a value
-at a particular coordinate of that axis. An outside read that uses the same
-coordinate must still pair with the intermediate at that coordinate.
-Similarly, an output axis must survive to distinguish output elements.
-These two requirements explain the union in Equation~\eqref{eq:keep-axes}.
-The intersection excludes coordinates that never occur inside the
-intermediate's computation.
-
-For $U$, the inside reads are $Y,Z$ and the outside read is $X$. Source
-mappings give $Y$ the groups $B,K,\Jsel,\Jrem$ and $Z$ the groups
-$B,\Isel,\Jsel,H$. These lists state membership, not physical order.
-Table~\ref{tab:keep-decisions} explains each decision. In particular, $K$
-was reduced by the source inner dot but must survive $U$ to pair with $X$.
-Conversely, $\Irem$ is needed in the final output but need not pass through
-$U$: it reaches the final dot directly through $X$.
-\begin{table}[!htbp]
-\caption{Axes retained or reduced by the replacement intermediate $U$.}
-\label{tab:keep-decisions}
-\begin{tabularx}{\linewidth}{@{}lYY@{}}\toprule
-Group & Reason & Role in $U$\\\midrule
-$B$ & Used by $X$ and retained in $O$ & Batch axes\\
-$K$ & Needed to pair with $X$ later & Left-free axes\\
-$\Isel$ & Needed to pair with $X$ later & Right-free axes\\
-$\Jsel$ & Needed only inside $U$ & Contraction axes\\
-$\Jrem,H$ & Retained in the final output & Left-free and right-free axes\\\bottomrule
-\end{tabularx}
-\end{table}
-\FloatBarrier
-\begin{figuretext}{figures/Infer Axis Roles in U.pdf}{An intermediate preserves axes needed outside its computation or in the final output and reduces the remaining shared axes.}{fig:infer-u}{A flow compares axes inside the replacement intermediate with axes needed
-outside it and in the output, retaining required axes and contracting the rest.}
-Figure~\ref{fig:infer-u} applies this rule to unbatched $U$: $K$ survives for
-contraction with $X$, $\Jrem,H$ survive for output, and $\Isel$ survives to
-pair with $X$. Only $\Jsel$ can be reduced inside $U$. The guarded general
-case also preserves batch group $B$.
-
-The same reasoning uses the declared groups of other operations. For a group
-$g$ bound to operands in a nonempty set $E_g$, first select the axes occurring
-in exactly those operands:
-\begin{equation}
- \begin{aligned}
- D_g&=\left(\bigcap_{i\in E_g}\Axes(x_i)\right)\\
- &\quad\setminus\left(\bigcup_{i\notin E_g}\Axes(x_i)\right).
- \end{aligned}
-\end{equation}
-For groups whose role can switch between reduction and preservation,
-$D_g\setminus M_t$ gives reduction candidates and $D_g\cap M_t$ gives
-preservation candidates. This candidate rule must also respect the operation's
-full contract: a dot retains every one-sided free axis, even outside $M_t$.
-For a dot, both batch and contraction groups occur in both operands.
-Whether their coordinates must survive distinguishes the two roles.
-This assigns membership; ordered positions are constructed next.
-Ambiguous declared roles remain unresolved, and explicit output-domain groups
-are handled separately.
-
-The table lists group membership; free axes retain operand order.
-\begin{center}
-\begin{tabular}{@{}lcc@{}}\toprule
-Role & $U$ & $O'$\\\midrule
-Batch & $B$ & $B$\\
-Contracted & $\Jsel$ & $K,\Isel$\\
-Left free & $K,\Jrem$ & $\Irem$\\
-Right free & $\Isel,H$ & $\Jrem,H$\\\bottomrule
-\end{tabular}
-\end{center}
-\end{figuretext}
-\FloatBarrier
-\subsubsection{Construct Attributes from the Mapping Table}
 \label{sec:attribute-construction}
-A query $\pos(\mathsf{I},G)$ returns positions selecting ordered group $G$ in $\mathsf{I}$.
-Both sides of a paired binding query the same group order.
+Within the mathematical fragment, the compiler represents the mandatory and
+live sets from Section~\ref{sec:canonical-axes} using symbolic groups.
+The contraction roles follow Equation~\eqref{eq:canonical-roles}, and
+Section~\ref{sec:ordering-feasibility} supplies the required-order checks.
+This keeps the distinction between $M_v$ and $P_v$: an operation may have to
+retain axes beyond those that are mandatory.
+
+For $U$, the reads inside the replacement subtree are $Y,Z$, while $X$
+lies outside it. Applying these rules preserves $K$ and $\Isel$ for the
+later contraction with $X$, and $\Jrem,H$ for the final output, where
+$H$ is the source outer dot's right-free group from $Z$. The shared group
+$\Jsel$ is contracted, and $B$ remains batch.
+Appendix~\ref{extended:sec:keep-axes} gives the complete role assignment.
+
+Section~\ref{sec:formal-construction} constructs attributes by converting
+ordered logical axes into operand positions. TEPL implements this step
+through symbolic mapping queries: $\pos(\mathsf{I},G)$ locates ordered
+group $G$ in interface $\mathsf{I}$. For example, $U$'s contraction lists are
+\begin{equation}
+ k_\ell^U=\pos(\mathsf{I}_Y,\Jsel),\qquad
+ k_r^U=\pos(\mathsf{I}_Z,\Jsel).
+ \label{eq:symbolic-contraction-queries}
+\end{equation}
+Both queries select the same group order, preserving operand pairings.
+
 \begin{figuretext}{figures/Constructing Dot Attributes from Axis Mappings.pdf}{Paired position queries construct dot attributes; the completed intermediate supplies mappings for the final dot.}{fig:attribute-construction}{Paired queries on Y and Z construct the inner dot, an interface bridge
 establishes U's layout, and paired queries on X and U construct the final dot.}
-Figure~\ref{fig:attribute-construction} first constructs $U$'s contraction
-lists, then uses $U$'s completed interface for the final dot. Its unbatched
-example abbreviates contraction fields and writes $G=\Isel\catseq K$.
-Group chips indicate membership, not physical order.
+Figure~\ref{fig:attribute-construction} shows how construction proceeds
+from $U$ to the final dot. Its unbatched example writes
+$G=\Isel\catseq K$ for the final contraction group.
 
-Let $b_X,b_Y,b_Z$ locate $B$, let $k_X,i_X$ locate $K,I$ in $X$, and let
-$j_Y$ locate $J$ in $Y$. Equation~\eqref{eq:z-partners} gives $z_J$.
-For $U$, batch lists are $b_Y,b_Z$ and contraction lists are
-$\gath(j_Y,v_J),z_J$. Taking ordered complements of those positions gives
-free lists $f_Y^U,f_Z^U$ and interface
-\begin{equation}
-\begin{aligned}
- \mathsf{I}_U&=B\catseq\gath(\mathsf{I}_Y,f_Y^U)\\
- &\quad\catseq\gath(\mathsf{I}_Z,f_Z^U).
-\end{aligned}
-\label{eq:u-interface}
-\end{equation}
-This retains physical operand order even when surviving groups interleave.
+After constructing $U$'s attributes, the compiler derives its ordered
+interface $\mathsf{I}_U$ and records its group positions. The final dot
+then queries this interface for its own attributes.
 
-The compiler publishes the resulting $\mathsf{I}_U$ and its group mappings before
-constructing the final dot. Merely listing $U$'s retained groups would not
-specify this layout: $K$ and $\Jrem$ can be interleaved in $Y$, and
-$\Isel$ and $H$ can be interleaved in $Z$. Ordered complements retain
-those arrangements, and the dot's output convention places the left free
-axes before the right free axes.
+As in Equation~\eqref{eq:constructed-order}, the output places batch axes
+first, then left-free and right-free axes in operand order. A list of
+retained groups alone is insufficient: surviving groups can be interleaved
+within an operand. The symbolic interface preserves that order.
 
+Appendix~\ref{extended:sec:attribute-construction} derives both replacement
+descriptors and their output interfaces.
 \end{figuretext}
-In particular, the free lists are
-\begin{equation}
-\begin{aligned}
- f_Y^U&=\ocomp(\iota(\mathsf{I}_Y),b_Y\catseq\gath(j_Y,v_J)),\\
- f_Z^U&=\ocomp(\iota(\mathsf{I}_Z),b_Z\catseq z_J).
-\end{aligned}
-\end{equation}
-The final dot uses batch lists $b_X,\iota(B)$ and contraction lists
-\begin{equation}
-\begin{aligned}
- k_\ell^{O'}&=\gath(i_X,v_I)\catseq k_X,\\
- k_r^{O'}&=\pos(\mathsf{I}_U,\Isel)\catseq\pos(\mathsf{I}_U,K).
-\end{aligned}
-\end{equation}
-Both lists select $\Isel\catseq K$, following source reduction order
-$D\catseq K$ filtered to the remaining contractions. Fixed bindings determine
-order when present; otherwise construction prefers source reduction or output
-order, then operand order. Removing contractions leaves
-$\mathsf{I}_{O'}=B\catseq\Irem\catseq\Jrem\catseq H=\mathsf{I}_O$.
-These are candidate attributes, still subject to legality and value checking.
 
 \FloatBarrier
-\subsubsection{Produce and Verify Attribute Programs}
+\subsubsection{Generate Reusable Attribute Programs}
 \label{sec:emit-programs}
-The compiler resolves group queries and intermediate interfaces to source
-attributes and shapes. For example,
+The compiler resolves position queries into expressions over source
+attributes and shapes. For $U$'s right contraction list, the mappings from
+Section~\ref{sec:partitioning} give
 \begin{equation}
  k_r^U=\gath\bigl(k_r^{\mathrm{outer}},
- \mpo(k_\ell^{\mathrm{outer}},|B|+|I|+\iota(J))_1\bigr),
+ \mpo(k_\ell^{\mathrm{outer}},|B|+|I|+\rho(J))_1\bigr),
  \label{eq:source-only-example}
 \end{equation}
-where subscript 1 selects the first returned list. Group lengths also derive
-from source metadata. Emitted programs contain no unresolved RHS attributes
-or logical-group queries and do not access tensor elements.
+where subscript 1 selects the first returned list. This expression finds
+which outer contraction entries select axes from $J$, then selects their
+partners in $Z$. Group lengths also derive from source metadata.
 
-The expression has two steps: find which outer contraction slots select
-axes from $J$, then select their partners from the right contraction list.
-In the partitioning figure, those steps yield $u_J=[0]$ and $k_r^U=[2]$.
-The emitted expression keeps the symbolic operations, so it can compute
-different lists for other legal matches of the same rule. Queries involving
-$\mathsf{I}_U$ are resolved by substituting its constructed layout and composing
-mappings until only source attributes and shapes remain. Thus synthesis
-produces a reusable computation for each attribute, rather than a single
-list for one tensor shape.
+Queries involving $\mathsf{I}_U$ substitute its constructed layout and
+compose mappings until only source metadata remains. The resulting programs
+contain no unresolved RHS attributes or logical-group queries. They are
+generated once per rule and evaluated on each match, allowing attribute
+lists to vary with tensor ranks and source attributes.
 
-Supported calculated accesses additionally match index coefficients and
-offsets. For example, two static slices access the original input at
-$s_i+d_i(s_o+d_o h)$, where $s_i,d_i$ are the inner start and stride,
-$s_o,d_o$ are the outer ones, and $h$ is an output coordinate. Expanding this
-expression gives candidate attributes for a combined slice:
-\begin{equation}
- s'=s_i+d_i s_o,\qquad d'=d_i d_o.
-\end{equation}
-The calculation applies per axis; resulting access bounds and output shape
-still require checking. This illustrates how index expressions supply
-attributes beyond axis-position lists. Coupled or inverse equations beyond
-the supported fragment remain unresolved.
-
-The completed RHS reduces $\Jsel$ inside $U$ and $\Isel\catseq K$ in the
-final dot. Its actual reads, coefficients, reduction domains, and output
-interface can now be compared with the source under permitted laws.
-In abbreviated indexed notation, the comparison is
-\begin{equation}
- e_{\mathrm{RHS}}
- =\sum_{\Isel,K}X\left(\sum_{\Jsel}YZ\right)
- =\sum_{\Isel,K,\Jsel}XYZ.
-\end{equation}
-The selected subgroups cover $D$, and their mappings retain the original
-operand pairings. This allows comparison with the source's
-$\sum_{D,K}XYZ$ when the arithmetic policy permits the required changes
-in reduction order. The check uses the actual constructed descriptors and
-output layout.
-A fresh context reconstructs the completed rule from emitted programs.
-Construction obligations must follow from source legality and the declared
-guard; they cannot become new assumptions.
-
-\subsubsection{General Synthesis Algorithm}
-\label{sec:synthesis-algorithm}
-Algorithm~\ref{alg:synthesis} describes the general candidate-and-check path,
-not the complete mathematical algorithm of
-Section~\ref{sec:mathematical-synthesis}. The ordered contraction/permutation
-path propagates requirements first, as explained in
-Section~\ref{sec:symbolic-bridge}. The general path retains $(V,\mathcal M,\Pi)$ and proposed
-constructors $\mathcal C$. After source normalization and read matching, it processes
-replacement operations after their inputs, selects and orders groups, fills
-attributes through position and supported index queries, and lowers each
-completed operation. Every completed node must have legal resolved attributes,
-a consistent interface and value expression, and valid mappings.
-Explicit output-domain groups come from required output axes absent from all
-operands; their sizes determine domain attributes. Whole-rule checking,
-source-only resolution, and fresh-context verification precede success.
-Unsupported or unproved steps return unresolved results.
-
-\begin{paperalgorithm}[H]
-\caption{Synthesize and check replacement attribute programs.}
-\label{alg:synthesis}
-\begin{lstlisting}[language=Python]
-def synthesize_attribute_programs(rule):
-    V, mappings, partitions = build_symbolic_axis_mapping(rule.lhs)
-    source = normalize(V[rule.lhs].value)
-    skeleton = normalize(arithmetic_skeleton(rule.rhs))
-    match = correspond(source, skeleton)
-    required = required_output_axes(match, V[rule.lhs].axes)
-    bind_replacement_reads(V, match)
-    constructors = {}
-    for op in producer_first(rule.rhs):
-        if op.is_input:
-            continue
-        inputs = [V[t] for t in op.inputs]
-        if op.has_attribute_holes:
-            groups = select_groups(op.definition, inputs, required[op])
-            groups = order_groups(groups, op, source, inputs)
-            for binding in op.unresolved_axis_bindings:
-                axes = inputs[binding.operand].axes
-                G = groups[binding.group]
-                constructors[op, binding.attribute] = positions(axes, G, mappings, partitions)
-            complete_other_attributes(op, inputs, groups, match, constructors)
-        completed = substitute_attributes(op, constructors)
-        V[op] = lower_and_check(completed, inputs, mappings, partitions)
-    check_equivalence(V[rule.lhs], V[rule.rhs])
-    programs = source_only_expressions(constructors)
-    verify_in_fresh_context(rule, programs)
-    return programs
-\end{lstlisting}
-\end{paperalgorithm}
-The table $\mathcal C$ is indexed by both operation and attribute, so the two
-replacement dots can have different constructors for identically named
-fields. This makes explicit the scope of each proposed expression.
-\code{lower_and_check} publishes a completed operation's interface and
-mappings for its consumers, as $U$ supplies the layout needed by the final
-dot. \code{complete_other_attributes} handles supported index expressions,
-output domains, and output permutations. The last three steps check the
-whole replacement, resolve programs to source metadata, and reconstruct the
-rule in a fresh context. Appendix~\ref{app:synthesis} gives further details
-on the helper operations and their unresolved outcomes.
+TEPL verifies the completed rewrite using the emitted programs under source
+legality and the declared \code{where} condition.
+Section~\ref{sec:condition-suggestions} explains this verification.
+The current ordered path covers contraction and permutation
+(Section~\ref{sec:symbolic-bridge}). A broader synthesis procedure proposes attributes for supported
+operations outside the mathematical fragment and checks the result; it
+does not inherit the fragment's completeness guarantee.
+Appendix~\ref{extended:sec:synthesis-algorithm} gives the full procedure,
+and Appendix~\ref{extended:sec:emit-programs} describes supported
+index-expression inference.

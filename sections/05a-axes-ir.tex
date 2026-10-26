@@ -1,98 +1,109 @@
 \subsection{Axes IR}
 \label{sec:axes-ir}
-Axes IR separates ordered coordinate relationships from scalar value
-computation. This shared representation lets the compiler compose operation
-semantics, construct attributes, and check completed rewrites.
+Axes IR describes an operation's axis connections, output axis order,
+and element computation. It provides a common representation for composing
+operations, constructing replacement attributes, and checking rewrites.
 
 \subsubsection{Symbolic Axis Groups}
 \label{sec:axis-groups}
-A symbolic group is an ordered sequence of arbitrary length. Unlike
-TensorRight's set-based aggregated axes~\cite{tensorright}, TEPL records group
-order and positions for attribute construction. An interface
+We represent logical axes using \emph{symbolic groups}: ordered sequences
+of arbitrary length that let one operation definition handle different
+tensor ranks. While TensorRight's aggregated axes are set-based~\cite{tensorright},
+TEPL preserves axis order and operand positions for pairing axes and
+constructing attributes. An interface
 $\mathsf{I}=\langle a_0,\ldots,a_{n-1}\rangle$ lists a tensor's logical axes in dimension
-order. A zero-based position sequence $q$ locates an ordered group $G$:
+order. For tensor $t$, we write this interface as $\mathsf{I}_t$.
+A zero-based position sequence $q$ locates an ordered group $G$:
 \begin{equation}
  \gath(\mathsf{I},q)=G.
  \label{eq:mapping}
 \end{equation}
-Axis identity is distinct from extent. A group preserves its constituent
-coordinates rather than flattening them, and can be empty where permitted.
-\begin{figuretext}{figures/Symbolic axis groups.pdf}{Ordered, arbitrary-length axis groups preserve operand pairings and determine output order.}{fig:axis-groups}{Four arbitrary-length groups for batch, left-free, contraction, and right-free
+For example, if $\mathsf{I}=\langle i,k,j\rangle$ and $q=[2,0]$,
+then $G=\langle j,i\rangle$: positions 2 and 0 select $j$ and $i$,
+in that order.
+
+
+\begin{figuretext}{figures/Symbolic axis groups.pdf}{Symbolic axis groups for generalized dot. Attribute lists bind the batch
+($B$), contraction ($K$), and free ($I,J$) groups to operand positions.
+Paired axes share coordinates, and summing over $K$ leaves output order
+$B\catseq I\catseq J$.}{fig:axis-groups}{Four arbitrary-length groups for batch, left-free, contraction, and right-free
 axes are connected to operand position lists and an output-axis construction.}
-A \code{bind} associates a group with operand positions. Two operands binding
-the same group pair their selected axes in list order, requiring equal lengths
-and corresponding extents. Equal sizes alone do not establish pairing.
+Each operation defines its Axes IR representation through two blocks:
+\code{axes} and \code{semantics}.
 
-Figure~\ref{fig:axis-groups} shows dot groups $B,I,K,J$ for batch, left-free,
-contraction, and right-free axes. Selecting \code{[2,3]} in \code{X} and
-\code{[5,2]} in \code{Y} identifies the same ordered $K$ despite different
-physical layouts. Reducing $K$ leaves output $B\catseq I\catseq J$.
+The \code{axes} block declares symbolic groups with \code{bind}, which
+associates each group with positions in its operands. Binding the same
+group in two operands pairs their selected axes in list order.
+The block's \code{yield} specifies the output axis order.
 
-The dot's four attributes give batch and contraction positions in both
-operands. Ordered complements select free positions. The definition below
-connects these positions to the groups and the output computation.
+The \code{semantics} block describes how each output element is computed
+using the groups defined in \code{axes}. For example, a dot multiplies
+operand elements at paired coordinates and sums over its contraction group.
+
+Figure~\ref{fig:axis-groups} gives a concrete example of dot's symbolic
+axis groups and their operand bindings.
+
+Listing~\ref{lst:dot-declaration} shows how this representation is written
+in a TEPL operation declaration. The \code{dot} attributes \code{lb},
+\code{rb}, \code{lc}, and \code{rc} supply the batch and contraction
+positions used by its \code{axes} bindings; its \code{semantics} block
+computes the output values.
+
 \end{figuretext}
-For brevity, let \code{lb}, \code{rb}, \code{lc}, and \code{rc} denote
-the left and right batch and contraction attributes. The following excerpt
-combines the dot's axis bindings and value semantics:
+
+
 \begin{codeblock}[H]
-\begin{lstlisting}[language=TEPL]
-axes {
-  let lf = ordered_complement(all_axes(lhs), lb ++ lc);
-  let rf = ordered_complement(all_axes(rhs), rb ++ rc);
-  bind B { lhs: lb, rhs: rb };
-  bind K { lhs: lc, rhs: rc };
-  bind I { lhs: lf };
-  bind J { rhs: rf };
-  yield B ++ I ++ J;
-}
-semantics {
-  yield Reduce(K, Product(lhs, rhs));
+\begin{lstlisting}[language=TEPL,
+  caption={Axes IR representation of generalized dot, with explicit attributes, axis bindings, and value semantics.},
+  label={lst:dot-declaration}]
+op dot(lhs: tensor, rhs: tensor) -> tensor {
+  attrs {
+    lb: index[];
+    lc: index[];
+    rb: index[];
+    rc: index[];
+  }
+  axes {
+    let lf = ordered_complement(all_axes(lhs), attrs.lb ++ attrs.lc);
+    let rf = ordered_complement(all_axes(rhs), attrs.rb ++ attrs.rc);
+    bind B { lhs: attrs.lb, rhs: attrs.rb };
+    bind K { lhs: attrs.lc, rhs: attrs.rc };
+    bind I { lhs: lf };
+    bind J { rhs: rf };
+    yield B ++ I ++ J;
+  }
+  semantics {
+    yield Reduce(K, Product(lhs, rhs));
+  }
 }
 \end{lstlisting}
 \end{codeblock}
-Here \code{all_axes} lists operand positions, and \code{++} concatenates
-sequences. The two bindings of $K$ make corresponding entries in \code{lc}
-and \code{rc} refer to the same logical coordinates. The free lists retain
-operand order. The axis \code{yield} specifies the output order, while the
-value \code{yield} multiplies paired operand elements and sums over $K$.
-The same definition applies when these groups contain different numbers of
-axes; no rank is fixed by the excerpt. Appendix~\ref{app:axes} gives the full
-declaration, another concrete layout, and the primitive reference tables.
+In Listing~\ref{lst:dot-declaration}, \code{all_axes} lists operand positions,
+and \code{ordered_complement(a,b)} removes from \code{a} all entries
+appearing in \code{b}, preserving the order of the remaining entries.
+For example, removing \code{[0,1]} from \code{[2,0,3,1]} gives \code{[2,3]}.
+The bindings pair batch and contraction axes using the attribute
+lists. The \code{axes} block yields the output order \code{B ++ I ++ J},
+while \code{semantics} multiplies operand elements and sums over \code{K}.
+This representation allows a single operation definition to support
+different tensor ranks. Appendix~\ref{app:axes} provides a concrete layout
+and primitive reference tables.
 \FloatBarrier
-\subsubsection{Expressing Tensor Computations}
+\subsubsection{Tensor Computation in the \texorpdfstring{\code{semantics}}{semantics} Block}
 \label{sec:value-expressions}
-Value and index expressions separate scalar computation from access
-construction. Value primitives are operand reads, integer
-constants, addition, multiplication, summation \code{Reduce(G,e)}, and
-\code{Read(input,indices)} for calculated accesses. Ordinary reads use bound
-coordinates. Index expressions select coordinates, concatenate or add index
-sequences, and apply scaling and offsets. A slice, for example, reads at
-\code{starts + strides * output_indices}. Reduction holds output coordinates
-fixed while summing over every coordinate combination in its group;
-\code{Reduce} here means summation, not arbitrary reduction operators.
+The \code{semantics} block represents an operation using basic mathematical
+primitives, including operand reads, scalar arithmetic, and summation.
+Ordinary operand reads use coordinates established by the \code{axes}
+bindings. Summation ranges over a symbolic group while holding output
+coordinates fixed. The \code{yield} statement specifies the scalar
+expression for each output element. Combining these primitives lets users
+define tensor computations through scalar arithmetic and summation over
+symbolic axis groups. Table~\ref{extended:tab:value-expressions} in
+Appendix~\ref{app:axes} lists the core primitives.
 
-Elementwise addition without broadcasting binds both operands to one group
-$S$ and yields \code{Add(lhs,rhs)}. Generalized dot binds $B,I,K,J$, yields
-output axes $B\catseq I\catseq J$, and computes a sum of products:
-\begin{center}\code{Reduce(K,Product(lhs,rhs))}.\end{center} Supported slices and convolutions calculate
-access indices; broadcasting introduces output axes along which input values
-are reused. Output shape remains explicit even for constant-valued tensors.
-
-\subsubsection{Reasoning About Composed Operations}
-\label{sec:composition}
-Consider distribution without broadcasting:
-$\operatorname{dot}(X+Y,Z)\longleftrightarrow
-\operatorname{dot}(X,Z)+\operatorname{dot}(Y,Z)$, with identical dot descriptors.
-Substituting addition into the dot's value expression gives
-\code{Reduce(K,Product(Add(X,Y),Z))}, but arithmetic substitution alone does
-not identify addition's axes with $K$ or preserve their pairing with \code{Z}.
-Symbolic mapping establishes that correspondence. Aligned indexed reads then
-permit comparison of $\sum_K(X+Y)Z$ and $\sum_K XZ+\sum_K YZ$ under the
-selected distributive laws.
-
-For the formal additive extension, each normalized component has its own
-port partition. Shared symbolic group names describe aligned coordinates
-across terms; they do not merge the input-port classes of different terms.
-For example, distribution uses input sets $\{X,Z\}$ and $\{Y,Z\}$, and
-Appendix~\ref{sec:addition-proof} reasons about their partitions separately.
+TEPL also supports explicit operand reads through \code{Read(input,indices)},
+with index expressions computing access coordinates for operations such
+as slices and convolutions. These features extend operation representation,
+but synthesis involving general index expressions is outside the scope
+of our completeness result. Appendix~\ref{app:axes} documents the index
+primitives and gives an access example.

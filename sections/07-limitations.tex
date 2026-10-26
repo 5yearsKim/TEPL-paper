@@ -1,5 +1,6 @@
 \section{Limitations}
 \label{sec:limitations}
+\label{sec:guarantee}
 \paragraph{Coordinate semantics for automatic inference.}
 TEPL supports coordinate transformations such as static slice and reverse,
 but its current semantic language cannot describe every tensor access pattern.
@@ -28,15 +29,28 @@ TEPL's language allows more than this fragment, including explicit attribute
 derivations and descriptor reuse.
 These features do not inherit its completeness guarantee.
 
-The ordered implementation currently specializes the model to contraction
-and permutation. Extending its exact path to unary summation and separated
-additive components remains work, as does a formal proof connecting the
-symbolic compiler to the mathematical algorithm. A correct rule can remain
-unproved because coordinate correspondence is ambiguous, a metadata relation
-is unsupported, or the verifier cannot establish the guard implication.
+The current implemented fragment is described in Section~\ref{sec:implementation}.
+A correct rule can remain unproved because coordinate correspondence is
+ambiguous, a metadata relation or coupled index equation is unsupported,
+the required arithmetic laws are unavailable, or the verifier cannot
+establish the guard implication. Multiple read-coordinate assignments must
+agree before acceptance. Algebraic reassociation alone does not ensure
+strict floating-point equivalence.
 Verifying a manually supplied constructor does not guarantee that general
 synthesis can discover it. Future work can expand this reasoning and the
 implemented fragment without changing the theorem's stated scope.
+
+\paragraph{Implementation soundness.}
+The theorem proves constructive soundness for the mathematical algorithm;
+the current compiler, symbolic translation, and broader verifier are not
+formally proved sound. A full implementation proof must show that source
+extraction represents the logical axes faithfully, symbolic membership and
+ordering agree with the mathematical passes, and emitted programs compute
+the intended attributes. It also depends on correct operation definitions,
+coordinate transport, metadata and index checks, and evaluation of guards
+and partial attribute programs. Reconstructing a completed rule in a fresh
+context separates verification from synthesis conclusions, but both paths
+share semantic infrastructure; this separation is not itself a soundness proof.
 
 \paragraph{Reasoning cost and scalability.}
 Long compositions and overlapping axis relationships can increase symbolic

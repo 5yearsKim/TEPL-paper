@@ -42,6 +42,22 @@
 \newfloat{codeblock}{htbp}{loc}
 % Let the codeblock wrapper control spacing around its listings.
 \floatevery{codeblock}{\lstset{aboveskip=0pt,belowskip=0pt}}
+% Keep code spacing local. An empty [H] caption box otherwise adds a
+% caption-sized gap below the listing even when no float caption is present.
+\makeatletter
+\BeforeBeginEnvironment{codeblock}{%
+  \begingroup
+  \setlength{\intextsep}{12pt}%
+  \patchcmd{\@float@HH}{\setbox\@floatcapt=\vbox{}}%
+    {\setbox\@floatcapt\box\voidb@x}{}%
+    {\PackageError{tepl}{Unable to adjust codeblock caption spacing}{}}%
+  % The following paragraph supplies baseline spacing in addition to this gap.
+  \patchcmd{\float@endH}{\box\@currbox\vskip\intextsep}%
+    {\box\@currbox\vskip4pt}{}%
+    {\PackageError{tepl}{Unable to adjust codeblock bottom spacing}{}}%
+}
+\AfterEndEnvironment{codeblock}{\endgroup}
+\makeatother
 \floatname{paperalgorithm}{Algorithm}
 \newcommand{\paperfigure}[5]{%
   \begin{figure}[!htbp]\centering
@@ -159,4 +175,6 @@ cases (100\%).
 \input{sections/appendix-canonicalization}
 \FloatBarrier
 \input{sections/appendix-completeness}
+\FloatBarrier
+\input{sections/appendix-declaration-adapters}
 \end{document}

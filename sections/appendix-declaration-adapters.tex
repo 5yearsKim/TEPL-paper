@@ -1,0 +1,24 @@
+\section{Operation Declaration Adapters}
+\label{sec:declaration-adapters}
+An operation declaration can use field names different from those in the
+mathematical model. An adapter identifies the corresponding model roles
+from the declaration's attribute schema, axis bindings, output order, and
+value expression. For a contraction, these must satisfy the contract in
+Table~\ref{tab:formal-operations}, including the batch and contraction
+positions in both operands. Additional constraints must be checked: a
+restricted declaration is not an unrestricted instance of the model.
+
+For an admitted declaration, the fields corresponding to model attributes
+are distinct and cover all roles. The RHS adapter therefore gives a
+bijection between declared attribute assignments and model assignments.
+The LHS adapter reads captured values and preserves their sharing.
+
+The preservation argument follows the expression tree. Inputs retain their
+shapes and values. At each operation, matching the model contract preserves
+attribute legality, ordered output shape, and element computation, assuming
+these are preserved for its children. Thus the adapted tree represents the
+same computation, and the bijection neither loses nor introduces attribute
+solutions. Recognition uses supported structural templates; it does not
+require deciding equivalence of arbitrary operation definitions. This
+argument concerns declaration adaptation, not a soundness proof of the
+full symbolic compiler.

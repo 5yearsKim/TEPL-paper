@@ -1,5 +1,6 @@
 \section{Implementation}
 \label{sec:implementation}
+\label{sec:symbolic-bridge}
 TEPL is implemented in C++20 with ANTLR parsing. Rules and dialect semantics
 are compilation inputs; the graph to rewrite is supplied to runtime.
 Compilation resolves names and types, synthesizes missing
@@ -14,10 +15,19 @@ C++ generation is unavailable. E-graph export is also implemented and well
 supported in TEPL, but is outside the scope of this paper.
 \FloatBarrier
 
-The ordered contraction/permutation path recognizes supported declarations,
-derives axis and ordering requirements, and constructs positional fields.
-The general synthesis path remains available for other supported cases.
-Both use completed-rule verification. The mathematical unary-summation and
-additive extension is presented in full in this paper, but is not yet fully
-implemented on the exact path. This distinction also applies to interpreting
-the evaluation results.
+The compiler recognizes modeled operations from their declared attribute
+fields, axis bindings, output order, and value expressions, rather than
+operation names. These must match the contracts in
+Table~\ref{tab:formal-operations}; extra restrictions can prevent a declaration
+from qualifying as an unrestricted model operation.
+Appendix~\ref{sec:declaration-adapters} explains the correspondence between
+declared fields and model attributes.
+
+The ordered contraction/permutation path derives axis membership and ordering
+requirements before constructing positional fields. These requirements remain
+obligations under the written guard. If admission or bounded reasoning does
+not support this path, TEPL can try the general procedure in
+Algorithm~\ref{alg:synthesis}. Both paths use completed-rule verification.
+Unary summation and the separated-addition extension of the mathematical
+algorithm are not yet implemented on the ordered path. This distinction
+also applies to interpreting the evaluation results.
