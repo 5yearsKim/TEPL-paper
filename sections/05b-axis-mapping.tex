@@ -8,9 +8,7 @@ arithmetic laws to check equivalence.
 Consider \code{T=dot(X,Y); O=add(T,Z)}, with batch group $B$ and no broadcasting.
 The dot's value expression is \code{Reduce(K,Product(X,Y))}, and addition's
 is \code{Add(T,Z)}. Substituting the dot expression for \code{T} gives
-\begin{center}
 \code{Add(Reduce(K,Product(X,Y)),Z)}.
-\end{center}
 This describes the arithmetic, but the operations initially use different
 axis groups: the dot yields $B\catseq I\catseq J$, while addition binds
 all axes of $T$ and $Z$ to a single group $S$ and yields $S$ as its output

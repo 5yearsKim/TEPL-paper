@@ -96,3 +96,112 @@ review. No prior-system performance numbers are used in the paper.
 Still unresolved: systematic novelty/expressiveness comparison; shared task
 coverage with related verifiers; exact numerical-policy alignment; benchmark
 selection and effort metrics. These remain explicit TODOs in the paper.
+
+Related Work revision — checked 2026-10-27
+
+TensorRight: https://lsrcz.github.io/files/POPL25.pdf
+  Rechecked Sections 4–6: users supply both sides and preconditions;
+  aggregated axes compactly represent arbitrary ranks; sufficient rank bounds
+  reduce verification to finite proof obligations. Section 5 uses unordered
+  named axes for layout-insensitive reasoning and relabeling for axis matching.
+  The TEPL comparison concerns ordered positional attribute construction, not
+  a claim that TensorRight cannot express attributes or verify transpositions.
+
+MLIR DRR: https://mlir.llvm.org/docs/DeclarativeRewrites/
+  Rechecked compilation to C++ rewrite patterns and NativeCodeCall attribute
+  transformations. No blanket claim that all attributes require native code.
+
+13. mlir-pdll
+    https://mlir.llvm.org/docs/PDLL/
+    Checked declarative matching, AOT/JIT pattern compilation, native constraints,
+    and native rewrite functions. Documentation accessed 27 October 2026.
+
+14. axon
+    https://arxiv.org/abs/2606.26344
+    https://arxiv.org/html/2606.26344v1
+    Checked author list and June 2026 submission metadata; abstract and Section
+    4.4 describe instruction synthesis from semantic specifications. Cited as a
+    preprint. Comparison identifies TEPL's synthesis output, without claiming
+    that Axon lacks instruction-parameter or attribute handling.
+
+TASO, TENSAT, SPORES, Ruler, and MLIR Linalg were rechecked at the primary
+URLs above for the concise comparisons in Section 11. SPORES's algebraic
+completeness is distinguished from TEPL's attribute-synthesis completeness.
+
+Compiler optimization context — checked 2026-10-27
+
+15. tvm
+    https://www.usenix.org/conference/osdi18/presentation/chen
+    https://homes.cs.washington.edu/~arvind/papers/tvm.pdf
+    The abstract reports production use; Section 3 describes constant folding,
+    operator fusion, and layout transformations. Fusion reduces intermediate
+    memory traffic. Used as evidence of practical graph transformations, not
+    as a claim that all TVM optimizations are declarative tensor rewrite rules.
+
+16. xla-hlo-passes
+    https://openxla.org/xla/hlo_passes
+    Official documentation describes HLO optimization passes and algebraic
+    simplification. The opening paragraph lists optimizations across XLA and
+    TVM collectively, without attributing every example to both sources.
+
+TASO and TENSAT abstracts and introductions rechecked for performance gains
+from searching equivalent graphs through substitutions. Their detailed
+system comparison was replaced with a brief joint citation in the opening
+paragraph; no production deployment claim is made for TASO or TENSAT.
+
+Grouped optimization citations — checked 2026-10-27
+  The opening now groups research by optimization purpose. SPORES appears
+  only in the graph-optimization group, not the semantic-representation
+  comparison. Production-use wording remains attached to XLA and TVM.
+
+17. unity
+    https://www.usenix.org/conference/osdi22/presentation/unger
+    Publisher abstract and BibTeX: joint algebraic transformation and
+    parallelization through graph substitutions for distributed training.
+
+18. mirage
+    https://www.usenix.org/conference/osdi25/presentation/wu-mengdi
+    Publisher abstract and BibTeX: algebraic and schedule transformations
+    spanning kernel, thread-block, and thread levels. Cites OSDI 2025 Mirage,
+    not the later Mirage Persistent Kernel system.
+
+19. trinity
+    https://ina.kaist.ac.kr/assets/bibliography/Trinity.pdf
+    Published ASPLOS 2026 paper, abstract and first-page citation metadata:
+    tile-level equality saturation jointly optimizes algebraic equivalence,
+    memory I/O, and compute orchestration; bridges graph and operator levels.
+
+20. dnnfusion
+    https://arxiv.org/pdf/2108.13342
+    PLDI 2021 author manuscript: mathematical-property-based graph rewriting
+    facilitates operator fusion. Bibliography uses the published paper DOI
+    printed on page 1, not the unrelated resource DOI on its arXiv landing page.
+
+21. neptune
+    https://arxiv.org/pdf/2510.08726
+    https://github.com/uiuc-arc/neptune
+    PLDI 2026 paper and author repository: advanced reduction fusion uses
+    algebraic correction expressions. First-page citation gives article 220,
+    37 pages, DOI 10.1145/3808298. Cited for algebraic transformations supporting
+    fusion, without claiming its method uses predefined graph rewrite rules.
+
+Synthesis foundations — checked 2026-10-27
+  Replaced the Axon discussion with brief introductions to Sketch, SyGuS,
+  and component-based synthesis, retaining Ruler. The comparison identifies
+  TEPL's synthesis output without claiming it implements these frameworks.
+
+22. sketch
+    https://people.csail.mit.edu/asolar/papers/asplos06-final.pdf
+    https://people.eecs.berkeley.edu/~sseshia/pubs/b2hd-solar-asplos06.html
+    Partial programs with holes completed against a specification; ASPLOS 2006.
+
+23. sygus
+    https://www.microsoft.com/en-us/research/wp-content/uploads/2013/05/fmcad13.pdf
+    Logical specification plus grammar of candidate implementations; FMCAD 2013.
+
+24. loop-free-synthesis
+    https://www.microsoft.com/en-us/research/publication/synthesis-loop-free-programs/
+    https://www.microsoft.com/en-us/research/wp-content/uploads/2016/12/pldi11-loopfree-synthesis.pdf
+    Gulwani, Jha, Tiwari, and Venkatesan, PLDI 2011: composing library components
+    with logical semantics to synthesize loop-free programs. The short summary
+    does not claim arbitrary loop synthesis or unrestricted component use.

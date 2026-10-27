@@ -1,4 +1,86 @@
 % Claims checked against the primary sources listed in draft/source_audit.txt.
+@inproceedings{sketch,
+  author = {Solar-Lezama, Armando and Tancau, Liviu and Bodik, Rastislav and Seshia, Sanjit A. and Saraswat, Vijay A.},
+  title = {Combinatorial Sketching for Finite Programs},
+  booktitle = {Proceedings of the 12th International Conference on Architectural Support for Programming Languages and Operating Systems},
+  year = {2006}, pages = {404--415},
+  publisher = {Association for Computing Machinery}, address = {New York, NY, USA},
+  url = {https://people.csail.mit.edu/asolar/papers/asplos06-final.pdf}
+}
+@inproceedings{sygus,
+  author = {Alur, Rajeev and Bodik, Rastislav and Juniwal, Garvit and Martin, Milo M. K. and Raghothaman, Mukund and Seshia, Sanjit A. and Singh, Rishabh and Solar-Lezama, Armando and Torlak, Emina and Udupa, Abhishek},
+  title = {Syntax-Guided Synthesis},
+  booktitle = {2013 Formal Methods in Computer-Aided Design},
+  year = {2013}, numpages = {8},
+  publisher = {IEEE}, address = {Portland, OR, USA},
+  url = {https://www.microsoft.com/en-us/research/wp-content/uploads/2013/05/fmcad13.pdf}
+}
+@inproceedings{loop-free-synthesis,
+  author = {Gulwani, Sumit and Jha, Susmit and Tiwari, Ashish and Venkatesan, Ramarathnam},
+  title = {Synthesis of Loop-Free Programs},
+  booktitle = {Proceedings of the 32nd ACM SIGPLAN Conference on Programming Language Design and Implementation},
+  year = {2011}, numpages = {12},
+  publisher = {Association for Computing Machinery}, address = {New York, NY, USA},
+  url = {https://www.microsoft.com/en-us/research/publication/synthesis-loop-free-programs/}
+}
+@inproceedings{unity,
+  author = {Unger, Colin and Jia, Zhihao and Wu, Wei and Lin, Sina and Baines, Mandeep and Quintero Narvaez, Carlos Efrain and Ramakrishnaiah, Vinay and Prajapati, Nirmal and McCormick, Pat and Mohd-Yusof, Jamaludin and Luo, Xi and Mudigere, Dheevatsa and Park, Jongsoo and Smelyanskiy, Misha and Aiken, Alex},
+  title = {{Unity}: Accelerating {DNN} Training Through Joint Optimization of Algebraic Transformations and Parallelization},
+  booktitle = {16th USENIX Symposium on Operating Systems Design and Implementation (OSDI 22)},
+  year = {2022}, address = {Carlsbad, CA}, pages = {267--284},
+  publisher = {USENIX Association},
+  url = {https://www.usenix.org/conference/osdi22/presentation/unger}
+}
+@inproceedings{mirage,
+  author = {Wu, Mengdi and Cheng, Xinhao and Liu, Shengyu and Shi, Chunan and Ji, Jianan and Ao, Man Kit and Velliengiri, Praveen and Miao, Xupeng and Padon, Oded and Jia, Zhihao},
+  title = {{Mirage}: A Multi-Level Superoptimizer for Tensor Programs},
+  booktitle = {19th USENIX Symposium on Operating Systems Design and Implementation (OSDI 25)},
+  year = {2025}, address = {Boston, MA}, pages = {21--38},
+  publisher = {USENIX Association},
+  url = {https://www.usenix.org/conference/osdi25/presentation/wu-mengdi}
+}
+@inproceedings{trinity,
+  author = {Park, Jaehyeong and Kim, Youngchan and An, Haechan and Jeong, Gieun and Kang, Jeehoon and Han, Dongsu},
+  title = {{Trinity}: Three-Dimensional Tensor Program Optimization via Tile-level Equality Saturation},
+  booktitle = {Proceedings of the 31st ACM International Conference on Architectural Support for Programming Languages and Operating Systems, Volume 2},
+  year = {2026}, numpages = {29},
+  publisher = {Association for Computing Machinery}, address = {New York, NY, USA},
+  doi = {10.1145/3779212.3790240}
+}
+@inproceedings{dnnfusion,
+  author = {Niu, Wei and Guan, Jiexiong and Wang, Yanzhi and Agrawal, Gagan and Ren, Bin},
+  title = {{DNNFusion}: Accelerating Deep Neural Networks Execution with Advanced Operator Fusion},
+  booktitle = {Proceedings of the 42nd ACM SIGPLAN International Conference on Programming Language Design and Implementation},
+  year = {2021}, numpages = {17},
+  publisher = {Association for Computing Machinery}, address = {New York, NY, USA},
+  doi = {10.1145/3453483.3454083}
+}
+@article{neptune,
+  author = {Zhao, Yifan and Johnson, Egan and Chatarasi, Prasanth and Adve, Vikram S. and Misailovic, Sasa},
+  title = {{Neptune}: Advanced {ML} Operator Fusion for Locality and Parallelism on {GPUs}},
+  journal = {Proceedings of the ACM on Programming Languages},
+  volume = {10}, number = {PLDI}, articleno = {220}, numpages = {37},
+  year = {2026}, doi = {10.1145/3808298}
+}
+@inproceedings{tvm,
+  author = {Chen, Tianqi and Moreau, Thierry and Jiang, Ziheng and Zheng, Lianmin and Yan, Eddie and Shen, Haichen and Cowan, Meghan and Wang, Leyuan and Hu, Yuwei and Ceze, Luis and Guestrin, Carlos and Krishnamurthy, Arvind},
+  title = {{TVM}: An Automated End-to-End Optimizing Compiler for Deep Learning},
+  booktitle = {13th USENIX Symposium on Operating Systems Design and Implementation (OSDI 18)},
+  year = {2018},
+  address = {Carlsbad, CA},
+  pages = {578--594},
+  publisher = {USENIX Association},
+  url = {https://www.usenix.org/conference/osdi18/presentation/chen}
+}
+@misc{xla-hlo-passes,
+  author = {{OpenXLA Contributors}},
+  title = {{HLO} Passes},
+  year = {n.d.},
+  howpublished = {OpenXLA documentation},
+  url = {https://openxla.org/xla/hlo_passes},
+  urldate = {2026-10-27},
+  note = {Accessed 27 October 2026}
+}
 @misc{numpy-einsum,
   author = {{NumPy Developers}},
   title = {{NumPy}: {numpy.einsum} {API} Documentation},
@@ -91,4 +173,22 @@
   title = {Table-driven Declarative Rewrite Rule ({DRR})},
   howpublished = {MLIR documentation},
   url = {https://mlir.llvm.org/docs/DeclarativeRewrites/}, urldate = {2026-10-19}
+}
+@misc{mlir-pdll,
+  author = {{MLIR Contributors}},
+  title = {{PDLL}: {PDL} Language},
+  year = {n.d.},
+  howpublished = {MLIR documentation},
+  url = {https://mlir.llvm.org/docs/PDLL/},
+  urldate = {2026-10-27},
+  note = {Accessed 27 October 2026}
+}
+@misc{axon,
+  author = {Kothari, Akash and Zhu, Shaowei and Kroening, Daniel and Sung, Chungha},
+  title = {{Axon}: A Synthesizing Superoptimizer for Tensor Programs},
+  year = {2026},
+  howpublished = {arXiv:2606.26344},
+  url = {https://arxiv.org/abs/2606.26344},
+  doi = {10.48550/arXiv.2606.26344},
+  note = {Preprint}
 }

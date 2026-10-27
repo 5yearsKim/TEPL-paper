@@ -110,27 +110,26 @@
 \begin{abstract}
 Tensor rewrite rules are concise in algebraic form, but their implementations
 require substantial attribute-transformation logic. Rewrite rules written as
-tensor expressions describe how to change a computation, but matching alone
+tensor expressions describe how to change a computation graph, but matching alone
 does not compute the attributes needed by the replacement, such as permutations
 and contraction dimensions.
-TEPL (Tensor Equality Pattern Language) is a domain-specific language for
+TEPL (Tensor Equality Pattern Language) is a domain-specific language (DSL) for
 describing tensor rewrites, explicit conditions, and attribute changes together.
-More importantly, TEPL can automatically synthesize replacement attributes
-from operation semantics. Its synthesis approach uses Axes IR and symbolic
-axis mapping to handle tensors of arbitrary rank within the supported rewrite
-fragment. We give a mathematical synthesis algorithm and prove constructive
-completeness for a read-once fragment of contraction, permutation, and unary
-summation, with a restricted additive extension. The theorem concerns this
-algorithm; the current implementation covers only part of the fragment.
-Our intended guarantee is that every semantically verified rewrite
-has computable replacement attributes and produces a legal replacement with
-equivalent results under its stated conditions and arithmetic policy. 
-We evaluate TEPL on 209 XLA-derived tensor rewrite cases. TEPL supports the
-operation semantics needed for 118 cases and verifies 86 with explicit
-attributes. Attribute inference succeeds on all 20 verified axis/extent
-cases (100\%).
+More importantly, TEPL can automatically synthesize attribute transformations
+from operation semantics. We prove constructive completeness for a restricted class of tensor
+rewrites: under the stated assumptions, our synthesis algorithm constructs
+correct attribute transformations whenever they exist. To support attribute
+synthesis in the compiler, we introduce Axes IR and symbolic axis mapping to
+handle tensors of arbitrary rank and track axis relationships. The implementation
+supports a wider range of operations than the theorem covers, synthesizing
+attribute transformations and independently verifying the resulting rewrites.
+TEPL's supported operation semantics cover 119 of 209 concrete XLA rewrite
+cases, with RHS attribute synthesis succeeding in 36 of the 43 eligible
+cases (83.7\%). Across these successful cases, attribute synthesis reduces
+TEPL specification size by 32.4\% in tokens compared with explicit
+attribute transformations.
 \end{abstract}
-\keywords{tensor rewrites, attribute synthesis, symbolic axis mapping, rewrite languages}
+\keywords{tensor rewrites, attribute synthesis, symbolic axis mapping}
 \maketitle
 
 \FloatBarrier
@@ -165,16 +164,9 @@ cases (100\%).
 \bibliography{references}
 \clearpage
 \appendix
+\input{sections/appendix-foundations}
+\clearpage
+\input{sections/appendix-compilation}
 \FloatBarrier
-\input{sections/appendix-extended}
-\FloatBarrier
-\input{sections/appendix-axis-exactness}
-\FloatBarrier
-\input{sections/appendix-canonical-axes}
-\FloatBarrier
-\input{sections/appendix-canonicalization}
-\FloatBarrier
-\input{sections/appendix-completeness}
-\FloatBarrier
-\input{sections/appendix-declaration-adapters}
+\input{sections/appendix-scalability}
 \end{document}

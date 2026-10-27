@@ -1,11 +1,11 @@
-\section{Proof of Correctness and Completeness}
+\subsection{Correctness and Completeness}
 \label{app:completeness-proof}
 We prove Theorem~\ref{thm:complete-synthesis} under the assumptions of
 Section~\ref{sec:formal-scope}. The proof has three parts: every valid
 assignment passes the checks; passing the checks gives a valid construction;
 and the restricted additive fragment separates into independent components.
 
-\subsection{Necessity}
+\subsubsection{Necessity}
 \begin{lemma}[Necessity]
 \label{lem:necessity}
 For one component,
@@ -32,7 +32,7 @@ requirement must be a subsequence of its actual order, $Req_v\preceq I_v$.
 All clauses of Equation~\eqref{eq:feasibility} therefore hold.
 \end{proof}
 
-\subsection{Sufficiency}
+\subsubsection{Sufficiency}
 \begin{lemma}[Sufficiency]
 \label{lem:sufficiency}
 For one component,
@@ -77,7 +77,7 @@ values. Together with legality, this proves
 $\operatorname{Valid}(p,\operatorname{build}(p))$.
 \end{proof}
 
-\subsection{Extension to Addition}
+\subsubsection{Extension to Addition}
 \label{sec:addition-proof}
 Under Section~\ref{sec:formal-scope}'s additive restrictions, write
 \begin{equation}

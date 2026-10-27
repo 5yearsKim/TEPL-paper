@@ -63,7 +63,17 @@ of `draft/complete_attribute_synthesis_proof_kr.md`.
 - `sections/05e-tepl-integration.tex`: adapters, symbolic correspondence, conditions, and broader operations.
 - `draft/proof_integration_map.json`: content-preservation and notation checklist.
 
-The existing extended appendix remains included and uses the same notation.
+The appendices follow the main paper's progression and use the same notation:
+
+- **A. Mathematical Foundations: Examples and Proofs**
+  (`sections/appendix-foundations.tex`): axis exactness, the mandatory and
+  retained axes example, canonicalization, and correctness and completeness.
+- **B. Symbolic Compilation Details**
+  (`sections/appendix-compilation.tex`): Axes IR, mapping and synthesis
+  derivations and algorithms, and operation declaration adapters.
+- **C. Scalability Evaluation** (`sections/appendix-scalability.tex`):
+  experimental setup, results, and measurement limits.
+
 The 20-page reduction is deferred; this version is the content-complete draft.
 `draft/paper_outline.md` records the older shortened structure and is not the
 outline of the expanded draft.

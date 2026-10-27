@@ -1,18 +1,26 @@
 \section{Conclusion}
 \label{sec:conclusion}
-TEPL combines algebraic tensor patterns with explicit or inferred replacement
-attributes. Ordered symbolic groups, composed mappings, refinement, and
-normalized reads provide coordinate correspondence for reusable attribute
-programs. The completed replacement is then checked against legality, output
-agreement, and value semantics under declared conditions and arithmetic laws.
-A separate mathematical algorithm decides attribute feasibility and
-constructs solutions for the stated read-once fragment, including its
-restricted additive extension. The proof accounts for logical-axis identity,
-canonical intermediate axes, and output order. The symbolic implementation
-currently covers part of this complete algorithm; the broader checking
-contract remains conditional on its semantic assumptions, and this paper
-does not establish implementation soundness.
-Of 209 XLA-derived cases, 118 have semantic coverage and 86 verify explicitly.
-All 20 verified axis/extent cases succeed with automatic attributes, conditional
-on verification and within 38 eligible axis/extent cases. Authoring savings,
-cost, reliability, and scalability remain to be measured.
+TEPL is a DSL for writing readable tensor rewrite rules and applying them
+in practice. At compile time, it generates programs to compute RHS
+attributes, reducing the manual attribute transformation logic. We prove
+constructive completeness for a restricted set of operations and rewrite
+structures: under the stated assumptions, our synthesis algorithm finds
+correct attributes whenever they exist. To integrate attribute synthesis
+into the language, we propose Axes IR and symbolic axis mapping, which
+represent operation semantics and track coordinate relationships, enabling
+the compiler to construct RHS attribute programs.
+
+The current implementation also supports rewrites outside the completeness
+fragment. For these additional rewrites, an
+independent verifier checks soundness under the declared semantics and
+written conditions. Coverage remains limited, particularly for tensor
+operations involving general indexing or general reductions.
+
+In our XLA evaluation, TEPL supports the operation semantics required by
+119 of 209 cases and successfully synthesizes attributes for 36 of the 43
+eligible cases (83.7\%). The TEPL rules are far shorter than the
+corresponding XLA excerpts, although those excerpts also cover extra cases
+and policies. Across the 36 successful cases, attribute inference reduces
+TEPL token counts by 32.4\% compared with explicit RHS attributes. These
+results demonstrate a practical approach to tensor rewriting through
+declarative rules that delegate manual attribute construction to the compiler.

@@ -1,4 +1,4 @@
-\section{Example: Mandatory Axes and Axes Kept}
+\subsection{Mandatory and Retained Axes: A Worked Example}
 \label{app:canonical-axes-example}
 Consider a rewrite that moves a row sum from an input to the result of
 batched matrix multiplication:
@@ -14,7 +14,7 @@ the resulting rows. We apply Section~\ref{sec:canonical-axes} to the RHS,
 where multiplication must keep $i$ until the final summation even though
 it is not needed in the final output.
 
-\subsection{Inputs and Logical Axes}
+\subsubsection{Inputs and Logical Axes}
 Let $A,B$ have shapes $(s,m,n)$ and $(s,n,p)$, with all extents at least two.
 Their ordered logical axes are
 \begin{equation}
@@ -36,7 +36,7 @@ In indexed form, the source $L$, RHS intermediate $T$, and RHS output $Y$ are
 Both computations have output order $F=(b,j)$ and agree under exact real
 arithmetic. The RHS nodes are $A,B,T,Y$.
 
-\subsection{Mandatory Axes and Axes Kept}
+\subsubsection{Mandatory Axes and Axes Kept}
 At input $A$, axis $b$ is required in the output and $k$ must connect to $B$.
 In particular, $\sigma(k)=\{A,B\}\nsubseteq U_A=\{A\}$: an input
 containing $k$ lies outside this subtree. Axis $i$ is not mandatory, but
@@ -65,7 +65,7 @@ $Y=\operatorname{sum}_i(T)$ & $\{A,B\}$ & $\{b,j\}$ & $\{b,j\}$\\\bottomrule
 \end{tabularx}
 \end{table}
 
-\subsection{Batch, Contraction, and Free Axes}
+\subsubsection{Batch, Contraction, and Free Axes}
 At $T$, the operands share $b,k$. Axis $b$ is mandatory and stays as batch;
 $k$ is not mandatory and is summed out. Axes $i,j$ remain free.
 Table~\ref{tab:matmul-axis-roles} lists the four roles.

@@ -1,4 +1,4 @@
-\section{Proof of Axis Exactness}
+\subsection{Axis Exactness: Proof and Example}
 \label{app:axis-exactness}
 We prove Lemma~\ref{lem:axis-exactness} for legal read-once components $L,R$
 at fixed metadata, under Section~\ref{sec:formal-scope}'s assumptions.
@@ -9,14 +9,14 @@ permutation reorders axes, and summation removes them from the output.
 Removed axes cannot reappear, and separate axes in one child cannot later
 merge with each other.
 
-\subsection{Forward Direction}
+\subsubsection{Forward Direction}
 Suppose $N(L)=N(R)$. The same ordered output classes give the same output
 shape. At any output coordinate, both computations select the same input
 entries and sum their products over the same remaining indices. Under
 exact real arithmetic, the order of these operations does not affect the
 result. Thus $L(X)=R(X)$ for every input $X$.
 
-\subsection{Converse Direction}
+\subsubsection{Converse Direction}
 Suppose $N(L)\ne N(R)$. We construct inputs for which the results differ.
 
 \paragraph{Find a different connection.}
@@ -43,7 +43,7 @@ and $y$. Their connection forbids this, so every summand is zero. Hence
 \end{equation}
 Thus equal results for all inputs require equal representations.
 
-\subsection{Example: A Dot Product and Two Independent Sums}
+\subsubsection{Example: A Dot Product and Two Independent Sums}
 A dot product shares an index; two independent sums do not. With
 $A^*=(1,0)$ and $B^*=(0,1)$,
 \begin{equation}

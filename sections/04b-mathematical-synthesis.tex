@@ -43,13 +43,14 @@ their original order, using the logical axes identified on the LHS.
 \begin{table}[!htbp]
 \caption{Axes kept at each RHS node. A unary node has child $u$.}
 \label{tab:canonical-live}
-\begin{tabularx}{\linewidth}{@{}llY@{}}\toprule
+\centering
+\begin{tabular}{@{}lll@{}}\toprule
 Node & Axes kept ($P_v$) & Reason\\\midrule
 Input $X$ & $\operatorname{set}(I_X)$ & Start with all input axes.\\
 Permutation & $P_u$ & Keep all axes and change their order.\\
 Unary summation & $P_u\cap M_v$ & Keep only mandatory axes.\\
 Contraction & $B_v\cup LF_v\cup RF_v$ & Keep batch and free axes.\\\bottomrule
-\end{tabularx}
+\end{tabular}
 \end{table}
 For a contraction, a shared axis is kept as a batch axis if it is mandatory;
 otherwise, it is summed out. Axes present in only one operand remain free.
@@ -108,11 +109,12 @@ it immediately:
 \begin{table}[!htbp]
 \caption{Two ways to compute the scalar $A_0B_0+A_1B_1$.}
 \label{tab:canonical-example}
-\begin{tabularx}{\linewidth}{@{}lYll@{}}\toprule
+\centering
+\begin{tabular}{@{}llll@{}}\toprule
 Assignment & Dot $(b_\ell,b_r,k_\ell,k_r)$ & Dot shape & Sum axes\\\midrule
 $\beta$ & $([0],[0],[],[])$ & $[2]$ & $[0]$\\
 $\beta'$ & $([],[],[0],[0])$ & $[]$ & $[]$\\\bottomrule
-\end{tabularx}
+\end{tabular}
 \end{table}
 Summation over an empty list leaves its input unchanged.
 

@@ -1,11 +1,11 @@
-\section{Proof That Canonical Axes Preserve Feasibility}
+\subsection{Canonicalization Preserves Feasibility}
 \label{app:canonicalization-proof}
 We prove Lemma~\ref{lem:canonicalization} under the assumptions of
 Section~\ref{sec:formal-scope}. Start with a valid attribute assignment
 $\beta$. By Lemma~\ref{lem:axis-exactness}, its axes can be identified
 with the LHS logical axes.
 
-\subsection{Proof Plan}
+\subsubsection{Proof Plan}
 We construct $\beta'$ from the inputs toward the root. At each node $v$,
 we show that $P_v$ is a subset of the original output axes and that legal
 attributes can produce exactly
@@ -16,7 +16,7 @@ In words, we delete axes outside $P_v$ without changing the order of those
 that remain. Every mandatory axis must also survive under $\beta$:
 once removed, it cannot connect to another input or reach the final output.
 
-\subsection{Constructing Attributes at Each Node}
+\subsubsection{Constructing Attributes at Each Node}
 \paragraph{Inputs and unary operations.}
 Inputs stay unchanged. A permutation can arrange its retained axes in
 the required order. A unary summation keeps $P_v=P_u\cap M_v$ and sums
@@ -52,7 +52,7 @@ This produces exactly the original output order restricted to $P_v$.
 The attributes are legal: positions are distinct, batch and contraction
 axes are disjoint, and paired axes have equal extents.
 
-\subsection{Why the Result Is Valid}
+\subsubsection{Why the Result Is Valid}
 The construction connects only matching LHS logical axes. It removes an
 axis only after all its input connections are complete and only if the
 axis is absent from the final output. Thus the input-port connections

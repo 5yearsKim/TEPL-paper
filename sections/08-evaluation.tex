@@ -1,73 +1,55 @@
 \section{XLA Evaluation}
 \label{sec:evaluation}
-We evaluate TEPL on 209 concrete rewrite cases adapted from XLA's algebraic
-simplifier, measuring operation-semantic coverage, verification with explicit
-RHS attributes, and automatic attribute inference. Counts refer to concrete
-cases, which may specialize broader catalog rules. Table~\ref{tab:xla-results}
-summarizes the three stages; their denominators differ as explained below.
+\begin{figuretext}{figures/XLA rewrite case results.pdf}{XLA case coverage and attribute synthesis. The fragment classification follows concrete encodings; completeness guarantees additionally require the theorem's assumptions.}{fig:xla-results}{A downward tree partitions 209 compiled XLA rewrite cases into 119 semantically supported cases and 90 unsupported cases. Of the supported cases, 94 verify with explicit attributes, 76 require no RHS descriptors, and 43 require synthesis. Synthesis succeeds on 36 cases: all 10 classified within the theorem fragment and 26 of 33 beyond it. Seven cases remain unresolved.}
+We evaluate attribute synthesis on 209 concrete rewrite cases representing
+199 XLA rewrite schemas. Of these, 119 cases have the operation semantics
+required by the verifier; the remaining 90 require semantics that are not
+currently supported. Among the supported cases, 43 contain RHS attribute
+descriptors to synthesize. The other 76 require no RHS descriptors: their
+replacements use attribute-free operations, such as elementwise addition,
+or directly return a matched value, as in
+$\operatorname{add}(X,0) \to X$.
+Figure~\ref{fig:xla-results} summarizes the results.
+\end{figuretext}
 
-\begin{table}[htbp]
-\caption{XLA case coverage and conditional attribute inference.}
-\label{tab:xla-results}
+With explicit RHS metadata formulas, the verifier proves 94 of the 119
+supported cases (79.0\%). Attribute synthesis succeeds on 36 of the 43
+eligible cases (83.7\%), inferring all RHS descriptors while preserving the
+written rewrite conditions. These include all 10 cases classified within
+the fragment of Theorem~\ref{thm:complete-synthesis} and 26 of 33 cases
+beyond it. Within the fragment, completeness holds under the theorem's
+stated assumptions. For the 26 beyond-fragment successes, independent
+semantic verification checks the soundness of each synthesized rewrite
+under the declared semantics and written conditions.
+
+\begin{table}[!htbp]
 \centering
-\begin{tabular}{@{}lr@{}}\toprule
-Stage & Result\\\midrule
-Semantic coverage & 118/209\\
-Explicit verification & 86/118\\
-Auto inference (axis/extent) & 20/20 (100\%)\\\bottomrule
-\end{tabular}
+\begin{minipage}{0.86\linewidth}
+\caption{Specification size across 36 successfully synthesized cases representing 30 XLA rewrite schemas.}
+\label{tab:xla-specification-size}
+\begin{tabularx}{\linewidth}{@{}Xrr@{}}
+\toprule
+Representation & Total lines\textsuperscript{1} & Total tokens\textsuperscript{1}\\
+\midrule
+Corresponding XLA implementation excerpts & 1,398 & 10,849\\
+TEPL with explicit RHS attributes & 243 & 3,370\\
+TEPL with inferred RHS attributes & 198 & 2,277\\
+\bottomrule
+\end{tabularx}
+\smallskip
+\begin{minipage}{\linewidth}
+\footnotesize
+\textsuperscript{1} Counts exclude blank lines and comments.
+\end{minipage}
+\end{minipage}
 \end{table}
 
-\paragraph{Semantic coverage.}
-A case is eligible for verification when every required operation has a
-semantic definition in TEPL. This holds for 118 of the 209 cases; the remaining
-91 lack at least one required definition. Axis bindings, scalar expressions,
-reductions, and calculated operand reads describe value computations and
-supported coordinate transformations: transpose permutes axes, dot sums
-products over contraction axes, and static slice computes coordinates from
-starts and strides.
-
-Supported operations include elementwise arithmetic, transpose,
-axis-inserting broadcast, sum reduction, dot, reverse, and static slice with
-positive sizes and strides. Convolution uses fixed layouts, positive strides
-and dilations, and no padding or groups. General reshape, pad, concatenate,
-and dynamic slice require coordinate capabilities beyond current semantic
-support, as discussed in Section~\ref{sec:limitations}.
-
-\paragraph{Explicit verification.}
-We first supply RHS attributes through captured descriptors or handwritten
-constructions, without \code{auto}. TEPL checks evaluability, RHS legality,
-and agreement in output shape and values under the declared guards and
-arithmetic policy. The recorded full-corpus sweep verifies 86 of the 118
-eligible cases.
-
-The other 32 remain unproved. This does not establish that their rewrites
-are incorrect: TEPL may lack the required shape, axis, index, or scalar
-reasoning, or the rule may need an additional applicability condition.
-Successful verification is relative to the declared operation semantics and
-arithmetic policy, not every aspect of XLA's numerical behavior.
-
-\paragraph{Automatic inference.}
-Of the 86 verified cases, 63 have no RHS attributes to infer, and three
-require scalar settings such as comparison direction. The remaining 20
-require only axis or extent lists, including permutations, reduction
-dimensions, broadcast dimensions and extents, and slice parameters.
-
-For these 20, we replace RHS attribute specifications with \code{auto} and
-remove the corresponding handwritten constructions, retaining the same
-patterns, guards, and operation semantics. TEPL constructs every required
-attribute and verifies each completed rule in a fresh context. All 20 succeed
-without RHS attribute hints, including descriptor reuse and computed programs.
-
-Automatic inference succeeds on all 20 explicitly verified axis/extent cases.
-These constitute the verified subset of 38 semantically eligible axis/extent
-cases.
-
-\paragraph{Relation to the theorem.}
-These measurements evaluate the implementation's broader supported fragment,
-not completeness of the mathematical algorithm. In particular, broadcast
-and slice cases lie outside Theorem~\ref{thm:complete-synthesis}. The current
-corpus results do not separately classify every case against the theorem's
-structural, extent, and attribute restrictions. The 20/20 result remains
-conditional on explicit verification; it does not establish completeness
-of symbolic inference or guard reasoning.
+Across these 36 successfully synthesized cases representing 30 XLA rewrite
+schemas, attribute inference reduces TEPL specification size by 18.5\% in
+lines and 32.4\% in tokens (Table~\ref{tab:xla-specification-size}). It
+eliminates 47 explicit RHS descriptor occurrences while preserving the
+rewrite equations and written conditions. The XLA code matches patterns,
+transforms attributes, and builds replacement graphs. TEPL handles this
+work through declarative rules and attribute inference, reducing the code
+authors must write. Some XLA excerpts also cover extra cases and policies,
+which contribute to their larger size.

@@ -1,7 +1,7 @@
-\section{Axes IR Definitions and Examples}
+\subsection{Axes IR Definitions and Examples}
 \label{app:axes}
 
-\subsection{Concrete Axis Binding Example}
+\subsubsection{Concrete Axis Binding Example}
 \label{extended:sec:axis-groups}
 Using the attributes in Listing~\ref{lst:dot-declaration}, consider these
 operand layouts and bindings:
@@ -46,7 +46,7 @@ but equal extents alone do not identify axes. Grouping keeps each axis's
 coordinate separate; it does not flatten the axes into one dimension.
 Groups may also be empty, as with an unbatched dot's batch group.
 
-\subsection{Value and Index Expressions}
+\subsubsection{Value and Index Expressions}
 \label{extended:sec:value-expressions}
 The following examples and tables supplement
 Section~\ref{sec:value-expressions}'s value and index expressions.
@@ -116,16 +116,17 @@ Expression & Meaning\\\midrule
 \end{table}
 
 
-\section{Mapping Derivations and Construction Algorithm}
+\FloatBarrier
+\subsection{Mapping Derivations and Construction Algorithm}
 \label{app:mapping}
 Symbolic axis mapping connects groups defined by different operations. It
 records where each group appears in a tensor, allowing composition of value
 expressions while preserving axis order and operand pairings.
 
 
-\subsection{Building and Composing Mapping Tables}
+\subsubsection{Building and Composing Mapping Tables}
 \label{extended:sec:mapping-tables}
-This appendix derives the complete axis mapping for
+This subsection derives the complete axis mapping for
 $T=\operatorname{add}(X,Y)$ and $O=\operatorname{dot\_general}(T,Z)$,
 including how operand positions preserve axis order. Unlike
 Figure~\ref{fig:axis-mapping}, this example places addition before dot.
@@ -214,9 +215,9 @@ Adding a length to a position sequence shifts each entry. These output
 offsets therefore follow directly from the declared group order.
 
 
-\subsection{Symbolic Axis Partitioning}
+\subsubsection{Symbolic Axis Partitioning}
 \label{extended:sec:partitioning}
-This appendix derives the subgroup positions, operand pairings, and complete
+This subsection derives the subgroup positions, operand pairings, and complete
 mapping table for the dot-reassociation example in
 Section~\ref{sec:partitioning}. Figure~\ref{fig:axis-partitioning} supplies
 the concrete example used throughout.
@@ -340,7 +341,7 @@ each overlapping portion into both parent groups. Each partition is internally
 disjoint, while groups in different partitions can overlap.
 
 
-\subsection{General Construction Algorithm}
+\subsubsection{General Construction Algorithm}
 \label{extended:sec:mapping-algorithm}
 Algorithm~\ref{alg:mapping} expands the procedure outlined in
 Section~\ref{sec:mapping-algorithm}. It processes producers before consumers, connects each
@@ -455,7 +456,8 @@ composes them. These operations are designed to maintain the invariant;
 they do not dispense with checking the completed rewrite.
 
 
-\section{Synthesis Derivations and Algorithm}
+\FloatBarrier
+\subsection{Attribute Synthesis Derivations and Algorithm}
 \label{app:synthesis}
 The mapping procedure establishes which logical axes occur in source tensors
 and where they occur. Synthesis uses these relationships to fill the
@@ -488,7 +490,7 @@ the source intermediate, $U=\operatorname{dot}(Y,Z)$ the replacement
 intermediate, and $O,O'$ their respective final results.
 
 
-\subsection{Value Expression Normalization}
+\subsubsection{Value Expression Normalization}
 \label{extended:sec:normalization}
 The graphs combine their reads in different orders. Normalization identifies
 corresponding computations before constructing the replacement's attributes.
@@ -569,7 +571,7 @@ coordinates for construction. Reduction domains, coefficients, and full
 value equivalence still have to be checked after attributes are known.
 
 
-\subsection{Determine Which Axes Each Operation Preserves}
+\subsubsection{Determine Which Axes Each Operation Preserves}
 \label{extended:sec:keep-axes}
 
 
@@ -666,10 +668,10 @@ $O'=\operatorname{dot}(X,U)$ & $B$ & $K,\Isel$ & $\Irem$ & $\Jrem,H$\\\bottomrul
 Free axes follow operand order. The rule relies on distinguishable declared
 group roles; ambiguous assignments remain unresolved. Groups introduced by an
 explicit output domain rather than operand bindings are handled separately
-in Section~\ref{extended:sec:synthesis-algorithm}.
+in Appendix~\ref{extended:sec:synthesis-algorithm}.
 
 
-\subsection{Construct Attributes from the Mapping Table}
+\subsubsection{Construct Attributes from the Mapping Table}
 \label{extended:sec:attribute-construction}
 Group membership says which axes a dot uses, but its attributes need ordered
 positions in actual operands. A query $\pos(\mathsf{I},G)$ returns $q$ satisfying
@@ -755,7 +757,7 @@ These attributes therefore have the candidate pairings and output order.
 Operation legality and value equivalence still require checking.
 
 
-\subsection{Produce and Verify Attribute Programs}
+\subsubsection{Produce and Verify Attribute Programs}
 \label{extended:sec:emit-programs}
 The tables contain symbolic group queries, while a rule application must
 compute concrete attributes. The compiler resolves each query to expressions
@@ -817,7 +819,7 @@ graph's metadata. Unestablished construction or verification relationships
 leave the rule unresolved.
 
 
-\subsection{General Synthesis Algorithm}
+\subsubsection{General Synthesis Algorithm}
 \label{extended:sec:synthesis-algorithm}
 \label{sec:synthesis-algorithm}
 Algorithm~\ref{alg:synthesis} describes the general candidate-and-check
@@ -877,7 +879,7 @@ checked after completion.
 \code{correspond} matches normalized reads, and \code{required_output_axes}
 computes $M_v$ for each replacement intermediate. \code{select_groups}
 uses operand membership and reduction roles as in
-Section~\ref{extended:sec:keep-axes}. Explicit output-domain groups are separate: they
+Appendix~\ref{extended:sec:keep-axes}. Explicit output-domain groups are separate: they
 come from required output axes absent from every operand, and their sizes
 determine domain attributes. Ambiguous group assignments remain unresolved.
 \code{order_groups} respects fixed bindings and otherwise follows source
