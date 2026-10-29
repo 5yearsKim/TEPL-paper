@@ -341,9 +341,9 @@ children:
     - 0.319286
     - 0.437143
     content: |-
-      Omitted RHS attributes
-      are inferred separately
-      from source metadata.
+      RHS axis fields are
+      inferred from source
+      metadata.
   - name: reusable_semantics
     type: text
     pos:

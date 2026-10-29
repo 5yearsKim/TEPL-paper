@@ -69,6 +69,8 @@
 % Put 50%-width artwork beside prose occupying 46% of text width. Measuring both columns keeps
 % each pair on one page and prevents text or display math from crossing artwork.
 % The optional argument scales artwork within its column; the default is 1.
+% Override locally when a figure needs a fixed-width right column.
+\newcommand{\figuretextwidth}{0.5\textwidth}
 \newsavebox{\figuretextbody}
 \newsavebox{\figuretextart}
 \newlength{\figuretextheight}
@@ -78,12 +80,12 @@
   \def\figuretextfile{#2}\def\figuretextcaption{#3}%
   \def\figuretextlabel{#4}\def\figuretextdescription{#5}%
   \begin{lrbox}{\figuretextbody}%
-  \begin{minipage}[t]{0.46\textwidth}\vspace{0pt}%
+  \begin{minipage}[t]{\dimexpr0.96\textwidth-\figuretextwidth\relax}\vspace{0pt}%
   \emergencystretch=1em\noindent
 }{%
   \end{minipage}\end{lrbox}%
   \begin{lrbox}{\figuretextart}%
-  \begin{minipage}[t]{0.5\textwidth}\vspace{0pt}\centering
+  \begin{minipage}[t]{\figuretextwidth}\vspace{0pt}\centering
     \captionsetup{type=figure,hypcap=false}%
     \includegraphics[width=\figuretextscale\linewidth]{\figuretextfile}%
     \caption{\figuretextcaption}\label{\figuretextlabel}%

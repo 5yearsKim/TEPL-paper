@@ -2,20 +2,63 @@
 \label{sec:language}
 \subsection{Dialects, Operations, and Rewrite Rules}
 \label{sec:dialects}
-A dialect defines a reusable set of operations, including their operand
-signatures, attributes, and semantics. Attributes configure operations independently of tensor values:
-a transpose, for example, carries \code{permutation: index[]}.
-The semantics of each operation can be described using Axes IR, introduced
-in Section~\ref{sec:axes-ir}.
+A \emph{dialect} groups reusable operation definitions. Each \emph{operation}
+declares its operands, result, attributes, and semantics. Attributes configure
+an operation independently of tensor values.
+Section~\ref{sec:attribute-roles} introduces their roles and shows an example
+declaration.
 
-Rules import dialects using an \code{import} statement and use their
-operations to describe tensor rewrites. A rule has the form \code{LHS => RHS},
-with each side represented as an s-expression.
+A \emph{rewrite rule} imports operations from a dialect and describes a
+replacement using \code{LHS => RHS}. Each side is a tensor expression written
+as an s-expression. For example,
+\code{(transpose (transpose X)) => (transpose X)} replaces two consecutive
+transposes with one. The replacement's attributes determine whether the
+rewrite preserves the result.
 
-An operation node can be named using \code{:}. For example,
-\code{(d: dot x y)} names the dot node \code{d}. This name can be referenced
-in \code{derive} and \code{where} blocks.
+An operation occurrence can be named using \code{:}. For example,
+\code{(d: dot X Y)} names the dot occurrence \code{d}. Later sections show
+how \code{where} and \code{derive} use these names to read attributes,
+express conditions, and construct replacement attributes.
 
+% \Needspace{150pt}
+\begingroup
+\renewcommand{\figuretextwidth}{0.3\textwidth}
+
+
+\begin{figuretext}{figures/Axis, extent, and coordinate.pdf}{Axis, extent, and coordinate in a tensor of shape $(2,3,4)$.}{fig:attribute-roles}{A three-dimensional tensor with vertical axis 0 of extent 2, horizontal axis 1 of extent 3, and depth axis 2 of extent 4. The highlighted element has coordinate (0, 0, 2). Matching colors associate each axis with its shape and coordinate entries.}
+
+\subsection{Axis, Extent, and Coordinate Attributes}
+\label{sec:attribute-roles}
+
+TEPL distinguishes three roles for integer attributes. An \code{axis}
+identifies a dimension by its zero-based position; an \code{extent}
+specifies a dimension's size; and a \code{coordinate} specifies a position,
+offset, or stride within a dimension. Figure~\ref{fig:attribute-roles} visualizes the distinction between axes,
+extents, and coordinates.
+
+
+TEPL makes these roles explicit in attribute declarations, allowing
+synthesis to target axis fields while preserving supplied extents and
+coordinate parameters. A transpose operation can be defined as follows:
+\end{figuretext}
+\endgroup
+
+\begin{codeblock}[H]
+\begin{lstlisting}[language=TEPL]
+dialect TensorLang {
+    op transpose(input: tensor) -> tensor {
+        attrs {
+            permutation: axis[];
+        }
+        // Other blocks, such as axes and semantics, can follow.
+        ...
+    }
+}
+\end{lstlisting}
+\end{codeblock}
+
+% Keep the heading with the following figure-and-text block.
+\Needspace{300pt}
 \subsection{Attribute Binding and Transformation}
 \label{sec:binding}
 \begin{figuretext}[0.9]{figures/Attribute Binding and Derivation.pdf}{Captured operation attributes can be read in \code{where} and \code{derive} blocks. The \code{derive} block explicitly defines RHS attribute transformation logic using these captured attributes.}{fig:attribute-binding}{An input graph with transpose and dot is replaced by a dot. Colored descriptor
@@ -99,7 +142,7 @@ replacement transpose from the two captured permutations.
 
 \subsection{Automatic Attribute Inference}
 \label{sec:auto}
-When RHS attributes are omitted and no derivation is provided, TEPL asks the
+When eligible RHS axis fields are omitted and no derivation is provided, TEPL asks the
 compiler to infer their transformation logic. The same transpose rewrite
 can therefore be written without a \code{derive} block:
 \begin{codeblock}[H]
@@ -109,7 +152,7 @@ rule compose_transposes_auto {
 }
 \end{lstlisting}
 \end{codeblock}
-\begin{figuretext}{figures/Automatic Attribute Inference.pdf}{Omitted RHS attributes trigger inference of a reusable attribute function at compile time. Runtime evaluates this function on the metadata captured for each match.}{fig:introducing-auto}{A vertical flow separates the user rule and operation semantics, compiler
+\begin{figuretext}{figures/Automatic Attribute Inference.pdf}{Omitted RHS axis fields trigger inference of a reusable attribute function at compile time. Runtime evaluates this function on the metadata captured for each match.}{fig:introducing-auto}{A vertical flow separates the user rule and operation semantics, compiler
 synthesis and verification, and runtime application of the generated function.}
 For transpose composition, the compiler infers the same permutation
 transformation as the explicit derivation above. It constructs a reusable

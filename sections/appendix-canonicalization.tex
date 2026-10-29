@@ -1,7 +1,10 @@
 \subsection{Canonicalization Preserves Feasibility}
 \label{app:canonicalization-proof}
 We prove Lemma~\ref{lem:canonicalization} under the assumptions of
-Section~\ref{sec:formal-scope}. Start with a valid attribute assignment
+Section~\ref{sec:formal-scope}, with every input axis having extent at least
+two, as required by Lemma~\ref{lem:axis-exactness}. We use the retained-axis
+and contraction-role rules in Appendix~\ref{app:canonical-axis-rules}.
+Start with a valid attribute assignment
 $\beta$. By Lemma~\ref{lem:axis-exactness}, its axes can be identified
 with the LHS logical axes.
 
@@ -37,6 +40,8 @@ An axis in $B_v$ is mandatory, so $\beta$ must keep it as batch.
 An axis in $K_v$ has no connections outside the subtree and is absent
 from the final output. We can contract it now, even if $\beta$ keeps
 it as batch and sums it out later.
+D2 permits this change of axis roles and the corresponding changes to
+position lists.
 \item \emph{Free axes remain free.}
 Suppose a left-free axis $a\in P_\ell\setminus P_r$ appeared in the
 original right child. Since it connects inputs in both children,

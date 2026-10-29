@@ -7,6 +7,7 @@ exists and constructs one whenever it does.
 \label{thm:complete-synthesis}
 For a symbolic rewrite and metadata $p$ satisfying
 Section~\ref{sec:formal-scope},
+
 \begin{align}
  \operatorname{check}(p)&\iff\exists\beta:\operatorname{Valid}(p,\beta),
  \label{eq:complete-theorem}\\
@@ -15,7 +16,7 @@ Section~\ref{sec:formal-scope},
  \label{eq:sound-theorem}
 \end{align}
 For one component, use the construction above.
-For addition, combine the component checks and assignments as in
+For multiple terms, combine the component checks and assignments as in
 Appendix~\ref{sec:addition-proof}.
 \end{theorem}
 Intuitively, \code{check} answers whether any valid RHS attribute assignment

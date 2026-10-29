@@ -3,29 +3,43 @@
 Within the defined scope (Section~\ref{sec:formal-scope}), each computation
 component is determined by its input axis connections and output axis order.
 
-\subsection{Logical Axis Representation}
-A logical axis groups input axes that use the same index. For example, in
+\subsection{Logical Axes}
+\label{sec:logical-axes}
+A \emph{logical axis} groups input axes that use the same coordinate. For example, in
 \code{einsum('ik,kj->ij', A, B)}~\cite{numpy-einsum}, the two axes named
-\code{k} share an index.
+\code{k} share a coordinate: the second axis of $A$ and the first axis of
+$B$. Since \code{k} is absent from the output \code{ij}, it is summed out.
 We record this relation using input \emph{ports}. Port $(X,d)$ is dimension
-$d$ of input $X$. For a component with input set $\mathcal X$, let
+$d$ of input $X$, with positions starting at zero. For a component with input
+set $\mathcal X$, let
 \begin{equation}
  P=\{(X,d)\mid X\in\mathcal X,\ 0\le d<\operatorname{rank}(X)\}.
 \end{equation}
-Two ports are related by $\sim$ when they are connected, directly or
-indirectly, to use the same index. A logical axis is one equivalence class:
+We write $u\sim v$ when ports $u$ and $v$ use the same coordinate.
+Each logical axis is one equivalence class, and the set of logical axes is
 \begin{equation}
  \mathcal A=P/{\sim}.
 \end{equation}
+Here $P/{\sim}$ groups connected ports into one class each.
 Equal extents do not establish axis identity. We also retain the classes of
 axes removed by summation: they still record how input coordinates connect.
 
+\noindent\textbf{Symbolic axis groups.}
+An ordered list of logical axes is a \emph{symbolic axis group}, written
+$\vec I$, $\vec J$, or $\vec K$. For example, $\vec K=(k_1,k_2)$ contains
+two distinct logical axes. When two inputs share this group, axes in the
+same list position are paired. Allowing groups of varying length lets TEPL
+describe tensors of arbitrary rank with one rule.
+
+\subsection{Axis Representation}
+\label{sec:axis-representation}
 For an expression $T$ with assigned attributes, define
 \begin{equation}
  N(T)=(P,\sim,F),
  \label{eq:axis-representation}
 \end{equation}
-where $F$ lists the output classes in dimension order. This representation
+where $P$ is the set of input ports, $\sim$ records their coordinate
+connections, and $F$ lists the output classes in dimension order. This representation
 specifies the value at each output coordinate: use the same index at
 connected input ports, multiply the selected input entries, and sum over
 all classes absent from $F$. Classes in $F$ remain as output coordinates.
@@ -40,10 +54,21 @@ Thus
 \end{equation}
 The class $k$ is absent from the output, giving $T_{ij}=\sum_k A_{ik}B_{kj}$.
 
+The same representation applies to groups of axes. For example, if $A$ has
+axis order $\vec I\Vert\vec K$ and $B$ has axis order $\vec K\Vert\vec J$,
+corresponding axes in $\vec K$ are paired and summed out. The output order is
+$F=\vec I\Vert\vec J$.
+Here $\Vert$ concatenates ordered axis groups.
+
+Singleton axes can be handled through normalization while preserving the
+ordered output shape. We leave this extension outside the present
+completeness proof.
+
 \subsection{Equivalence of Axis Representations}
 \begin{lemma}[Axis exactness]
 \label{lem:axis-exactness}
 For two legal components $L,R$ over the same inputs at fixed source metadata,
+with every input axis having extent at least two,
 \begin{equation}
  \forall X,\quad L(X)=R(X)\quad\iff\quad N(L)=N(R).
  \label{eq:axis-exactness}
@@ -54,7 +79,7 @@ shape and values for every input exactly when their input-axis connections
 and output-axis order agree. The names assigned to logical axes do not matter.
 
 For TEPL, this gives attribute synthesis a concrete target: choose legal RHS
-attributes that reproduce the LHS axis representation. The lemma establishes
+axis fields that reproduce the LHS axis representation. The lemma establishes
 that matching this representation is both necessary and sufficient for
 equivalence, providing the basis for the synthesis algorithm in
 Section~\ref{sec:mathematical-synthesis}. Appendix~\ref{app:axis-exactness}

@@ -1,7 +1,8 @@
 \subsection{Correctness and Completeness}
 \label{app:completeness-proof}
 We prove Theorem~\ref{thm:complete-synthesis} under the assumptions of
-Section~\ref{sec:formal-scope}. The proof has three parts: every valid
+Section~\ref{sec:formal-scope}, with every input axis having extent
+at least two. The proof has three parts: every valid
 assignment passes the checks; passing the checks gives a valid construction;
 and the restricted additive fragment separates into independent components.
 
@@ -27,9 +28,10 @@ corresponding child. Batch order can be chosen independently of child order.
 Unary summation preserves the order of surviving axes, so its child contains
 the same required subsequence. A permutation imposes no child requirement.
 These are exactly the propagation rules of
-Section~\ref{sec:ordering-feasibility}. At an input, the propagated
+Appendix~\ref{app:ordering-rules}. At an input, the propagated
 requirement must be a subsequence of its actual order, $Req_v\preceq I_v$.
-All clauses of Equation~\eqref{eq:feasibility} therefore hold.
+Thus $C_v$ is true at every node. Together with the root live-set check,
+this gives $\operatorname{check}(p)=\mathrm{true}$.
 \end{proof}
 
 \subsubsection{Sufficiency}
@@ -40,10 +42,17 @@ $\operatorname{check}(p)\Rightarrow
 \operatorname{Valid}(p,\operatorname{build}(p))$.
 \end{lemma}
 \begin{proof}
-Assume the checks pass. First prove Equation~\eqref{eq:order-invariant}
-by structural induction on the RHS. An input uses its fixed order, which
-passes the input subsequence check. A permutation freely arranges its axes.
-Unary summation removes exactly the specified axes and preserves the rest.
+Assume the checks pass. By structural induction on the RHS, we maintain:
+\begin{enumerate}
+\item The constructed attributes and intermediate operations are legal.
+\item The output axes are $P_v$ and satisfy $Req_v$.
+\item The input-port partition equals the LHS partition restricted to
+the subtree's inputs, including classes removed from the output.
+\end{enumerate}
+The second invariant is Equation~\eqref{eq:order-invariant}.
+An input uses its fixed order, which passes the input subsequence check.
+A permutation freely arranges its axes. Unary summation removes exactly
+the specified axes and preserves the rest.
 
 At a contraction, the construction uses $B_v,K_v,LF_v,RF_v$.
 The block-order check ensures that placing required batch axes first and
@@ -52,11 +61,9 @@ exactly $P_v$. Each selected axis occurs once in its child, so all position
 lookups are defined. Paired axes have equal extents because they belong to
 the same LHS class. Batch and contraction sets are disjoint. Thus all
 constructed attributes are legal.
+By D4, the node assignments combine without conflicting choices.
 
-We also maintain a partition invariant: at node $v$, the constructed port
-partition equals the LHS partition restricted to input ports from $U_v$.
-Classes already removed from the output remain recorded in this partition.
-
+For the third invariant, consider the input ports from $U_v$.
 At an input, distinct axes belong to distinct classes. Permutation and
 unary summation do not merge ports. At a contraction, any LHS class with
 support in both child subtrees is mandatory in both children, so it appears
@@ -77,9 +84,10 @@ values. Together with legality, this proves
 $\operatorname{Valid}(p,\operatorname{build}(p))$.
 \end{proof}
 
-\subsubsection{Extension to Addition}
+\subsubsection{Extension to Multiple Terms}
 \label{sec:addition-proof}
-Under Section~\ref{sec:formal-scope}'s additive restrictions, write
+We extend the single-component result to sums of components under
+Section~\ref{sec:formal-scope}'s additive restrictions. Write
 \begin{equation}
  L=\sum_{t\in J}L_t,\qquad R=\sum_{t\in J}R_t.
 \end{equation}
@@ -119,16 +127,9 @@ terms, but addition only aligns output coordinates; it does not merge input
 port classes across terms.
 
 The restrictions are necessary for this argument. Terms with the same
-input set cannot be separated by the scaling variables. Shared unknowns
-can also prevent component solutions from combining. For independent square
-matrices $A,B$, consider
-\begin{equation}
- A+\operatorname{transpose}(B)
- \quad\Rightarrow\quad
- \operatorname{transpose}_{\pi}(A)+\operatorname{transpose}_{\pi}(B).
-\end{equation}
-The first component requires identity and the second requires swap. Each
-has a solution separately, but they cannot share the same unknown $\pi$.
+input set cannot be separated by the scaling variables. D4 ensures that
+component assignments combine without conflict; its boundary example
+appears in Table~\ref{tab:direct-scope}.
 
 Lemmas~\ref{lem:necessity} and~\ref{lem:sufficiency} prove the theorem for
 one component. Equation~\eqref{eq:additive-separation} and the independent

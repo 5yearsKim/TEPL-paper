@@ -72,7 +72,7 @@ children:
     - 0.639
     - 0.395
     - 0.453
-    content: 'Omitted attrs → inference'
+    content: 'Omitted axis fields → inference'
   - name: operation_semantics
     type: text
     pos:

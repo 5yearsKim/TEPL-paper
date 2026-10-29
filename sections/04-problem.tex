@@ -14,14 +14,14 @@ attribute descriptor $a$. Tensor expressions have the form
 \begin{equation}
  T ::= X_i \mid o_a(T_1,\ldots,T_k).
 \end{equation}
-A rewrite is $L\Rightarrow R$. Its LHS attributes are known, and its RHS
-attributes are to be constructed. We use the following notation throughout:
+A rewrite is $L\Rightarrow R$. Its LHS attributes are known, and synthesis
+constructs the unknown RHS axis fields. We use the following notation throughout:
 \begin{equation}
 \begin{aligned}
  s&=(s_1,\ldots,s_n) &&\text{input shapes},\\
  \alpha&=\text{LHS attributes},\\
  p&=(s,\alpha) &&\text{source metadata},\\
- \beta&=\text{RHS attributes}.
+ \beta&=\text{completed RHS attributes}.
 \end{aligned}
 \label{eq:metadata}
 \end{equation}
@@ -32,27 +32,35 @@ entries of $X$.
 
 \subsection{Valid Attribute Assignments}
 \label{sec:valid}
-An assignment must make every RHS operation legal and preserve both ordered
-output shape and values:
+We define what counts as a correct synthesis result.
+Let $\beta$ denote the completed RHS attributes.
+$\operatorname{Legal}_R$ includes the legality of every intermediate
+operation, $\operatorname{Shape}$ is an ordered shape vector, and $X$ ranges
+over all tensor values with the input shapes specified by $p$. We define
 \begin{equation}
- \operatorname{Valid}(p,\beta)\iff
- \operatorname{Legal}_R(p,\beta)
- \land\operatorname{Shape}_L(p)=\operatorname{Shape}_R(p,\beta)
- \land\forall X,\; L_p(X)=R_{p,\beta}(X).
+\begin{aligned}
+ \operatorname{Valid}(p,\beta)\iff{}&
+ \operatorname{Legal}_R(p,\beta)\\
+ &\land\operatorname{Shape}_L(p)=\operatorname{Shape}_R(p,\beta)\\
+ &\land\forall X,\; L_p(X)=R_{p,\beta}(X).
+\end{aligned}
 \label{eq:valid}
 \end{equation}
-Here $X$ ranges over all values with the shapes in $p$.
-$\operatorname{Legal}_R$ includes every intermediate operation, and a shape
-is an ordered vector. The same $\beta$ must work for every compatible $X$:
-the quantifier order is $\exists\beta\,\forall X$, not a separate attribute
-choice for each tensor value.
+Thus, valid attributes make the RHS legal and preserve both the ordered
+output shape and the values for every compatible input.
+
+Synthesis chooses only the unknown axis fields using metadata $p$ and
+preserves the supplied fields. Supplied expressions must be defined.
+The resulting $\beta$ must be correct for every compatible input value,
+so the quantifier order is $\exists\beta\,\forall X$.
 
 \subsection{What Must Synthesis Produce?}
 \label{sec:find}
 Our goal is to synthesize two reusable programs, \code{check} and
 \code{build}, from a symbolic rewrite. Given source metadata $p$,
-\code{check} decides whether valid RHS attributes exist, and \code{build}
-constructs them whenever \code{check} succeeds. The programs must satisfy:
+\code{check} decides whether a valid RHS completion exists, and \code{build}
+constructs one whenever \code{check} succeeds. The programs
+must satisfy:
 \begin{align}
  \operatorname{check}(p)&\iff\exists\beta:\operatorname{Valid}(p,\beta),
  \label{eq:check-goal}\\
@@ -66,55 +74,69 @@ varying ranks and shapes.
 
 \subsection{Scope and Assumptions of the Completeness Theorem}
 \label{sec:formal-scope}
-Sections~\ref{sec:axis-model} and~\ref{sec:mathematical-synthesis} use the following
-assumptions. TEPL also handles operations and rules outside this model;
-Section~\ref{sec:broader-operators} explains that separate path.
+The completeness theorem covers \emph{axis-structural multilinear}
+computations: operations connect, reorder, and sum whole axes, while values
+are computed through products and sums of independent input entries.
+Multilinear means linear in each input when the others are fixed.
+Synthesis chooses independent RHS \code{axis} fields under the restrictions
+in Table~\ref{tab:direct-scope}. Extent and coordinate fields are not inferred.
 
-\paragraph{Operation contracts.}
-The proof uses exactly the operation contracts in
-Table~\ref{tab:formal-operations}. Empty attribute lists are permitted.
 \begin{table}[!htbp]
-\caption{Operations in the mathematical model.}
-\label{tab:formal-operations}
-\begin{tabularx}{\linewidth}{@{}p{0.17\linewidth}YY@{}}\toprule
-Operation & Attributes and legality & Computation and output\\\midrule
-Permutation & A full permutation $\pi$ of input positions.
-& Output axis $j$ selects input axis $\pi_j$.\\
-Unary\newline summation & Distinct, in-range positions $d$.
-& Sum over $d$, remove those axes, and preserve the remaining axis order.\\
-Contraction & Ordered batch lists $(b_\ell,b_r)$ and contraction lists $(k_\ell,k_r)$.
-For each operand, all listed positions are distinct and in range.
-Corresponding left/right lists have equal lengths and pair axes of equal extent.
-& Multiply at paired coordinates and sum over contraction axes. Output order:
-batch-list order, then left-free axes, then right-free axes; free axes retain
-operand order.\\
-Addition & No attributes. Operands have identical ordered shapes; no broadcasting.
-& Add corresponding elements and preserve the operand shape and axis order.\\\bottomrule
+\caption{Restrictions of the direct completeness theorem and boundary examples.}
+\label{tab:direct-scope}
+\small
+\begin{tabularx}{\linewidth}{@{}p{0.18\linewidth}YY@{}}\toprule
+Condition & Restriction & Boundary example\\\midrule
+\textbf{D1. Whole-axis structure}
+& Connect, reorder, and sum whole axes in the same direction. No new axes,
+coordinate splitting or merging, or additional weights.
+& A slice taking $[a,b,c,d]$ to $[b,c]$ selects only part of an axis.\\
+\addlinespace
+\textbf{D2. Unrestricted RHS axis choices}
+& All RHS axis fields are unknown. No fixed choices, list lengths, or layout
+constraints beyond operation legality; empty lists are allowed.
+& A dot with a fixed batch axis followed by a sum may be valid. Contracting
+that axis early would violate the fixed attribute.\\
+\addlinespace
+\textbf{D3. Output ordering}
+& Freely reorder axes, preserve their input order, or concatenate groups in
+the declared order.
+& A declaration interleaving two groups as $(i_1,j_1,i_2,j_2)$ requires an
+additional ordering rule. This is a boundary of the current rules.\\
+\addlinespace
+\textbf{D4. Independent axis unknowns}
+& Different RHS fields and nodes do not share one unknown assignment.
+& To match $A+\operatorname{transpose}(B)$ for independent $2\times2$ inputs,
+two RHS transposes require identity for $A$ and swap for $B$. A shared
+permutation cannot satisfy both.\\\bottomrule
 \end{tabularx}
 \end{table}
 
-\paragraph{Inputs and arithmetic.}
-Inputs have arbitrary finite ranks, including zero, and axis extents
-of at least two. Input values vary independently over the reals,
-and arithmetic is exact.
+\noindent\textbf{Operation declarations.}
+Each operation declares which input axes are connected, which are summed,
+and the output order. For example, contraction pairs axes of equal extent
+from two inputs and multiplies entries at matching coordinates. Paired axes
+retained in the output are \emph{batch} axes; those summed out are
+\emph{contraction} axes. Unpaired axes remain \emph{free}. The output order
+is batch, left-free, then right-free, preserving each input's free-axis
+order. Batch and contraction positions are distinct and in range within
+each operand, and the left and right lists pair axes in list order.
 
-\paragraph{Expression structure.}
-A \emph{read-once component} is a contraction/permutation/unary-summation
-tree that uses every tensor in a nonempty input set exactly once. The LHS
-and RHS of a component use the same input set.
-
-For addition, expand the LHS using linearity and bilinearity into
-$L=\sum_t L_t$. The actual RHS must already be an explicit sum of matching
-components, $R=\sum_t R_t$. Each $L_t,R_t$ is read-once and uses the same
-input set $U_t$. Different terms have different input sets, although these
-sets may overlap.
-
-\paragraph{RHS attributes.}
-Each RHS operation has its own attributes for the compiler to infer,
-subject only to Table~\ref{tab:formal-operations}. The theorem excludes
-attributes fixed in advance or required to be shared between RHS operations.
-Expanding expressions must preserve captured LHS attributes and their
-sharing, without splitting a shared RHS attribute into separate choices.
+\noindent\textbf{Input and rewrite assumptions.}
+\begin{itemize}
+\item Inputs have finite ranks; scalars are allowed.
+\item Input entries are independent real numbers, and all calculations are
+exact. Every LHS operation is legal.
+\item Each \emph{read-once component} is a contraction/permutation/unary-summation
+tree using each tensor in a nonempty input set exactly once. Corresponding
+LHS and RHS components use the same input set.
+\item With addition, expand the LHS into $L=\sum_t L_t$ using linearity and
+bilinearity. The RHS must already be an explicit sum $R=\sum_t R_t$ of
+matching components. Each pair $L_t,R_t$ uses the same input set $U_t$;
+different terms have different input sets, which may overlap.
+\end{itemize}
+Captured LHS attributes retain their values when expressions are expanded;
+a shared RHS unknown must not be split into independent choices.
 
 The completeness theorem applies only to this fragment.
 Section~\ref{sec:limitations} discusses cases outside its scope.
