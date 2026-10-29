@@ -1,33 +1,29 @@
 \section{Implementation}
 \label{sec:implementation}
 \label{sec:symbolic-bridge}
-TEPL is implemented in C++20 with ANTLR parsing. Rules and dialect semantics
-are compilation inputs; the graph to rewrite is supplied to runtime.
-Compilation resolves names and types, synthesizes missing
-attributes, verifies semantic rules, and produces executable programs that
-can be exported as JSON. Type-checked rules may retain holes; executable rules
-have completed constructors, guards, and replacement patterns.
+\paragraph{Compiler architecture.}
+The TEPL compiler processes rewrite rules and dialect declarations through
+ANTLR parsing, import and name resolution, and type checking. For rules
+with declared semantics, it then lowers operation semantics, synthesizes
+missing attributes, and verifies the completed rewrite. The compiler lowers
+the resulting rules to an executable representation. The rewrite engine
+uses this representation to match input graphs at runtime. Attribute holes have already been replaced by executable
+computations over source metadata, so applying a rule evaluates these
+computations without repeating attribute inference.
 
-Runtime loads and validates compiled programs, matches LHS patterns,
-evaluates guards and constructors, and builds replacements. A failed guard or
-invalid evaluation skips the match. Generated Rust uses the shared runtime;
-C++ generation is unavailable. E-graph export is also implemented and well
-supported in TEPL, but is outside the scope of this paper.
-\FloatBarrier
+\paragraph{Runtime integration.}
+TEPL provides a greedy graph-rewriting engine. Users construct an input
+graph using operations from declared dialects and supply compiled rewrite
+rules. The engine repeatedly matches and applies applicable rules, returning
+the rewritten graph when no further rewrite applies or an execution limit
+is reached.
 
-The compiler recognizes modeled operations from their declared attribute
-fields, axis bindings, output order, and value expressions, rather than
-operation names. These must match the contracts in
-Section~\ref{sec:formal-scope}; extra restrictions can prevent a declaration
-from qualifying as an unrestricted model operation.
-Appendix~\ref{sec:declaration-adapters} explains the correspondence between
-declared fields and model attributes.
-
-The ordered contraction/permutation path derives axis membership and ordering
-requirements before constructing positional fields. These requirements remain
-obligations under the written guard. If admission or bounded reasoning does
-not support this path, TEPL can try the general procedure in
-Algorithm~\ref{alg:synthesis}. Both paths use completed-rule verification.
-Unary summation and the separated-addition extension of the mathematical
-algorithm are not yet implemented on the ordered path. This distinction
-also applies to interpreting the evaluation results.
+The compiled representation also supports integration with other rewrite
+engines. As a concrete example, TEPL provides an integration with
+\emph{egg}~\cite{egg}, generating Rust code from compiled rules to enable
+equality saturation of tensor expressions. The integration supports
+conditional rewrites using tensor shape and dtype information maintained
+by e-class analysis. Matching also binds attributes from matched operation
+nodes, making them available to rule conditions and replacement attribute
+computations. This integration demonstrates TEPL's potential applicability to other
+tensor compiler stacks.

@@ -1,8 +1,16 @@
 \section{Introduction}
 \label{sec:introduction}
 \subsection{Motivation}
-Algebraic tensor rewriting is used to optimize tensor computations. A rewrite
-rule can be simple in algebraic form, but complex to implement. For example,
+Tensor rewrites are widely used to improve execution efficiency in tensor
+compilers. Production systems such as XLA and TVM use graph transformations
+to simplify computations and enable efficient execution~\cite{xla-hlo-passes,tvm}.
+Related research applies algebraic transformations to graph
+optimization~\cite{taso,tensat,spores}, distributed training~\cite{unity},
+operator fusion~\cite{dnnfusion,neptune}, and optimization across multiple
+execution levels~\cite{mirage,trinity}.
+
+Although tensor rewrite rules can be simple in algebraic form, they can
+require substantial implementation logic. For example,
 consider the dot reassociation rule, $(XY)Z \Rightarrow X(YZ)$. The equation shows how to
 rearrange the computation, but general tensor dot operations also need
 attributes specifying their batch and contraction dimensions. The rewrite
@@ -43,7 +51,6 @@ TEPL automatically infers attribute transformation logic from reusable
 operation semantics and source metadata.}{fig:why-tepl}{Four panels compare an algebraic pattern, custom implementation logic,
 explicit TEPL attribute expressions, and inferred TEPL attributes for the
 same nested-dot replacement graph.}
-\FloatBarrier
 \subsection{Central Thesis}
 We introduce TEPL, a DSL for practical tensor rewriting that provides
 syntactic features for expressing algebraic patterns, applicability

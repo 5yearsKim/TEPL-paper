@@ -5,15 +5,15 @@ common basis for reasoning about tensor rewrites. TEPL composes their
 value expressions and normalizes the LHS and RHS under the permitted
 arithmetic laws to check equivalence.
 
-Consider \code{T=dot(X,Y); O=add(T,Z)}, with batch group $B$ and no broadcasting.
+Consider \code{T=dot(X,Y); O=add(T,Z)}, with batch group $\vec B$ and no broadcasting.
 The dot's value expression is \code{Reduce(K,Product(X,Y))}, and addition's
 is \code{Add(T,Z)}. Substituting the dot expression for \code{T} gives
 \code{Add(Reduce(K,Product(X,Y)),Z)}.
 This describes the arithmetic, but the operations initially use different
-axis groups: the dot yields $B\catseq I\catseq J$, while addition binds
-all axes of $T$ and $Z$ to a single group $S$ and yields $S$ as its output
-axis order. Thus $S$ contains all axes of $T$, $Z$, and $O$ in their shared
-order. The compiler must identify $S=B\catseq I\catseq J$ so that addition
+axis groups: the dot yields $\vec B\catseq\vec I\catseq\vec J$, while addition binds
+all axes of $T$ and $Z$ to a single group $\vec S$ and yields $\vec S$ as its output
+axis order. Thus $\vec S$ contains all axes of $T$, $Z$, and $O$ in their shared
+order. The compiler must identify $\vec S=\vec B\catseq\vec I\catseq\vec J$ so that addition
 reads the dot result and $Z$ at corresponding coordinates.
 
 Symbolic axis mapping establishes this correspondence. Once the bindings
@@ -29,24 +29,26 @@ when group lengths and positions are symbolic.
 
 \subsubsection{Building Mappings Across Operations}
 \label{sec:mapping-tables}
+\sidefigure{figures/Symbolic Axis Mapping.pdf}{Combining local axis mappings for dot and addition. The shared tensor $T$ establishes $\vec S=\vec I\catseq\vec J$, allowing the compiler to propagate the positions of $\vec I$ and $\vec J$ to $Z$ and $O$.}{fig:axis-mapping}{Local dot and addition mapping tables are connected through their shared
+intermediate, producing a table whose axes use a common coordinate description.}
 The core question is: how can we relate different symbolic axis groups
 across composed operations? The compiler must track the same logical axes
 across operations and infer their positions in each tensor. These positions
 are needed to construct RHS attributes: for example, contracting a group
 requires its positions in both operands.
 
-Each mapping stores a triple $(\mathsf{I}_t,G,q)$: $\mathsf{I}_t$ is
-the ordered list of logical axes in tensor $t$, $G$ is the symbolic group
+Each mapping stores a triple $(\mathsf{I}_t,\vec G,q)$: $\mathsf{I}_t$ is
+the ordered list of logical axes in tensor $t$, $\vec G$ is the symbolic group
 being located, and $q$ lists the positions of its axes in $\mathsf{I}_t$,
 in group order. Thus
-$\gath(\mathsf{I}_t,q)=G$ (Equation~\eqref{eq:mapping}).
+$\gath(\mathsf{I}_t,q)=\vec G$ (Equation~\eqref{eq:mapping}).
 The positions may be symbolic expressions rather than concrete lists.
 
-We write $\rho(G)=\operatorname{range}(|G|)=[0,1,\ldots,|G|-1]$ for
-the ordered list of positions within $G$, where $|G|$ is its number of axes.
-For example, if $G=[i_0,i_1,i_2]$, then $\rho(G)=[0,1,2]$.
+We write $\rho(\vec G)=\operatorname{range}(|\vec G|)=[0,1,\ldots,|\vec G|-1]$ for
+the ordered list of positions within $\vec G$, where $|\vec G|$ is its number of axes.
+For example, if $\vec G=[i_0,i_1,i_2]$, then $\rho(\vec G)=[0,1,2]$.
 These are positions within the group; the mapping list $q$ gives their
-positions in tensor $t$. For an empty group, $\rho(G)=[]$.
+positions in tensor $t$. For an empty group, $\rho(\vec G)=[]$.
 
 The compiler builds mappings from producers to consumers in three steps:
 \begin{enumerate}
@@ -59,14 +61,14 @@ the same tensor, preserving axis order and pairings.
 \item \emph{Compose positions.}
 An operation may select axes from a group whose positions in the original
 tensor are already known. To find those axes in the tensor, the compiler
-combines the two position lists. For example, if $G$ occupies tensor
+combines the two position lists. For example, if $\vec G$ occupies tensor
 positions $q=[2,0,1]$ and the operation selects positions $h=[1,0]$
-within $G$, their tensor positions are $\gath(q,h)=[0,2]$.
+within $\vec G$, their tensor positions are $\gath(q,h)=[0,2]$.
 In general,
 \begin{equation}
  \gath\!\left(
-   \underbrace{\gath(\mathsf{I}_t,q)}_{\text{group }G},
-   \underbrace{h}_{\text{positions within }G}
+   \underbrace{\gath(\mathsf{I}_t,q)}_{\text{group }\vec G},
+   \underbrace{h}_{\text{positions within }\vec G}
  \right)
  =
  \gath\!\left(
@@ -79,14 +81,10 @@ This means that the compiler can combine position mappings across composed
 operations to locate selected axes in the corresponding tensors.
 \end{enumerate}
 
-\begin{figuretext}{figures/Symbolic Axis Mapping.pdf}{Combining local axis mappings for dot and addition. The shared tensor $T$ establishes $S=I\catseq J$, allowing the compiler to propagate the positions of $I$ and $J$ to $Z$ and $O$.}{fig:axis-mapping}{Local dot and addition mapping tables are connected through their shared
-intermediate, producing a table whose axes use a common coordinate description.}
 Figure~\ref{fig:axis-mapping} combines the local mappings of dot and
-addition through their shared tensor $T$. Identifying $S=I\catseq J$
-lets the compiler infer the positions of $I$ and $J$ in $Z$ and $O$.
-\end{figuretext}
+addition through their shared tensor $T$. Identifying $\vec S=\vec I\catseq\vec J$
+lets the compiler infer the positions of $\vec I$ and $\vec J$ in $Z$ and $O$.
 
-\FloatBarrier
 \subsubsection{Symbolic Axis Partitioning}
 \label{sec:partitioning}
 A consumer may select axes from several producer groups. How can the
@@ -94,9 +92,9 @@ compiler separate these selections while preserving their order and operand
 pairings? Symbolic axis partitioning divides each producer group into
 selected and remaining axes and records their positions.
 
-For dot reassociation $(XY)Z\to X(YZ)$, the inner dot contracts $K$ and
-produces $T$ with groups $B\catseq I\catseq J$. The outer dot may contract
-axes from both $I$ and $J$. Figure~\ref{fig:axis-partitioning} selects
+For dot reassociation $(XY)Z\to X(YZ)$, the inner dot contracts $\vec K$ and
+produces $T$ with groups $\vec B\catseq\vec I\catseq\vec J$. The outer dot may contract
+axes from both $\vec I$ and $\vec J$. Figure~\ref{fig:axis-partitioning} selects
 $[j_1,i_0]$, paired with positions $[2,0]$ in $Z$. The compiler separates
 these selections by their producer groups while retaining each axis's
 partner in $Z$. We assume that the \code{where} block enforces a guard
@@ -106,31 +104,31 @@ in the same order.
 \paperfigure{1}{figures/Symbolic Axis Partitioning (Dot Reassociation).pdf}{Partitioning selected axes by producer origin preserves their contraction partners for reassociation.}{fig:axis-partitioning}{Three panels show selecting producer output axes, splitting them by origin,
 and retaining contraction partners, followed by a subgroup mapping table.}
 Let $k_\ell^{\mathrm{outer}}$ and $k_r^{\mathrm{outer}}$ be the outer dot's
-contraction lists in $T$ and $Z$, pairing axes of the contraction group $D$.
-For each producer group $G\in\{I,J\}$, the compiler records three lists:
+contraction lists in $T$ and $Z$, pairing axes of the contraction group $\vec D$.
+For each producer group $\vec G\in\{\vec I,\vec J\}$, the compiler records three lists:
 \begin{itemize}
-\item $v_G$: positions of selected axes within $G$;
+\item $v_G$: positions of selected axes within $\vec G$;
 \item $u_G$: positions of those axes in the outer contraction list;
 \item $z_G$: positions of their paired axes in $Z$.
 \end{itemize}
 The operation $\mpo(a,b)=(u,v)$ finds the entries shared by
 distinct-entry lists $a$ and $b$, in $a$'s order, and returns their positions
 in each list. Thus $\gath(a,u)=\gath(b,v)$.
-Let $q_G$ locate $G$ in $T$. The compiler computes
+Let $q_G$ locate $\vec G$ in $T$. The compiler computes
 \begin{equation}
 \begin{aligned}
  (u_G,v_G)&=\mpo(k_\ell^{\mathrm{outer}},q_G),\\
- G_{\mathrm{sel}}&=\gath(G,v_G),\qquad
- G_{\mathrm{rem}}=\gath(G,\ocomp(\rho(G),v_G)),\\
+ \vec G_{\mathrm{sel}}&=\gath(\vec G,v_G),\qquad
+ \vec G_{\mathrm{rem}}=\gath(\vec G,\ocomp(\rho(\vec G),v_G)),\\
  z_G&=\gath(k_r^{\mathrm{outer}},u_G).
 \end{aligned}
 \label{eq:z-partners}
 \end{equation}
 Selected axes follow contraction order, while remaining axes preserve
-their order in $G$. Concatenating the two subgroups therefore need not
-restore $G$'s original order.
+their order in $\vec G$. Concatenating the two subgroups therefore need not
+restore $\vec G$'s original order.
 
-For $i_0$ in the figure, its position within $I$ is 0, but its position
+For $i_0$ in the figure, its position within $\vec I$ is 0, but its position
 in the contraction list is 1. Thus $v_I=[0]$ and $u_I=[1]$.
 Its partner is found at entry 1 of the right contraction list $[2,0]$,
 giving $z_I=[0]$. Using $v_I$ instead of $u_I$ would select the wrong partner.
@@ -141,7 +139,6 @@ axis pairings, even when group lengths and positions remain symbolic.
 Appendix~\ref{extended:sec:partitioning} gives the detailed batch condition,
 output order, and complete refined mapping table.
 
-\FloatBarrier
 \subsubsection{Symbolic Axis Mapping Algorithm}
 \label{sec:mapping-algorithm}
 The compiler builds shared axis mappings by visiting producers before
@@ -161,8 +158,8 @@ The mapping procedure performs four steps:
 The compiler keeps each tensor's axis interface and value expression in
 \code{V}. It also records mappings that locate individual groups and
 partitions that describe how groups together cover an entire interface.
-For example, an interface may be described by one group $S$ or by two
-groups $I$ and $J$, where $S=I\catseq J$. The compiler connects these
+For example, an interface may be described by one group $\vec S$ or by two
+groups $\vec I$ and $\vec J$, where $\vec S=\vec I\catseq\vec J$. The compiler connects these
 descriptions while preserving the tensor's axis order.
 
 The resulting mappings let attribute synthesis locate logical axes in

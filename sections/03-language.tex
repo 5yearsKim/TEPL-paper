@@ -20,15 +20,9 @@ An operation occurrence can be named using \code{:}. For example,
 how \code{where} and \code{derive} use these names to read attributes,
 express conditions, and construct replacement attributes.
 
-% \Needspace{150pt}
-\begingroup
-\renewcommand{\figuretextwidth}{0.3\textwidth}
-
-
-\begin{figuretext}{figures/Axis, extent, and coordinate.pdf}{Axis, extent, and coordinate in a tensor of shape $(2,3,4)$.}{fig:attribute-roles}{A three-dimensional tensor with vertical axis 0 of extent 2, horizontal axis 1 of extent 3, and depth axis 2 of extent 4. The highlighted element has coordinate (0, 0, 2). Matching colors associate each axis with its shape and coordinate entries.}
-
 \subsection{Axis, Extent, and Coordinate Attributes}
 \label{sec:attribute-roles}
+\sidefigure[0.3]{figures/Axis, extent, and coordinate.pdf}{Axis, extent, and coordinate in a tensor of shape $(2,3,4)$.}{fig:attribute-roles}{A three-dimensional tensor with vertical axis 0 of extent 2, horizontal axis 1 of extent 3, and depth axis 2 of extent 4. The highlighted element has coordinate (0, 0, 2). Matching colors associate each axis with its shape and coordinate entries.}
 
 TEPL distinguishes three roles for integer attributes. An \code{axis}
 identifies a dimension by its zero-based position; an \code{extent}
@@ -39,11 +33,9 @@ extents, and coordinates.
 
 TEPL makes these roles explicit in attribute declarations, allowing
 synthesis to target axis fields while preserving supplied extents and
-coordinate parameters. A transpose operation can be defined as follows:
-\end{figuretext}
-\endgroup
+coordinate parameters. Transpose and contiguous slice operations can be
+defined as follows:
 
-\begin{codeblock}[H]
 \begin{lstlisting}[language=TEPL]
 dialect TensorLang {
     op transpose(input: tensor) -> tensor {
@@ -53,15 +45,23 @@ dialect TensorLang {
         // Other blocks, such as axes and semantics, can follow.
         ...
     }
+
+    op slice(input: tensor) -> tensor {
+        attrs {
+            starts: coordinate[];
+            sizes: extent[];
+        }
+        ...
+    }
 }
 \end{lstlisting}
-\end{codeblock}
+For the slice, \code{starts} specifies where to begin and \code{sizes}
+specifies how many elements to take along each dimension; stride is fixed
+to one.
 
-% Keep the heading with the following figure-and-text block.
-\Needspace{300pt}
 \subsection{Attribute Binding and Transformation}
 \label{sec:binding}
-\begin{figuretext}[0.9]{figures/Attribute Binding and Derivation.pdf}{Captured operation attributes can be read in \code{where} and \code{derive} blocks. The \code{derive} block explicitly defines RHS attribute transformation logic using these captured attributes.}{fig:attribute-binding}{An input graph with transpose and dot is replaced by a dot. Colored descriptor
+\sidefigure{figures/Attribute Binding and Derivation.pdf}{Captured operation attributes can be read in \code{where} and \code{derive} blocks. The \code{derive} block explicitly defines RHS attribute transformation logic using these captured attributes.}{fig:attribute-binding}{An input graph with transpose and dot is replaced by a dot. Colored descriptor
 bindings connect the rule to a table with two captured rows and one derived row.}
 LHS operation attributes are captured automatically at match time. Naming an operation
 makes its descriptor accessible as \code{node.attrs}. For example,
@@ -80,14 +80,11 @@ at match time and RHS attributes are derived from them using user-written
 transformation logic.
 
 
-\end{figuretext}
-
 Although our mathematical synthesis algorithm is complete for the defined
 fragment, TEPL may still be unable to verify a rewrite with explicit
 attribute derivations. Failure to verify a rewrite does not necessarily
 mean that it is incorrect.
 
-\FloatBarrier
 
 \subsection{Conditions with \texorpdfstring{\code{where}}{where}}
 \label{sec:where}
@@ -104,7 +101,6 @@ must imply this predicate for every legal LHS match.
 
 For example, the following dot reassociation rule preserves the inner dot's
 batch axes, assuming arithmetic that permits reassociation:
-\begin{codeblock}[H]
 \begin{lstlisting}[language=TEPL]
 rule reassociate {
   (source: dot (inner: dot A B) C) => (dot A (dot B C))
@@ -113,7 +109,6 @@ rule reassociate {
   }
 }
 \end{lstlisting}
-\end{codeblock}
 The condition requires the outer dot's left batch dimensions to match the
 inner dot's batch output positions in the same order.
 
@@ -125,7 +120,6 @@ to add to \code{where}. The user adds the condition and checks the rule again
 A \code{derive} block defines RHS attribute transformation logic using
 captured LHS attributes. The following rule composes two transposes by
 using \code{gather} to compose their permutations:
-\begin{codeblock}[H]
 \begin{lstlisting}[language=TEPL]
 rule compose_transposes_explicit {
   (outer: transpose (inner: transpose X)) => (combined: transpose X)
@@ -136,7 +130,6 @@ rule compose_transposes_explicit {
   }
 }
 \end{lstlisting}
-\end{codeblock}
 When applying the rule, this derivation computes the attributes of the
 replacement transpose from the two captured permutations.
 
@@ -145,14 +138,12 @@ replacement transpose from the two captured permutations.
 When eligible RHS axis fields are omitted and no derivation is provided, TEPL asks the
 compiler to infer their transformation logic. The same transpose rewrite
 can therefore be written without a \code{derive} block:
-\begin{codeblock}[H]
 \begin{lstlisting}[language=TEPL]
 rule compose_transposes_auto {
   (transpose (transpose X)) => (transpose X)
 }
 \end{lstlisting}
-\end{codeblock}
-\begin{figuretext}{figures/Automatic Attribute Inference.pdf}{Omitted RHS axis fields trigger inference of a reusable attribute function at compile time. Runtime evaluates this function on the metadata captured for each match.}{fig:introducing-auto}{A vertical flow separates the user rule and operation semantics, compiler
+\sidefigure{figures/Automatic Attribute Inference.pdf}{Omitted RHS axis fields trigger inference of a reusable attribute function at compile time. Runtime evaluates this function on the metadata captured for each match.}{fig:introducing-auto}{A vertical flow separates the user rule and operation semantics, compiler
 synthesis and verification, and runtime application of the generated function.}
 For transpose composition, the compiler infers the same permutation
 transformation as the explicit derivation above. It constructs a reusable
@@ -168,6 +159,4 @@ Automatic inference must construct attribute transformation logic that works
 across input ranks and shapes. The resulting attributes must make the RHS
 legal and preserve the computation under the rule's declared conditions.
 The next section formalizes this synthesis problem.
-\end{figuretext}
-\FloatBarrier
 

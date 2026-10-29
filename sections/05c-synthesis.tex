@@ -1,121 +1,63 @@
 \subsection{Attribute Program Synthesis}
 \label{sec:synthesis}
-Section~\ref{sec:mathematical-synthesis} establishes how to select intermediate
-axes, satisfy ordering requirements, and construct attributes. This section
-explains how TEPL expresses these decisions using symbolic groups and mappings
-to generate reusable attribute programs. We retain its notation: $M_v$ denotes
-mandatory axes, $P_v$ the canonical live set, and $Req_v$ the required axis order.
-Symbolic groups represent these axes without fixing their number.
+TEPL uses symbolic axis groups and mappings to turn the construction in
+Section~\ref{sec:mathematical-synthesis} into reusable attribute programs.
+
 
 \subsubsection{Match Source and Replacement Computations}
 \label{sec:normalization}
 The compiler first identifies which source coordinates correspond to each
-RHS operand read. It normalizes value expressions into sums of products,
-similar to SPORES's R-polynomial representation~\cite[Section~2.3, Definition~2.4]{spores}.
-Each term records a coefficient, indexed reads, and reduction axes:
-\begin{equation}
- t=(c,[r_1,\ldots,r_m],\mathcal D),\qquad
- \operatorname{value}(t)=\sum_{\mathcal D}c\prod_{i=1}^{m}r_i.
- \label{eq:normalized-term}
-\end{equation}
-The reads retain tensor identity and coordinates. For reassociation,
-normalization combines the nested reductions into $\sum_{D,K}XYZ$ under
-the permitted arithmetic laws, with $Z$ independent of $K$ and the reduction
-groups disjoint.
+RHS operand read. It normalizes the source computation and the RHS
+\emph{arithmetic skeleton} into sums of products, similar to SPORES's
+R-polynomial representation~\cite[Section~2.3, Definition~2.4]{spores},
+then matches reads of the same input tensors. These matches associate
+RHS reads with source coordinates before the RHS axis fields are known.
+For reassociation, both computations contain reads of $X,Y,Z$; their
+completed reduction structure and equivalence are checked after construction.
 
-Unknown RHS attributes leave its reduction axes and read coordinates
-unspecified. The compiler therefore matches the source against an
-\emph{arithmetic skeleton} of the RHS, which expands the declared value
-operations while temporarily omitting axis information. Matching corresponding
-reads supplies the source coordinates used for construction; it does not yet
-establish equivalence of the completed rewrite.
+The replacement intermediate $U=\operatorname{dot}(Y,Z)$ uses the matched
+reads of $Y,Z$, while the final dot combines $X$ and $U$.
+Appendix~\ref{extended:sec:normalization} details normalization and read
+matching.
 
-\paperfigure{1}{figures/Attribute synthesis_ from rules to attributes.pdf}{Matching normalized operand reads supplies coordinate correspondences for constructing replacement attributes. In dot distribution without broadcasting, both replacement dots reuse the source attributes. Group labels denote logical coordinates, and question marks indicate unresolved reductions.}{fig:auto-matching}{Three stages connect a distribution rule and operation semantics to normalized
-terms, read matching, position queries, and completed replacement descriptors.}
-Figure~\ref{fig:auto-matching} illustrates matching for dot distribution.
-For the reassociation example, the same process identifies $Y,Z$ as the
-inputs to the new intermediate $U=\operatorname{dot}(Y,Z)$ and $X$ as
-the other input to the final dot $O'=\operatorname{dot}(X,U)$.
-Their logical axes come from the source mappings in
-Section~\ref{sec:partitioning}. Appendix~\ref{extended:sec:normalization}
-details normalization and read matching.
 
-\FloatBarrier
-\subsubsection{Apply Axis Selection and Attribute Construction}
+\subsubsection{Construct Attribute Programs}
 \label{sec:keep-axes}
 \label{sec:attribute-construction}
-Within the mathematical fragment, the compiler represents the mandatory and
-live sets from Section~\ref{sec:canonical-axes} using symbolic groups.
-The contraction roles follow Equation~\eqref{eq:canonical-roles}, and
-Section~\ref{sec:ordering-feasibility} supplies the required-order checks.
-This keeps the distinction between $M_v$ and $P_v$: an operation may have to
-retain axes beyond those that are mandatory.
-
-For $U$, the reads inside the replacement subtree are $Y,Z$, while $X$
-lies outside it. Applying these rules preserves $K$ and $\Isel$ for the
-later contraction with $X$, and $\Jrem,H$ for the final output, where
-$H$ is the source outer dot's right-free group from $Z$. The shared group
-$\Jsel$ is contracted, and $B$ remains batch.
-Appendix~\ref{extended:sec:keep-axes} gives the complete role assignment.
-
-Section~\ref{sec:formal-construction} constructs attributes by converting
-ordered logical axes into operand positions. TEPL implements this step
-through symbolic mapping queries: $\pos(\mathsf{I},G)$ locates ordered
-group $G$ in interface $\mathsf{I}$. For example, $U$'s contraction lists are
+\label{sec:emit-programs}
+Using Section~\ref{sec:mathematical-synthesis}'s rules, the compiler selects
+axis groups for each replacement operation. Symbolic mappings convert
+these groups into operand positions: $\pos(\mathsf I,\vec G)$ locates
+the ordered group $\vec G$ in interface $\mathsf I$.
+For $U$, both contraction lists select $\vec J_{\mathrm{sel}}$:
 \begin{equation}
- k_\ell^U=\pos(\mathsf{I}_Y,\Jsel),\qquad
- k_r^U=\pos(\mathsf{I}_Z,\Jsel).
+ k_\ell^U=\pos(\mathsf{I}_Y,\vec J_{\mathrm{sel}}),\qquad
+ k_r^U=\pos(\mathsf{I}_Z,\vec J_{\mathrm{sel}}).
  \label{eq:symbolic-contraction-queries}
 \end{equation}
 Both queries select the same group order, preserving operand pairings.
 
-\begin{figuretext}{figures/Constructing Dot Attributes from Axis Mappings.pdf}{Paired position queries construct dot attributes; the completed intermediate supplies mappings for the final dot.}{fig:attribute-construction}{Paired queries on Y and Z construct the inner dot, an interface bridge
+\sidefigure{figures/Constructing Dot Attributes from Axis Mappings.pdf}{Paired position queries construct dot attributes; the completed intermediate supplies mappings for the final dot.}{fig:attribute-construction}{Paired queries on Y and Z construct the inner dot, an interface bridge
 establishes U's layout, and paired queries on X and U construct the final dot.}
-Figure~\ref{fig:attribute-construction} shows how construction proceeds
-from $U$ to the final dot. Its unbatched example writes
-$G=\Isel\catseq K$ for the final contraction group.
 
-After constructing $U$'s attributes, the compiler derives its ordered
-interface $\mathsf{I}_U$ and records its group positions. The final dot
-then queries this interface for its own attributes.
 
-As in Equation~\eqref{eq:constructed-order}, the output places batch axes
-first, then left-free and right-free axes in operand order. A list of
-retained groups alone is insufficient: surviving groups can be interleaved
-within an operand. The symbolic interface preserves that order.
+Figure~\ref{fig:attribute-construction} shows construction of $U$ followed
+by the final dot. After constructing $U$, the compiler records its ordered
+interface $\mathsf I_U$. In the figure's unbatched example, the final dot
+queries this interface for its contraction group
+$\vec G=\vec I_{\mathrm{sel}}\catseq\vec K$.
+The interface preserves surviving operand order, including interleaved groups.
+Appendix~\ref{extended:sec:attribute-construction} gives the full derivation.
 
-Appendix~\ref{extended:sec:attribute-construction} derives both replacement
-descriptors and their output interfaces.
-\end{figuretext}
-
-\FloatBarrier
-\subsubsection{Generate Reusable Attribute Programs}
-\label{sec:emit-programs}
 The compiler resolves position queries into expressions over source
-attributes and shapes. For $U$'s right contraction list, the mappings from
-Section~\ref{sec:partitioning} give
-\begin{equation}
- k_r^U=\gath\bigl(k_r^{\mathrm{outer}},
- \mpo(k_\ell^{\mathrm{outer}},|B|+|I|+\rho(J))_1\bigr),
- \label{eq:source-only-example}
-\end{equation}
-where subscript 1 selects the first returned list. This expression finds
-which outer contraction entries select axes from $J$, then selects their
-partners in $Z$. Group lengths also derive from source metadata.
+attributes and shapes. Queries involving a replacement intermediate
+substitute its constructed interface until only source metadata remains.
+The resulting programs contain no unresolved axis fields or logical-group
+queries. They are generated once per rule and evaluated on each match,
+allowing attribute lists to vary with tensor rank.
+Appendix~\ref{extended:sec:emit-programs} details program generation
+and verification for the reassociation example.
 
-Queries involving $\mathsf{I}_U$ substitute its constructed layout and
-compose mappings until only source metadata remains. The resulting programs
-contain no unresolved RHS attributes or logical-group queries. They are
-generated once per rule and evaluated on each match, allowing attribute
-lists to vary with tensor ranks and source attributes.
-
-TEPL verifies the completed rewrite using the emitted programs under source
-legality and the declared \code{where} condition.
-Section~\ref{sec:condition-suggestions} explains this verification.
-The current ordered path covers contraction and permutation
-(Section~\ref{sec:symbolic-bridge}). A broader synthesis procedure proposes attributes for supported
-operations outside the mathematical fragment and checks the result; it
-does not inherit the fragment's completeness guarantee.
-Appendix~\ref{extended:sec:synthesis-algorithm} gives the full procedure,
-and Appendix~\ref{extended:sec:emit-programs} describes supported
-index-expression inference.
+TEPL verifies the completed rewrite under source legality and the
+declared \code{where} condition, as described in
+Section~\ref{sec:condition-suggestions}.

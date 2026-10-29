@@ -6,11 +6,14 @@ Tables~\ref{tab:value-expressions} and~\ref{tab:index-expressions}. Their
 coordinate interpretation uses the mapping invariant in
 Equation~\eqref{extended:eq:mapping-invariant}, complete disjoint partitions from
 Section~\ref{sec:mapping-algorithm}, and ordered output interfaces. Normalized
-terms have the denotation in Equation~\eqref{eq:normalized-term}. Arithmetic
+terms have the denotation in Equation~\eqref{extended:eq:normalized-term}. Arithmetic
 normalization is conditional on the selected laws and on the reduction-domain
 and read-independence checks described in Section~\ref{sec:normalization}.
-Algorithms~\ref{alg:mapping} and~\ref{alg:synthesis} give the construction and synthesis
-procedures; neither is a claim of completeness.
+Algorithm~\ref{alg:mapping} gives the mapping construction, and
+Appendices~\ref{extended:sec:attribute-construction}
+and~\ref{extended:sec:emit-programs} describe attribute construction and program
+generation; these procedures do not establish completeness beyond the
+mathematical fragment.
 
 The accompanying artifact should record each benchmark's definitions, guards,
 explicit and synthesized constructors, arithmetic policy, and failure

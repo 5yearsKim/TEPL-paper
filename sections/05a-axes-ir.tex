@@ -6,27 +6,27 @@ operations, constructing replacement attributes, and checking rewrites.
 
 \subsubsection{Symbolic Axis Groups}
 \label{sec:axis-groups}
-We represent logical axes using \emph{symbolic groups}: ordered sequences
-of arbitrary length that let one operation definition handle different
-tensor ranks. While TensorRight's aggregated axes are set-based~\cite{tensorright},
+TEPL binds the symbolic axis groups introduced in
+Section~\ref{sec:logical-axes} to operand positions.
+While TensorRight's aggregated axes are set-based~\cite{tensorright},
 TEPL preserves axis order and operand positions for pairing axes and
 constructing attributes. An interface
 $\mathsf{I}=\langle a_0,\ldots,a_{n-1}\rangle$ lists a tensor's logical axes in dimension
 order. For tensor $t$, we write this interface as $\mathsf{I}_t$.
-A zero-based position sequence $q$ locates an ordered group $G$:
+A zero-based position sequence $q$ locates an ordered group $\vec G$:
 \begin{equation}
- \gath(\mathsf{I},q)=G.
+ \gath(\mathsf{I},q)=\vec G.
  \label{eq:mapping}
 \end{equation}
 For example, if $\mathsf{I}=\langle i,k,j\rangle$ and $q=[2,0]$,
-then $G=\langle j,i\rangle$: positions 2 and 0 select $j$ and $i$,
+then $\vec G=\langle j,i\rangle$: positions 2 and 0 select $j$ and $i$,
 in that order.
 
 
-\begin{figuretext}{figures/Symbolic axis groups.pdf}{Symbolic axis groups for generalized dot. Attribute lists bind the batch
-($B$), contraction ($K$), and free ($I,J$) groups to operand positions.
-Paired axes share coordinates, and summing over $K$ leaves output order
-$B\catseq I\catseq J$.}{fig:axis-groups}{Four arbitrary-length groups for batch, left-free, contraction, and right-free
+\sidefigure{figures/Symbolic axis groups.pdf}{Symbolic axis groups for generalized dot. Attribute lists bind the batch
+($\vec B$), contraction ($\vec K$), and free ($\vec I,\vec J$) groups to operand positions.
+Paired axes share coordinates, and summing over $\vec K$ leaves output order
+$\vec B\catseq\vec I\catseq\vec J$.}{fig:axis-groups}{Four arbitrary-length groups for batch, left-free, contraction, and right-free
 axes are connected to operand position lists and an output-axis construction.}
 Each operation defines its Axes IR representation through two blocks:
 \code{axes} and \code{semantics}.
@@ -44,24 +44,18 @@ Figure~\ref{fig:axis-groups} gives a concrete example of dot's symbolic
 axis groups and their operand bindings.
 
 Listing~\ref{lst:dot-declaration} shows how this representation is written
-in a TEPL operation declaration. The \code{dot} attributes \code{lb},
-\code{rb}, \code{lc}, and \code{rc} supply the batch and contraction
-positions used by its \code{axes} bindings; its \code{semantics} block
-computes the output values.
-
-\end{figuretext}
+in a TEPL operation declaration. The \code{attrs} block declares \code{lb},
+\code{rb}, \code{lc}, and \code{rc} as \code{axis[]} fields storing batch
+and contraction positions. The \code{axes} block binds these positions to
+logical groups; \code{semantics} computes the output values.
 
 
-\begin{codeblock}[H]
 \begin{lstlisting}[language=TEPL,
   caption={Axes IR representation of generalized dot, with explicit attributes, axis bindings, and value semantics.},
   label={lst:dot-declaration}]
 op dot(lhs: tensor, rhs: tensor) -> tensor {
   attrs {
-    lb: index[];
-    lc: index[];
-    rb: index[];
-    rc: index[];
+    lb, lc, rb, rc: axis[];
   }
   axes {
     let lf = ordered_complement(all_axes(lhs), attrs.lb ++ attrs.lc);
@@ -77,7 +71,7 @@ op dot(lhs: tensor, rhs: tensor) -> tensor {
   }
 }
 \end{lstlisting}
-\end{codeblock}
+Comma-separated names abbreviate separate attribute declarations.
 In Listing~\ref{lst:dot-declaration}, \code{all_axes} lists operand positions,
 and \code{ordered_complement(a,b)} removes from \code{a} all entries
 appearing in \code{b}, preserving the order of the remaining entries.
@@ -88,7 +82,6 @@ while \code{semantics} multiplies operand elements and sums over \code{K}.
 This representation allows a single operation definition to support
 different tensor ranks. Appendix~\ref{app:axes} provides a concrete layout
 and primitive reference tables.
-\FloatBarrier
 \subsubsection{Tensor Computation in the \texorpdfstring{\code{semantics}}{semantics} Block}
 \label{sec:value-expressions}
 The \code{semantics} block represents an operation using basic mathematical

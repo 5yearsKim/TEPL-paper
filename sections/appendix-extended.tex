@@ -5,7 +5,6 @@
 \label{extended:sec:axis-groups}
 Using the attributes in Listing~\ref{lst:dot-declaration}, consider these
 operand layouts and bindings:
-\begin{codeblock}[H]
 \begin{lstlisting}
 lhs:    [i, k0, b, k1]
 rhs:    [k1, j, k0, b]
@@ -16,7 +15,6 @@ rb = [3]
 lc = [1, 3]
 rc = [2, 0]
 \end{lstlisting}
-\end{codeblock}
 The batch binding pairs position $2$ of \code{lhs} with position $3$ of
 \code{rhs}. The contraction lists pair $(1,2)$ for $k_0$ and $(3,0)$ for
 $k_1$. Remaining axes give $I=\langle i\rangle$ and $J=\langle j\rangle$;
@@ -53,7 +51,6 @@ Section~\ref{sec:value-expressions}'s value and index expressions.
 
 Elementwise addition without broadcasting binds every axis of
 \code{lhs} to the corresponding axis of \code{rhs}, preserving that group:
-\begin{codeblock}[H]
 \begin{lstlisting}[language=TEPL]
 axes {
   bind S {
@@ -66,7 +63,6 @@ semantics {
   yield Add(lhs, rhs);
 }
 \end{lstlisting}
-\end{codeblock}
 The shared binding requires equal rank and matching sizes. At each coordinate
 in $S$, the operand references read corresponding elements and \code{Add}
 produces their sum. Table~\ref{extended:tab:value-expressions} lists the value primitives.
@@ -90,13 +86,11 @@ Expression & Meaning\\\midrule
 Index expressions produce an index sequence with one entry for each accessed
 axis. Table~\ref{extended:tab:index-expressions} gives their forms. A slice, for example,
 uses
-\begin{codeblock}[H]
 \begin{lstlisting}[language=TEPL]
 Read(input,
   IndexOffset(attrs.starts,
     IndexScale(attrs.strides, Coords(O))))
 \end{lstlisting}
-\end{codeblock}
 Here $O$ is the output group. Per axis, the index expression computes
 \code{starts + strides * output_indices}. The \code{Read} expression retrieves
 the selected value. The index calculation determines the location, and the
@@ -461,7 +455,7 @@ they do not dispense with checking the completed rewrite.
 \label{app:synthesis}
 The mapping procedure establishes which logical axes occur in source tensors
 and where they occur. Synthesis uses these relationships to fill the
-replacement's attribute holes. It normalizes value expressions, identifies
+replacement's axis-field holes. It normalizes value expressions, identifies
 which axes each replacement operation must preserve or reduce, and queries
 mappings to construct its attributes.
 
@@ -475,6 +469,10 @@ equal the source descriptor. The figure's reads $A[I,K]$, $B[I,K]$, and
 $C[K,J]$ abbreviate group coordinates, rather than asserting that groups are
 contiguous in physical layouts. The skeleton's question marks denote unresolved
 reduction information. Equivalence is checked only after construction.
+
+\paperfigure{1}{figures/Attribute synthesis_ from rules to attributes.pdf}{Matching normalized operand reads supplies coordinate correspondences for constructing replacement attributes. In dot distribution without broadcasting, both replacement dots reuse the source attributes. Group labels denote logical coordinates, and question marks indicate unresolved reductions.}{fig:auto-matching}{Three stages connect a distribution rule and operation semantics to normalized
+terms, read matching, position queries, and completed replacement descriptors.}
+\FloatBarrier
 
 
 
@@ -542,7 +540,6 @@ The inner reduction contributes reads \code{X}, \code{Y}, and axes $K$.
 Multiplication incorporates \code{Z} after checking that it does not depend
 on $K$. The outer reduction prepends $D$ after establishing that $D$ and $K$
 are disjoint. Thus
-\begin{codeblock}[H]
 \begin{lstlisting}
 Value expression:
 Reduce(D,
@@ -553,9 +550,8 @@ Reduce(D,
 Normalized term:
 t = (1, [X, Y, Z], D ++ K)
 \end{lstlisting}
-\end{codeblock}
 
-Unknown RHS attributes mean its actual reduction axes and read coordinates
+Unknown RHS axis fields mean its actual reduction axes and read-coordinate correspondence
 are not yet available. Synthesis instead normalizes its \emph{arithmetic
 skeleton}: it expands declared value operations while temporarily omitting
 axis information. The skeleton for $X(YZ)$ has coefficient $1$, reads
@@ -585,10 +581,6 @@ To build $U$, the compiler must classify these axes as batch, contraction,
 left-free, or right-free. In particular, $K$ must survive $U$ for a later
 contraction with \code{X}.
 
-\begin{figuretext}{figures/Infer Axis Roles in U.pdf}{An intermediate preserves axes needed outside its computation or in the final output and reduces the remaining shared axes. The figure applies the mandatory-axis rule to the unbatched replacement intermediate $U$.}{fig:infer-u}{A flow compares axes inside the replacement intermediate with axes needed
-outside it and in the output, retaining required axes and contracting the rest.}
-
-
 Here $\Axes(x)$ denotes the set of logical axes in tensor $x$'s interface.
 For one matched product, $\Axes_{\mathrm{in}}(v)$ and
 $\Axes_{\mathrm{out}}(v)$ collect axes used by reads inside and outside
@@ -599,6 +591,8 @@ definition in Equation~\eqref{eq:mandatory-axes} can be written as
  \bigl(\Axes_{\mathrm{out}}(v)\cup\Axes(O)\bigr).
  \label{eq:keep-axes}
 \end{equation}
+\sidefigure{figures/Infer Axis Roles in U.pdf}{An intermediate preserves axes needed outside its computation or in the final output and reduces the remaining shared axes. The figure applies the mandatory-axis rule to the unbatched replacement intermediate $U$.}{fig:infer-u}{A flow compares axes inside the replacement intermediate with axes needed
+outside it and in the output, retaining required axes and contracting the rest.}
 This is the same mandatory set $M_v$ used in Section~\ref{sec:canonical-axes};
 the live set $P_v$ may additionally include axes that the operation cannot
 remove. In the general matching path, requirements for a shared intermediate
@@ -618,7 +612,6 @@ only inside and can be contracted. Although $\Irem$ belongs to the final
 output, it occurs outside $U$ and reaches the final dot through \code{X}.
 At the final dot, $K$ and $\Isel$ are shared by \code{X} and $U$ but absent
 from $O$, so they are reduced together.
-\end{figuretext}
 
 Using group names as shorthand for all their constituent axes,
 \begin{equation}
@@ -666,9 +659,7 @@ $O'=\operatorname{dot}(X,U)$ & $B$ & $K,\Isel$ & $\Irem$ & $\Jrem,H$\\\bottomrul
 \end{tabular}
 \end{center}
 Free axes follow operand order. The rule relies on distinguishable declared
-group roles; ambiguous assignments remain unresolved. Groups introduced by an
-explicit output domain rather than operand bindings are handled separately
-in Appendix~\ref{extended:sec:synthesis-algorithm}.
+group roles; ambiguous assignments remain unresolved.
 
 
 \subsubsection{Construct Attributes from the Mapping Table}
@@ -778,21 +769,11 @@ $\mathsf{I}_U$ similarly substitute its layout and compose mappings until only s
 metadata remains. Emitted programs contain neither unresolved RHS attributes
 nor logical-group queries.
 
-For calculated accesses, position mappings alone need not determine every
-attribute. The implementation additionally matches supported index expressions,
-including coordinate coefficients and offsets. Composed slices, for example,
-have the candidate attributes
-\begin{equation}
-\begin{aligned}
- \mathrm{start}'&=\mathrm{start}_{\mathrm{inner}}
-   +\mathrm{stride}_{\mathrm{inner}}\,\mathrm{start}_{\mathrm{outer}},\\
- \mathrm{stride}'&=\mathrm{stride}_{\mathrm{inner}}\,
-                  \mathrm{stride}_{\mathrm{outer}}.
-\end{aligned}
-\end{equation}
-These expressions must also satisfy resulting access bounds and output shape.
-Coupled or
-inverse equations outside the supported fragment remain unresolved.
+For calculated accesses, the compiler compares supplied coordinate
+expressions to establish read correspondence. Synthesis constructs only
+axis-position expressions; extent and coordinate fields retain their
+supplied expressions or schema defaults. Verification checks that these
+expressions are defined and satisfy access bounds and output shape.
 
 \paragraph{Check the completed replacement.}
 With attributes filled, the RHS has actual coordinates and reduction domains.
@@ -817,81 +798,3 @@ become new assumptions. On success, the result is a collection of checked
 source-dependent programs, compiled once and evaluated on each matched
 graph's metadata. Unestablished construction or verification relationships
 leave the rule unresolved.
-
-
-\subsubsection{General Synthesis Algorithm}
-\label{extended:sec:synthesis-algorithm}
-\label{sec:synthesis-algorithm}
-Algorithm~\ref{alg:synthesis} describes the general candidate-and-check
-procedure, not the complete mathematical algorithm of
-Section~\ref{sec:mathematical-synthesis}. The ordered contraction/permutation
-path derives ordering requirements before construction, as explained in
-Section~\ref{sec:symbolic-bridge}. The general procedure uses each operation's declared groups, value expression, and
-output order, rather than requiring the replacement to contain dots. Its
-inputs are a rule's source graph, replacement graph with attribute holes,
-operation definitions, and declared conditions. It returns checked attribute
-programs or an unresolved result.
-
-\begin{paperalgorithm}[htbp]
-\caption{Synthesize and check replacement attribute programs.}
-\label{alg:synthesis}
-\begin{lstlisting}[language=Python]
-def synthesize_attribute_programs(rule):
-    V, mappings, partitions = build_symbolic_axis_mapping(rule.lhs)
-    source = normalize(V[rule.lhs].value)
-    skeleton = normalize(arithmetic_skeleton(rule.rhs))
-    match = correspond(source, skeleton)
-    required = required_output_axes(match, V[rule.lhs].axes)
-    bind_replacement_reads(V, match)
-    constructors = {}
-    for op in producer_first(rule.rhs):
-        if op.is_input:
-            continue
-        inputs = [V[t] for t in op.inputs]
-        if op.has_attribute_holes:
-            groups = select_groups(op.definition, inputs, required[op])
-            groups = order_groups(groups, op, source, inputs)
-            for binding in op.unresolved_axis_bindings:
-                axes = inputs[binding.operand].axes
-                G = groups[binding.group]
-                constructors[op, binding.attribute] = positions(axes, G, mappings, partitions)
-            complete_other_attributes(op, inputs, groups, match, constructors)
-        completed = substitute_attributes(op, constructors)
-        V[op] = lower_and_check(completed, inputs, mappings, partitions)
-    check_equivalence(V[rule.lhs], V[rule.rhs])
-    programs = source_only_expressions(constructors)
-    verify_in_fresh_context(rule, programs)
-    return programs
-\end{lstlisting}
-\end{paperalgorithm}
-
-The state retains $(V,\mathcal M,\Pi)$ and adds a table $\mathcal C$ of proposed attribute
-expressions indexed by operation and attribute. In the pseudocode, \code{.axes} and \code{.value} denote the two
-components of $V[t]$. Read correspondence supplies required output sets,
-and replacement nodes are processed after their inputs. The construction
-invariant requires every completed node to have resolved legal attributes,
-an interface and value expression consistent with them, and mappings
-satisfying Equation~\eqref{extended:eq:mapping-invariant}. Whole-rule equivalence is
-checked after completion.
-
-
-
-\code{correspond} matches normalized reads, and \code{required_output_axes}
-computes $M_v$ for each replacement intermediate. \code{select_groups}
-uses operand membership and reduction roles as in
-Appendix~\ref{extended:sec:keep-axes}. Explicit output-domain groups are separate: they
-come from required output axes absent from every operand, and their sizes
-determine domain attributes. Ambiguous group assignments remain unresolved.
-\code{order_groups} respects fixed bindings and otherwise follows source
-and operand orders. \code{positions} implements $\operatorname{pos}$ by mapping lookup and position
-construction for these ordered groups.
-
-\code{complete_other_attributes} handles supported index coefficients,
-offsets, output domains, and output permutations. \code{lower_and_check}
-checks each completed operation and publishes its interface and mappings for
-consumers. \code{check_equivalence} compares fully lowered values, reduction
-domains, output order, shape, and dtype. \code{source_only_expressions}
-resolves constructors to source metadata, and the final check reconstructs
-the completed rule in a fresh context. The pseudocode omits failure paths:
-unsupported or unproved steps return an unresolved result. Successful output
-is a program for every missing attribute, ready for match-time evaluation.

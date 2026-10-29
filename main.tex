@@ -6,12 +6,12 @@
 \usepackage{listings}
 \usepackage{placeins}
 \usepackage{float}
+\usepackage{wrapstuff}
 \usepackage{microtype}
-\usepackage{needspace}
 \setcounter{secnumdepth}{3}
 \setcounter{tocdepth}{3}
 \lstdefinelanguage{TEPL}{
-  morekeywords={dialect,op,attrs,axes,semantics,dtype,bind,yield,let,rule,where,derive,from,import,as,use,auto,tensor,index},
+  morekeywords={dialect,op,attrs,axis,extent,coordinate,axes,semantics,dtype,bind,yield,let,rule,where,derive,from,import,as,use,auto,tensor},
   sensitive=true,morecomment=[l]{//},morestring=[b]"
 }
 \lstset{basicstyle=\normalfont\ttfamily\small,keywordstyle=\bfseries,
@@ -34,30 +34,11 @@
 \newcommand{\Jsel}{J_{\mathrm{sel}}}
 \newcommand{\Jrem}{J_{\mathrm{rem}}}
 \newcolumntype{Y}{>{\raggedright\arraybackslash}X}
-% Float barriers keep every figure in its specified subsection.
-% Small artwork uses 50% of text width; large artwork uses 100%.
+% Algorithms remain ordinary floats; listings stay in the text flow so they
+% can break automatically across pages.
 \floatstyle{plaintop}
 \newfloat{paperalgorithm}{htbp}{loa}
 \floatstyle{plain}
-\newfloat{codeblock}{htbp}{loc}
-% Let the codeblock wrapper control spacing around its listings.
-\floatevery{codeblock}{\lstset{aboveskip=0pt,belowskip=0pt}}
-% Keep code spacing local. An empty [H] caption box otherwise adds a
-% caption-sized gap below the listing even when no float caption is present.
-\makeatletter
-\BeforeBeginEnvironment{codeblock}{%
-  \begingroup
-  \setlength{\intextsep}{12pt}%
-  \patchcmd{\@float@HH}{\setbox\@floatcapt=\vbox{}}%
-    {\setbox\@floatcapt\box\voidb@x}{}%
-    {\PackageError{tepl}{Unable to adjust codeblock caption spacing}{}}%
-  % The following paragraph supplies baseline spacing in addition to this gap.
-  \patchcmd{\float@endH}{\box\@currbox\vskip\intextsep}%
-    {\box\@currbox\vskip4pt}{}%
-    {\PackageError{tepl}{Unable to adjust codeblock bottom spacing}{}}%
-}
-\AfterEndEnvironment{codeblock}{\endgroup}
-\makeatother
 \floatname{paperalgorithm}{Algorithm}
 \newcommand{\paperfigure}[5]{%
   \begin{figure}[!htbp]\centering
@@ -66,43 +47,65 @@
   \end{figure}}
 
 
-% Put 50%-width artwork beside prose occupying 46% of text width. Measuring both columns keeps
-% each pair on one page and prevents text or display math from crossing artwork.
-% The optional argument scales artwork within its column; the default is 1.
-% Override locally when a figure needs a fixed-width right column.
-\newcommand{\figuretextwidth}{0.5\textwidth}
-\newsavebox{\figuretextbody}
-\newsavebox{\figuretextart}
-\newlength{\figuretextheight}
-\newenvironment{figuretext}[5][1]{%
-  \FloatBarrier
-  \def\figuretextscale{#1}%
-  \def\figuretextfile{#2}\def\figuretextcaption{#3}%
-  \def\figuretextlabel{#4}\def\figuretextdescription{#5}%
-  \begin{lrbox}{\figuretextbody}%
-  \begin{minipage}[t]{\dimexpr0.96\textwidth-\figuretextwidth\relax}\vspace{0pt}%
-  \emergencystretch=1em\noindent
-}{%
-  \end{minipage}\end{lrbox}%
-  \begin{lrbox}{\figuretextart}%
-  \begin{minipage}[t]{\figuretextwidth}\vspace{0pt}\centering
-    \captionsetup{type=figure,hypcap=false}%
-    \includegraphics[width=\figuretextscale\linewidth]{\figuretextfile}%
-    \caption{\figuretextcaption}\label{\figuretextlabel}%
-    \Description{\figuretextdescription}%
-  \end{minipage}\end{lrbox}%
-  \setlength{\figuretextheight}{\dimexpr\ht\figuretextbody+\dp\figuretextbody\relax}%
-  \ifdim\dimexpr\ht\figuretextart+\dp\figuretextart\relax>\figuretextheight
-    \setlength{\figuretextheight}{\dimexpr\ht\figuretextart+\dp\figuretextart\relax}%
-  \fi
-  \typeout{SIDEFIG \figuretextlabel: \the\figuretextheight}%
-  \par\addvspace{\intextsep}%
-  % Initialize the page goal before checking space after pending top floats.
-  \nointerlineskip\vbox{}\nointerlineskip
-  \Needspace{\figuretextheight}%
-  \noindent\usebox{\figuretextbody}\hfill\usebox{\figuretextart}\par
-  \addvspace{\intextsep}%
+% Place a small figure beside normal paragraphs; never enclose the prose.
+% Usage: \sidefigure[width fraction]{file}{caption}{label}{description}
+% Reserve only the artwork/caption height; prose is never boxed.
+% If necessary, start the wrapped figure on the next page, never a full-width row.
+\newsavebox{\sidefigureart}
+% A soft space reservation lets TeX break before an attached heading, rather
+% than forcing a break between that heading and its first paragraph.
+\makeatletter
+\newcommand{\reservesidefigurespace}[1]{%
+  \begingroup
+    \@tempskipb\lastskip
+    \vskip-\@tempskipb
+    \dimen@=#1\relax
+    \advance\dimen@\@tempskipb
+    \vskip0pt plus\dimen@
+    \if@nobreak\penalty10000\else\penalty-100\fi
+    \vskip0pt plus-\dimen@
+    \vskip\dimen@
+    \penalty9999
+    \vskip-\dimen@
+    \vskip\@tempskipb
+  \endgroup
 }
+\makeatother
+\newcommand{\sidefigure}[5][0.45]{%
+  \par\wrapstuffclear
+  \sbox{\sidefigureart}{%
+    \begin{minipage}{#1\textwidth}
+      \centering
+      \captionsetup{type=figure,hypcap=false}%
+      \includegraphics[width=\linewidth]{#2}%
+      \caption{#3}\label{#4}\Description{#5}%
+    \end{minipage}}%
+  \reservesidefigurespace{\dimexpr\ht\sidefigureart+\dp\sidefigureart+2\baselineskip+\intextsep\relax}%
+  \begin{wrapstuff}[r,belowsep=\intextsep]
+    \usebox{\sidefigureart}%
+  \end{wrapstuff}%
+}
+
+% Code, lists, display math and floats require full width with this class.
+% Keep ordinary text flowing around figures across section headings.
+\BeforeBeginEnvironment{lstlisting}{\par\wrapstuffclear}
+\BeforeBeginEnvironment{itemize}{\par\wrapstuffclear}
+\BeforeBeginEnvironment{enumerate}{\par\wrapstuffclear}
+\BeforeBeginEnvironment{description}{\par\wrapstuffclear}
+\BeforeBeginEnvironment{equation}{\par\wrapstuffclear}
+\BeforeBeginEnvironment{align}{\par\wrapstuffclear}
+\BeforeBeginEnvironment{equation*}{\par\wrapstuffclear}
+\BeforeBeginEnvironment{align*}{\par\wrapstuffclear}
+\BeforeBeginEnvironment{gather}{\par\wrapstuffclear}
+\BeforeBeginEnvironment{gather*}{\par\wrapstuffclear}
+\BeforeBeginEnvironment{multline}{\par\wrapstuffclear}
+\BeforeBeginEnvironment{multline*}{\par\wrapstuffclear}
+\BeforeBeginEnvironment{displaymath}{\par\wrapstuffclear}
+\BeforeBeginEnvironment{table}{\par\wrapstuffclear}
+\BeforeBeginEnvironment{figure}{\par\wrapstuffclear}
+\BeforeBeginEnvironment{paperalgorithm}{\par\wrapstuffclear}
+\BeforeBeginEnvironment{table*}{\par\wrapstuffclear}
+\BeforeBeginEnvironment{figure*}{\par\wrapstuffclear}
 
 \title[TEPL]{TEPL: Synthesizing Attribute Programs from Tensor Rewrite Semantics}
 \author{Author Name}
@@ -127,39 +130,25 @@ supports a wider range of operations than the theorem covers, synthesizing
 attribute transformations and independently verifying the resulting rewrites.
 TEPL's supported operation semantics cover 119 of 209 concrete XLA rewrite
 cases, with RHS attribute synthesis succeeding in 36 of the 43 eligible
-cases (83.7\%). Across these successful cases, attribute synthesis reduces
-TEPL specification size by 32.4\% in tokens compared with explicit
-attribute transformations.
+cases (83.7\%). Across these successful cases, compact inferred TEPL uses
+17.8\% fewer tokens than TEPL with explicit attribute transformations.
 \end{abstract}
 \keywords{tensor rewrites, attribute synthesis, symbolic axis mapping}
 \maketitle
 
-\FloatBarrier
 \input{sections/01-introduction}
-\FloatBarrier
 \input{sections/03-language}
-\FloatBarrier
 \input{sections/04-problem}
-\FloatBarrier
 \input{sections/04a-axis-model}
-\FloatBarrier
 \input{sections/04b-mathematical-synthesis}
 \input{sections/04c-formal-correctness}
-\FloatBarrier
 \input{sections/05-method}
-\FloatBarrier
 \input{sections/05e-tepl-integration}
-\FloatBarrier
 \input{sections/06-implementation}
-\FloatBarrier
 \input{sections/07-limitations}
-\FloatBarrier
 \input{sections/08-evaluation}
-\FloatBarrier
 \input{sections/09-related-work}
-\FloatBarrier
 \input{sections/10-conclusion}
-\FloatBarrier
 \label{main-text-end}
 \clearpage
 \bibliographystyle{ACM-Reference-Format}
@@ -169,6 +158,5 @@ attribute transformations.
 \input{sections/appendix-foundations}
 \clearpage
 \input{sections/appendix-compilation}
-\FloatBarrier
 \input{sections/appendix-scalability}
 \end{document}

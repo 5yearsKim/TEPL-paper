@@ -1,14 +1,6 @@
 \section{Related Work}
 \label{sec:related-work}
 
-Tensor rewrites are widely used to improve execution efficiency in tensor
-compilers. Production systems such as XLA and TVM use graph transformations
-to simplify computations and enable efficient execution~\cite{xla-hlo-passes,tvm}.
-Related research applies algebraic transformations to graph
-optimization~\cite{taso,tensat,spores}, distributed training~\cite{unity},
-operator fusion~\cite{dnnfusion,neptune}, and optimization across multiple
-execution levels~\cite{mirage,trinity}.
-
 \paragraph{Declarative rewrite languages.}
 MLIR's declarative rewrite rules (DRR) and PDLL simplify compiler rewrite
 development by letting authors describe matching and replacement patterns

@@ -5,76 +5,85 @@
 \label{sec:coverage}
 
 \paragraph{Can TEPL cover all tensor operations?}
-In principle, yes, as a language for writing custom tensor rewrite patterns.
-Users can declare operations in a dialect, write rules in algebraic form,
-and manually specify attribute transformations and applicability conditions
-using \code{derive} and \code{where}. This manual path does not require
-operation semantics in Axes IR, so it can express rewrites beyond the
-automatic inference fragment. For operations without declared semantics,
-the user is responsible for the rewrite's correctness.
+In principle, yes. Users can declare operations in a dialect and manually
+specify attribute transformations and applicability conditions using
+\code{derive} and \code{where}.
+Operations need not have Axes IR semantics, but users must ensure
+correctness when those semantics are absent.
 
-\paragraph{Can TEPL infer attributes for all operations?}
-No. Automatic attribute inference requires the operations to have semantic
-definitions in Axes IR. Axes IR mainly describes computations through axes,
-with limited support for explicit index calculations, such as those used
-by static slice and reverse. It cannot currently describe accesses that
-depend on tensor-valued indices. For example, dynamic slice takes runtime
-start indices as tensor operands and slice sizes as attributes. The start
-indices select elements within axes; describing this access requires more
-than identifying or rearranging axes. Table~\ref{tab:semantic-coverage}
-summarizes the current coverage of Axes IR and the synthesis guarantees.
+\paragraph{Can TEPL infer all attributes?}
+No. TEPL synthesizes only eligible RHS \code{axis} fields.
+Extent and coordinate fields must be supplied explicitly or through
+schema defaults. Supporting an operation's semantics does not imply
+that TEPL can infer all of its attributes: for example, static slice
+semantics are supported, but slice offsets, strides, and target
+extents are not inferred.
+
+Axis synthesis also requires operation semantics supported by Axes IR,
+and this support alone does not guarantee successful inference.
+Axes IR supports axis relationships and limited explicit coordinate
+calculations, but cannot currently represent accesses through
+tensor-valued indices, such as dynamic slice's runtime start indices.
+Table~\ref{tab:semantic-coverage} distinguishes semantic support
+from theorem scope.
 
 \begin{table}[!htbp]
-\caption{Operation families: Axes IR support and attribute synthesis guarantees.}
+\caption{Supported operations and scope of axis inference guarantees.}
 \label{tab:semantic-coverage}
 \centering
 \small
 \setlength{\tabcolsep}{4pt}
 \renewcommand{\arraystretch}{1}
-\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.35\linewidth}Ycc@{}}\toprule
-\multicolumn{1}{@{}l}{\begin{tabular}[c]{@{}l@{}}Operation family\end{tabular}}
-& \multicolumn{1}{l}{\begin{tabular}[c]{@{}l@{}}Corresponding examples\end{tabular}}
-& \begin{tabular}[c]{@{}c@{}}Axes IR\\support\end{tabular}
-& \begin{tabular}[c]{@{}c@{}}Synthesis\\guarantee\end{tabular}\\[2pt]\midrule
-\textbf{Contraction family}
-& Dot products, sum reduction; transpose and addition & O & \textbf{Complete}*\\
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.19\linewidth}Y>{\centering\arraybackslash}p{0.12\linewidth}Y@{}}\toprule
+Operation family & Representative examples & Semantic support & Theorem scope and reason\\[2pt]\midrule
+\textbf{Core axis operations}
+& Contraction, sum reduction, transpose, separated addition
+& \textcolor{green!45!black}{\ding{51}}
+& \textcolor{green!45!black}{\ding{51}} Under D1--D4 and domain assumptions\\
 \addlinespace
-\textbf{Scalar expressions}
-& Arithmetic, exp/log, min/max, compare & O & Sound\\
+\textbf{Extended axis operations}
+& Reverse, broadcast, negation, fixed nonzero rational scaling
+& \textcolor{green!45!black}{\ding{51}}
+& \textcolor{green!45!black}{\ding{51}}\textsuperscript{a} With extended theorem\\
+\addlinespace
+\textbf{General scalar expressions}
+& Exp/log, min/max, compare, select, general division
+& \textcolor{green!45!black}{\ding{51}}
+& \textcolor{red!75!black}{\ding{55}} Outside the multilinear value contract\\
 \addlinespace
 \textbf{Calculated coordinate maps}
-& Broadcast, reverse, static slice, transpose, simple convolution & O & Sound\\
+& Static slice, strided slice, restricted convolution
+& \textcolor{green!45!black}{\ding{51}}\textsuperscript{b}
+& \textcolor{red!75!black}{\ding{55}} Outside D1: within-axis coordinate calculations\\
 \addlinespace
-\textbf{General indexing}
-& Reshape, padding, concatenation, dynamic slice, gather/scatter, general convolution & X & \\
-\addlinespace
-\textbf{General reductions and regions}
-& Reduce-min/max, custom reduce, map, reduction windows & X & \\
-\addlinespace
-\textbf{Extended value semantics}
-& Complex operations, conversions, attribute-payload constants, iota & X & \\\bottomrule
+\textbf{Additional semantic requirements}
+& General reshape, padding, concatenation, gather/scatter, custom reduce, conversions
+& \textcolor{red!75!black}{\ding{55}}
+& \textcolor{red!75!black}{\ding{55}} Requires richer indexing, reduction, or value semantics\\\bottomrule
 \end{tabularx}
 \par\smallskip
 \begin{minipage}{\linewidth}
 \footnotesize
-\textbf{Complete}: the mathematical algorithm finds valid attributes whenever
-they exist within the scope of Section~\ref{sec:formal-scope}.
-\textbf{Sound}: accepted attributes yield legal, equivalent replacements under the
-rule's conditions and arithmetic policy; inference may still fail.
+\textsuperscript{a} The extension tracks axis direction for reverse and
+scalar factors for negation and scaling. Broadcast requires tracking new
+axes and the factors produced when they are summed out.
+\par\smallskip
+\textsuperscript{b} Support is limited to the modeled contracts; fixed
+rational scaling is expressible. Theorem coverage does not assert
+completeness of the implemented solver.
 \end{minipage}
 \end{table}
 
-\paragraph{Is attribute inference complete for every supported operation?}
-No. The mathematical algorithm is complete only for the contraction-family
-fragment in Section~\ref{sec:formal-scope}: it finds valid attributes whenever
-they exist (Theorem~\ref{thm:complete-synthesis}). The current implementation
-covers part of this fragment (Section~\ref{sec:implementation}).
-
-For other Axes IR operations, TEPL can verify custom algebraic rewrites using
-supported primitives and arithmetic laws. Its contract is \emph{soundness}:
-accepted attributes must yield legal, equivalent replacements under the
-rule's conditions and arithmetic policy. TEPL may still fail to prove a
-correct rewrite or discover attributes that it can verify when supplied manually.
+\paragraph{Is axis inference complete for every supported operation?}
+No. Theorem~\ref{thm:complete-synthesis} guarantees complete axis
+inference under the restrictions in Section~\ref{sec:formal-scope}.
+TEPL also supports operations outside this scope, where inference
+and verification may fail.
+Accepted rewrites must produce legal, equivalent replacements
+under the written conditions and arithmetic policy.
+Outside the guaranteed scope, TEPL may verify a rewrite with
+user-provided attributes even when it cannot infer those attributes
+automatically.
 
 \FloatBarrier
 \subsection{Scalability}

@@ -40,6 +40,34 @@ them with `\cite{key}`. The build runs BibTeX once citations are present.
 Use `make -B` to force a rebuild, `make clean` to remove auxiliary files,
 or `make clean-all` to also remove the generated paper PDF.
 
+## Code and figure layout
+
+Write code directly in `lstlisting`; do not wrap it in a float or minipage.
+A listing can continue across pages automatically, including its existing
+caption and label.
+
+For a small figure, place this command before ordinary paragraphs:
+
+```latex
+\sidefigure{figures/example.pdf}
+  {Figure caption.}{fig:example}{Accessible description.}
+
+Normal prose continues here and flows around the figure.
+```
+
+The default figure width is 45% of the text width; an optional argument such
+as `\sidefigure[0.3]{...}` changes it. There is no accompanying text environment
+or manual line count. Prose continues wrapping across headings, and returns
+to full width below the figure. Code, lists, display equations, and floats
+end the wrap automatically. Side figures never become full-width floats:
+when the figure and caption cannot fit, LaTeX starts them with the following
+prose on the next page, keeping an immediately preceding heading attached.
+This can leave space at the bottom of the preceding page. A figure with too
+little accompanying prose before full-width material can also leave space
+below that prose; use `\paperfigure` for large or unsuitable artwork.
+
+This uses `wrapstuff`, included in the `texlive-latex-extra` dependency above.
+
 ## Writing resources
 
 - `draft/paper_outline.md`: detailed paper outline.

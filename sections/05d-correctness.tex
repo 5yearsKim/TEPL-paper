@@ -2,9 +2,10 @@
 \label{sec:correctness}
 \label{sec:broader-operators}
 Let $C(p)$ be the rule's \code{where} condition and $f$ its attribute program,
-so that $\beta=f(p)$. Unlike \code{build} in Section~\ref{sec:find}, which
-comes from the mathematical algorithm, $f$ may be user-written or inferred.
-Both receive the same checks under the contract in Equation~\eqref{eq:contract}.
+so that $\beta=f(p)$. Note that $f$ differs from \code{build} in
+Section~\ref{sec:find}: $f$ may be user-written or inferred, whereas
+\code{build} is the constructor defined by the mathematical algorithm.
+Both are checked under the contract in Equation~\eqref{eq:contract}.
 
 The verifier substitutes the attribute programs and reconstructs the completed
 rewrite in a fresh context. It derives coordinate relationships and values
@@ -34,19 +35,15 @@ Here $C(p)$ means that evaluating \code{where} successfully returns
 errors, respecting the language's evaluation order and short-circuiting
 rules. Undefined attribute computation cannot satisfy the contract.
 
-Within the theorem's assumptions and compatible dtype and arithmetic
-conditions, using its constructor reduces the obligation to
+Under the theorem's assumptions, using its constructor reduces the
+verification obligation to
 \begin{equation}
  \forall p,\quad
  \operatorname{Legal}_L(p)\land C(p)\Rightarrow\operatorname{check}(p).
  \label{eq:guard-feasibility}
 \end{equation}
-This implication must hold for every legal match satisfying the guard.
-Deciding feasibility for individual metadata instances does not provide
-a complete procedure for proving this universal implication.
-
-Broader operations, including slice, convolution, and operations involving
-cancellation, use the same verification contract without the theorem's
-completeness guarantee for discovering attributes. Their completed RHS
-is checked directly. Appendix~\ref{extended:sec:emit-programs} illustrates
-attribute construction and checking for composed slices.
+Whenever the source is legal and the declared condition holds,
+the feasibility check must succeed.
+Thus, verification must establish that the declared condition implies
+the feasibility check. The theorem then guarantees correctness of
+the constructed replacement for every legal match satisfying that condition.
