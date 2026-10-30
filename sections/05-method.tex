@@ -1,19 +1,21 @@
 \section{From Mathematical Synthesis to Symbolic Programs}
 \label{sec:method}
 The preceding sections define and prove a mathematical synthesis algorithm.
-The implementation challenge is to perform this reasoning before concrete
-tensor ranks and source attribute values are known.
-Following Section~\ref{sec:mathematical-synthesis}, the compiler must
-determine which axes each RHS operation retains, their output order,
-and their positions in its operands. These decisions must be expressed
-symbolically to produce attribute programs that work across different
-input ranks and source attribute values.
+Its completeness guarantee does not extend to the symbolic implementation:
+attribute construction, guard proving, and condition suggestions may remain
+unresolved even for valid rewrites.
+However, the mathematical algorithm selects logical axes for given
+metadata, while the compiler must generate attribute programs before
+tensor ranks and axis positions are known. The challenge is to express
+these selections and orderings as computations over source metadata.
 
-TEPL addresses this through three mechanisms. Axes IR represents varying
+TEPL bridges this gap through three mechanisms. Axes IR represents varying
 numbers of axes as ordered symbolic groups. Symbolic axis mapping connects
 these groups across operations while preserving their positions and pairings.
 Attribute program synthesis uses these mappings to generate expressions
 that compute replacement attributes from source metadata.
+At each match, evaluating these expressions on concrete metadata produces
+the positional attribute lists.
 The following subsections explain these mechanisms through concrete examples.
 \input{sections/05a-axes-ir}
 \input{sections/05b-axis-mapping}

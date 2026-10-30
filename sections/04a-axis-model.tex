@@ -60,9 +60,10 @@ corresponding axes in $\vec K$ are paired and summed out. The output order is
 $F=\vec I\Vert\vec J$.
 Here $\Vert$ concatenates ordered axis groups.
 
-Singleton axes can be handled through normalization while preserving the
-ordered output shape. We leave this extension outside the present
-completeness proof.
+Singleton axes can make different axis representations equivalent:
+swapping the axes of a shape-$[1,1]$ input preserves its shape and values.
+The present axis-exactness and completeness results therefore exclude
+singleton and zero extents.
 
 \subsection{Equivalence of Axis Representations}
 \begin{lemma}[Axis exactness]

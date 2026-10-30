@@ -1,117 +1,304 @@
 title: XLA rewrite case results
-concept: A top-to-bottom tree separates semantic coverage, RHS attribute-inference needs, and inference results inside and beyond the completeness-theorem fragment.
-purpose: Show the scope of semantic support and distinguish guaranteed inference within the theorem fragment from empirical success beyond it.
+concept: A left-to-right tree partitions 209 XLA rewrite cases by semantic support, RHS axis fields, and evaluation
+  outcome.
+purpose: Show semantic coverage and distinguish successful structural theorem candidates from unresolved cases and
+  verification-only results.
 requirements:
-  - Target a half-width frame of 500 × 400 px with a white background; the title is metadata only.
-  - Follow tools/figure_style.md. Use Arial-compatible text, dark text '#263238', flat cards, thin borders, and 4 px corner radii.
-  - Use 22 px bold for the root count, 18 px primary labels, and 16 px result annotations with at least 20 px line height. Preserve these font sizes while tightening the layout.
-  - Use the supplied counts as the source for this figure; the evaluation prose currently contains older counts.
-  - Arrange four horizontal levels with downward branching connectors. Reserve 22 px between levels for connectors; put the root and aggregate result annotations on single lines.
-  - Solid neutral arrows mean subset classification, not execution order or a causal relationship. Route branches orthogonally through the gaps with no crossings or text intersections.
-  - 'Connect root → supported and unsupported; supported → attribute_free and rhs_inference; rhs_inference → within_fragment and beyond_fragment.'
-  - Treat explicitly proved and successfully inferred as annotations inside their parent cards, not additional disjoint branches. Do not imply that the 94 explicitly proved cases and the 36 inferred cases are disjoint.
-  - Keep attribute_free and unsupported as terminal branches. Do not infer a proof-rate breakdown for attribute_free or for either theorem-fragment branch.
-  - Use pale blue '#ECF2F8' and blue borders '#5479A8' for supported and rhs_inference. Use neutral fill '#F3F5F7' and border '#DCE2E7' for root, unsupported, attribute_free, and beyond_fragment.
-  - Highlight within_fragment with pale green '#EEF5F1' and a green border '#6A9F88'. Use dark green '#396F59' for successful inference annotations and dark amber '#9A702B' for unresolved; retain explicit text labels so color is supplementary.
-  - Place the completeness-guarantee annotation only inside within_fragment. Beyond-fragment success is empirical; unresolved does not mean impossible or semantically invalid.
-  - Counts and percentages are textual labels; card widths and connector widths do not encode quantities. Percentages use each stated parent population and round to one decimal, except 100%.
-  - Keep 8 px card padding, with 4 px vertical padding in the root and bottom cards. Bottom cards retain 11 px horizontal padding. Bold each case count and keep explanatory text regular. Result annotations use 16 px; primary category labels use 18 px.
-
+- Match the current editable Figma frame at https://www.figma.com/design/YQJMjTL8UuRL05QHkQr1Ge/TEPL?node-id=150-2.
+  This storyboard corresponds to figures/XLA rewrite case results.pdf.
+- Use an exact 500 × 380 px white frame. The title is metadata only. Preserve all node labels and parenthesized
+  percentages.
+- Arrange four columns from left to right. Connect root to supported and unsupported; supported to axis_fields and
+  no_axis_fields; axis_fields to candidates and outside_scope; no_axis_fields to verified and unresolved.
+- Use thin neutral orthogonal branches (#A7B2BB, 1.3 px), with shared vertical stems in the gaps between columns.
+  Branches join node edges and indicate disjoint subsets, not execution order. Every outcome is a separate leaf;
+  never connect an outcome through another outcome.
+- Use a bordered card for every node, with 5 px corners and 0.8 px outlines. Keep flat fills, no shadows, and no
+  gradients. Card and connector widths do not encode quantities.
+- Center all text horizontally and center each text stack vertically. Use editable Arimo text; counts are bold 26
+  px with 29 px line height, labels are regular 16 px with 18 px line height, and percentages are bold 16 px with
+  18 px line height. Use 2 px stack gaps and at least 4 px vertical and 6 px horizontal padding. Wrap labels within
+  the available width without clipping.
+- 'Use neutral cards for root and unsupported (fill #F3F5F7, border #CBD4DB, count #52616B); blue for supported
+  and both axis categories (fill #ECF2F8, border #9CB5D0, count #3F608A); green for candidates and verified (fill
+  #EEF5F1, border #9CC2AF, count #396F59); amber for outside_scope and unresolved (fill #FBF4E7, border #DDC28F,
+  count #9A702B). Labels remain dark #263238; percentages use the count color.'
+- 'Percentages use immediate parent populations: 123/209 = 58.9%, 31/38 = 81.6%, and 67/85 = 78.8%. Display every
+  percentage in parentheses on its own line.'
+- Structural theorem candidate is a classification; theorem guarantees additionally require the stated assumptions.
+  Unresolved does not establish impossibility or incorrectness.
 children:
-  - name: root
-    type: image
-    pos: [0.10, 0.90, 0.02, 0.125]
-    requirements:
-      - Center the single-line label at 22 px; emphasize 209 in bold.
-    children:
-      - name: root_label
-        type: text
-        pos: [0.04, 0.96, 0.08, 0.92]
-        content: 209 compiled XLA rewrite cases
-
-  - name: supported
-    type: image
-    pos: [0.02, 0.60, 0.18, 0.38]
-    requirements:
-      - Center the category and percentage on the first two lines. Put the proof result on one annotation line below, separated by a 4 px gap.
-    children:
-      - name: supported_label
-        type: text
-        pos: [0.03, 0.97, 0.08, 0.92]
-        content: |-
-          119 semantically supported
-          (56.9%)
-          94/119 explicitly proved (79.0%)
-
-  - name: unsupported
-    type: image
-    pos: [0.64, 0.98, 0.18, 0.38]
-    requirements:
-      - Center the three-line label vertically; retain readable neutral text.
-    children:
-      - name: unsupported_label
-        type: text
-        pos: [0.05, 0.95, 0.125, 0.875]
-        content: |-
-          90 semantically
-          unsupported
-          (43.1%)
-
-  - name: attribute_free
-    type: image
-    pos: [0.02, 0.34, 0.435, 0.635]
-    requirements:
-      - Center the two-line label vertically.
-    children:
-      - name: attribute_free_label
-        type: text
-        pos: [0.05, 0.95, 0.25, 0.75]
-        content: |-
-          76 attribute-free
-          cases
-
-  - name: rhs_inference
-    type: image
-    pos: [0.38, 0.98, 0.435, 0.635]
-    requirements:
-      - Center the category on the first two lines; show the aggregate inference result on one line below in dark green, separated by a 4 px gap.
-    children:
-      - name: inference_label
-        type: text
-        pos: [0.03, 0.97, 0.08, 0.92]
-        content: |-
-          43 requiring RHS
-          attribute inference
-          36/43 successfully inferred (83.7%)
-
-  - name: within_fragment
-    type: image
-    pos: [0.02, 0.48, 0.69, 0.98]
-    requirements:
-      - Center the text. Put the result and guarantee below the two-line category, with a small gap before the guarantee. Keep the guarantee at 16 px.
-    children:
-      - name: within_label
-        type: text
-        pos: [0.048, 0.952, 0.034, 0.966]
-        content: |-
-          10 within completeness-
-          theorem fragment
-          10/10 inferred (100%)
-          Completeness guarantee
-          applies
-
-  - name: beyond_fragment
-    type: image
-    pos: [0.52, 0.98, 0.69, 0.98]
-    requirements:
-      - Center the text. Show the inferred and unresolved outcomes as two separate annotation lines inside the same card; these outcomes partition its 33 cases.
-      - Align the first category line and inference-result line with those in within_fragment.
-    children:
-      - name: beyond_label
-        type: text
-        pos: [0.048, 0.952, 0.034, 0.966]
-        content: |-
-          33 beyond
-          theorem fragment
-          26/33 inferred (78.8%)
-          7/33 unresolved (21.2%)
+- name: root
+  type: image
+  pos:
+  - 0.004
+  - 0.144
+  - 0.4211
+  - 0.6842
+  requirements:
+  - Use the neutral card style.
+  children:
+  - name: count
+    type: text
+    pos:
+    - 0.0857
+    - 0.9143
+    - 0.075
+    - 0.365
+    content: '209'
+  - name: label
+    type: text
+    pos:
+    - 0.0857
+    - 0.9143
+    - 0.385
+    - 0.925
+    content: |-
+      XLA rewrite
+      cases
+- name: supported
+  type: image
+  pos:
+  - 0.178
+  - 0.412
+  - 0.3263
+  - 0.6211
+  requirements:
+  - Use the blue card style.
+  children:
+  - name: count
+    type: text
+    pos:
+    - 0.0513
+    - 0.9487
+    - 0.1116
+    - 0.3705
+    content: '123'
+  - name: label
+    type: text
+    pos:
+    - 0.0513
+    - 0.9487
+    - 0.3884
+    - 0.7098
+    content: |-
+      Semantically
+      supported
+  - name: percentage
+    type: text
+    pos:
+    - 0.0513
+    - 0.9487
+    - 0.7277
+    - 0.8884
+    content: (58.9%)
+- name: unsupported
+  type: image
+  pos:
+  - 0.178
+  - 0.412
+  - 0.7368
+  - 0.9947
+  requirements:
+  - Use the neutral card style.
+  children:
+  - name: count
+    type: text
+    pos:
+    - 0.0513
+    - 0.9487
+    - 0.0663
+    - 0.3622
+    content: '86'
+  - name: label
+    type: text
+    pos:
+    - 0.0513
+    - 0.9487
+    - 0.3827
+    - 0.9337
+    content: |-
+      Semantic
+      support not
+      yet available
+- name: axis_fields
+  type: image
+  pos:
+  - 0.448
+  - 0.622
+  - 0.1316
+  - 0.4211
+  requirements:
+  - Use the blue card style.
+  children:
+  - name: count
+    type: text
+    pos:
+    - 0.069
+    - 0.931
+    - 0.1136
+    - 0.3773
+    content: '38'
+  - name: label
+    type: text
+    pos:
+    - 0.069
+    - 0.931
+    - 0.3955
+    - 0.8864
+    content: |-
+      Have RHS
+      axis fields
+- name: no_axis_fields
+  type: image
+  pos:
+  - 0.448
+  - 0.622
+  - 0.6316
+  - 0.9211
+  requirements:
+  - Use the blue card style.
+  children:
+  - name: count
+    type: text
+    pos:
+    - 0.069
+    - 0.931
+    - 0.1136
+    - 0.3773
+    content: '85'
+  - name: label
+    type: text
+    pos:
+    - 0.069
+    - 0.931
+    - 0.3955
+    - 0.8864
+    content: |-
+      Have no RHS
+      axis fields
+- name: candidates
+  type: image
+  pos:
+  - 0.666
+  - 0.996
+  - 0.0053
+  - 0.3105
+  requirements:
+  - Use the green card style.
+  children:
+  - name: count
+    type: text
+    pos:
+    - 0.0364
+    - 0.9636
+    - 0.0474
+    - 0.2974
+    content: '31'
+  - name: label
+    type: text
+    pos:
+    - 0.0364
+    - 0.9636
+    - 0.3147
+    - 0.7802
+    content: |-
+      Structural theorem
+      candidates; inferred
+      and verified
+  - name: percentage
+    type: text
+    pos:
+    - 0.0364
+    - 0.9636
+    - 0.7974
+    - 0.9526
+    content: (81.6%)
+- name: outside_scope
+  type: image
+  pos:
+  - 0.666
+  - 0.996
+  - 0.3211
+  - 0.5526
+  requirements:
+  - Use the amber card style.
+  children:
+  - name: count
+    type: text
+    pos:
+    - 0.0364
+    - 0.9636
+    - 0.1193
+    - 0.4489
+    content: '7'
+  - name: label
+    type: text
+    pos:
+    - 0.0364
+    - 0.9636
+    - 0.4716
+    - 0.8807
+    content: |-
+      Outside theorem
+      scope; unresolved
+- name: verified
+  type: image
+  pos:
+  - 0.666
+  - 0.996
+  - 0.5789
+  - 0.7842
+  requirements:
+  - Use the green card style.
+  children:
+  - name: count
+    type: text
+    pos:
+    - 0.0364
+    - 0.9636
+    - 0.0577
+    - 0.4295
+    content: '67'
+  - name: label
+    type: text
+    pos:
+    - 0.0364
+    - 0.9636
+    - 0.4551
+    - 0.6859
+    content: Verified
+  - name: percentage
+    type: text
+    pos:
+    - 0.0364
+    - 0.9636
+    - 0.7115
+    - 0.9423
+    content: (78.8%)
+- name: unresolved
+  type: image
+  pos:
+  - 0.666
+  - 0.996
+  - 0.8053
+  - 0.9947
+  requirements:
+  - Use the amber card style.
+  children:
+  - name: count
+    type: text
+    pos:
+    - 0.0364
+    - 0.9636
+    - 0.1597
+    - 0.5625
+    content: '18'
+  - name: label
+    type: text
+    pos:
+    - 0.0364
+    - 0.9636
+    - 0.5903
+    - 0.8403
+    content: Unresolved

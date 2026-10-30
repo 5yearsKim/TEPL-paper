@@ -4,6 +4,12 @@ This appendix expands the scalability discussion in
 Section~\ref{sec:limitations} with the experimental setup, results, and
 measurement limits.
 
+\paragraph{Termination of partition refinement.}
+Partition refinement visits a finite rewrite graph. Each update compares
+finitely many recorded groups, and newly recorded overlaps do not trigger
+recursive refinement. Thus partition refinement terminates, although this
+does not bound the cost of symbolic reasoning as a whole.
+
 \paragraph{Experimental setup.}
 We evaluate scalability using contraction chains with 1--10 dot operations
 at fixed tensor rank three, and transpose composition at ranks 2, 4, 8, 16,

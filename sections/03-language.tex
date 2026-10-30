@@ -20,9 +20,10 @@ An operation occurrence can be named using \code{:}. For example,
 how \code{where} and \code{derive} use these names to read attributes,
 express conditions, and construct replacement attributes.
 
+\sidefigure[0.3]{figures/Axis, extent, and coordinate.pdf}{Axis, extent, and coordinate in a tensor of shape $(2,3,4)$.}{fig:attribute-roles}{A three-dimensional tensor with vertical axis 0 of extent 2, horizontal axis 1 of extent 3, and depth axis 2 of extent 4. The highlighted element has coordinate (0, 0, 2). Matching colors associate each axis with its shape and coordinate entries.}
+
 \subsection{Axis, Extent, and Coordinate Attributes}
 \label{sec:attribute-roles}
-\sidefigure[0.3]{figures/Axis, extent, and coordinate.pdf}{Axis, extent, and coordinate in a tensor of shape $(2,3,4)$.}{fig:attribute-roles}{A three-dimensional tensor with vertical axis 0 of extent 2, horizontal axis 1 of extent 3, and depth axis 2 of extent 4. The highlighted element has coordinate (0, 0, 2). Matching colors associate each axis with its shape and coordinate entries.}
 
 TEPL distinguishes three roles for integer attributes. An \code{axis}
 identifies a dimension by its zero-based position; an \code{extent}

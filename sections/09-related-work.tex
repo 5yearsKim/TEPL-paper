@@ -20,14 +20,12 @@ preconditions. TensorRight uses \emph{aggregated axes} to represent axis
 groups and proves that SMT verification up to a finite rank bound suffices
 to establish correctness for arbitrary ranks.
 
-TEPL focuses on constructing executable tensor rewrites, including the
-attribute transformations. Synthesizing attribute transformation logic
-requires tracking both axis relationships and their
-positions: for example, a dot operation needs contraction lists that specify
-which axes to pair across its operands. TensorRight uses unordered named
-axes for layout-insensitive reasoning~\cite{tensorright}, while TEPL uses
-ordered axis groups and symbolic axis mapping to construct these positional
-attributes.
+TensorRight verifies a rewrite whose axis relationships are supplied.
+In contrast, TEPL accepts a specified RHS operation graph with missing
+axis fields and synthesizes programs that compute them from source
+metadata. This requires determining intermediate axes, satisfying
+output-order constraints, and translating axis correspondences into
+operand positions. TEPL then verifies the completed rewrite.
 
 The systems also address different completeness questions. TensorRight
 establishes when bounded-rank verification suffices to verify a supplied

@@ -124,7 +124,8 @@ each operand, and the left and right lists pair axes in list order.
 
 \noindent\textbf{Input and rewrite assumptions.}
 \begin{itemize}
-\item Inputs have finite ranks; scalars are allowed.
+\item Inputs have finite ranks, and every input axis has extent at least
+two; scalars are allowed.
 \item Input entries are independent real numbers, and all calculations are
 exact. Every LHS operation is legal.
 \item Each \emph{read-once component} is a contraction/permutation/unary-summation
@@ -139,6 +140,8 @@ Captured LHS attributes retain their values when expressions are expanded;
 a shared RHS unknown must not be split into independent choices.
 
 The completeness theorem applies only to this fragment.
+The minimum-extent restriction limits the completeness guarantee, not
+the general validity definition or the TEPL contract.
 Section~\ref{sec:limitations} discusses cases outside its scope.
 
 \subsection{The Contract Exposed by TEPL}

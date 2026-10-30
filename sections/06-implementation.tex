@@ -3,7 +3,7 @@
 \label{sec:symbolic-bridge}
 \paragraph{Compiler architecture.}
 The TEPL compiler processes rewrite rules and dialect declarations through
-ANTLR parsing, import and name resolution, and type checking. For rules
+ANTLR~\cite{antlr} parsing, import and name resolution, and type checking. For rules
 with declared semantics, it then lowers operation semantics, synthesizes
 missing attributes, and verifies the completed rewrite. The compiler lowers
 the resulting rules to an executable representation. The rewrite engine
@@ -21,7 +21,7 @@ is reached.
 The compiled representation also supports integration with other rewrite
 engines. As a concrete example, TEPL provides an integration with
 \emph{egg}~\cite{egg}, generating Rust code from compiled rules to enable
-equality saturation of tensor expressions. The integration supports
+equality saturation~\cite{equality-saturation} of tensor expressions. The integration supports
 conditional rewrites using tensor shape and dtype information maintained
 by e-class analysis. Matching also binds attributes from matched operation
 nodes, making them available to rule conditions and replacement attribute

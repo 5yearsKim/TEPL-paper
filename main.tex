@@ -120,18 +120,18 @@ does not compute the attributes needed by the replacement, such as permutations
 and contraction dimensions.
 TEPL (Tensor Equality Pattern Language) is a domain-specific language (DSL) for
 describing tensor rewrites, explicit conditions, and attribute changes together.
-More importantly, TEPL can automatically synthesize attribute transformations
+More importantly, TEPL can automatically synthesize axis attribute transformations
 from operation semantics. We prove constructive completeness for a restricted class of tensor
 rewrites: under the stated assumptions, our synthesis algorithm constructs
-correct attribute transformations whenever they exist. To support attribute
+valid RHS axis assignments whenever they exist. To support attribute
 synthesis in the compiler, we introduce Axes IR and symbolic axis mapping to
-handle tensors of arbitrary rank and track axis relationships. The implementation
-supports a wider range of operations than the theorem covers, synthesizing
-attribute transformations and independently verifying the resulting rewrites.
-TEPL's supported operation semantics cover 119 of 209 concrete XLA rewrite
-cases, with RHS attribute synthesis succeeding in 36 of the 43 eligible
-cases (83.7\%). Across these successful cases, compact inferred TEPL uses
-17.8\% fewer tokens than TEPL with explicit attribute transformations.
+handle tensors of arbitrary rank and track axis relationships. This enables attribute programs to be synthesized once per rule and
+evaluated per match without repeating inference.
+TEPL's supported operation semantics cover 123 of 209 concrete XLA rewrite
+cases, with RHS axis inference and verification succeeding in 31 of the
+38 eligible cases (81.6\%). Across these successful cases, attribute inferred TEPL uses
+80.1\% fewer tokens than the corresponding XLA implementations and
+17.8\% fewer than TEPL with explicit attribute transformations.
 \end{abstract}
 \keywords{tensor rewrites, attribute synthesis, symbolic axis mapping}
 \maketitle
@@ -159,4 +159,5 @@ cases (83.7\%). Across these successful cases, compact inferred TEPL uses
 \clearpage
 \input{sections/appendix-compilation}
 \input{sections/appendix-scalability}
+\input{sections/appendix-token-counting}
 \end{document}

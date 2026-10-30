@@ -17,10 +17,9 @@ written conditions. Coverage remains limited, particularly for tensor
 operations involving general indexing or general reductions.
 
 In our XLA evaluation, TEPL supports the operation semantics required by
-119 of 209 cases and successfully synthesizes attributes for 36 of the 43
-eligible cases (83.7\%). The TEPL rules are far shorter than the
-corresponding XLA excerpts, although those excerpts also cover extra cases
-and policies. Across the 36 successful cases, compact inferred TEPL uses
-17.8\% fewer tokens than TEPL with explicit RHS attributes. These
-results demonstrate a practical approach to tensor rewriting through
-declarative rules that delegate manual attribute construction to the compiler.
+123 of 209 concrete rewrite cases and successfully infers and verifies
+31 of the 38 cases requiring axis inference (81.6\%). Across the 31
+successful cases, inferred TEPL uses 80.1\% fewer tokens than the
+corresponding XLA implementations and 17.8\% fewer than explicit TEPL.
+These results show how declarative rewrite rules and automatic axis
+inference can reduce the manual work required to implement tensor rewrites.

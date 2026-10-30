@@ -1,12 +1,12 @@
 \section{Introduction}
 \label{sec:introduction}
 \subsection{Motivation}
-Tensor rewrites are widely used to improve execution efficiency in tensor
+Algebraic tensor rewrites are widely used to improve execution efficiency in tensor
 compilers. Production systems such as XLA and TVM use graph transformations
 to simplify computations and enable efficient execution~\cite{xla-hlo-passes,tvm}.
-Related research applies algebraic transformations to graph
+Prior work uses algebraic transformations for graph
 optimization~\cite{taso,tensat,spores}, distributed training~\cite{unity},
-operator fusion~\cite{dnnfusion,neptune}, and optimization across multiple
+operator fusion~\cite{dnnfusion,neptune}, and optimization across
 execution levels~\cite{mirage,trinity}.
 
 Although tensor rewrite rules can be simple in algebraic form, they can
@@ -35,21 +35,21 @@ Our research question is: \emph{What if we could design a language that makes
 tensor rewriting as easy and intuitive as writing its algebraic form, while
 leaving complex attribute transformation to the compiler?}
 TEPL pursues this goal by using operation semantics and symbolic axis mapping
-to infer replacement attributes under explicit conditions.
+to infer RHS axis attributes under explicit conditions.
 Figure~\ref{fig:why-tepl} illustrates the idea with a dot reassociation example.
 TEPL lets users write rewrite rules in simple algebraic form and provides tools for
-explicitly deriving attribute transformation logic. It also lets the compiler
-infer this logic automatically.
+explicitly deriving attribute transformations. For eligible axis fields,
+the compiler can infer these transformations automatically.
 
 \paperfigure{1}{figures/Why TEPL_ From Algebraic Rules to Practical Tensor Rewrites.pdf}{Four ways to express the same dot reassociation rewrite.
 (a) A concise algebraic pattern specifies the RHS graph but leaves its
 attributes unspecified. (b) A custom implementation computes these attributes
 but requires complex handwritten logic. (c) TEPL preserves readable algebraic
 rewrite rules and provides a \code{derive} section with tools for explicitly
-computing replacement attributes. (d) When attribute derivations are omitted,
-TEPL automatically infers attribute transformation logic from reusable
+computing replacement attributes. (d) When eligible RHS axis fields are omitted,
+TEPL infers their transformation logic from reusable
 operation semantics and source metadata.}{fig:why-tepl}{Four panels compare an algebraic pattern, custom implementation logic,
-explicit TEPL attribute expressions, and inferred TEPL attributes for the
+explicit TEPL attribute expressions, and inferred TEPL axis attributes for the
 same nested-dot replacement graph.}
 \subsection{Central Thesis}
 We introduce TEPL, a DSL for practical tensor rewriting that provides
@@ -66,8 +66,8 @@ TEPL provides syntactic structures and tools for expressing tensor
 rewrite rules concisely and intuitively.
 \item \textbf{Automatic attribute inference.}
 For supported rewrites, the compiler constructs reusable functions that
-compute RHS attributes from source metadata, integrating attribute
-synthesis into tensor rewrite rules.
+compute missing RHS axis fields from source metadata while preserving
+supplied extent and coordinate attributes.
 \item \textbf{Symbolic axis mapping for composed operations.}
 We propose an algorithm that maps symbolic axis groups across composed
 operations using operation semantics, enabling attribute matching for
@@ -75,8 +75,8 @@ input tensors of arbitrary rank.
 \item \textbf{Correctness and completeness guarantees for a defined fragment.}
 For read-once contraction, permutation, and unary summation, with a restricted
 additive extension, we prove that our mathematical synthesis algorithm
-constructs valid RHS attributes whenever they exist. The constructed
-attributes ensure that the replacement is legal and equivalent to the
+constructs valid assignments to RHS axis fields whenever they exist.
+These assignments ensure that the replacement is legal and equivalent to the
 original computation under the stated assumptions.
 \end{enumerate}
 Together, these contributions support concise tensor rewrite rules,

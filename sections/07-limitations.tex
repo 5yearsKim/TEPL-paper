@@ -44,7 +44,8 @@ Operation family & Representative examples & Semantic support & Theorem scope an
 \textbf{Extended axis operations}
 & Reverse, broadcast, negation, fixed nonzero rational scaling
 & \textcolor{green!45!black}{\ding{51}}
-& \textcolor{green!45!black}{\ding{51}}\textsuperscript{a} With extended theorem\\
+& \textcolor{green!45!black}{\ding{51}}\textsuperscript{a} Finite axis search
+(Theorem~\ref{thm:extended-axis-synthesis})\\
 \addlinespace
 \textbf{General scalar expressions}
 & Exp/log, min/max, compare, select, general division
@@ -64,9 +65,10 @@ Operation family & Representative examples & Semantic support & Theorem scope an
 \par\smallskip
 \begin{minipage}{\linewidth}
 \footnotesize
-\textsuperscript{a} The extension tracks axis direction for reverse and
-scalar factors for negation and scaling. Broadcast requires tracking new
-axes and the factors produced when they are summed out.
+\textsuperscript{a} Appendix~\ref{app:axis-extensions} proves completeness
+of finite axis search for these extensions, with input and introduced
+extents at least two and supplied broadcast extents. Only fixed unary
+scaling and negation are also proved here to preserve the direct constructor.
 \par\smallskip
 \textsuperscript{b} Support is limited to the modeled contracts; fixed
 rational scaling is expressible. Theorem coverage does not assert

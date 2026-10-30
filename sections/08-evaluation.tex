@@ -1,30 +1,43 @@
 \section{XLA Evaluation}
 \label{sec:evaluation}
-\sidefigure{figures/XLA rewrite case results.pdf}{XLA case coverage and attribute synthesis. The fragment classification follows concrete encodings; completeness guarantees additionally require the theorem's assumptions.}{fig:xla-results}{A downward tree partitions 209 compiled XLA rewrite cases into 119 semantically supported cases and 90 unsupported cases. Of the supported cases, 94 verify with explicit attributes, 76 require no RHS descriptors, and 43 require synthesis. Synthesis succeeds on 36 cases: all 10 classified within the theorem fragment and 26 of 33 beyond it. Seven cases remain unresolved.}
-We evaluate attribute synthesis on 209 concrete rewrite cases representing
-199 XLA rewrite schemas. Of these, 119 cases have the operation semantics
-required by the verifier; the remaining 90 require semantics that are not
-currently supported. Among the supported cases, 43 contain RHS attribute
-descriptors to synthesize. The other 76 require no RHS descriptors: their
-replacements use attribute-free operations, such as elementwise addition,
-or directly return a matched value, as in
-$\operatorname{add}(X,0) \to X$.
-Figure~\ref{fig:xla-results} summarizes the results.
+\sidefigure[0.45]{figures/XLA_rewritie_cases.pdf}{XLA rewrite case results. Percentages use the immediate parent population. The completeness guarantee additionally requires the theorem's stated assumptions.}{fig:xla-results}{A horizontal tree partitions 209 XLA rewrite cases into 123 semantically supported cases and 86 without semantic support. Of the supported cases, 38 have RHS axis fields: 31 structural theorem candidates are inferred and verified, and seven outside the theorem scope remain unresolved. Of the 85 cases without RHS axis fields, 67 verify and 18 remain unresolved.}
+We evaluate 209 XLA rewrite cases~\cite{xla-evaluation-source}. Figure~\ref{fig:xla-results} summarizes semantic coverage and the
+outcomes of axis inference and verification.
 
-With explicit RHS metadata formulas, the verifier proves 94 of the 119
-supported cases (79.0\%). Attribute synthesis succeeds on 36 of the 43
-eligible cases (83.7\%), inferring all RHS descriptors while preserving the
-written rewrite conditions. These include all 10 cases classified within
-the fragment of Theorem~\ref{thm:complete-synthesis} and 26 of 33 cases
-beyond it. Within the fragment, completeness holds under the theorem's
-stated assumptions. For the 26 beyond-fragment successes, independent
-semantic verification checks the soundness of each synthesized rewrite
-under the declared semantics and written conditions.
+
+TEPL provides the operation semantics required for evaluation in 123 of the
+209 cases (58.9\%). The remaining 86 cases require semantic support that is
+not yet available. Semantic support allows TEPL to attempt verification. A case succeeds when
+any requested axis fields are inferred and the resulting rewrite is proved
+legal and equivalent under its written conditions.
+
+Of the 123 supported cases, 38 contain RHS axis fields. TEPL infers and
+verifies 31 of these cases (81.6\%), completing all requested axis fields.
+These cases are structural theorem candidates; the completeness guarantee
+applies only under Section~\ref{sec:formal-scope}'s assumptions, including
+input extents of at least two. Singleton cases may still be verified,
+but inference is not guaranteed complete for them.
+All seven unresolved cases involve slice or convolution, which fall outside
+the theorem's scope (Table~\ref{tab:direct-scope}, D1). These results do not
+imply that axis inference is impossible.
+
+The other 85 supported cases have no RHS axis fields to infer. TEPL
+verifies 67 of them (78.8\%), while 18 remain unresolved. These cases
+measure verification rather than axis inference. Equivalence is verified
+under the operations' declared semantics, assuming exact algebraic arithmetic.
+
+We also evaluate token counts for the 31 successfully inferred XLA rewrite
+cases, comparing the XLA implementations, TEPL rules with explicit RHS
+attribute calculations, and TEPL rules with axis inference
+(Table~\ref{tab:xla-specification-size}). Counts are grouped by responsibility
+and exclude blank lines and comments.
+Appendix~\ref{app:token-counting} gives an explicit/inferred rule pair and
+its token counts by responsibility.
 
 \begin{table}[!htbp]
 \centering
 \begin{minipage}{\linewidth}
-\caption{Token counts by responsibility for 36 successfully synthesized cases.}
+\caption{Token counts by responsibility for the 31 successfully inferred and verified cases.}
 \label{tab:xla-specification-size}
 \definecolor{xlabaseline}{HTML}{0072B2}
 \definecolor{explicitbaseline}{HTML}{B65300}
@@ -54,13 +67,14 @@ respectively. Counts exclude blank lines and comments.
 \end{minipage}
 \end{table}
 
-Across these 36 successfully synthesized cases representing 30 XLA rewrite
-schemas, compact inferred TEPL reduces token counts by 80.1\%
-relative to XLA and 17.8\% relative to explicit TEPL
-(Table~\ref{tab:xla-specification-size}). It
-eliminates 47 explicit RHS descriptor occurrences while preserving the
-rewrite equations and written conditions. The XLA code matches patterns,
-transforms attributes, and builds replacement graphs. TEPL handles this
-work through declarative rules and attribute inference, reducing the code
-authors must write. Some XLA excerpts also cover extra cases and policies,
-which contribute to their larger size.
+Across these cases, inferred TEPL uses 1,829 tokens, 80.1\% fewer than XLA
+and 17.8\% fewer than explicit TEPL. Most savings over explicit TEPL come
+from attribute reasoning and syntax, reduced from 554 to 191 tokens
+(65.5\%). Inference removes 47 explicit RHS descriptors while preserving
+the rewrite equations and conditions; legality checks and graph-management
+code remain unchanged. Some XLA excerpts also implement additional cases and
+policies, which contribute to their larger size.
+
+The comparison with XLA reflects the broader benefit of expressing pattern
+matching, attribute calculations, and replacement construction as
+declarative rules.

@@ -14,6 +14,10 @@ Table~\ref{tab:verification-checks} lists the requirements. Only source
 legality and the declared guard may be assumed; any additional conditions
 needed by construction must follow from them.
 
+The verifier rechecks the completed rewrite without assuming conclusions
+from synthesis. This prevents circular reasoning but does not prove that
+the shared reasoning rules are correct.
+
 \begin{table}[!htbp]
 \caption{Checks required for a completed semantic rewrite.}
 \label{tab:verification-checks}

@@ -1,0 +1,44 @@
+\subsection{Extension by Finite Axis Search}
+\label{app:axis-extensions}
+The following result extends semantic coverage using finite search over
+axis choices, rather than the direct constructor of
+Theorem~\ref{thm:complete-synthesis}.
+
+\begin{theorem}[Extended axis synthesis]
+\label{thm:extended-axis-synthesis}
+Under Section~\ref{sec:formal-scope}'s input and rewrite assumptions,
+allow axis reversal, broadcast inserting axes of supplied extents at
+least two, and fixed nonzero rational unary scaling.
+If legal axis choices are finitely enumerable from metadata and child
+shapes while preserving supplied fields, a terminating metadata-only
+search finds a valid RHS completion if and only if one exists.
+\end{theorem}
+
+\begin{proof}
+Represent each component by $N^+(T)=(s,\Pi,w)$: its ordered output
+shape, port partition with canonical relative directions, and nonzero
+rational weight. Broadcast introduces independent axes; scaling
+multiplies $w$. Summed classes containing no input or output port
+contribute their extents to $w$ and are removed.
+
+This representation is exact. Equal representations give equal
+computations. Different shapes are inequivalent; different signed
+partitions are distinguished by one-hot inputs using endpoint
+coordinates $0,n-1$, since all extents are at least two. For identical
+partitions, compatible one-hot inputs expose any difference in weights.
+
+Enumerate legal RHS axis assignments bottom-up, recording their
+representations and witnesses. Finite local choices ensure termination;
+induction on the tree ensures every legal assignment is represented.
+Exactness therefore makes root matching sound and complete.
+Separated addition follows componentwise from
+Appendix~\ref{sec:addition-proof}.
+\end{proof}
+
+For fixed unary scaling alone, search is unnecessary. Removing scaling
+nodes gives $E=c_E\bar E$, where $c_E$ is their product. The same one-hot
+argument gives equivalence exactly when $c_L=c_R$ and
+$N(\bar L)=N(\bar R)$. Thus compare coefficients and apply the original
+direct constructor to the remaining trees, componentwise.
+The general search may be combinatorial; this theorem does not establish
+completeness of TEPL's implemented solver.
