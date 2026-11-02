@@ -1,0 +1,15 @@
+SemanticRule dot_move_reverse
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: Reduce(n3.K, Product(align[n3:lhs](Read(input, IndexReverse(Coords(S), attrs.dimensions)) over Input(#0)), align[n3:rhs](Input(#1))))
+      rhs-graph: Reduce(n7.K, Product(align[n7:lhs](Input(#0)), align[n7:rhs](Read(input, IndexReverse(Coords(S), attrs.dimensions)) over Input(#1))))
+      verified: source-layout guard certificate and core emission theorem
+      declared-conditions:
+        ==(len(shape(Input(#0))), 1)
+        ==(len(shape(Input(#1))), 1)
+        ==(index(shape(Input(#0)), 0), index(shape(Input(#1)), 0))
+        m1
+      additional-guard: true
+      reason: core schema guard and supplied metadata certified; sound for all legal extents
+      let m0 = &&(&&(==(attr_r.attrs.dimensions, [0]), ==(attr_d.attrs.lhs_batching_dimensions, [])), ==(attr_d.attrs.rhs_batching_dimensions, []))
+      let m1 = &&(&&(m0, ==(attr_d.attrs.lhs_contracting_dimensions, [0])), ==(attr_d.attrs.rhs_contracting_dimensions, [0]))
+

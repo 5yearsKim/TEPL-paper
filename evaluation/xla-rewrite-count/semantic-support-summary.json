@@ -1,0 +1,29 @@
+{
+  "scope": "Static semantic representation under the paper HLO and AxisViews profiles, with existing XLA literal/type/precision checks retained. Not a standalone TEPL matcher/guard port or successful validation count.",
+  "total_rule_variants": 32,
+  "total_applications": 201,
+  "categories": {
+    "outside": {
+      "rule_variants": 6,
+      "applications": 67
+    },
+    "unit_view_candidate": {
+      "rule_variants": 6,
+      "applications": 48
+    },
+    "conditional": {
+      "rule_variants": 6,
+      "applications": 31
+    },
+    "direct": {
+      "rule_variants": 14,
+      "applications": 55
+    }
+  },
+  "direct_semantic_variants": 14,
+  "additional_unit_view_candidates": 6,
+  "direct_plus_unit_view_candidates": 20,
+  "important_limit": "Applications are weights attached to source variants, not verified supported workload applications. Conditional source sites cover multiple operations/reducers and the previous event log lacks per-application details.",
+  "xla_reruns": 0,
+  "tepl_checks_run": 0
+}

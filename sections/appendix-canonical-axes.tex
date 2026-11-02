@@ -1,31 +1,29 @@
 \subsection{Operation-Specific Construction Rules}
-\label{app:canonical-axis-rules}
-\label{app:ordering-rules}
-\label{app:attribute-construction-rules}
+\label{app:operation-construction-rules}
 Let $I_X$ list input $X$'s logical axes in their original order, using the
 LHS axis identities. The following rules define retained axes, ordering
-checks, and attribute construction under D1--D4. Compute $P_v$ from inputs
+checks, and attribute construction under D1--D4. Compute $S_v$ from inputs
 to root, propagate $Req_v$ from root to inputs starting with
 $Req_{\mathrm{root}}=F$, and construct attributes from inputs to root after
-all checks succeed. A requirement must contain distinct axes from $P_v$;
+all checks succeed. A requirement must contain distinct axes from $S_v$;
 otherwise $C_v$ is false. All child requirements are checked recursively.
 
 \noindent\textbf{Input.}
-For input $X$, set $P_X=\operatorname{set}(I_X)$ and
+For input $X$, set $S_X=\operatorname{set}(I_X)$ and
 $C_X=[Req_X\preceq I_X]$. Its output order is
 $\operatorname{Ord}_X=I_X$; no attributes are needed.
 
 \noindent\textbf{Permutation.}
-Set $P_v=P_u$, pass $Req_u=[]$, and take $C_v=\mathrm{true}$.
+Set $S_v=S_u$, pass $Req_u=[]$, and take $C_v=\mathrm{true}$.
 Construct $\operatorname{Ord}_v$ by placing $Req_v$ first and appending
 the remaining child axes in their current order. The permutation attribute
 lists their positions in the child.
 
 \noindent\textbf{Unary summation.}
-Set $P_v=P_u\cap M_v$, pass $Req_u=Req_v$, and take
+Set $S_v=S_u\cap M_v$, pass $Req_u=Req_v$, and take
 $C_v=\mathrm{true}$. The output order is
-$\operatorname{Ord}_v=\operatorname{Ord}_u|_{P_v}$.
-The reduction attribute lists the positions of $P_u\setminus P_v$
+$\operatorname{Ord}_v=\operatorname{Ord}_u|_{S_v}$.
+The reduction attribute lists the positions of $S_u\setminus S_v$
 in the child.
 
 \noindent\textbf{Contraction.}
@@ -33,14 +31,14 @@ For children $\ell,r$, define the batch, contraction, left-free, and
 right-free axis sets by
 \begin{equation}
 \begin{aligned}
- B_v&=P_\ell\cap P_r\cap M_v,&
- K_v&=(P_\ell\cap P_r)\setminus M_v,\\
- LF_v&=P_\ell\setminus P_r,&
- RF_v&=P_r\setminus P_\ell.
+ B_v&=S_\ell\cap S_r\cap M_v,&
+ K_v&=(S_\ell\cap S_r)\setminus M_v,\\
+ LF_v&=S_\ell\setminus S_r,&
+ RF_v&=S_r\setminus S_\ell.
 \end{aligned}
 \label{eq:canonical-roles}
 \end{equation}
-Set $P_v=B_v\cup LF_v\cup RF_v$ and pass
+Set $S_v=B_v\cup LF_v\cup RF_v$ and pass
 $Req_\ell=Req_v|_{LF_v}$ and $Req_r=Req_v|_{RF_v}$.
 The local check $C_v$ is
 \begin{equation}
@@ -74,87 +72,27 @@ such shared axes; unary summation can remove any such axis in its input.
 
 \subsection{Mandatory and Retained Axes: A Worked Example}
 \label{app:canonical-axes-example}
-Consider a rewrite that moves a row sum from an input to the result of
-batched matrix multiplication:
-\begin{equation}
- \operatorname{dot}(\operatorname{sum}_i(A),B)
- \;\Rightarrow\;
- \operatorname{sum}_i(\operatorname{dot}(A,B)).
-\end{equation}
-Here $\operatorname{dot}$ preserves the shared batch axis $b$ and contracts
-axis $k$, while $\operatorname{sum}_i$ removes row axis $i$. The LHS sums
-the rows of $A$ before multiplication; the RHS multiplies first and sums
-the resulting rows. We apply Section~\ref{sec:canonical-axes} to the RHS,
-where multiplication must keep $i$ until the final summation even though
-it is not needed in the final output.
-
-\subsubsection{Inputs and Logical Axes}
-Let $A,B$ have shapes $(s,m,n)$ and $(s,n,p)$, with all extents at least two.
-Their ordered logical axes are
-\begin{equation}
- I_A=(b,i,k),\qquad I_B=(b,k,j).
-\end{equation}
-Axes $b,k$ connect the inputs, while $i,j$ occur in only one input each:
-\begin{equation}
- \sigma(b)=\sigma(k)=\{A,B\},\qquad
- \sigma(i)=\{A\},\qquad \sigma(j)=\{B\}.
-\end{equation}
-In indexed form, the source $L$, RHS intermediate $T$, and RHS output $Y$ are
-\begin{equation}
-\begin{aligned}
- L_{bj}&=\sum_k\left(\sum_i A_{bik}\right)B_{bkj},\\
- T_{bij}&=\sum_k A_{bik}B_{bkj},\qquad
- Y_{bj}=\sum_i T_{bij}.
-\end{aligned}
-\end{equation}
-Both computations have output order $F=(b,j)$ and agree under exact real
-arithmetic. The RHS nodes are $A,B,T,Y$.
-
-\subsubsection{Mandatory Axes and Axes Kept}
-At input $A$, axis $b$ is required in the output and $k$ must connect to $B$.
-In particular, $\sigma(k)=\{A,B\}\nsubseteq U_A=\{A\}$: an input
-containing $k$ lies outside this subtree. Axis $i$ is not mandatory, but
-an input node keeps all its axes. Thus $M_A=\{b,k\}$ while
-$P_A=\{b,i,k\}$.
-
-At $T$, both inputs are inside the subtree, so only the final output axes
-are mandatory: $M_T=\{b,j\}$. Multiplication sums out $k$, but cannot
-sum out $i$, which appears only in its left operand. It must keep $i$ as
-a free axis, giving
-\begin{equation}
- M_T=\{b,j\}\subsetneq P_T=\{b,i,j\}.
-\end{equation}
-The final unary summation removes $i$. Table~\ref{tab:matmul-axis-sets}
-lists the sets at every RHS node.
+Consider
+$\operatorname{dot}(\operatorname{sum}_i(A),B)\Rightarrow
+\operatorname{sum}_i(\operatorname{dot}(A,B))$,
+with input frames $I_A=(b,i,k)$, $I_B=(b,k,j)$ and output $F=(b,j)$.
+All extents are at least two. The RHS dot $T$ retains batch axis $b$,
+contracts $k$, and keeps free axes $i,j$; the root $Y$ removes $i$.
+Table~\ref{tab:row-sum-mandatory-retained-axes} applies the rules above.
 \begin{table}[!htbp]
-\caption{Mandatory and retained axes for batched multiplication followed
-by a row sum.}
-\label{tab:matmul-axis-sets}
+\caption{Mandatory and retained axes in row-sum movement. At $T$, roles
+are $B_T=\{b\}$, $K_T=\{k\}$, $LF_T=\{i\}$, and $RF_T=\{j\}$.}
+\label{tab:row-sum-mandatory-retained-axes}
+\small
 \begin{tabularx}{\linewidth}{@{}lYll@{}}\toprule
-Node & Inputs in subtree & Mandatory axes & Axes kept\\\midrule
+Node & Inputs in subtree & Mandatory $M_v$ & Retained $S_v$\\\midrule
 $A$ & $\{A\}$ & $\{b,k\}$ & $\{b,i,k\}$\\
 $B$ & $\{B\}$ & $\{b,k,j\}$ & $\{b,k,j\}$\\
-$T=AB$ & $\{A,B\}$ & $\{b,j\}$ & $\{b,i,j\}$\\
+$T=\operatorname{dot}(A,B)$ & $\{A,B\}$ & $\{b,j\}$ & $\{b,i,j\}$\\
 $Y=\operatorname{sum}_i(T)$ & $\{A,B\}$ & $\{b,j\}$ & $\{b,j\}$\\\bottomrule
 \end{tabularx}
 \end{table}
-
-\subsubsection{Batch, Contraction, and Free Axes}
-At $T$, the operands share $b,k$. Axis $b$ is mandatory and stays as batch;
-$k$ is not mandatory and is summed out. Axes $i,j$ remain free.
-Table~\ref{tab:matmul-axis-roles} lists the four roles.
-\begin{table}[!htbp]
-\caption{Axis roles at the multiplication node $T$.}
-\label{tab:matmul-axis-roles}
-\begin{tabularx}{\linewidth}{@{}llY@{}}\toprule
-Role & Axis set & Reason\\\midrule
-Batch & $B_T=\{b\}$ & Shared and required in the final output.\\
-Contraction & $K_T=\{k\}$ & Shared and no longer needed.\\
-Left-free & $LF_T=\{i\}$ & Present only in $A$; multiplication must keep it.\\
-Right-free & $RF_T=\{j\}$ & Present only in $B$; required in the final output.\\\bottomrule
-\end{tabularx}
-\end{table}
-Thus $P_T=B_T\cup LF_T\cup RF_T=\{b,i,j\}$. At the root, unary
-summation keeps $P_Y=P_T\cap M_Y=\{b,j\}=\operatorname{set}(F)$.
-The extra axis $i$ survives multiplication only because that operation
-cannot remove it.
+The strict inclusion $M_T\subsetneq S_T$ is essential: $i$ is not needed
+outside $T$, but a contraction cannot remove an axis occurring in only one
+operand. Summation removes it at the root. Thus mandatory and retained sets
+cannot be identified even when the rewrite is feasible.

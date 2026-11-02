@@ -1,0 +1,22 @@
+SemanticRule subtract_constant
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: Add(align[n2:lhs](Input(#0)), Product(Const(-1), align[n2:rhs](Input(#1))))
+      rhs-graph: Add(align[n6:lhs](Input(#0)), align[n6:rhs](Product(Const(-1), align[n5:input](Input(#1)))))
+      law: constant-arithmetic
+      verified: capture access + reduction domains + ordered axes + shape + dtype + legality
+      lhs-normalized: Read(#0, access@0) + -1 * Read(#1, access@1)
+      rhs-normalized: Read(#0, access@3) + -1 * Read(#1, access@4)
+      declared-conditions: true
+      additional-guard: true
+      reason: valid for all legal LHS metadata satisfying the declared conditions under the selected arithmetic policy
+      coordinate frame (fresh identities; domain lengths remain symbolic):
+        input0 = group(extents=shape(Input(#0)))
+        input1 = group(extents=shape(Input(#1)))
+        n2.S = group(extents=shape(Input(#0)))
+        access@0 = n2.S
+        access@1 = gather(n2.S, range(len(shape(Input(#1)))))
+        access@3 = n2.S
+        access@4 = gather(n2.S, range(len(shape(Input(#1)))))
+        lhs-output = n2.S
+        rhs-output = n2.S
+

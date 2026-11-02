@@ -1,0 +1,148 @@
+\subsection{Certified View and Reindexing Schemas}
+\label{app:axis-extensions}
+The certified backend combines the original core constructor with the schemas
+below. They carry
+\emph{soundness only}: neither arbitrary compositions of these operations
+nor completeness of their inference or guard checking is claimed.
+They use the original source guard and preserve every supplied field by
+certifying equality with the generated metadata expression. Unsupported
+expressions or unresolved equalities reject. The broader default backend
+retains empirical support beyond these schemas.
+
+\paragraph{Index interpretation.}
+Write $B_{d,e}X$ for insertion-only broadcast: $d$ injectively maps the
+input dimension positions into the output, and $e$ gives the extents at
+complementary positions in output order. For an output coordinate tuple
+$z$, $(B_{d,e}X)[z]=X[z[d]]$. Write $T_pX$ for transpose, with output shape
+$\gath(\operatorname{shape}(X),p)$ and input coordinate $z[p^{-1}]$.
+For a set of positions $A$, $R_AX$ replaces coordinate $z_i$ by
+$n_i-1-z_i$ exactly when $i\in A$. A reduction $\Sigma_AX$ sums the selected
+coordinates and retains the complement in input order. All selectors
+below are legal source selectors; duplicate positions are excluded.
+
+\begin{lemma}[Sound certified schemas]
+\label{lem:certified-extensions}
+Under the canonical declaration and dtype contracts, each constructor
+below produces a legal replacement with identical ordered shape and values
+whenever its stated source condition holds. This holds for arbitrary finite
+ranks and nonnegative extents under exact algebraic semantics, sufficient
+resources, and representable metadata.
+\end{lemma}
+\begin{proof}
+The view constructors follow directly from the coordinate maps:
+\begin{enumerate}
+\item A chain of reversals becomes one reversal on the symmetric difference
+of its selectors. Reversals on different coordinates commute and each is an
+involution. Removing the final reversal additionally requires an empty
+symmetric difference.
+\item For $B_{b,f}(B_{d,e}X)$, require $b=[0,\ldots,r+|e|-1]$, where $r$ is
+the input rank. The constructor uses embedding $\gath(b,d)$ and inserted
+extents $e\catseq f$. The outer insertion appends its axes, so the two sets
+of inserted extents occur in precisely that order.
+\item For $\star\in\{+,\times\}$, identical embeddings and inserted extents
+give $(B_{d,e}X)\star(B_{d,e}Y)=B_{d,e}(X\star Y)$. Source pointwise
+legality implies equality of the original input shapes, because the common
+embedding is injective. Both sides read $X[z[d]]\star Y[z[d]]$.
+\item $R_A(B_{d,e}X)=B_{d,e}(R_QX)$, where
+$Q=\{j\mid d_j\in A\}$. Reversal of an inserted coordinate cannot change
+a read. Reversal of an embedded coordinate has its original input extent.
+Omitting $R_Q$ requires $Q=\varnothing$, which includes scalar broadcast
+when $d=[]$.
+\item Any insertion-only broadcast absorbs transpose. Let $n=|p|$,
+$d'=\gath(p^{-1},d)$, $h=d\catseq\ocomp([0,\ldots,n-1],d)$,
+and $s=\operatorname{shape}(X)\catseq e$. Source legality makes $h$ a
+permutation. The original broadcast shape is $\gath(s,h^{-1})$, so the
+new inserted extents are
+$\gath(\gath(\gath(s,h^{-1}),p),\ocomp([0,\ldots,n-1],d'))$.
+The replacement $B_{d',e'}X$ reads the same input coordinates as
+$T_p(B_{d,e}X)$ and has exactly its ordered shape. For scalar broadcast,
+this reduces to $d'=[]$ and $e'=\gath(e,p)$.
+A broadcast inserting no axes is $T_{d^{-1}}X$.
+\item If $A\subseteq\operatorname{im}(d)$, then
+$\Sigma_A(B_{d,e}X)=B_{d',e}(\Sigma_QX)$, where
+$Q=\{j\mid d_j\in A\}$ and the retained entries of $d'$ are
+$d_j-|\{a\in A\mid a<d_j\}|$, in original input order.
+Both sides sum exactly the same input coordinates; the formula removes
+reduced positions from the ordered output. Reducing an inserted axis is
+excluded, since it would introduce a multiplicity factor.
+\item If $\operatorname{shape}(X)=[1]\catseq t$ and $d=[0,\ldots,r-1]$,
+remove input position zero and broadcast the result with embedding
+$[1,\ldots,r-1]$ and inserted extents $[1]\catseq e$. The source and
+replacement both have shape $[1]\catseq t\catseq e$. The removed
+coordinate can only be zero, so both read the identical element of $X$.
+This is a singleton-axis view, including for nonnumeric element types;
+it supplies no general reshape rule.
+\end{enumerate}
+The remaining constructors use finite algebraic identities. Reversal
+distributes over addition; a scalar broadcast summand is constant under
+reversal and can be copied unchanged. A chain of numeric negations depends
+on its parity, and negation commutes with reduction, including an empty sum.
+
+For moving reversal from one dot operand to the other, require every
+reversed position to belong to that operand's contracting list $k$.
+If $h$ is the other contracting list, reverse the positions
+$\gath(h,\{j\mid k_j\in A\})$ there and copy all dot axis fields.
+Paired contracting extents are equal by source legality. Changing each
+selected summation coordinate from $t$ to $n-1-t$ is a bijection, leaving
+batch and free coordinates fixed, so the sums agree.
+A dot with no batch axes and both contracting lists equal to their full
+input-position ranges becomes a pointwise product followed by reduction
+of all positions: source legality gives identical input shapes and
+coordinate pairing. A dot with all four axis lists empty becomes a product
+of complementary broadcasts, with embeddings the left prefix and right
+suffix and inserted extents the other operand's shape. Both constructions
+preserve the dot's ordered output. Identical operation trees may also copy
+all source fields by congruence.
+
+For scalar $c$, bilinearity gives
+$\operatorname{dot}(cX,Y)=c\operatorname{dot}(X,Y)$, and similarly on the
+right. The constructor copies all dot axis fields and broadcasts $c$ to
+the source dot's output shape, computed from its ordered batch and free
+positions. Source legality supplies every dtype and paired-extent condition.
+For nested products,
+$(X\cdot B_{[],\operatorname{shape}(X)}c)\cdot B_{d,e}Y
+=X\cdot B_{d,e}(Y\cdot B_{[],\operatorname{shape}(Y)}c)$:
+source pointwise legality equates the outer shapes, and each coordinate
+reduces to associativity and commutativity of the same three scalar factors.
+
+For broadcast movement across dot, let $d$ embed $X$ into the left operand,
+and let $I$ be its inserted positions. Require $I$ to be contained in the
+left contracting list. Reduce $Y$ over the right contracting positions paired
+with $I$. Delete those pairs from the dot, map the remaining left batch and
+contracting positions back through $d$, and shift retained right positions
+after the reduction. Require left batch positions to be embedded original
+positions and the mapped left free positions to occur in the source's free
+output order. These checks preserve batch, left-free, and right-free output
+order. The new reduction selects distinct positions disjoint from retained
+batch/contracting positions, so every replacement operation is legal. The
+value identity is
+$\sum_{a,b}X[a]Y[a,b]=\sum_a X[a](\sum_bY[a,b])$ at each fixed output
+coordinate: $b$ indexes only broadcast-created contracting axes. Finite-sum
+distribution proves equality, including empty summation domains.
+
+These arguments also establish replacement legality and ordered shape,
+not just value equality. Canonical identity dtype transport and numeric
+preservation discharge target dtype requirements from source legality.
+When an extent is zero there are no coordinates to read on that axis and
+its reduction is an empty sum; when it is one, reversal is the identity.
+Thus neither case requires a minimum extent of two.
+\end{proof}
+
+\paragraph{Implementation correspondence.}
+The compiler and loader regenerate the metadata DAG from the actual
+source/target schedules, bind roles to recognized operation contracts,
+and check every schema condition against positive source-guard equalities
+and capture constraints. Equality checking uses literal rank/field facts,
+safe list identities, and finite congruence closure; facts under disjunctions
+are ignored. Supplied fields must equal their constructors. The general transpose case recognizes supplied
+inverse/scatter comprehensions only with their exact bounds, indexed values,
+and zero branches. For a legal permutation $h$, each sum
+$\sum_{j<n}[h_j=i]v_j$ has exactly one contributing term and equals
+$v_{h^{-1}(i)}$; choosing $v_j=j$ yields the inverse. Source legality supplies the permutation and length premises; each sum is
+defined and representable. Every original helper initializer must be proved defined, using safe
+constructor subexpressions, evaluated source-guard expressions, or literal
+bounds, before helpers are erased. Value equality alone cannot discard
+undefined subexpressions. The loader checks exact DAG equality and reruns guard
+and dtype certification; native evaluation checks source metadata and
+executes that DAG. Implementation correspondence is trusted; the paper proofs are not mechanized.
+The completeness fragment in Theorem~\ref{thm:complete-synthesis} is unchanged.

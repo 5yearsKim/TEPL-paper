@@ -1,0 +1,6 @@
+exec ${PAGER:-/usr/bin/less} "$0" || exit 1
+Executing tests from //tests:ordered_synthesis_test
+-----------------------------------------------------------------------------
+1584 exhaustive decisions, 240 checked obstructions
+387 exhaustive sum decisions, 90 checked obstructions
+1980 emitted programs checked against concrete construction and independent replay

@@ -1,0 +1,527 @@
+\subsection{Core Metadata and Validation Proofs}
+\label{app:validation-proofs}
+This appendix defines the inference rules used by the formal validator in
+Section~\ref{sec:candidate-validation}. It proves soundness of this calculus;
+it does not identify a diagnostic trace from the implementation with a
+checked proof certificate.
+
+\subsubsection{Finite-Sequence Interpretation}
+A metadata valuation assigns a value of the declared sort to every captured
+field and shape. Axis sequences contain identities with associated extents.
+All sequences are finite. For $Q=[Q_0,\ldots,Q_{n-1}]$,
+$\gath(Q,q)=[Q_{q_0},\ldots,Q_{q_{k-1}}]$ when every position is in range.
+$\pos(Q,G)$ returns the unique positions of $G$'s members in $Q$, in $G$'s
+order, and requires distinct $Q,G$ and inclusion of their member sets.
+Ordered complement deletes members while preserving the first argument's
+order. For distinct sequences, $\mpo(A,B)=(u,v)$ lists the positions of
+common members in $A$'s order and their corresponding positions in $B$.
+The inverse of a permutation $q$ is the unique list $q^{-1}$ satisfying
+$q_{q^{-1}_i}=i$. Extents and ranks never depend on tensor entries or
+reduction coordinates.
+
+More explicitly, the typed core expression grammar is
+\begin{equation}
+\begin{aligned}
+ e::={}&\operatorname{src}(k)\mid c\mid[e_1,\ldots,e_m]
+       \mid e_1\Vert e_2\mid |e|\mid\operatorname{range}(e)\\
+      &\mid\gath(e,e)\mid\ocomp(e,e)\mid\pos(e,e)
+       \mid\operatorname{inverse}(e)\\
+      &\mid\mpo(e,e)_i\mid e+e\mid e-e
+       \mid\operatorname{if}(b,e,e).
+\end{aligned}
+\end{equation}
+Here $\operatorname{src}(k)$ names captured metadata, $c$ is a typed
+literal, and $i\in\{1,2\}$. Arithmetic is scalar or an integer shift of a
+position sequence, as determined by the types. Predicates and their Boolean
+combinations are the $b$ expressions. Sequence member-set operations in
+the reasoning rules are ordered filter/union views, with the member-set
+interpretations below; they introduce no new axis identities.
+
+Metadata evaluation follows these definitions. Literals and captured values
+are defined; lists, concatenation, and length are strict.
+$\operatorname{range}(n)=[0,\ldots,n-1]$ requires $n\ge0$ and representable
+length. Complement and paired matching require finite, distinct arguments;
+permutation inverse requires $\operatorname{Perm}(q,|q|)$. Position shifts
+and integer arithmetic additionally check representability in their declared
+integer type. An inverse or position lookup with unmet premises is
+undefined. Conditionals and Boolean short-circuiting evaluate only the
+selected subexpression. A resource limit may interrupt an implementation;
+the mathematical evaluator describes its result with sufficient resources.
+
+\subsubsection{The Core Inference System}
+We write $e\Downarrow_p v$ for successful evaluation of a metadata
+expression. Evaluation is strict except for conditionals and short-circuit
+Boolean operators; integer overflow is undefined.
+
+Let $\Gamma$ contain legal LHS metadata and the fact that the written
+condition evaluated to true. Derived facts must follow from these
+premises. The judgments
+\begin{equation}
+ \Gamma\vdash e\downarrow,\qquad \Gamma\vdash\phi
+ \label{eq:metadata-judgments}
+\end{equation}
+establish defined evaluation and a true metadata predicate, respectively.
+These are derivability judgments; $e\Downarrow_p v$ describes evaluation
+at one metadata valuation, not a proof-search outcome.
+Predicates include ordered equality, length and integer comparisons,
+distinctness, set inclusion, disjointness, and selector validity.
+Set predicates forget order; ordered equality does not.
+
+For a sequence $Q$, $\operatorname{Sel}(q,Q)$ requires distinct positions
+in $[0,|Q|)$; $\operatorname{Perm}(q,n)$ also requires $|q|=n$.
+Table~\ref{tab:metadata-definedness} gives rules for well-typed expressions,
+with definedness premises explicit. Injectivity is a core restriction;
+ordinary gather permits repeated positions.
+
+\begin{table}[!htbp]
+\caption{Representative inference rules for candidate validation.}
+\label{tab:metadata-definedness}
+\small
+\begin{tabularx}{\linewidth}{@{}lY@{}}\toprule
+Rule & Derivation\\\midrule
+\textsc{D-Gather} &
+$\displaystyle
+ \frac{\Gamma\vdash Q\downarrow\quad\Gamma\vdash q\downarrow
+       \quad\Gamma\vdash\operatorname{Sel}(q,Q)}
+      {\Gamma\vdash\gath(Q,q)\downarrow}$\\[6pt]
+\textsc{D-If-True} &
+$\displaystyle
+ \frac{\Gamma\vdash b\quad\Gamma\vdash e_1\downarrow}
+      {\Gamma\vdash\operatorname{if}(b,e_1,e_2)\downarrow}$\\[6pt]
+\textsc{E-Cong} &
+$\displaystyle
+ \frac{\Gamma\vdash e=e'\quad\Gamma\vdash H(e)\downarrow
+       \quad\Gamma\vdash H(e')\downarrow}
+      {\Gamma\vdash H(e)=H(e')}$\\[2pt]\bottomrule
+\end{tabularx}
+\end{table}
+Here $H$ is a core operator with other arguments fixed; the false-branch
+rule is symmetric. If $\Gamma$ proves $Q,q,h$ defined and
+$\operatorname{Sel}(q,Q),\operatorname{Sel}(h,q)$, gather composition gives
+\begin{equation}
+ \Gamma\vdash\gath(\gath(Q,q),h)=\gath(Q,\gath(q,h))
+ \quad\text{\textsc{E-Gather}}.
+ \label{eq:validated-gather}
+\end{equation}
+Both sides have entry $Q[q[h[j]]]$ at every finite length.
+The remaining rules and their soundness proofs follow below.
+
+Definedness is checked on the original constructor expressions before
+value simplification can erase a partial subexpression. For example,
+eager evaluation of $0\cdot q[i]$ still requires $i$ to be in range.
+Merely obtaining a simplified constant zero is insufficient. Supplied
+fields are checked and preserved just like inferred fields.
+
+
+The context $\Gamma$ initially contains legal source metadata and the
+successfully true written guard. Source legality contributes the declared
+operation contracts, including in-range selectors, permutations, distinct
+input frames, paired lengths and extents, and output-layout equations.
+These are assumptions about legal source instances. The same facts for an
+RHS operation must be derived before they can be used.
+
+The following rules define the core; no rule may assume an unproved
+candidate obligation.
+\begin{enumerate}
+\item \emph{Premises and Boolean reasoning.} Use a premise from $\Gamma$,
+introduce or eliminate conjunctions, and apply propositional consequences
+validated by a finite Boolean truth table over defined atomic predicates.
+A guard may contribute facts only along evaluation paths established by
+its successful result; a short-circuited branch contributes no facts or
+definedness. In particular, a successfully true conjunction establishes
+both conjuncts, whereas a true disjunction does not establish either
+disjunct separately. A premise involving a partial expression includes
+successful evaluation of that expression.
+\item \emph{Definedness.} Use Table~\ref{tab:metadata-definedness} and the
+finite-sequence contracts above. Literals, source values, lists, length,
+and concatenation compose strictly. Position lookup additionally uses
+\begin{equation*}
+ \frac{\begin{gathered}
+       \Gamma\vdash Q\downarrow\quad\Gamma\vdash G\downarrow\\
+       \Gamma\vdash\operatorname{distinct}(Q)\land
+                    \operatorname{distinct}(G)\land
+                    \operatorname{set}(G)\subseteq\operatorname{set}(Q)
+       \end{gathered}}
+      {\Gamma\vdash\pos(Q,G)\downarrow}
+ \quad\text{\textsc{D-Pos}}.
+\end{equation*}
+The false-branch counterpart of \textsc{D-If-True} uses
+$\Gamma\vdash\neg b$ and $\Gamma\vdash e_2\downarrow$.
+If $\Gamma\vdash b\downarrow$ but its truth value is unresolved, requiring
+both branches defined suffices; the same approach applies to short-circuit
+operators.
+\item \emph{Equality.} Reflexivity applies to defined expressions.
+Symmetry, transitivity, substitution, and \textsc{E-Cong} require all
+involved expressions to be defined; congruence applies argumentwise.
+Ground operations use the finite-sequence definitions directly.
+\item \emph{Sequence laws.} Instantiate the laws in
+Table~\ref{tab:core-sequence-laws}, with their stated premises and
+argument definedness. $\operatorname{set}(Q)$ denotes the member set.
+\item \emph{Set reasoning.} A sequence intersection, difference, or union
+has the corresponding member-set interpretation; its order is inherited
+from its specified traversal. To prove inclusion, disjointness, or set
+equality, replace each atomic member set by a Boolean variable for an
+arbitrary member. Accept only a propositional consequence of the
+established set premises. This finite truth-table procedure proves member
+relations, never ordered equality.
+\item \emph{Integer bounds.} Use exact ground computation and interval
+bounds. If $a\in[l_a,u_a]$ and $b\in[l_b,u_b]$, then
+$a+b\in[l_a+l_b,u_a+u_b]$ and
+$a-b\in[l_a-u_b,u_a-l_b]$. Lengths are nonnegative;
+concatenation lengths add. A computed interval proves representability
+only when it lies inside the declared integer range. Unsupported arithmetic
+or an overflow while computing a bound gives no derivation.
+\end{enumerate}
+These rules specify a proof relation, not a complete strategy for finding
+proofs. Finite work bounds can abandon search without changing that relation.
+
+\begin{table}[!htbp]
+\caption{Sequence laws of the validation core. All expressions must be defined.}
+\label{tab:core-sequence-laws}
+\small
+\begin{tabularx}{\linewidth}{@{}p{0.56\linewidth}Y@{}}\toprule
+Law & Further premises\\\midrule
+$|A\Vert B|=|A|+|B|$; $|\gath(A,q)|=|q|$
+& Valid gather selector\\
+$\gath(A,\operatorname{range}(|A|))=A$
+& None\\
+Gather composition, Equation~\eqref{eq:validated-gather}
+& $\operatorname{Sel}(q,A)$ and $\operatorname{Sel}(h,q)$\\
+$\gath(A,q\Vert h)=\gath(A,q)\Vert\gath(A,h)$
+& All listed selectors in range\\
+$\gath(A\Vert B,q)=\gath(A,q)$
+& $\operatorname{Sel}(q,A)$\\
+$\gath(A\Vert B,|A|+q)=\gath(B,q)$
+& $\operatorname{Sel}(q,B)$\\
+$\gath(c+\operatorname{range}(n),q)=c+q$
+& $q$ selects positions in $\operatorname{range}(n)$\\
+$\gath(A,\pos(A,G))=G$
+& $A,G$ distinct and $\operatorname{set}(G)\subseteq\operatorname{set}(A)$\\
+$\gath(q,\operatorname{inverse}(q))=\operatorname{range}(|q|)$
+& $\operatorname{Perm}(q,|q|)$\\
+$\operatorname{Perm}(\gath(q,h),n)$
+& $\operatorname{Perm}(q,n)$ and $\operatorname{Perm}(h,n)$\\
+$\operatorname{set}(\gath(A,q))\subseteq\operatorname{set}(A)$;
+$\operatorname{distinct}(\gath(A,q))$
+& $A$ distinct and $\operatorname{Sel}(q,A)$\\\bottomrule
+\end{tabularx}
+\end{table}
+
+The finite matching and complement operations also publish their defining
+properties: for $(u,v)=\mpo(A,B)$, the selectors are valid and
+$\gath(A,u)=\gath(B,v)$ lists exactly the common members; a selector and
+its ordered complement are disjoint and cover the original positions.
+These facts follow from their definitions, not from the candidate rewrite.
+We also use the finite length bounds implied by selectors and complements:
+an injective selector into $Q$ has length at most $|Q|$, and deleting
+positions cannot increase a sequence's length. Nonnegative block lengths
+bound each block offset and position by the total length. These inequalities
+follow by injection into the original position set and monotonicity of
+addition; a proved bound on the total therefore bounds each such offset.
+
+\begin{lemma}[Sound metadata derivations]
+\label{lem:metadata-soundness}
+For every valuation $p$ satisfying $\Gamma$, a derivation
+$\Gamma\vdash e\downarrow$ implies successful evaluation of $e$ at $p$.
+A derivation $\Gamma\vdash\phi$ implies successful evaluation of $\phi$
+to true at $p$.
+\end{lemma}
+\begin{proof}
+Induct on the derivation. Premises hold by satisfaction of $\Gamma$;
+propositional rules preserve truth. For definedness, a valid gather selector
+makes every accessed index in range; distinctness and inclusion make every
+position lookup unique and present; a permutation has a unique inverse.
+All other sequence constructors process finitely many defined arguments.
+The integer-interval rules follow from monotonicity of addition and
+subtraction and establish both exact values and representability.
+Conditional rules check either both branches or the established selected
+branch, so actual evaluation succeeds.
+
+Equality rules preserve equality of already defined values. The sequence
+laws follow by comparing lengths and entries: gather composition has entry
+$A_{q_{h_j}}$ on both sides; concatenation and its shifted selectors agree
+within each block; position lookup selects exactly the requested members;
+inverse selection gives the identity list. Composition of two permutations
+is a bijection. Injective selection preserves distinctness and membership.
+Selecting a shifted range gives entry $c+q_j$ on both sides.
+Matching visits precisely the common members and records their paired
+locations; complement visits precisely the omitted positions. Finally,
+for any member, the Boolean interpretation of set operations is exact.
+A propositional consequence therefore holds for that member, and hence
+for every member. None of these cases fixes a sequence length.
+\end{proof}
+
+\begin{lemma}[Selection and complement transport]
+\label{lem:selection-complement}
+Let $q,r$ be disjoint injective selectors into a sequence $A$, and set
+$s=\ocomp(\operatorname{range}(|A|),r)$. Then $\pos(s,q)$ is defined,
+\begin{equation}
+ \gath(\gath(A,s),\pos(s,q))=\gath(A,q),
+ \label{eq:complement-selection}
+\end{equation}
+and deleting those selected entries from $\gath(A,s)$ gives the same
+ordered sequence as deleting $r\Vert q$ from the positions of $A$.
+\end{lemma}
+\begin{proof}
+Disjointness places every entry of $q$ in $s$; both lists are distinct.
+The position-lookup rule proves definedness, and gather composition with
+$\gath(s,\pos(s,q))=q$ proves Equation~\eqref{eq:complement-selection}.
+For the deletion claim, each original position remains exactly when it is
+in neither $r$ nor $q$. Both constructions visit these positions in their
+original increasing order, so they have the same entries in the same order.
+This argument concerns positions and does not require distinct values in
+$A$. It also applies to empty selections. We use this finite-sequence
+consequence as a derived transport rule in the reassociation proof.
+\end{proof}
+
+\subsubsection{Validation Procedure}
+\label{app:validation-procedure}
+Let $\mathcal G$ be the finite set of candidate obligations. These are
+proof goals, never source assumptions. The procedure is:
+
+\noindent\begin{minipage}{\linewidth}
+\begin{lstlisting}[language={},caption={Validation of a completed candidate.}]
+Validate(L, R, C, f, goals):
+    Gamma = source legality and successful evaluation of C
+    require source-only, typed, defined original expressions in f
+    require supplied fields are preserved and all holes are filled
+    prove every goal in goals from Gamma
+    lower L and completed R using the declared operation contracts
+    prove every RHS legality and coordinate-transport obligation
+    normalize both value expressions using checked algebraic laws
+    prove equality of normalized terms, ordered outputs and shapes
+    return Proved if all goals have derivations; otherwise Unknown
+\end{lstlisting}
+\end{minipage}
+
+
+Here \code{goals} denotes $\mathcal G$. A \code{Proved} result requires
+all obligations to have derivations; unresolved goals or work limits give
+\code{Unknown}. This outcome does not establish infeasibility.
+
+For the canonical program of Theorem~\ref{thm:symbolic-compilation},
+acceptance instead requires guard certification:
+\begin{equation}
+ \forall p.\quad \operatorname{Legal}_L(p)\land C(p)
+ \Rightarrow\operatorname{check}(p).
+ \label{eq:guard-feasibility}
+\end{equation}
+This obligation uses that theorem's domain assumptions. Candidate
+validation applies to any completed program with a derivation in the
+calculus. Implementation paths outside the calculus are discussed in
+Section~\ref{sec:implementation-scope}.
+
+\subsubsection{Mappings, Partitions, and Executable Expressions}
+\begin{lemma}[Mapping and partition preservation]
+\label{lem:validated-mappings}
+Mappings derived by valid selection, gather composition, concatenation
+with offsets, permutation reconstruction, and paired overlap matching
+satisfy their stated ordered-selection equations. A registered complete
+partition covers its interface exactly once.
+\end{lemma}
+\begin{proof}
+For selection and composition, use Table~\ref{tab:core-sequence-laws}.
+For reconstruction, concatenate groups as $\vec G=\vec G_1\Vert\cdots\Vert \vec G_m$
+and their position lists as $q=q_1\Vert\cdots\Vert q_m$. Require $q$ to
+be a permutation and $|\vec G_i|=|q_i|$. With
+$Q=\gath(\vec G,\operatorname{inverse}(q))$, inverse composition gives
+$\gath(Q,q)=\vec G$, whose corresponding blocks give
+$\gath(Q,q_i)=\vec G_i$. Injectivity and completeness of $q$ give exact coverage.
+For overlap, if $\vec G=\gath(Q,q)$, $\vec H=\gath(Q,h)$, and
+$(u,v)=\mpo(q,h)$, then $q_{u_j}=h_{v_j}$; both transported selections
+therefore have entry $Q_{q_{u_j}}$. The paired selectors retain order and
+partner identity. Induction on a mapping derivation proves the claim.
+\end{proof}
+
+\begin{lemma}[Core metadata emission]
+\label{lem:metadata-emission}
+Translate a defined core metadata expression to executable metadata syntax
+by preserving source references, literals, operator identities, argument
+order, and conditional evaluation order. With the primitive sequence and
+checked-integer semantics above, executable evaluation has the same value
+as metadata evaluation.
+\end{lemma}
+\begin{proof}
+Induct on the expression. Source references read the same captured metadata;
+literals are unchanged. For a strict operator, the induction hypotheses
+give equal argument values. The corresponding executable operator applies
+the same finite-sequence definition or checked arithmetic operation.
+Definedness rules ensure that its accesses and representability checks
+succeed. For a conditional or short-circuit operator, both evaluators first
+obtain the same Boolean and evaluate the same selected subexpression,
+whose value agrees by induction. The tree is finite and each primitive
+terminates on finite arguments. Thus execution agrees, with sufficient
+resources. This proves the specified translation, not correctness of every
+native or generated backend implementation of a primitive.
+\end{proof}
+
+\subsubsection{Lowering, Normalization, and Comparison}
+A lowered value expression uses constants, indexed input reads, addition,
+multiplication, and finite summation. Its normalized form is a sum of
+terms $(c,[r_1,\ldots,r_m],\vec D)$, interpreted by
+Equation~\eqref{eq:validator-term}.
+\begin{equation}
+ \sum_{\rho\in\operatorname{Coords}(\vec D)}c\prod_{i=1}^{m}r_i(\rho).
+ \label{eq:validator-term}
+\end{equation}
+The read list preserves multiplicity. Normalization uses distributivity
+and reduction linearity, combining reductions only with proved disjoint
+bound axes and independence of moved factors. Bound-coordinate renaming
+must be injective, preserve extents, and avoid capture. Coefficient
+computation is exact; representation overflow leaves the goal unresolved.
+
+Term comparison checks equal coefficients, matching read multisets in a
+common coordinate frame, and the same reduction axes and domains. Output
+comparison additionally establishes ordered axis equality, shape equality,
+and equality of the source and replacement result dtypes. Equality of shapes alone does not establish equality
+of reads or axis order. The normalization and comparison proof follows below.
+
+
+\begin{lemma}[Core lowering]
+\label{lem:core-lowering}
+Lowering a legal core expression using validated coordinate mappings gives
+its declared ordered shape and its value at every output coordinate.
+\end{lemma}
+\begin{proof}
+Induct on the expression. An input read uses its physical dimension order.
+For a permutation $q$, output coordinate $i$ supplies the coordinate of
+input dimension $q_i$; the permutation premise makes this a bijective
+reindexing. Unary summation binds precisely the selected dimensions and
+preserves the remaining dimension order. A contraction pairs its batch and
+contraction axes in attribute-list order. Equal paired extents provide a
+common domain, distinct disjoint selectors avoid duplicate bindings, and
+the declared batch/left-free/right-free order specifies the output. Its
+value is the finite sum of the product of the corresponding operand
+entries. Addition requires matching ordered shapes and adds corresponding
+entries. Substitute lowered operands using the induction hypotheses;
+Lemma~\ref{lem:validated-mappings} preserves their coordinates. RHS
+legality facts must already have derivations, so no illegal replacement is
+used as a premise.
+\end{proof}
+
+Define $\operatorname{deps}(t)$ as a conservative set of axes occurring in
+a term's read coordinates; absence implies independence. Bound names are
+fresh, and any renaming is a capture-avoiding, extent-preserving bijection.
+The core normalizer maps a constant to one coefficient term, a read to one
+read term, addition to term-list concatenation, and reduction to prepending
+its bound axes after a disjointness check. A product forms the Cartesian
+product of its child term lists. For terms with reduction axes $\vec D_1,\vec D_2$
+and read factors $F_1,F_2$, this step requires
+\begin{equation}
+\begin{aligned}
+ \vec D_1\cap \vec D_2&=\varnothing,\\
+ \vec D_1\cap(\operatorname{deps}(F_2)\setminus \vec D_2)&=\varnothing,\\
+ \vec D_2\cap(\operatorname{deps}(F_1)\setminus \vec D_1)&=\varnothing.
+\end{aligned}
+\end{equation}
+Intersections here refer to member sets. All three conditions must be
+proved; normalization does not assume independence from a missing map.
+
+\begin{lemma}[Core normalization and comparison]
+\label{lem:core-normalization}
+Successful core normalization preserves values. Matching normalized terms
+with equal coefficients, equal read multisets, and equal reduction domains
+establishes value equality.
+\end{lemma}
+\begin{proof}
+Induct on the normalized value expression. Constants and reads are immediate;
+addition is concatenation of finite sums. Reduction distributes over a
+finite sum. Disjointness permits nested reduction domains to be identified
+with their Cartesian product. For multiplication, the stated independence
+conditions justify
+\begin{equation}
+ \left(\sum_{\vec D_1}a\right)\left(\sum_{\vec D_2}b\right)
+ =\sum_{\vec D_1\Vert \vec D_2}ab.
+\end{equation}
+Distributivity gives the Cartesian product of term lists; exact coefficient
+arithmetic and multiplication preserve each term. These identities hold
+also for empty domains. Collecting equal terms adds coefficients in exact
+real arithmetic. A legal renaming is a bijection between coordinate
+assignments, preserving every summand. For matching terms, multiplication
+is commutative, read multiplicities agree, and summation order does not
+change a finite sum. Therefore each matched pair has equal value, as do
+the complete term lists. This is sufficient comparison, not a completeness
+claim about normal forms or proof search.
+\end{proof}
+
+\begin{proof}[Proof of Theorem~\ref{thm:validator-soundness}]
+Fix legal source metadata $p$ for which the written guard $C$ evaluates to
+true. A \code{Proved} result means that every required check has a
+derivation. By Lemma~\ref{lem:metadata-soundness}, the attribute expressions
+are defined, supplied fields are preserved, and every RHS operation is
+legal. Lemma~\ref{lem:metadata-emission} shows that executing $f$ therefore
+produces the established attributes $\beta$, with sufficient resources.
+
+Lemma~\ref{lem:core-lowering} gives each lowered graph its declared shape
+and value at every output coordinate. By
+Lemma~\ref{lem:core-normalization}, normalization preserves these values
+under exact arithmetic, and successful term comparison establishes equal
+values for all compatible tensor inputs. The proved ordered-shape checks
+and result-dtype checks give the remaining parts of
+$\operatorname{Valid}(p,\beta)$. Thus
+$f\Downarrow_p\beta\land\operatorname{Valid}(p,\beta)$.
+Since $p$ was arbitrary, the theorem follows independently of how the
+candidate was generated.
+\end{proof}
+A new implementation rule must be justified by this calculus or receive
+its own soundness argument before it belongs to this formal guarantee.
+
+\subsubsection{Validation of Transpose Composition}
+\label{app:transpose-validation}
+For transpose composition on input $t$, let $a,b$ be source permutations,
+$n=|\operatorname{Ord}_t|$, and $f(p)=\gath(a,b)$. Source legality and
+\textsc{D-Gather} prove definedness; permutation composition gives the left
+premise below. \textsc{E-Gather} gives the right, with
+$F_L=\gath(\gath(\operatorname{Ord}_t,a),b)$ and
+$F_R=\gath(\operatorname{Ord}_t,f(p))$.
+\begin{equation}
+ \frac{\Gamma\vdash\operatorname{Perm}(f(p),n)
+       \qquad\Gamma\vdash F_L=F_R}
+      {\Gamma\vdash\operatorname{Valid}(p,f(p))}
+ \quad\text{\textsc{Transpose}}
+ \label{eq:transpose-validation-tree}
+\end{equation}
+This derived rule is specific to the transpose-only rewrite: both sides
+read the same input in the common frame and preserve its dtype. No
+reductions occur, and the argument includes rank zero.
+
+\subsubsection{Validating Batched Reassociation}
+\label{app:reassociation-validation}
+We validate the complete program in
+Table~\ref{tab:reassociation-program}, rather than treating the candidate's
+axis correspondences as premises. Let $C$ be the batch-preservation and
+integer-bound guard in Appendix~\ref{app:batched-reassociation-program}, and let
+$\Gamma$ contain only $C$ and source legality. The argument uses the core
+sequence laws, selection/complement transport
+(Lemma~\ref{lem:selection-complement}), and finite-sum normalization.
+
+\begin{proposition}[Guarded reassociation program]
+\label{prop:reassociation-program}
+For every legal source match satisfying $C$, the program in
+Table~\ref{tab:reassociation-program} evaluates to legal attributes and
+preserves the ordered output shape and values under exact real arithmetic.
+Ranks, batch lengths, and contraction lengths may vary; free groups may
+be interleaved in the operands. Zero and singleton extents are allowed.
+\end{proposition}
+\paragraph{Validation obligations.}
+The proof discharges three concrete obligations from source legality and
+$C$, without assuming candidate correspondences:
+\begin{enumerate}
+\item \emph{Defined attributes.} The partition places $z_I$ inside $f_Z$
+and $k_Y$ inside $f_Y$, so both critical position queries are defined.
+The integer bound makes their offsets representable.
+\item \emph{Legal replacement.} Paired selectors are injective, in range,
+and disjoint from batching; they select $\Jsel$ in the inner replacement
+and $\Isel\Vert\vec K$ in the outer one, with matching extents.
+\item \emph{Equivalent result.} Both outputs have ordered frame
+$\vec B\Vert\Irem\Vert\Jrem\Vert\vec H$, where $\vec H$ is the outer
+source dot's right-free group. An extent-preserving bijection splits the
+source reduction group $\vec D$ into its selected $\vec I$ and $\vec J$
+parts; checked finite-sum laws then give identical reads and reductions.
+\end{enumerate}
+Appendix~\ref{app:reassociation-proof} supplies the full coordinate and
+normalization derivation. Appendix~\ref{app:reassociation-record} connects
+the displayed program to recorded compiler output; the argument quantifies
+over arbitrary legal metadata rather than sampled ranks.
+
+\input{sections/appendix-condition-suggestions}

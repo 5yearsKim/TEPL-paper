@@ -1,0 +1,11 @@
+SemanticRule reverse_compose_disjoint
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: Read(input, IndexReverse(Coords(S), attrs.dimensions)) over Read(input, IndexReverse(Coords(S), attrs.dimensions)) over Input(#0)
+      rhs-graph: Read(input, IndexReverse(Coords(S), attrs.dimensions)) over Input(#0)
+      verified: source-layout guard certificate and core emission theorem
+      declared-conditions:
+        ==(len(shape(Input(#0))), 2)
+        &&(==(attr_inner.attrs.dimensions, [0]), ==(attr_outer.attrs.dimensions, [1]))
+      additional-guard: true
+      reason: core schema guard and supplied metadata certified; sound for all legal extents
+

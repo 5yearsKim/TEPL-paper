@@ -1,0 +1,172 @@
+CheckedProgram
+  operation #0 TensorLang.add(lhs: Tensor, rhs: Tensor) -> Tensor
+    dtype
+      parameter #0 a: DType operand=0
+      parameter #1 b: DType operand=1
+      assert Binary(==, Symbol(#0):DType, Symbol(#1):DType):Bool
+      assert Builtin(is_numeric, Symbol(#0):DType):Bool
+      yield Symbol(#0):DType
+    bind S { lhs: all_axes(lhs), rhs: all_axes(rhs) }
+    output-axes: S
+    semantics [index]: Add(lhs, rhs)
+  operation #1 TensorLang.multiply(lhs: Tensor, rhs: Tensor) -> Tensor
+    dtype
+      parameter #0 a: DType operand=0
+      parameter #1 b: DType operand=1
+      assert Binary(==, Symbol(#0):DType, Symbol(#1):DType):Bool
+      assert Builtin(is_numeric, Symbol(#0):DType):Bool
+      yield Symbol(#0):DType
+    bind S { lhs: all_axes(lhs), rhs: all_axes(rhs) }
+    output-axes: S
+    semantics [index]: Product(lhs, rhs)
+  operation #2 TensorLang.negate(input: Tensor) -> Tensor
+    dtype
+      parameter #0 t: DType operand=0
+      assert Builtin(is_numeric, Symbol(#0):DType):Bool
+      yield Symbol(#0):DType
+    bind S { input: all_axes(input) }
+    output-axes: S
+    semantics [index]: Product(Const(-1), input)
+  operation #3 TensorLang.subtract(lhs: Tensor, rhs: Tensor) -> Tensor
+    dtype
+      parameter #0 a: DType operand=0
+      parameter #1 b: DType operand=1
+      assert Binary(==, Symbol(#0):DType, Symbol(#1):DType):Bool
+      assert Builtin(is_numeric, Symbol(#0):DType):Bool
+      yield Symbol(#0):DType
+    bind S { lhs: all_axes(lhs), rhs: all_axes(rhs) }
+    output-axes: S
+    semantics [index]: Add(lhs, Product(Const(-1), rhs))
+  operation #4 TensorLang.zero_like(input: Tensor) -> Tensor
+    dtype
+      parameter #0 t: DType operand=0
+      assert Builtin(is_numeric, Symbol(#0):DType):Bool
+      yield Symbol(#0):DType
+    bind S { input: all_axes(input) }
+    output-axes: S
+    semantics [index]: Const(0)
+  operation #5 TensorLang.dot_general(lhs: Tensor, rhs: Tensor) -> Tensor attrs=#0
+    dtype
+      parameter #0 a: DType operand=0
+      parameter #1 b: DType operand=1
+      assert Binary(==, Symbol(#0):DType, Symbol(#1):DType):Bool
+      assert Builtin(is_numeric, Symbol(#0):DType):Bool
+      yield Symbol(#0):DType
+    bind B { lhs: attrs.lhs_batching_dimensions, rhs: attrs.rhs_batching_dimensions }
+    bind K { lhs: attrs.lhs_contracting_dimensions, rhs: attrs.rhs_contracting_dimensions }
+    bind I { lhs: ordered_complement(all_axes(lhs), concat(attrs.lhs_batching_dimensions, attrs.lhs_contracting_dimensions)) }
+    bind J { rhs: ordered_complement(all_axes(rhs), concat(attrs.rhs_batching_dimensions, attrs.rhs_contracting_dimensions)) }
+    output-axes: concat(concat(B, I), J)
+    semantics [index]: Reduce(K, Product(lhs, rhs))
+  operation #6 TensorLang.convolution(input: Tensor, kernel: Tensor) -> Tensor attrs=#1
+    dtype
+      parameter #0 a: DType operand=0
+      parameter #1 b: DType operand=1
+      assert Binary(==, Symbol(#0):DType, Symbol(#1):DType):Bool
+      assert Builtin(is_numeric, Symbol(#0):DType):Bool
+      yield Symbol(#0):DType
+    bind N { input: [0] }
+    bind C { input: [-(rank(input), 1)], kernel: [-(rank(kernel), 2)] }
+    bind F { kernel: [-(rank(kernel), 1)] }
+    bind Window { kernel: range(-(rank(kernel), 2)) }
+    bind O = group(offset_extents(extent_floor_div(extent_sub(gather(shape(input), ordered_complement(all_axes(input), [0,-(rank(input), 1)])), offset_extents(extent_mul(attrs.dilations, offset_extents(gather(shape(kernel), range(-(rank(kernel), 2))), -(0, 1))), 1)), attrs.strides), 1))
+    assert >=(rank(input), 3)
+    assert ==(rank(kernel), rank(input))
+    assert is_positive_extents(gather(shape(kernel), range(-(rank(kernel), 2))))
+    assert ==(len(attrs.strides), len(ordered_complement(all_axes(input), [0,-(rank(input), 1)])))
+    assert ==(len(attrs.dilations), len(ordered_complement(all_axes(input), [0,-(rank(input), 1)])))
+    assert is_positive_extents(attrs.strides)
+    assert is_positive_extents(attrs.dilations)
+    assert extent_le(offset_extents(extent_mul(attrs.dilations, offset_extents(gather(shape(kernel), range(-(rank(kernel), 2))), -(0, 1))), 1), gather(shape(input), ordered_complement(all_axes(input), [0,-(rank(input), 1)])))
+    output-axes: concat(concat(N, O), F)
+    semantics [index]: Reduce(Window, Reduce(C, Product(Read(input, Concat(Coords(N), IndexAdd(IndexScale(attrs.strides, Coords(O)), IndexScale(attrs.dilations, Coords(Window))), Coords(C))), kernel)))
+  operation #7 TensorLang.slice(input: Tensor) -> Tensor attrs=#2
+    dtype
+      parameter #0 t: DType operand=0
+      yield Symbol(#0):DType
+    bind O = group(attrs.sizes)
+    assert ==(len(attrs.starts), rank(input))
+    assert ==(len(attrs.sizes), rank(input))
+    assert ==(len(attrs.strides), rank(input))
+    assert is_valid_extents(attrs.starts)
+    assert is_positive_extents(attrs.sizes)
+    assert is_positive_extents(attrs.strides)
+    assert extent_le(extent_add(attrs.starts, extent_mul(attrs.strides, offset_extents(attrs.sizes, -(0, 1)))), offset_extents(shape(input), -(0, 1)))
+    output-axes: O
+    semantics [index]: Read(input, IndexOffset(attrs.starts, IndexScale(attrs.strides, Coords(O))))
+  operation #8 TensorLang.broadcast_in_dim(input: Tensor) -> Tensor attrs=#3
+    dtype
+      parameter #0 t: DType operand=0
+      yield Symbol(#0):DType
+    bind S { input: all_axes(input) }
+    bind N = group(attrs.new_extents)
+    output-axes: place(S, attrs.dimensions, N)
+    semantics [index]: input
+  operation #9 TensorLang.transpose(input: Tensor) -> Tensor attrs=#4
+    dtype
+      parameter #0 t: DType operand=0
+      yield Symbol(#0):DType
+    bind S { input: all_axes(input) }
+    assert is_valid_axis_list(attrs.permutation, rank(input))
+    assert ==(len(attrs.permutation), rank(input))
+    output-axes: permute(S, attrs.permutation)
+    semantics [index]: input
+  operation #10 TensorLang.reverse(input: Tensor) -> Tensor attrs=#5
+    dtype
+      parameter #0 t: DType operand=0
+      yield Symbol(#0):DType
+    bind S { input: all_axes(input) }
+    assert is_valid_axis_list(attrs.dimensions, rank(input))
+    output-axes: S
+    semantics [index]: Read(input, IndexReverse(Coords(S), attrs.dimensions))
+  operation #11 TensorLang.reduce_sum(input: Tensor) -> Tensor attrs=#6
+    dtype
+      parameter #0 t: DType operand=0
+      assert Builtin(is_numeric, Symbol(#0):DType):Bool
+      yield Symbol(#0):DType
+    bind K { input: attrs.dimensions }
+    bind F { input: ordered_complement(all_axes(input), attrs.dimensions) }
+    output-axes: F
+    semantics [index]: Reduce(K, input)
+  attr_schema #0 TensorLang.dot_general::attrs { lhs_contracting_dimensions: u64[]; rhs_contracting_dimensions: u64[]; lhs_batching_dimensions: u64[]; rhs_batching_dimensions: u64[]; }
+  attr_schema #1 TensorLang.convolution::attrs { strides: i64[]; dilations: i64[]; }
+  attr_schema #2 TensorLang.slice::attrs { starts: i64[]; sizes: u64[]; strides: i64[]; }
+  attr_schema #3 TensorLang.broadcast_in_dim::attrs { dimensions: u64[]; new_extents: u64[]; }
+  attr_schema #4 TensorLang.transpose::attrs { permutation: u64[]; }
+  attr_schema #5 TensorLang.reverse::attrs { dimensions: u64[]; }
+  attr_schema #6 TensorLang.reduce_sum::attrs { dimensions: u64[]; }
+  rule #0 rank_16_automatic [/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/inputs/rank_16_automatic.tepl:326:1]
+    capture #0 A: Tensor
+    dimension #0 D0: U64
+    dimension #1 D1: U64
+    dimension #2 D2: U64
+    dimension #3 D3: U64
+    dimension #4 D4: U64
+    dimension #5 D5: U64
+    dimension #6 D6: U64
+    dimension #7 D7: U64
+    dimension #8 D8: U64
+    dimension #9 D9: U64
+    dimension #10 D10: U64
+    dimension #11 D11: U64
+    dimension #12 D12: U64
+    dimension #13 D13: U64
+    dimension #14 D14: U64
+    dimension #15 D15: U64
+    descriptor @#0 p3: Descriptor(#4) captured
+    descriptor @#1 p2: Descriptor(#4) captured
+    descriptor @#2 p1: Descriptor(#4) captured
+    descriptor @#3 inferred#3: Descriptor(#4) inferred
+    constraint #0 dtype=f32 shape=[#0, #1, #2, #3, #4, #5, #6, #7, #8, #9, #10, #11, #12, #13, #14, #15]
+    match: MatchOp(TensorLang.transpose #9 @#0, MatchOp(TensorLang.transpose #9 @#1, MatchOp(TensorLang.transpose #9 @#2, Capture(#0))))
+    derive @#3 = Descriptor(#4){auto:U64[],}:Descriptor(#4)
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: align[n3:input](align[n2:input](align[n1:input](Input(#0))))
+      rhs-graph: align[n5:input](Input(#0))
+      verified: source-layout guard certificate and core emission theorem
+      declared-conditions:
+        ==(len(shape(Input(#0))), 16)
+        ==(dtype(Input(#0)), dtype_f32())
+      additional-guard: true
+      reason: core guard implies canonical feasibility; DAG builder is sound for all legal extents
+    replacement: BuildOp(TensorLang.transpose #9 @#3, CaptureRef(#0))

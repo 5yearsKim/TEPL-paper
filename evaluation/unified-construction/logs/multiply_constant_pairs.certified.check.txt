@@ -1,0 +1,11 @@
+SemanticRule multiply_constant_pairs
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: Product(align[n6:lhs](Product(align[n2:lhs](Input(#0)), align[n2:rhs](Input(#1)))), align[n6:rhs](Product(align[n5:lhs](Input(#2)), align[n5:rhs](Input(#3)))))
+      rhs-graph: Product(align[n13:lhs](Product(align[n9:lhs](Input(#0)), align[n9:rhs](Input(#2)))), align[n13:rhs](Product(align[n12:lhs](Input(#1)), align[n12:rhs](Input(#3)))))
+      declared-conditions: true
+      additional-guard: unresolved
+      reason: outside certified view/reindexing schemas
+error: cannot verify rule 'multiply_constant_pairs': outside certified view/reindexing schemas
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

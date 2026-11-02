@@ -1,0 +1,44 @@
+SemanticRule catalog_broadcast_multiply_constant_into_broadcast
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: Product(align[n6:lhs](Product(align[n3:lhs](Input(#0)), align[n3:rhs](align[n2:input](Input(#1))))), align[n6:rhs](align[n5:input](Input(#2))))
+      rhs-graph: Product(align[n13:lhs](Input(#0)), align[n13:rhs](align[n12:input](Product(align[n11:lhs](Input(#2)), align[n11:rhs](align[n10:input](Input(#1)))))))
+      law: ordered-axis-split
+      law: paired-axis-selection
+      law: ordered-partition-traversal
+      law: product-associativity
+      law: commutative-matching
+      law: axis-map-restriction
+      law: axis-insertion
+      verified: capture access + reduction domains + ordered axes + shape + dtype + legality
+      lhs-normalized: Product(Read(#0, access@0), Read(#1, access@1), Read(#2, access@4))
+      rhs-normalized: Product(Read(#0, access@7), Read(#2, access@8), Read(#1, access@9))
+      constructor auto#2:
+        dimensions = []
+        new_extents = shape(Input(#2))
+      constructor auto#3:
+        dimensions = attr_b.attrs.dimensions
+        new_extents = attr_b.attrs.new_extents
+      declared-conditions:
+        >=(len(shape(Input(#2))), 0)
+        ==(len(shape(Input(#1))), 0)
+        ==(attr_out.attrs.dimensions, [])
+      additional-guard: true
+      reason: valid for all legal LHS metadata satisfying the declared conditions under the selected arithmetic policy
+      coordinate frame (fresh identities; domain lengths remain symbolic):
+        input0 = group(extents=shape(Input(#0)))
+        input1 = group(extents=shape(Input(#1)))
+        n2.S = group(extents=shape(Input(#1)))
+        n2.N = group(extents=shape(Input(#0)))
+        n3.S = group(extents=shape(Input(#0)))
+        input4 = group(extents=shape(Input(#2)))
+        n5.S = group(extents=shape(Input(#2)))
+        n5.N = group(extents=attr_b.attrs.new_extents)
+        access@0 = gather(place_axes(n5.S, attr_b.attrs.dimensions, n5.N), range(len(shape(Input(#0)))))
+        access@1 = n2.S
+        access@4 = n5.S
+        access@7 = gather(place_axes(n5.S, attr_b.attrs.dimensions, n5.N), range(len(shape(Input(#0)))))
+        access@8 = n5.S
+        access@9 = n2.S
+        lhs-output = gather(place_axes(n5.S, attr_b.attrs.dimensions, n5.N), range(len(shape(Input(#0)))))
+        rhs-output = place_axes(n5.S, attr_b.attrs.dimensions, n5.N)
+

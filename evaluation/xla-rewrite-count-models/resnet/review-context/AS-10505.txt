@@ -1,0 +1,32 @@
+10490:         return false;
+10491:       }
+10492: 
+10493:       w.set_padding_low(w.padding_low() + p.edge_padding_low());
+10494:       w.set_padding_high(w.padding_high() + p.edge_padding_high());
+10495:       if (p.interior_padding() != 0) {
+10496:         CHECK_EQ(w.base_dilation(), 1);
+10497:         w.set_base_dilation(1 + p.interior_padding());
+10498:       }
+10499:     }
+10500: 
+10501:     auto new_conv =
+10502:         convolution->CloneWithNewOperands(convolution->shape(), {a, b});
+10503:     new_conv->set_window(new_window);
+10504:     ABSL_RETURN_IF_ERROR(
+10505:         ReplaceWithNewInstruction(convolution, std::move(new_conv)));
+10506:     return true;
+10507:   }
+10508:   return false;
+10509: }
+10510: 
+10511: absl::StatusOr<bool> AlgebraicSimplifierVisitor::FoldConvFilterPad(
+10512:     HloInstruction* convolution) {
+10513:   if (!options_.enable_folding_pad_into_convolution()) {
+10514:     return false;
+10515:   }
+10516:   auto* lhs = convolution->mutable_operand(0);
+10517:   auto* rhs = convolution->mutable_operand(1);
+10518:   const ConvolutionDimensionNumbers& dnums =
+10519:       convolution->convolution_dimension_numbers();
+10520: 
+10521:   if (rhs->opcode() != HloOpcode::kPad) {

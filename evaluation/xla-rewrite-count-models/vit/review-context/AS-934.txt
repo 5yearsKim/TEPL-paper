@@ -1,0 +1,32 @@
+919:   // A + 0 => A
+920:   VLOG(10) << "trying transform [A + 0 => A]: " << add->ToString();
+921:   if (IsAll(rhs, 0) && ReplaceInstructionIfCompatible(add, lhs)) {
+922:     return absl::OkStatus();
+923:   }
+924:   // 0 + A => A
+925:   VLOG(10) << "trying transform [0 + A => A]: " << add->ToString();
+926:   if (IsAll(lhs, 0) && ReplaceInstructionIfCompatible(add, rhs)) {
+927:     return absl::OkStatus();
+928:   }
+929: 
+930:   // Canonicalization: Put constants on the right.  This makes the reassociation
+931:   // rules below simpler.
+932:   VLOG(10) << "trying transform [Const + A => A + Const]";
+933:   if (Match(add, m::Add(m::Constant(), m::NonConstant()))) {
+934:     return ReplaceWithNewInstruction(
+935:         add,
+936:         HloInstruction::CreateBinary(add->shape(), HloOpcode::kAdd, rhs, lhs));
+937:   }
+938: 
+939:   // Reassociate to allow constant folding.
+940:   //
+941:   // Note: This is not general.  For example, we won't reassociate
+942:   //
+943:   //   (A + C1) + (B + C2) =>  A + B + (C1 + C2).
+944:   //
+945:   VLOG(10) << "trying transform [(A + C1) + C2 => A + (C1 + C2)]";
+946:   HloInstruction *a, *c1, *c2;
+947:   if (Match(add, m::Add(m::Add(m::NonConstant(&a), m::Constant(&c1)),
+948:                         m::Constant(&c2))) ||
+949:       Match(add, m::Add(m::Add(m::NonConstant(&a),
+950:                                m::Broadcast(m::ConstantScalar(&c1))),

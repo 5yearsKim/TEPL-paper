@@ -1,0 +1,28 @@
+\subsection{Core Emission Measurements}
+\label{app:core-emission-results}
+These supplementary results use the new core emitter, separately from the frozen corpus/verification binary. One warmup and ten repetitions per configuration give 165 calls over 15 automatic configurations. Parsing and semantic-plan preparation are outside timing; preparation explicitly defers guard proofs. Emission includes structural admission and DAG generation. Execution includes source replay, predicate evaluation, and conditional attribute construction on canonical legal metadata. Every result is compared with the separate concrete constructor and positional replay outside timing.
+\begin{table}[!htbp]
+\caption{Core emission and execution medians in milliseconds. All configurations emit and execute in every repetition; this is not guard-verification success.}
+\label{tab:core-emission-cost}
+\small
+\begin{tabularx}{\linewidth}{@{}Yrrr@{}}\toprule
+Configuration & DAG nodes & Emit & Execute\\\midrule
+\code{chain_automatic_1} & 47 & 0.014 & 0.024\\
+\code{chain_automatic_2} & 83 & 0.031 & 0.054\\
+\code{chain_automatic_3} & 119 & 0.050 & 0.091\\
+\code{chain_automatic_4} & 155 & 0.064 & 0.113\\
+\code{chain_automatic_5} & 191 & 0.066 & 0.106\\
+\code{chain_automatic_6} & 227 & 0.081 & 0.130\\
+\code{chain_automatic_7} & 263 & 0.100 & 0.161\\
+\code{chain_automatic_8} & 299 & 0.124 & 0.191\\
+\code{chain_automatic_9} & 335 & 0.156 & 0.230\\
+\code{chain_automatic_10} & 371 & 0.179 & 0.254\\
+\code{rank_2_automatic} & 20 & 0.009 & 0.009\\
+\code{rank_4_automatic} & 20 & 0.009 & 0.009\\
+\code{rank_8_automatic} & 20 & 0.009 & 0.012\\
+\code{rank_16_automatic} & 20 & 0.009 & 0.016\\
+\code{rank_32_automatic} & 20 & 0.009 & 0.023\\
+\bottomrule\end{tabularx}
+\end{table}
+Contraction inputs have rank three, batch position zero, and contracting positions two/one; the transpose cases use reversed permutations and all extents are two. These concrete instances test emitted execution, not universal guard validity. The transpose DAG has 20 nodes at every tested rank, illustrating fixed program structure. The six symbolic-family emission commands also succeed, including the previously unresolved sum-movement rule; their outputs explicitly record that no rewrite has been accepted.
+Raw samples, emitted DAG descriptions, source bytes, and binary hashes are in \code{evaluation/core-emission/}. The default \code{check}/\code{compile} backend and its previously reported timeouts remain separate. The subsequent guard-certified \code{--core} acceptance experiment appears in Appendix~\ref{app:accepted-core-results}. This is not a paired speedup of end-to-end verification.

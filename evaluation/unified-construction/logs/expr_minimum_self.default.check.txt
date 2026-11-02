@@ -1,0 +1,20 @@
+SemanticRule expr_minimum_self
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: min(align[n2:lhs](Input(#0)), align[n2:rhs](Input(#0)))
+      rhs-graph: Input(#0)
+      law: scalar-idempotent-or-identity
+      verified: capture access + reduction domains + ordered axes + shape + dtype + legality
+      lhs-normalized: Read(#0, access@0)
+      rhs-normalized: Read(#0, access@3)
+      declared-conditions: true
+      additional-guard: true
+      reason: valid for all legal LHS metadata satisfying the declared conditions under the selected arithmetic policy
+      coordinate frame (fresh identities; domain lengths remain symbolic):
+        input0 = group(extents=shape(Input(#0)))
+        input1 = group(extents=shape(Input(#0)))
+        n2.S = group(extents=shape(Input(#0)))
+        access@0 = n2.S
+        access@3 = n2.S
+        lhs-output = n2.S
+        rhs-output = n2.S
+

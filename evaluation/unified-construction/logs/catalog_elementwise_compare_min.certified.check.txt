@@ -1,0 +1,12 @@
+SemanticRule catalog_elementwise_compare_min
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: compare(align[n4:lhs](Input(#0)), align[n4:rhs](min(align[n3:lhs](Input(#0)), align[n3:rhs](Input(#1)))), attrs.direction)
+      rhs-graph: compare(align[n7:lhs](Input(#0)), align[n7:rhs](Input(#1)), attrs.direction)
+      declared-conditions:
+        ==(attr_c.attrs.direction, 3)
+      additional-guard: unresolved
+      reason: core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+error: cannot verify rule 'catalog_elementwise_compare_min': core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

@@ -1,0 +1,12 @@
+SemanticRule catalog_elementwise_max_clamp_bound
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: max(align[n5:lhs](Input(#0)), align[n5:rhs](clamp(align[n4:low](Input(#0)), align[n4:input](Input(#1)), align[n4:high](Input(#2)))))
+      rhs-graph: clamp(align[n9:low](Input(#0)), align[n9:input](Input(#1)), align[n9:high](Input(#2)))
+      law: scalar-associative-commutative
+      declared-conditions: true
+      additional-guard: unresolved
+      reason: normalized coefficients, tensor accesses, or reduction domains differ
+error: cannot verify rule 'catalog_elementwise_max_clamp_bound': normalized coefficients, tensor accesses, or reduction domains differ
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

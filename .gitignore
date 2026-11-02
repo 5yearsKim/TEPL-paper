@@ -1,16 +1,61 @@
+# Built documents. Figure PDFs are source assets and must remain versioned.
 /main.pdf
-/main.aux
-/main.bbl
-/main.blg
-/main.cut
-/main.fdb_latexmk
-/main.fls
+/supplement.pdf
+
+# LaTeX auxiliary files (including builds of other document entry points).
+*.aux
+*.bbl
+*.blg
+*.cut
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+*.toc
+*.lof
+*.lot
+*.loa
+*.nav
+*.snm
+*.vrb
+*.xdv
+*.run.xml
+*.bcf
 /main.log
 /main.out
-/main.synctex.gz
-/main.toc
-/main.bak*
-/comment.cut
+/supplement.log
+/supplement.out
 /indent.log
 
+# Local Python environments and caches.
+__pycache__/
+*.py[cod]
+.venv/
+.venv-*/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.coverage
+.coverage.*
+htmlcov/
+
+# Rebuilt evaluation executables and generated compiler dumps.
+# Keep measurements, logs, source snapshots, inputs and provenance in Git.
+/evaluation/*/bin/
+/evaluation/xla-rewrite-count-models/*/hlo/final.hlo
+
+# Temporary files, editor backups and operating-system metadata.
 tmp/
+/main.bak*
+*~
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Local credentials; keep example configuration files available to commit.
+.env
+.env.*
+!.env.example
+!.env.template

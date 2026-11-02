@@ -1,0 +1,30 @@
+SemanticRule catalog_elementwise_compare_selected_mask
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: compare(align[n7:lhs](select(align[n5:pred](compare(align[n2:lhs](Input(#0)), align[n2:rhs](Input(#1)), attrs.direction)), align[n5:lhs](Literal(1)), align[n5:rhs](Literal(0)))), align[n7:rhs](Literal(0)), attrs.direction)
+      rhs-graph: compare(align[n10:lhs](Input(#0)), align[n10:rhs](Input(#1)), attrs.direction)
+      law: zero-multiplication
+      law: scalar-select-predicate
+      law: scalar-compare-boolean
+      law: axis-map-restriction
+      verified: capture access + reduction domains + ordered axes + shape + dtype + legality
+      lhs-normalized: compare(Read(#0, access@0), Read(#1, access@1), parameter=2)
+      rhs-normalized: compare(Read(#0, access@8), Read(#1, access@9), parameter=2)
+      declared-conditions:
+        ==(len(shape(Input(#0))), 0)
+        ==(len(shape(Input(#1))), 0)
+        &&(==(attr_ge.attrs.direction, 2), ==(attr_ne.attrs.direction, 1))
+      additional-guard: true
+      reason: valid for all legal LHS metadata satisfying the declared conditions under the selected arithmetic policy
+      coordinate frame (fresh identities; domain lengths remain symbolic):
+        input0 = group(extents=shape(Input(#0)))
+        input1 = group(extents=shape(Input(#1)))
+        n2.S = group(extents=shape(Input(#0)))
+        n5.S = group(extents=shape(Input(#0)))
+        n7.S = group(extents=shape(Input(#0)))
+        access@0 = n7.S
+        access@1 = gather(n7.S, range(len(shape(Input(#1)))))
+        access@8 = n7.S
+        access@9 = gather(n7.S, range(len(shape(Input(#1)))))
+        lhs-output = n7.S
+        rhs-output = gather(n7.S, range(len(shape(Input(#1)))))
+

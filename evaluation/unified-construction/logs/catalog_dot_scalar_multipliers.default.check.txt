@@ -1,0 +1,53 @@
+SemanticRule catalog_dot_scalar_multipliers
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: Reduce(n5.K, Product(align[n5:lhs](Product(align[n3:lhs](align[n1:input](Input(#0))), align[n3:rhs](Input(#1)))), align[n5:rhs](Input(#2))))
+      rhs-graph: Product(align[n11:lhs](align[n7:input](Input(#0))), align[n11:rhs](Reduce(n10.K, Product(align[n10:lhs](Input(#1)), align[n10:rhs](Input(#2))))))
+      law: ordered-axis-split
+      law: paired-axis-selection
+      law: product-associativity
+      law: axis-map-restriction
+      law: reduction-extraction
+      verified: capture access + reduction domains + ordered axes + shape + dtype + legality
+      lhs-normalized: Reduce(n5.K, Product(Read(#0, access@0), Read(#1, access@2), Read(#2, access@4)))
+      rhs-normalized: Reduce(gather(gather(concat(n5.K, n5.I), [1, 0]), [1]), Product(Read(#0, access@6), Read(#1, access@8), Read(#2, access@9)))
+      constructor auto#2:
+        dimensions = []
+        new_extents = [index(shape(Input(#1)), 0), index(shape(Input(#2)), 1)]
+      constructor auto#3:
+        lhs_contracting_dimensions = [1]
+        rhs_contracting_dimensions = [0]
+        lhs_batching_dimensions = []
+        rhs_batching_dimensions = []
+      declared-conditions:
+        ==(len(shape(Input(#1))), 2)
+        ==(dtype(Input(#1)), dtype_f32())
+        ==(len(shape(Input(#2))), 2)
+        ==(index(shape(Input(#1)), 1), index(shape(Input(#2)), 0))
+        ==(dtype(Input(#2)), dtype_f32())
+        ==(len(shape(Input(#0))), 0)
+        ==(dtype(Input(#0)), dtype_f32())
+        m2
+      additional-guard: true
+      reason: valid for all legal LHS metadata satisfying the declared conditions under the selected arithmetic policy
+      let m0 = &&(==(attr_b.attrs.dimensions, []), ==(attr_b.attrs.new_extents, [index(shape(Input(#1)), 0), index(shape(Input(#1)), 1)]))
+      let m1 = &&(&&(m0, ==(attr_d.attrs.lhs_batching_dimensions, [])), ==(attr_d.attrs.rhs_batching_dimensions, []))
+      let m2 = &&(&&(m1, ==(attr_d.attrs.lhs_contracting_dimensions, [1])), ==(attr_d.attrs.rhs_contracting_dimensions, [0]))
+      coordinate frame (fresh identities; domain lengths remain symbolic):
+        input0 = group(extents=shape(Input(#0)))
+        n1.S = group(extents=shape(Input(#0)))
+        n1.N = group(extents=shape(Input(#1)))
+        input2 = group(extents=shape(Input(#1)))
+        n3.S = group(extents=shape(Input(#1)))
+        input4 = group(extents=shape(Input(#2)))
+        n5.K = group(extents=gather(shape(Input(#1)), [1]))
+        n5.I = group(extents=gather(shape(Input(#1)), [0]))
+        n5.J = group(extents=gather(shape(Input(#2)), [1]))
+        access@0 = n1.S
+        access@2 = gather(concat(n5.K, n5.I), [1, 0])
+        access@4 = gather(concat(n5.K, n5.J), [0, 1])
+        access@6 = n1.S
+        access@8 = gather(concat(n5.K, n5.I), [1, 0])
+        access@9 = gather(concat(n5.K, n5.J), [0, 1])
+        lhs-output = concat(n5.I, n5.J)
+        rhs-output = concat(n5.I, n5.J)
+

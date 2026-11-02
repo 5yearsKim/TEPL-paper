@@ -1,0 +1,28 @@
+SemanticRule subtract_add_constants
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: Add(align[n4:lhs](Add(align[n2:lhs](Input(#0)), Product(Const(-1), align[n2:rhs](Input(#1))))), align[n4:rhs](Input(#2)))
+      rhs-graph: Add(align[n9:lhs](Add(align[n7:lhs](Input(#0)), align[n7:rhs](Input(#2)))), Product(Const(-1), align[n9:rhs](Input(#1))))
+      law: constant-arithmetic
+      law: add-associativity
+      law: commutative-matching
+      verified: capture access + reduction domains + ordered axes + shape + dtype + legality
+      lhs-normalized: Read(#0, access@0) + -1 * Read(#1, access@1) + Read(#2, access@3)
+      rhs-normalized: Read(#0, access@5) + Read(#2, access@6) + -1 * Read(#1, access@8)
+      declared-conditions: true
+      additional-guard: true
+      reason: valid for all legal LHS metadata satisfying the declared conditions under the selected arithmetic policy
+      coordinate frame (fresh identities; domain lengths remain symbolic):
+        input0 = group(extents=shape(Input(#0)))
+        input1 = group(extents=shape(Input(#1)))
+        n2.S = group(extents=shape(Input(#0)))
+        input3 = group(extents=shape(Input(#2)))
+        n4.S = group(extents=shape(Input(#0)))
+        access@0 = n4.S
+        access@1 = n4.S
+        access@3 = gather(n4.S, range(len(shape(Input(#2)))))
+        access@5 = n4.S
+        access@6 = gather(n4.S, range(len(shape(Input(#2)))))
+        access@8 = n4.S
+        lhs-output = n4.S
+        rhs-output = n4.S
+

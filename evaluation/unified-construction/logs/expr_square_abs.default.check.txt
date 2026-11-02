@@ -1,0 +1,24 @@
+SemanticRule expr_square_abs
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: Product(align[n4:lhs](abs(align[n1:input](Input(#0)))), align[n4:rhs](abs(align[n3:input](Input(#0)))))
+      rhs-graph: Product(align[n7:lhs](Input(#0)), align[n7:rhs](Input(#0)))
+      law: scalar-square-abs
+      verified: capture access + reduction domains + ordered axes + shape + dtype + legality
+      lhs-normalized: Product(Read(#0, access@0), Read(#0, access@2))
+      rhs-normalized: Product(Read(#0, access@5), Read(#0, access@6))
+      declared-conditions: true
+      additional-guard: true
+      reason: valid for all legal LHS metadata satisfying the declared conditions under the selected arithmetic policy
+      coordinate frame (fresh identities; domain lengths remain symbolic):
+        input0 = group(extents=shape(Input(#0)))
+        n1.S = group(extents=shape(Input(#0)))
+        input2 = group(extents=shape(Input(#0)))
+        n3.S = group(extents=shape(Input(#0)))
+        n4.S = group(extents=shape(Input(#0)))
+        access@0 = n4.S
+        access@2 = n4.S
+        access@5 = n4.S
+        access@6 = n4.S
+        lhs-output = n4.S
+        rhs-output = n4.S
+

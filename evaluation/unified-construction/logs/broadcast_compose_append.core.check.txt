@@ -1,0 +1,14 @@
+SemanticRule broadcast_compose_append
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: align[n2:input](align[n1:input](Input(#0)))
+      rhs-graph: align[n4:input](Input(#0))
+      declared-conditions:
+        >=(len(shape(Input(#0))), 0)
+        &&(==(attr_inner.attrs.dimensions, range(len(shape(Input(#0))))), m0)
+      additional-guard: unresolved
+      reason: core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+      let m0 = ==(attr_outer.attrs.dimensions, range(+(len(shape(Input(#0))), len(attr_inner.attrs.new_extents))))
+error: cannot verify rule 'broadcast_compose_append': core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

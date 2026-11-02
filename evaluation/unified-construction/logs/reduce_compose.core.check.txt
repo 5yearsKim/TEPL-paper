@@ -1,0 +1,11 @@
+SemanticRule reduce_compose
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: Reduce(n2.K, align[n2:input](Reduce(n1.K, align[n1:input](Input(#0)))))
+      rhs-graph: Reduce(n4.K, align[n4:input](Input(#0)))
+      verified: source-layout guard certificate and core emission theorem
+      declared-conditions:
+        ==(len(shape(Input(#0))), 3)
+        &&(==(attr_inner.attrs.dimensions, [1]), ==(attr_outer.attrs.dimensions, [1]))
+      additional-guard: true
+      reason: core guard implies canonical feasibility; DAG builder is sound for all legal extents
+

@@ -120,7 +120,7 @@
   year = {2026},
   url = {https://github.com/openxla/xla/blob/9cb4e2005f963acc873dc95facd3b7d134dbf108/xla/hlo/transforms/simplifiers/algebraic_simplifier.cc\#L3829-L4180},
   urldate = {2026-10-19},
-  note = {Routine at lines 3829--4180: 315 nonblank lines including comments, covering attribute transformation and applicability and profitability checks}
+  note = {Routine at lines 3829--4180: 269 nonblank code lines excluding comments, including the signature and braces; covers attribute transformation and applicability and profitability checks}
 }
 @article{spores,
   author = {Wang, Yisu Remy and Hutchison, Shana and Leang, Jonathan and Howe, Bill and Suciu, Dan},
@@ -223,4 +223,77 @@
   address = {New York, NY, USA},
   doi = {10.1145/1480881.1480915},
   url = {https://www.cs.cornell.edu/~ross/publications/eqsat/eqsat_tate_popl09.pdf}
+}
+
+@inproceedings{translation-validation,
+  author = {Necula, George C.},
+  title = {Translation Validation for an Optimizing Compiler},
+  booktitle = {Proceedings of the ACM SIGPLAN 2000 Conference on Programming Language Design and Implementation},
+  year = {2000},
+  pages = {83--94},
+  doi = {10.1145/349299.349314},
+  url = {https://people.eecs.berkeley.edu/~necula/Papers/tv_pldi00.pdf}
+}
+
+@misc{xla-transpose-folding-source,
+  author = {{OpenXLA Contributors}},
+  title = {{XLA} Transpose Folding: Pass and Test Source Snapshot},
+  year = {2026},
+  howpublished = {Source code, file revision 73d973412746940ae206c6c5190d3a0a19ffd225},
+  note = {Evaluated checkout 39c348196c834a7ee45a57f5b44688d53ae99a64. Exact pass, header, tests and file hashes are retained in the accompanying artifact}
+}
+
+@inproceedings{alive,
+  author = {Lopes, Nuno P. and Menendez, David and Nagarakatte, Santosh and Regehr, John},
+  title = {Provably Correct Peephole Optimizations with {Alive}},
+  booktitle = {Proceedings of the 36th ACM SIGPLAN Conference on Programming Language Design and Implementation},
+  year = {2015}, pages = {22--32}, publisher = {Association for Computing Machinery},
+  doi = {10.1145/2737924.2737965}
+}
+@inproceedings{alive-infer,
+  author = {Menendez, David and Nagarakatte, Santosh},
+  title = {{Alive-Infer}: Data-Driven Precondition Inference for Peephole Optimizations in {LLVM}},
+  booktitle = {Proceedings of the 38th ACM SIGPLAN Conference on Programming Language Design and Implementation},
+  year = {2017}, pages = {49--63}, publisher = {Association for Computing Machinery},
+  doi = {10.1145/3062341.3062372}
+}
+@article{halide-rules,
+  author = {Newcomb, Julie L. and Adams, Andrew and Johnson, Steven and Bodik, Rastislav and Kamil, Shoaib},
+  title = {Verifying and Improving {Halide}'s Term Rewriting System with Program Synthesis},
+  journal = {Proceedings of the ACM on Programming Languages},
+  volume = {4}, number = {OOPSLA}, articleno = {166}, numpages = {28},
+  year = {2020}, doi = {10.1145/3428234}
+}
+@inproceedings{glenside,
+  author = {Smith, Gus Henry and Liu, Andrew and Lyubomirsky, Steven and Davidson, Scott and McMahan, Joseph and Taylor, Michael and Ceze, Luis and Tatlock, Zachary},
+  title = {Pure Tensor Program Rewriting via Access Patterns (Representation Pearl)},
+  booktitle = {Proceedings of the 5th ACM SIGPLAN International Symposium on Machine Programming},
+  year = {2021}, pages = {21--31}, publisher = {Association for Computing Machinery},
+  doi = {10.1145/3460945.3464953}
+}
+@misc{tepl-supplement,
+  title = {{TEPL}: Supplementary Language and Evaluation Details},
+  year = {2026},
+  howpublished = {Supplementary PDF accompanying this submission},
+  note = {Declaration sketches (Section S1), worked token-counting procedure (Section S2), and complete 39-row scalability table (Section S3)}
+}
+
+@misc{flax-transformer-workflow,
+  author = {{Flax Contributors}},
+  title = {{Flax} Language Modeling Example: {TransformerLM}},
+  year = {2025},
+  howpublished = {Source code, release v0.12.0},
+  url = {https://github.com/google/flax/blob/v0.12.0/examples/lm1b/models.py},
+  urldate = {2026-11-01},
+  note = {The experiment retains the exact source bytes and a one-layer configuration}
+}
+
+@misc{xla-cpu-workload-source,
+  author = {{OpenXLA Contributors}},
+  title = {{XLA} {CPU} Benchmark {HLO} Workloads},
+  year = {2026},
+  howpublished = {Source code, revision 39c348196c834a7ee45a57f5b44688d53ae99a64},
+  url = {https://github.com/openxla/xla/tree/39c348196c834a7ee45a57f5b44688d53ae99a64/xla/backends/cpu/benchmarks/hlo},
+  urldate = {2026-11-01},
+  note = {Unmodified FP32 DLRM training-step and ResNet-50 prediction snapshots; exact files and hashes retained in the artifact}
 }

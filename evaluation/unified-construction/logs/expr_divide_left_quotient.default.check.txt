@@ -1,0 +1,11 @@
+SemanticRule expr_divide_left_quotient
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: div(align[n4:lhs](div(align[n2:lhs](Input(#0)), align[n2:rhs](Input(#1)))), align[n4:rhs](Input(#2)))
+      rhs-graph: div(align[n9:lhs](Input(#0)), align[n9:rhs](Product(align[n8:lhs](Input(#1)), align[n8:rhs](Input(#2)))))
+      declared-conditions: true
+      additional-guard: unresolved
+      reason: normalized coefficients, tensor accesses, or reduction domains differ
+error: cannot verify rule 'expr_divide_left_quotient': normalized coefficients, tensor accesses, or reduction domains differ
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

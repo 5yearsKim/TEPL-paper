@@ -1,0 +1,9 @@
+SemanticRule add_constant_order
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: Add(align[n2:lhs](Input(#0)), align[n2:rhs](Input(#1)))
+      rhs-graph: Add(align[n5:lhs](Input(#1)), align[n5:rhs](Input(#0)))
+      verified: source-layout guard certificate and core emission theorem
+      declared-conditions: true
+      additional-guard: true
+      reason: core guard implies canonical feasibility; DAG builder is sound for all legal extents
+

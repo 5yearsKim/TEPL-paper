@@ -1,0 +1,315 @@
+exec ${PAGER:-/usr/bin/less} "$0" || exit 1
+Executing tests from //tests:rust_codegen_test
+-----------------------------------------------------------------------------
+     Locking 49 packages to latest Rust 1.95.0 compatible versions
+   Compiling proc-macro2 v1.0.107
+   Compiling autocfg v1.5.1
+   Compiling quote v1.0.47
+   Compiling unicode-ident v1.0.26
+   Compiling crossbeam-utils v0.8.23
+   Compiling libc v0.2.190
+   Compiling equivalent v1.0.2
+   Compiling thiserror v1.0.69
+   Compiling allocator-api2 v0.2.21
+   Compiling bitflags v2.13.2
+   Compiling foldhash v0.1.5
+   Compiling log v0.4.34
+   Compiling once_cell v1.21.4
+   Compiling hashbrown v0.17.1
+   Compiling symbolic_expressions v5.0.3
+   Compiling smallvec v1.16.2
+   Compiling rustc-hash v2.1.3
+   Compiling raw-cpuid v11.6.0
+   Compiling env_logger v0.9.3
+   Compiling hashbrown v0.15.5
+   Compiling num-traits v0.2.19
+   Compiling syn v2.0.119
+   Compiling indexmap v2.14.2
+   Compiling num-integer v0.1.47
+   Compiling symbol_table v0.4.0
+   Compiling num-bigint v0.4.8
+   Compiling quanta v0.12.6
+   Compiling thiserror-impl v1.0.69
+   Compiling egg v0.11.0
+   Compiling tepl-runtime v0.1.0 (/home/onion/.cache/bazel/_bazel_onion/e2444f730ca8a1157a06f99ee2c3da5f/sandbox/linux-sandbox/133/execroot/_main/bazel-out/k8-opt/bin/tests/rust_codegen_test.runfiles/_main/runtime/rust)
+   Compiling tepl-generated-tests v0.1.0 (/home/onion/.cache/bazel/_bazel_onion/e2444f730ca8a1157a06f99ee2c3da5f/sandbox/linux-sandbox/133/execroot/_main/_tmp/fe8560e3ac458e5865ff889650535780/tepl-rust-codegen.FXYytb)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 10.48s
+     Running unittests src/lib.rs (/home/onion/.cache/bazel/_bazel_onion/e2444f730ca8a1157a06f99ee2c3da5f/sandbox/linux-sandbox/133/execroot/_main/_tmp/fe8560e3ac458e5865ff889650535780/tepl-rust-codegen.FXYytb/target/debug/deps/tepl_generated_tests-a1a48b3d90423ac3)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/generated.rs (/home/onion/.cache/bazel/_bazel_onion/e2444f730ca8a1157a06f99ee2c3da5f/sandbox/linux-sandbox/133/execroot/_main/_tmp/fe8560e3ac458e5865ff889650535780/tepl-rust-codegen.FXYytb/target/debug/deps/generated-2b3ed2abf4bf5344)
+
+running 14 tests
+test input_registration_is_atomic_and_precedes_insertion ... ok
+test schemas_and_literals_are_checked_at_the_boundary ... ok
+test conflicts_stop_execution_and_partial_facts_propagate ... ok
+test source_and_json_programs_build_the_same_rules ... ok
+test invalid_candidates_are_reported_without_inserting_rhs_or_stopping_other_rules ... ok
+test attribute_witnesses_remain_paired_with_captures ... ok
+test literal_matching_contextual_dtype_and_binders ... ok
+test short_circuit_and_required_metadata ... ok
+test constructors_locals_comprehensions_and_shared_schemas ... ok
+test convolution_uses_axes_and_generated_attributes ... ok
+test auto_transpose_composition_and_reduction ... ok
+test dimensions_dtype_bindings_and_repeated_captures ... ok
+test auto_broadcast_and_slice ... ok
+test logical_axis_guards_run_in_egg_with_empty_zero_and_singleton_dimensions ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/reference.rs (/home/onion/.cache/bazel/_bazel_onion/e2444f730ca8a1157a06f99ee2c3da5f/sandbox/linux-sandbox/133/execroot/_main/_tmp/fe8560e3ac458e5865ff889650535780/tepl-rust-codegen.FXYytb/target/debug/deps/reference-50c151886c6eb7ed)
+
+running 1 test
+test executable_evaluator_reference ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/semantic_reference.rs (/home/onion/.cache/bazel/_bazel_onion/e2444f730ca8a1157a06f99ee2c3da5f/sandbox/linux-sandbox/133/execroot/_main/_tmp/fe8560e3ac458e5865ff889650535780/tepl-rust-codegen.FXYytb/target/debug/deps/semantic_reference-4fa236861d86801c)
+
+running 72 tests
+test broadcast_partial_structural ... ok
+test broadcast_partial_empty ... ok
+test broadcast_partial_configured ... ok
+test broadcast_partial_nonidentity ... ok
+test broadcast_partial_groups ... ok
+test broadcast_partial_identity ... ok
+test derived_guard_broadcast ... ok
+test broadcast_partial_broadcast ... ok
+test derived_guard_configured ... ok
+test broadcast_partial_zero_singleton ... ok
+test derived_guard_empty ... ok
+test derived_guard_groups ... ok
+test derived_guard_zero_singleton ... ok
+test derived_guard_identity ... ok
+test derived_guard_structural ... ok
+test derived_guard_nonidentity ... ok
+test dot_groups_empty ... ok
+test dot_groups_configured ... ok
+test dot_groups_identity ... ok
+test dot_groups_nonidentity ... ok
+test dot_groups_broadcast ... ok
+test dot_groups_structural ... ok
+test explicit_broadcast ... ok
+test explicit_configured ... ok
+test dot_groups_zero_singleton ... ok
+test explicit_empty ... ok
+test explicit_identity ... ok
+test explicit_structural ... ok
+test explicit_nonidentity ... ok
+test explicit_zero_singleton ... ok
+test explicit_groups ... ok
+test logical_axes_broadcast ... ok
+test logical_axes_groups ... ok
+test logical_axes_structural ... ok
+test logical_axes_configured ... ok
+test dot_groups_groups ... ok
+test logical_axes_identity ... ok
+test partial_broadcast ... ok
+test logical_axes_empty ... ok
+test logical_axes_zero_singleton ... ok
+test partial_configured ... ok
+test logical_axes_nonidentity ... ok
+test partial_structural ... ok
+test partial_empty ... ok
+test partial_nonidentity ... ok
+test partial_zero_singleton ... ok
+test partial_groups ... ok
+test rejected_derived_guard_broadcast ... ok
+test partial_identity ... ok
+test rejected_derived_guard_groups ... ok
+test rejected_derived_guard_identity ... ok
+test rejected_derived_guard_empty ... ok
+test rejected_derived_guard_configured ... ok
+test rejected_derived_guard_zero_singleton ... ok
+test rejected_derived_guard_structural ... ok
+test source_guard_first_broadcast ... ok
+test rejected_derived_guard_nonidentity ... ok
+test source_guard_first_configured ... ok
+test source_guard_first_empty ... ok
+test source_guard_first_nonidentity ... ok
+test source_guard_first_structural ... ok
+test source_guard_first_zero_singleton ... ok
+test source_guard_first_groups ... ok
+test source_positions_broadcast ... ok
+test source_guard_first_identity ... ok
+test source_positions_configured ... ok
+test source_positions_structural ... ok
+test source_positions_groups ... ok
+test source_positions_empty ... ok
+test source_positions_zero_singleton ... ok
+test source_positions_identity ... ok
+test source_positions_nonidentity ... ok
+
+test result: ok. 72 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+   Compiling proc-macro2 v1.0.107
+   Compiling unicode-ident v1.0.26
+   Compiling quote v1.0.47
+   Compiling autocfg v1.5.1
+   Compiling crossbeam-utils v0.8.23
+   Compiling equivalent v1.0.2
+   Compiling libc v0.2.190
+   Compiling thiserror v1.0.69
+   Compiling allocator-api2 v0.2.21
+   Compiling bitflags v2.13.2
+   Compiling foldhash v0.1.5
+   Compiling once_cell v1.21.4
+   Compiling log v0.4.34
+   Compiling hashbrown v0.17.1
+   Compiling smallvec v1.16.2
+   Compiling symbolic_expressions v5.0.3
+   Compiling rustc-hash v2.1.3
+   Compiling env_logger v0.9.3
+   Compiling raw-cpuid v11.6.0
+   Compiling num-traits v0.2.19
+   Compiling hashbrown v0.15.5
+   Compiling syn v2.0.119
+   Compiling indexmap v2.14.2
+   Compiling num-integer v0.1.47
+   Compiling symbol_table v0.4.0
+   Compiling num-bigint v0.4.8
+   Compiling quanta v0.12.6
+   Compiling thiserror-impl v1.0.69
+   Compiling egg v0.11.0
+   Compiling tepl-runtime v0.1.0 (/home/onion/.cache/bazel/_bazel_onion/e2444f730ca8a1157a06f99ee2c3da5f/sandbox/linux-sandbox/133/execroot/_main/bazel-out/k8-opt/bin/tests/rust_codegen_test.runfiles/_main/runtime/rust)
+   Compiling tepl-generated-tests v0.1.0 (/home/onion/.cache/bazel/_bazel_onion/e2444f730ca8a1157a06f99ee2c3da5f/sandbox/linux-sandbox/133/execroot/_main/_tmp/fe8560e3ac458e5865ff889650535780/tepl-rust-codegen.FXYytb)
+    Finished `release` profile [optimized] target(s) in 15.90s
+     Running unittests src/lib.rs (/home/onion/.cache/bazel/_bazel_onion/e2444f730ca8a1157a06f99ee2c3da5f/sandbox/linux-sandbox/133/execroot/_main/_tmp/fe8560e3ac458e5865ff889650535780/tepl-rust-codegen.FXYytb/target/release/deps/tepl_generated_tests-b8c12784c179e62d)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/generated.rs (/home/onion/.cache/bazel/_bazel_onion/e2444f730ca8a1157a06f99ee2c3da5f/sandbox/linux-sandbox/133/execroot/_main/_tmp/fe8560e3ac458e5865ff889650535780/tepl-rust-codegen.FXYytb/target/release/deps/generated-9d6acb2b7db8fe63)
+
+running 14 tests
+test input_registration_is_atomic_and_precedes_insertion ... ok
+test conflicts_stop_execution_and_partial_facts_propagate ... ok
+test attribute_witnesses_remain_paired_with_captures ... ok
+test convolution_uses_axes_and_generated_attributes ... ok
+test constructors_locals_comprehensions_and_shared_schemas ... ok
+test dimensions_dtype_bindings_and_repeated_captures ... ok
+test invalid_candidates_are_reported_without_inserting_rhs_or_stopping_other_rules ... ok
+test literal_matching_contextual_dtype_and_binders ... ok
+test logical_axis_guards_run_in_egg_with_empty_zero_and_singleton_dimensions ... ok
+test auto_transpose_composition_and_reduction ... ok
+test auto_broadcast_and_slice ... ok
+test short_circuit_and_required_metadata ... ok
+test schemas_and_literals_are_checked_at_the_boundary ... ok
+test source_and_json_programs_build_the_same_rules ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/reference.rs (/home/onion/.cache/bazel/_bazel_onion/e2444f730ca8a1157a06f99ee2c3da5f/sandbox/linux-sandbox/133/execroot/_main/_tmp/fe8560e3ac458e5865ff889650535780/tepl-rust-codegen.FXYytb/target/release/deps/reference-4aaeced3d6adc678)
+
+running 1 test
+test executable_evaluator_reference ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/semantic_reference.rs (/home/onion/.cache/bazel/_bazel_onion/e2444f730ca8a1157a06f99ee2c3da5f/sandbox/linux-sandbox/133/execroot/_main/_tmp/fe8560e3ac458e5865ff889650535780/tepl-rust-codegen.FXYytb/target/release/deps/semantic_reference-dcffe96963917069)
+
+running 72 tests
+test broadcast_partial_configured ... ok
+test broadcast_partial_groups ... ok
+test derived_guard_broadcast ... ok
+test broadcast_partial_identity ... ok
+test derived_guard_empty ... ok
+test broadcast_partial_broadcast ... ok
+test derived_guard_groups ... ok
+test broadcast_partial_zero_singleton ... ok
+test derived_guard_identity ... ok
+test broadcast_partial_nonidentity ... ok
+test broadcast_partial_structural ... ok
+test dot_groups_broadcast ... ok
+test derived_guard_configured ... ok
+test derived_guard_nonidentity ... ok
+test derived_guard_structural ... ok
+test broadcast_partial_empty ... ok
+test derived_guard_zero_singleton ... ok
+test dot_groups_empty ... ok
+test dot_groups_configured ... ok
+test dot_groups_groups ... ok
+test dot_groups_structural ... ok
+test dot_groups_identity ... ok
+test dot_groups_nonidentity ... ok
+test explicit_broadcast ... ok
+test dot_groups_zero_singleton ... ok
+test explicit_empty ... ok
+test explicit_groups ... ok
+test explicit_configured ... ok
+test explicit_structural ... ok
+test explicit_nonidentity ... ok
+test explicit_identity ... ok
+test logical_axes_broadcast ... ok
+test explicit_zero_singleton ... ok
+test logical_axes_configured ... ok
+test logical_axes_nonidentity ... ok
+test logical_axes_groups ... ok
+test logical_axes_identity ... ok
+test partial_configured ... ok
+test logical_axes_empty ... ok
+test logical_axes_structural ... ok
+test partial_broadcast ... ok
+test partial_groups ... ok
+test partial_empty ... ok
+test partial_identity ... ok
+test rejected_derived_guard_zero_singleton ... ok
+test rejected_derived_guard_nonidentity ... ok
+test source_guard_first_empty ... ok
+test partial_structural ... ok
+test source_guard_first_nonidentity ... ok
+test logical_axes_zero_singleton ... ok
+test partial_nonidentity ... ok
+test source_positions_broadcast ... ok
+test source_guard_first_identity ... ok
+test source_guard_first_groups ... ok
+test source_positions_empty ... ok
+test source_positions_configured ... ok
+test source_positions_identity ... ok
+test rejected_derived_guard_broadcast ... ok
+test source_positions_nonidentity ... ok
+test partial_zero_singleton ... ok
+test rejected_derived_guard_configured ... ok
+test rejected_derived_guard_empty ... ok
+test rejected_derived_guard_groups ... ok
+test source_guard_first_structural ... ok
+test source_guard_first_zero_singleton ... ok
+test source_guard_first_broadcast ... ok
+test source_guard_first_configured ... ok
+test source_positions_structural ... ok
+test rejected_derived_guard_identity ... ok
+test source_positions_zero_singleton ... ok
+test rejected_derived_guard_structural ... ok
+test source_positions_groups ... ok
+
+test result: ok. 72 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Compiling tepl-runtime v0.1.0 (/home/onion/.cache/bazel/_bazel_onion/e2444f730ca8a1157a06f99ee2c3da5f/sandbox/linux-sandbox/133/execroot/_main/bazel-out/k8-opt/bin/tests/rust_codegen_test.runfiles/_main/runtime/rust)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.15s
+     Running unittests src/lib.rs (/home/onion/.cache/bazel/_bazel_onion/e2444f730ca8a1157a06f99ee2c3da5f/sandbox/linux-sandbox/133/execroot/_main/_tmp/fe8560e3ac458e5865ff889650535780/tepl-rust-codegen.FXYytb/target/debug/deps/tepl_runtime-9a2bac20e923eaf1)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/metadata.rs (/home/onion/.cache/bazel/_bazel_onion/e2444f730ca8a1157a06f99ee2c3da5f/sandbox/linux-sandbox/133/execroot/_main/_tmp/fe8560e3ac458e5865ff889650535780/tepl-rust-codegen.FXYytb/target/debug/deps/metadata-791e4782aae9ab08)
+
+running 4 tests
+test checked_integer_and_list_contracts ... ok
+test fact_merge_reports_changes_and_conflicts ... ok
+test logical_axis_types_are_checked_separately_from_opaque_attributes_and_positions ... ok
+test identity_and_order_are_independent_of_extents ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests tepl_runtime
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+generated output differs: mod.rs

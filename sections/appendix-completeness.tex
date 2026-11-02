@@ -1,7 +1,7 @@
 \subsection{Correctness and Completeness}
 \label{app:completeness-proof}
 We prove Theorem~\ref{thm:complete-synthesis} under the assumptions of
-Section~\ref{sec:formal-scope}, with every input axis having extent
+Section~\ref{sec:formal-scope}, with every input dimension having extent
 at least two. The proof has three parts: every valid
 assignment passes the checks; passing the checks gives a valid construction;
 and the restricted additive fragment separates into independent components.
@@ -14,9 +14,9 @@ $\exists\beta:\operatorname{Valid}(p,\beta)\Rightarrow\operatorname{check}(p)$.
 \end{lemma}
 \begin{proof}
 Suppose $\beta$ is valid. Lemma~\ref{lem:canonicalization} gives a valid
-canonical assignment $\beta'$ with live set $P_v$ at every node. Its final
+canonical assignment $\beta'$ with live set $S_v$ at every node. Its final
 output agrees with the LHS, so
-$P_{\mathrm{root}}=\operatorname{set}(F)$.
+$S_{\mathrm{root}}=\operatorname{set}(F)$.
 
 Starting with the root requirement $F$, prove from parents to children that
 each canonical output contains $Req_v$ as a subsequence. A contraction's
@@ -28,7 +28,7 @@ corresponding child. Batch order can be chosen independently of child order.
 Unary summation preserves the order of surviving axes, so its child contains
 the same required subsequence. A permutation imposes no child requirement.
 These are exactly the propagation rules of
-Appendix~\ref{app:ordering-rules}. At an input, the propagated
+Appendix~\ref{app:operation-construction-rules}. At an input, the propagated
 requirement must be a subsequence of its actual order, $Req_v\preceq I_v$.
 Thus $C_v$ is true at every node. Together with the root live-set check,
 this gives $\operatorname{check}(p)=\mathrm{true}$.
@@ -45,7 +45,7 @@ $\operatorname{check}(p)\Rightarrow
 Assume the checks pass. By structural induction on the RHS, we maintain:
 \begin{enumerate}
 \item The constructed attributes and intermediate operations are legal.
-\item The output axes are $P_v$ and satisfy $Req_v$.
+\item The output axes are $S_v$ and satisfy $Req_v$.
 \item The input-port partition equals the LHS partition restricted to
 the subtree's inputs, including classes removed from the output.
 \end{enumerate}
@@ -57,7 +57,7 @@ the specified axes and preserves the rest.
 At a contraction, the construction uses $B_v,K_v,LF_v,RF_v$.
 The block-order check ensures that placing required batch axes first and
 inheriting the child free orders satisfies $Req_v$. The output axes are
-exactly $P_v$. Each selected axis occurs once in its child, so all position
+exactly $S_v$. Each selected axis occurs once in its child, so all position
 lookups are defined. Paired axes have equal extents because they belong to
 the same LHS class. Batch and contraction sets are disjoint. Thus all
 constructed attributes are legal.
@@ -76,7 +76,7 @@ support is already inside the subtree. The partition invariant ensures that
 its supporting ports have been connected, so no later connection is lost.
 At the root, the full input partition consequently agrees with the LHS.
 
-Finally, $P_{\mathrm{root}}=\operatorname{set}(F)$ and
+Finally, $S_{\mathrm{root}}=\operatorname{set}(F)$ and
 $F\preceq\operatorname{Ord}_{\mathrm{root}}$. The output has exactly these
 axes, each once, so $\operatorname{Ord}_{\mathrm{root}}=F$. Hence
 $N(L)=N(R)$. Lemma~\ref{lem:axis-exactness} gives equality for all input

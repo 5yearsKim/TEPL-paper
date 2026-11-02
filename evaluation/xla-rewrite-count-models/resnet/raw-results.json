@@ -1,0 +1,61 @@
+{
+  "distinct_rule_sites": 10,
+  "input": "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/xla-rewrite-count-models/resnet/input.hlo",
+  "model_compilations": 1,
+  "pass_invocations": 9,
+  "rule_identity": "Outermost successful transformation branch, identified by function and original source line; equivalent branches remain separate variants",
+  "rules": [
+    {
+      "applications": 1,
+      "function": "FoldConvInputPad",
+      "original_line": 10505
+    },
+    {
+      "applications": 161,
+      "function": "HandleBroadcast",
+      "original_line": 5605
+    },
+    {
+      "applications": 159,
+      "function": "HandleBroadcast",
+      "original_line": 5645
+    },
+    {
+      "applications": 6,
+      "function": "HandleBroadcast",
+      "original_line": 5681
+    },
+    {
+      "applications": 161,
+      "function": "HandleBroadcast",
+      "original_line": 5723
+    },
+    {
+      "applications": 1,
+      "function": "HandleDivide",
+      "original_line": 2614
+    },
+    {
+      "applications": 483,
+      "function": "HandleReshape",
+      "original_line": 6750
+    },
+    {
+      "applications": 53,
+      "function": "HandleReshape",
+      "original_line": 6898
+    },
+    {
+      "applications": 1,
+      "function": "RemoveDegenerateDimensionFromDot",
+      "original_line": 2744
+    },
+    {
+      "applications": 1,
+      "function": "operator()",
+      "original_line": 2590
+    }
+  ],
+  "scope": "All AlgebraicSimplifier invocations in one normal XLA CPU compilation",
+  "total_applications": 1027
+}

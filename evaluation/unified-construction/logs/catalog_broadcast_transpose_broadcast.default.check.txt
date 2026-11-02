@@ -1,0 +1,35 @@
+SemanticRule broadcast_transpose_broadcast
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: align[n2:input](align[n1:input](Input(#0)))
+      rhs-graph: align[n4:input](Input(#0))
+      law: ordered-axis-split
+      law: paired-axis-selection
+      law: axis-map-restriction
+      law: axis-insertion
+      verified: capture access + reduction domains + ordered axes + shape + dtype + legality
+      lhs-normalized: Read(#0, access@0)
+      rhs-normalized: Read(#0, access@3)
+      constructor auto#2:
+        dimensions = gather(inverse(p.attrs.permutation), b.attrs.dimensions)
+        new_extents = m5
+      declared-conditions:
+        >=(len(shape(Input(#0))), 0)
+      additional-guard: true
+      reason: valid for all legal LHS metadata satisfying the declared conditions under the selected arithmetic policy
+      let m0 = concat(b.attrs.dimensions, ordered_complement(range(len(p.attrs.permutation)), b.attrs.dimensions))
+      let m1 = if(==(index(m0, sequence_variable(9)), sequence_variable(8)), index(concat(shape(Input(#0)), b.attrs.new_extents), sequence_variable(9)), 0)
+      let m2 = sequence_map(range(len(p.attrs.permutation)), sequence_variable(8), sum(sequence_map(range(len(p.attrs.permutation)), sequence_variable(9), m1)))
+      let m3 = if(==(index(p.attrs.permutation, sequence_variable(2)), sequence_variable(1)), sequence_variable(2), 0)
+      let m4 = sequence_map(range(len(p.attrs.permutation)), sequence_variable(1), sum(sequence_map(range(len(p.attrs.permutation)), sequence_variable(2), m3)))
+      let m5 = gather(gather(m2, p.attrs.permutation), ordered_complement(range(len(p.attrs.permutation)), gather(m4, b.attrs.dimensions)))
+      let m6 = ordered_complement(range(+(len(shape(Input(#0))), len(b.attrs.new_extents))), b.attrs.dimensions)
+      let m7 = place_axes(n1.S, gather(inverse(p.attrs.permutation), b.attrs.dimensions), gather(n1.N, order_positions(gather(inverse(p.attrs.permutation), m6))))
+      coordinate frame (fresh identities; domain lengths remain symbolic):
+        input0 = group(extents=shape(Input(#0)))
+        n1.S = group(extents=shape(Input(#0)))
+        n1.N = group(extents=b.attrs.new_extents)
+        access@0 = n1.S
+        access@3 = n1.S
+        lhs-output = gather(place_axes(n1.S, b.attrs.dimensions, n1.N), p.attrs.permutation)
+        rhs-output = m7
+

@@ -1,0 +1,32 @@
+2296:   }
+2297: 
+2298:   if (constant->shape().element_type() == TOKEN) {
+2299:     return absl::OkStatus();
+2300:   }
+2301: 
+2302:   // If a literal is all the same element replace it with a scalar broadcast.
+2303:   if (ShapeUtil::ElementsIn(constant->shape()) > 1 &&
+2304:       constant->literal().IsAllFirst()) {
+2305:     Literal unique_scalar(
+2306:         LiteralUtil::GetFirstScalarLiteral(constant->literal()));
+2307:     HloInstruction* scalar = constant->AddInstruction(
+2308:         simplifier_->CreateConstantWithLayoutUpdated(std::move(unique_scalar)));
+2309:     HloInstruction* broadcast = constant->AddInstruction(
+2310:         HloInstruction::CreateBroadcast(constant->shape(), scalar, {}));
+2311:     return ReplaceInstruction(constant, broadcast);
+2312:   }
+2313: 
+2314:   // If a literal is an increasing sequence from zero, replace it with an iota.
+2315:   if (ShapeUtil::ElementsIn(constant->shape()) > 1 &&
+2316:       constant->literal().IsR1Iota()) {
+2317:     return ReplaceWithNewInstruction(
+2318:         constant, HloInstruction::CreateIota(constant->shape(), 0));
+2319:   }
+2320: 
+2321:   if (std::optional<int64_t> stride = constant->literal().IsR1StridedIota()) {
+2322:     // Replace the constant with iota * stride.
+2323:     HloInstruction* stride_hlo = MakeScalarLike(constant, *stride);
+2324:     HloInstruction* iota = constant->AddInstruction(
+2325:         HloInstruction::CreateIota(constant->shape(), 0));
+2326:     return ReplaceWithNewInstruction(
+2327:         constant,

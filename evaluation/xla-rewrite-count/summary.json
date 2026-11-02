@@ -1,0 +1,327 @@
+{
+  "workload": "DLRM FP32 training step",
+  "batch": 6272,
+  "scope": "All AlgebraicSimplifier invocations in one normal XLA CPU compilation",
+  "model_compilations": 1,
+  "pass_invocations": 8,
+  "distinct_rule_variants": 32,
+  "total_applications": 201,
+  "rule_identity": "Outermost successful transformation branch, identified by function and original source line; equivalent branches remain separate variants",
+  "normalization": {
+    "raw_notifications": 206,
+    "excluded_bookkeeping_line": 9009,
+    "paired_replacement_line": 9023,
+    "excluded_notifications": 5,
+    "reason": "MarkAsChanged followed by successful replacement in the same reduce/reshape rewrite branch; count the rewrite once."
+  },
+  "families": {
+    "boolean": {
+      "distinct_rule_variants": 1,
+      "applications": 1
+    },
+    "broadcast": {
+      "distinct_rule_variants": 5,
+      "applications": 37
+    },
+    "compare": {
+      "distinct_rule_variants": 2,
+      "applications": 2
+    },
+    "constant": {
+      "distinct_rule_variants": 1,
+      "applications": 1
+    },
+    "divide": {
+      "distinct_rule_variants": 3,
+      "applications": 21
+    },
+    "dot": {
+      "distinct_rule_variants": 3,
+      "applications": 4
+    },
+    "multiply": {
+      "distinct_rule_variants": 4,
+      "applications": 20
+    },
+    "reduce": {
+      "distinct_rule_variants": 3,
+      "applications": 28
+    },
+    "reshape": {
+      "distinct_rule_variants": 4,
+      "applications": 63
+    },
+    "select": {
+      "distinct_rule_variants": 1,
+      "applications": 2
+    },
+    "transpose": {
+      "distinct_rule_variants": 4,
+      "applications": 10
+    },
+    "tuple": {
+      "distinct_rule_variants": 1,
+      "applications": 12
+    }
+  },
+  "rules": [
+    {
+      "rule_id": "AS-6750",
+      "family": "reshape",
+      "description": "compose consecutive reshapes",
+      "applications": 44,
+      "function": "HandleReshape",
+      "original_line": 6750
+    },
+    {
+      "rule_id": "AS-5605",
+      "family": "broadcast",
+      "description": "element-count-preserving broadcast -> reshape",
+      "applications": 24,
+      "function": "HandleBroadcast",
+      "original_line": 5605
+    },
+    {
+      "rule_id": "AS-8661",
+      "family": "reduce",
+      "description": "element-count-preserving reduction -> reshape",
+      "applications": 22,
+      "function": "ReplaceReduceWithReshape",
+      "original_line": 8661
+    },
+    {
+      "rule_id": "AS-5165",
+      "family": "multiply",
+      "description": "move scalar constant into broadcasted multiply",
+      "applications": 17,
+      "function": "HandleMultiply",
+      "original_line": 5165
+    },
+    {
+      "rule_id": "AS-2614",
+      "family": "divide",
+      "description": "divide by broadcast -> multiply by broadcast reciprocal",
+      "applications": 16,
+      "function": "HandleDivide",
+      "original_line": 2614
+    },
+    {
+      "rule_id": "AS-6744",
+      "family": "reshape",
+      "description": "remove shape-preserving reshape",
+      "applications": 14,
+      "function": "HandleReshape",
+      "original_line": 6744
+    },
+    {
+      "rule_id": "AS-5389",
+      "family": "tuple",
+      "description": "get_tuple_element(tuple(...), i) -> operand i",
+      "applications": 12,
+      "function": "HandleGetTupleElement",
+      "original_line": 5389
+    },
+    {
+      "rule_id": "AS-10187",
+      "family": "transpose",
+      "description": "transpose(dot(x, y)) -> dot(y, x)",
+      "applications": 6,
+      "function": "operator()",
+      "original_line": 10187
+    },
+    {
+      "rule_id": "AS-5645",
+      "family": "broadcast",
+      "description": "remove unit-inserting reshape before broadcast",
+      "applications": 5,
+      "function": "HandleBroadcast",
+      "original_line": 5645
+    },
+    {
+      "rule_id": "AS-5681",
+      "family": "broadcast",
+      "description": "permutation/subset of scalar broadcast -> broadcast",
+      "applications": 5,
+      "function": "HandleBroadcast",
+      "original_line": 5681
+    },
+    {
+      "rule_id": "AS-9023",
+      "family": "reduce",
+      "description": "move reshape through reduction",
+      "applications": 5,
+      "function": "HandleReduce",
+      "original_line": 9023
+    },
+    {
+      "rule_id": "AS-2478",
+      "family": "divide",
+      "description": "x / 1 -> x",
+      "applications": 4,
+      "function": "HandleDivide",
+      "original_line": 2478
+    },
+    {
+      "rule_id": "AS-6898",
+      "family": "reshape",
+      "description": "reshape(broadcast(x)) -> broadcast(x)",
+      "applications": 4,
+      "function": "HandleReshape",
+      "original_line": 6898
+    },
+    {
+      "rule_id": "AS-2744",
+      "family": "dot",
+      "description": "remove unit dimensions from dot; reshape output",
+      "applications": 2,
+      "function": "RemoveDegenerateDimensionFromDot",
+      "original_line": 2744
+    },
+    {
+      "rule_id": "AS-2824",
+      "family": "transpose",
+      "description": "transpose(broadcast(x)) -> broadcast(x)",
+      "applications": 2,
+      "function": "SimplifyTransposeOfBroadcast",
+      "original_line": 2824
+    },
+    {
+      "rule_id": "AS-5723",
+      "family": "broadcast",
+      "description": "remove unit dimensions from broadcast operand",
+      "applications": 2,
+      "function": "HandleBroadcast",
+      "original_line": 5723
+    },
+    {
+      "rule_id": "AS-9840",
+      "family": "select",
+      "description": "select(false, x, y) -> y",
+      "applications": 2,
+      "function": "HandleSelect",
+      "original_line": 9840
+    },
+    {
+      "rule_id": "AS-1405",
+      "family": "boolean",
+      "description": "true && x -> x",
+      "applications": 1,
+      "function": "HandleAnd",
+      "original_line": 1405
+    },
+    {
+      "rule_id": "AS-2317",
+      "family": "constant",
+      "description": "iota-valued literal -> iota",
+      "applications": 1,
+      "function": "HandleConstant",
+      "original_line": 2317
+    },
+    {
+      "rule_id": "AS-2590",
+      "family": "divide",
+      "description": "division by constant -> multiplication by reciprocal",
+      "applications": 1,
+      "function": "operator()",
+      "original_line": 2590
+    },
+    {
+      "rule_id": "AS-2742",
+      "family": "dot",
+      "description": "remove unit dimensions from dot; unchanged output shape",
+      "applications": 1,
+      "function": "RemoveDegenerateDimensionFromDot",
+      "original_line": 2742
+    },
+    {
+      "rule_id": "AS-3785",
+      "family": "dot",
+      "description": "dot without contracting dimensions -> broadcast multiply",
+      "applications": 1,
+      "function": "RewriteAsMultiplyDotWithZeroLhsContractingDim",
+      "original_line": 3785
+    },
+    {
+      "rule_id": "AS-5025",
+      "family": "multiply",
+      "description": "x * 1 -> x",
+      "applications": 1,
+      "function": "HandleMultiply",
+      "original_line": 5025
+    },
+    {
+      "rule_id": "AS-5056",
+      "family": "multiply",
+      "description": "(-x) * (-y) -> x * y",
+      "applications": 1,
+      "function": "HandleMultiply",
+      "original_line": 5056
+    },
+    {
+      "rule_id": "AS-5132",
+      "family": "multiply",
+      "description": "reassociate multiplication of constants",
+      "applications": 1,
+      "function": "HandleMultiply",
+      "original_line": 5132
+    },
+    {
+      "rule_id": "AS-5761",
+      "family": "compare",
+      "description": "known nonnegative x < 0 -> false",
+      "applications": 1,
+      "function": "HandleCompare",
+      "original_line": 5761
+    },
+    {
+      "rule_id": "AS-5767",
+      "family": "compare",
+      "description": "known nonnegative x >= 0 -> true",
+      "applications": 1,
+      "function": "HandleCompare",
+      "original_line": 5767
+    },
+    {
+      "rule_id": "AS-6358",
+      "family": "broadcast",
+      "description": "sink elementwise operation through broadcasts; per user",
+      "applications": 1,
+      "function": "TryToSinkBroadcastAfterElementwiseOps",
+      "original_line": 6358
+    },
+    {
+      "rule_id": "AS-6945",
+      "family": "reshape",
+      "description": "reshape(iota) -> coordinate arithmetic",
+      "applications": 1,
+      "function": "HandleReshape",
+      "original_line": 6945
+    },
+    {
+      "rule_id": "AS-8870",
+      "family": "reduce",
+      "description": "move negate through sum reduction",
+      "applications": 1,
+      "function": "HandleReduce",
+      "original_line": 8870
+    },
+    {
+      "rule_id": "AS-10114",
+      "family": "transpose",
+      "description": "remove identity transpose",
+      "applications": 1,
+      "function": "HandleTranspose",
+      "original_line": 10114
+    },
+    {
+      "rule_id": "AS-10118",
+      "family": "transpose",
+      "description": "compose consecutive transposes",
+      "applications": 1,
+      "function": "HandleTranspose",
+      "original_line": 10118
+    }
+  ],
+  "tepl_support_classification": "Static semantic audit only; TEPL validation and delegation remain unmeasured",
+  "semantic_audit": "semantic-support-summary.json"
+}

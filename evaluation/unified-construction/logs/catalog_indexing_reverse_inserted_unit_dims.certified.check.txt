@@ -1,0 +1,12 @@
+SemanticRule catalog_indexing_reverse_inserted_unit_dims
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: Read(input, IndexReverse(Coords(S), attrs.dimensions)) over align[n1:input](Input(#0))
+      rhs-graph: align[n5:input](Read(input, IndexReverse(Coords(S), attrs.dimensions)) over Input(#0))
+      verified: source-layout guard certificate and core emission theorem
+      declared-conditions:
+        ==(len(shape(Input(#0))), 1)
+        &&(m0, ==(axis_eval_0.attrs.new_extents, [1]))
+      additional-guard: true
+      reason: core schema guard and supplied metadata certified; sound for all legal extents
+      let m0 = &&(==([1, index(shape(Input(#0)), 0)], [1, index(shape(Input(#0)), 0)]), ==(axis_eval_0.attrs.dimensions, [1]))
+

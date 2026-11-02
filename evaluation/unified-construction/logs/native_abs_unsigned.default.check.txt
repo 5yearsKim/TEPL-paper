@@ -1,0 +1,21 @@
+SemanticRule native_abs_unsigned
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: abs(align[n1:input](Input(#0)))
+      rhs-graph: Input(#0)
+      law: scalar-abs-unsigned
+      verified: capture access + reduction domains + ordered axes + shape + dtype + legality
+      lhs-normalized: Read(#0, access@0)
+      rhs-normalized: Read(#0, access@2)
+      declared-conditions:
+        >=(len(shape(Input(#0))), 0)
+        is_unsigned_integer(dtype(Input(#0)))
+      additional-guard: true
+      reason: valid for all legal LHS metadata satisfying the declared conditions under the selected arithmetic policy
+      coordinate frame (fresh identities; domain lengths remain symbolic):
+        input0 = group(extents=shape(Input(#0)))
+        n1.S = group(extents=shape(Input(#0)))
+        access@0 = n1.S
+        access@2 = n1.S
+        lhs-output = n1.S
+        rhs-output = n1.S
+

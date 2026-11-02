@@ -1,0 +1,25 @@
+SemanticRule slice_identity
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: Read(input, IndexOffset(attrs.starts, IndexScale(attrs.strides, Coords(O)))) over Input(#0)
+      rhs-graph: Input(#0)
+      law: index-scale-normalization
+      law: index-offset-normalization
+      law: index-add-normalization
+      law: index-substitution
+      verified: capture access + reduction domains + ordered axes + shape + dtype + legality
+      lhs-normalized: Read(#0, access@0, coords(n1.O))
+      rhs-normalized: Read(#0, access@2)
+      declared-conditions:
+        >=(len(shape(Input(#0))), 0)
+        m0
+      additional-guard: true
+      reason: valid for all legal LHS metadata satisfying the declared conditions under the selected arithmetic policy
+      let m0 = &&(&&(==(attr_s.attrs.starts, [0]), ==(attr_s.attrs.sizes, shape(Input(#0)))), ==(attr_s.attrs.strides, [1]))
+      coordinate frame (fresh identities; domain lengths remain symbolic):
+        input0 = group(extents=shape(Input(#0)))
+        n1.O = group(extents=shape(Input(#0)))
+        access@0 = input0
+        access@2 = n1.O
+        lhs-output = n1.O
+        rhs-output = n1.O
+

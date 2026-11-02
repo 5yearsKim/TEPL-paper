@@ -1,0 +1,6 @@
+from "../../../../examples/semantic/dialects/tensor.tepl" import TensorLang as t;
+use t::{dot,transpose};
+rule rank_4_explicit { A:f32[D0,D1,D2,D3]
+ (p3: transpose (p2: transpose (p1: transpose A))) => (out: transpose A)
+ derive {out.attrs={permutation:gather(gather(p1.attrs.permutation, p2.attrs.permutation), p3.attrs.permutation)};}
+}

@@ -1,0 +1,144 @@
+\subsection{Guard Certificates and Portable Core Acceptance}
+\label{app:accepted-core-proof}
+The certificate is an executable sufficient condition, not an arbitrary
+entailment procedure. It applies only after admission checks the source
+and replacement templates, read-once components, equal input supports,
+and independent unrestricted automatic RHS fields. A rule containing
+supplied derivation helpers is rejected by this path. The recognizer
+accepts the following six cases; otherwise its result is unresolved.
+
+\begin{lemma}[Extent-independent canonical feasibility]
+\label{lem:topology-abstraction}
+For legal source instances with equal capture ranks and equal source axis
+lists, the canonical predicate $E_q$ has the same truth value, regardless
+of their extents.
+\end{lemma}
+\begin{proof}
+Number input ports by capture and position. Source replay joins precisely
+the port pairs named by the axis lists and computes output order using
+those lists. Neither decision compares unpaired extents. All extent checks
+succeed by source legality. Thus the input and output class sequences are
+identical up to class renaming. Every predicate expression uses only
+membership, order, and equality of those classes. Induction on its DAG
+therefore gives the same truth value. This includes zero and singleton
+extents; equality of unrelated extents never merges port classes.
+\end{proof}
+
+\paragraph{Literal-layout certificate.}
+The checker collects exact ranks from fixed-length capture constraints and
+rank equalities, and exact lists from source-field equalities. It traverses
+only positive conjunctions of the original conditions, expanding preceding
+local lets; a disjunction contributes no facts. Conflicting facts cause
+failure. If every input rank and every source axis field is determined,
+it creates the corresponding metadata with all extents two and evaluates
+$E_q$. Source legality for this representative and a true result certify
+all legal matches by Lemma~\ref{lem:topology-abstraction}. This is a decision
+about one fixed topology, with arbitrary extent values, rather than a
+finite test claimed to prove a variable-topology property. Finite rank, port, and work limits return unresolved when exceeded. The guard's extent inequalities and shape equalities remain
+in the portable rule and are checked normally at runtime.
+
+\paragraph{Sum-movement certificate.}
+For $\operatorname{dot}(\operatorname{sum}(A),B)\Rightarrow
+\operatorname{sum}(\operatorname{dot}(A,B))$, match the ordered surviving
+positions of $A$ with the source sum's output. Lift the source dot's batch
+and contraction lists through that injection, leaving its $B$ lists
+unchanged. The removed $A$ axes then occur only among the new dot's left
+free axes. Sum exactly these positions at the replacement root. Erasing
+them leaves the source dot's ordered batch/left-free/right-free output.
+The new sum indices are independent of $B$ and of the dot's contraction
+indices, so distributivity and interchange of finite sums give equal
+values. This witness exists at every legal source topology with extents
+at least two. Completeness gives $E_q$ there; extent independence extends
+that predicate fact to every legal nonnegative extent assignment. The
+builder soundness direction then supplies the actual emitted attributes;
+they need not use the witness's tie order.
+
+\paragraph{Single-free-axis transpose-folding certificate.}
+Consider the rewrite
+\[
+ \operatorname{dot}(\operatorname{transpose}(A),B)\Rightarrow
+ \operatorname{dot}(A,B).
+\]
+Require
+$\operatorname{rank}(A)=|b_A|+2$ and $|k_A|=1$, where $b_A,k_A$
+are the source dot's left batch and contraction lists. Source legality
+makes them distinct and disjoint, so the folded operand has exactly one
+free axis. Lift its batch and contraction positions through the captured
+permutation and copy the other operand's lists. Paired classes and their
+extents are unchanged. Batch order remains the source list order, the
+untouched operand's free order is unchanged, and the folded operand's
+single free axis admits no order ambiguity. Therefore the replacement
+has exactly the source ordered output and coordinate products/sums.
+The argument is symmetric for a transposed right operand. The canonical
+roles force this batch set and singleton contraction class; the required
+root order fixes batch order. Hence the emitted lists equal the lifted
+lists and copied partner lists of this witness. Completeness
+at extent two and Lemma~\ref{lem:topology-abstraction} establish $E_q$;
+builder soundness supplies the actual emitted fields for all legal extents.
+The checker extracts the rank/list-length relations only from positive
+conjuncts. A whole-shape sequence capture may provide the rank reference;
+a proper shape subsequence cannot. Backend-specific batch-fixing,
+nonidentity and rank restrictions remain in the written guard even though
+some are unnecessary for this semantic witness.
+
+\paragraph{Unary-chain certificate.}
+Both sides must be single-input trees containing only permutations and
+sums, with the same captured input. If the source contains a sum, the
+replacement must contain a sum; if the source contains a permutation, the
+replacement must contain a permutation. The source selects an ordered
+subsequence of input dimensions, possibly reordered by its permutations. One
+replacement sum can remove the complement, and one replacement permutation
+can establish the desired survivor order, whether it precedes or follows
+the sum. Other sums remove nothing and other permutations are identities.
+If the source has no permutation, sums alone preserve survivor order.
+This gives a feasible completion at every source topology. As above,
+completeness at extent two and extent independence imply the canonical
+predicate universally; builder soundness covers degenerate extents.
+
+\paragraph{Equal-component-tree certificate.}
+Expand the restricted additive fragment. For each matched input-support
+component, compare source and target trees by operation kind, ordered
+children, and input capture, ignoring descriptor identifiers. When they
+agree, copying source attributes along that isomorphism supplies a
+completion. Componentwise legality and value equality follow immediately.
+Independent RHS fields permit the assignments to be united. This covers
+the reduction and dot distribution examples; it does not identify
+arbitrary algebraically equivalent component trees. The same completeness
+and extent-independence argument establishes $E_q$.
+
+\paragraph{Batched-reassociation certificate.}
+Recognize exactly the two-dot reassociation tree and the positive guard
+fact that the outer left batch list is
+$\operatorname{range}(|b_X|)$, where $b_X$ is the inner left batch list.
+This is the batch-group routing condition in
+Appendix~\ref{app:batched-reassociation-program}. Proposition~\ref{prop:reassociation-program}
+constructs legal attributes and proves ordered output and value equality
+for arbitrary free and contracted group lengths. Its explicit integer
+bound is replaced here by Theorem~\ref{thm:accepted-core}'s metadata
+representability premise, not by a change to the written guard.
+The predicate consequence again follows from completeness on the
+nondegenerate representative and Lemma~\ref{lem:topology-abstraction}.
+
+\paragraph{Implementation correspondence and trust boundary.}
+Certification checks canonical dtype contracts: permutations preserve dtype;
+sums require numeric input and preserve it; contraction and addition require
+equal numeric inputs and return their common dtype. Operand references must
+be distinct, and additional dtype behavior is rejected. A numeric RHS with
+no numeric LHS operation remains unresolved. In a connected source tree,
+binary equalities and unary transport equate capture dtypes, and a source
+numeric assertion makes that common dtype numeric. Induction therefore
+establishes target dtype legality and preservation.
+
+The loader independently regenerates the DAG from actual operation contracts,
+reconstructs guard facts from serialized constraints, and repeats dtype
+certification. Every derived descriptor needs exactly one assignment;
+strict arithmetic and mixed applicability-inference programs are rejected.
+Materialization preserves the written guard and capture constraints without
+adding $E_q$ as an applicability condition. Runtime evaluation checks the
+original conditions, executes the cached program, and checks replacement
+conditions and graph legality; it performs no synthesis search. Resource
+exhaustion is a resource outcome, and a false $E_q$ is an invariant failure.
+These checks rely on recognized operation semantics and trusted implementation;
+they do not authenticate arbitrary edited value semantics or verify backend
+implementations. Module paths, format identifiers, and exact work limits are
+archived in \nolinkurl{evaluation/supplementary-materials/}.

@@ -1,0 +1,70 @@
+SemanticRule reassociate_preserve_batch
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: Reduce(n4.K, Product(align[n4:lhs](Reduce(n2.K, Product(align[n2:lhs](Input(#0)), align[n2:rhs](Input(#1))))), align[n4:rhs](Input(#2))))
+      rhs-graph: Reduce(n9.K, Product(align[n9:lhs](Input(#0)), align[n9:rhs](Reduce(n8.K, Product(align[n8:lhs](Input(#1)), align[n8:rhs](Input(#2)))))))
+      law: ordered-axis-split
+      law: paired-axis-selection
+      law: ordered-partition-traversal
+      law: reduction-extraction
+      law: axis-map-restriction
+      law: ordered-view-equality
+      verified: capture access + reduction domains + ordered axes + shape + dtype + legality
+      lhs-normalized: Reduce(concat(gather(concat(n2.B, n2.I, n2.J), @#0.lhs_contracting_dimensions), n2.K), Product(Read(#0, access@0), Read(#1, access@1), Read(#2, access@3)))
+      rhs-normalized: Reduce(concat(gather(gather(concat(n2.B, n2.I, n2.J), @#0.lhs_contracting_dimensions), membership_positions(@#0.lhs_contracting_dimensions, offset_positions(range(len(ordered_complement(range(len(shape(Input(#0)))), concat(@#1.lhs_batching_dimensions, @#1.lhs_contracting_dimensions)))), len(@#1.lhs_batching_dimensions)))), n2.K, gather(gather(concat(n2.B, n2.I, n2.J), @#0.lhs_contracting_dimensions), membership_positions(@#0.lhs_contracting_dimensions, offset_positions(range(len(ordered_complement(range(len(shape(Input(#1)))), concat(@#1.rhs_batching_dimensions, @#1.rhs_contracting_dimensions)))), +(len(@#1.lhs_batching_dimensions), len(ordered_complement(range(len(shape(Input(#0)))), concat(@#1.lhs_batching_dimensions, @#1.lhs_contracting_dimensions)))))))), Product(Read(#0, access@5), Read(#1, access@6), Read(#2, access@7)))
+      constructor auto#2:
+        lhs_contracting_dimensions = concat(gather(m0, p0.right_positions), inner.attrs.lhs_contracting_dimensions)
+        rhs_contracting_dimensions = concat(gather(m6, m7), m8)
+        lhs_batching_dimensions = inner.attrs.lhs_batching_dimensions
+        rhs_batching_dimensions = range(len(inner.attrs.lhs_batching_dimensions))
+      constructor auto#3:
+        lhs_contracting_dimensions = gather(m2, p1.right_positions)
+        rhs_contracting_dimensions = gather(outer.attrs.rhs_contracting_dimensions, p1.left_positions)
+        lhs_batching_dimensions = inner.attrs.rhs_batching_dimensions
+        rhs_batching_dimensions = outer.attrs.rhs_batching_dimensions
+      declared-conditions:
+        >=(len(shape(Input(#0))), 0)
+        >=(len(shape(Input(#1))), 0)
+        >=(len(shape(Input(#2))), 0)
+        m10
+      additional-guard: true
+      reason: valid for all legal LHS metadata satisfying the declared conditions under the selected arithmetic policy
+      let m0 = ordered_complement(range(len(shape(Input(#0)))), concat(inner.attrs.lhs_batching_dimensions, inner.attrs.lhs_contracting_dimensions))
+      let p0 = match_positions(outer.attrs.lhs_contracting_dimensions, offset_positions(range(len(m0)), len(inner.attrs.lhs_batching_dimensions)))
+      let m2 = ordered_complement(range(len(shape(Input(#1)))), concat(inner.attrs.rhs_batching_dimensions, inner.attrs.rhs_contracting_dimensions))
+      let p1 = match_positions(outer.attrs.lhs_contracting_dimensions, offset_positions(range(len(m2)), +(len(inner.attrs.lhs_batching_dimensions), len(m0))))
+      let m4 = concat(outer.attrs.rhs_batching_dimensions, gather(outer.attrs.rhs_contracting_dimensions, p1.left_positions))
+      let m5 = ordered_complement(range(len(shape(Input(#1)))), concat(inner.attrs.rhs_batching_dimensions, gather(m2, p1.right_positions)))
+      let m6 = offset_positions(range(len(ordered_complement(range(len(shape(Input(#2)))), m4))), +(len(inner.attrs.lhs_batching_dimensions), len(m5)))
+      let m7 = matched_positions(gather(outer.attrs.rhs_contracting_dimensions, p0.left_positions), ordered_complement(range(len(shape(Input(#2)))), m4))
+      let m8 = gather(offset_positions(range(len(m5)), len(inner.attrs.lhs_batching_dimensions)), matched_positions(inner.attrs.rhs_contracting_dimensions, m5))
+      let m9 = <=(+(+(len(shape(Input(#0))), len(shape(Input(#1)))), len(shape(Input(#2)))), 9223372036854775807)
+      let m10 = &&(==(outer.attrs.lhs_batching_dimensions, range(len(inner.attrs.lhs_batching_dimensions))), m9)
+      let m11 = ordered_complement(range(len(shape(Input(#2)))), concat(outer.attrs.rhs_batching_dimensions, outer.attrs.rhs_contracting_dimensions))
+      let m12 = inverse(concat(inner.attrs.lhs_batching_dimensions, inner.attrs.lhs_contracting_dimensions, m0))
+      let m13 = inverse(concat(inner.attrs.rhs_batching_dimensions, inner.attrs.rhs_contracting_dimensions, m2))
+      let m14 = concat(n2.B, gather(concat(n2.B, n2.I, n2.J), outer.attrs.lhs_contracting_dimensions), n4.J)
+      let m15 = inverse(concat(outer.attrs.rhs_batching_dimensions, outer.attrs.rhs_contracting_dimensions, m11))
+      let m16 = concat(range(len(inner.attrs.lhs_batching_dimensions)), outer.attrs.lhs_contracting_dimensions)
+      let m17 = ordered_complement(range(+(+(len(inner.attrs.lhs_batching_dimensions), len(m0)), len(m2))), m16)
+      let m18 = concat(n2.B, filter_axes(concat(n2.B, n2.I, n2.J), gather(concat(n2.B, n2.I, n2.J), m17)), n4.J)
+      let m19 = concat(inner.attrs.lhs_batching_dimensions, gather(m0, p0.right_positions), inner.attrs.lhs_contracting_dimensions)
+      let m20 = gather(concat(n2.B, n2.K, n2.I), gather(m12, ordered_complement(range(len(shape(Input(#0)))), m19)))
+      let m21 = membership_positions(m17, offset_positions(range(len(m2)), +(len(inner.attrs.lhs_batching_dimensions), len(m0))))
+      coordinate frame (fresh identities; domain lengths remain symbolic):
+        input0 = group(extents=shape(Input(#0)))
+        input1 = group(extents=shape(Input(#1)))
+        n2.B = group(extents=gather(shape(Input(#0)), inner.attrs.lhs_batching_dimensions))
+        n2.K = group(extents=gather(shape(Input(#0)), inner.attrs.lhs_contracting_dimensions))
+        n2.I = group(extents=gather(shape(Input(#0)), m0))
+        n2.J = group(extents=gather(shape(Input(#1)), m2))
+        input3 = group(extents=shape(Input(#2)))
+        n2.B = group(extents=gather(shape(Input(#0)), inner.attrs.lhs_batching_dimensions))
+        n4.J = group(extents=gather(shape(Input(#2)), m11))
+        access@0 = gather(concat(n2.B, n2.K, n2.I), m12)
+        access@1 = gather(concat(n2.B, n2.K, n2.J), m13)
+        access@3 = gather(m14, m15)
+        access@5 = gather(concat(n2.B, n2.K, n2.I), m12)
+        access@6 = gather(concat(n2.B, n2.K, n2.J), m13)
+        access@7 = gather(m14, m15)
+        lhs-output = m18
+        rhs-output = concat(n2.B, m20, gather(gather(concat(n2.B, n2.I, n2.J), m17), m21), n4.J)

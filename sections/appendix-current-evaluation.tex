@@ -1,0 +1,62 @@
+\section{Current Evaluation Protocol and Evidence}
+\label{app:current-evaluation}
+\paragraph{Coverage and acceptance.}
+We evaluate all 123 modeled cases with one optimized compiler under
+algebraic semantics and a 30-second per-command limit. Acceptance requires
+semantic checking, successful compilation, and portable-program validation
+under the original guards and supplied fields. The main figure reports
+default-backend acceptance; the text separately reports certified acceptance
+for inference tasks. The 86 unmodeled catalog cases are excluded from
+semantic evaluation and counted as neither successes nor failures.
+Exact sources, per-case outcomes, and compiler provenance are retained in
+\nolinkurl{evaluation/unified-construction/}.
+
+\begin{table}[!htbp]
+\caption{Selected operation families in the paired rerun.
+\textbf{Memberships overlap; do not sum rows.} Entries count all cases (axis-inference cases).}
+\label{tab:current-operation-families}
+\small
+\begin{tabularx}{\linewidth}{@{}Yrrr@{}}\toprule
+Family & Cases (axis) & Default accepted (axis) & Certified accepted (axis)\\\midrule
+Dot & 12 (12) & 11 (11) & 11 (11)\\
+Transpose & 10 (8) & 10 (8) & 8 (8)\\
+Reduction & 9 (9) & 9 (9) & 9 (9)\\
+Addition & 13 (3) & 12 (2) & 4 (2)\\
+Broadcast & 19 (19) & 15 (15) & 15 (15)\\
+Reverse & 10 (8) & 7 (6) & 7 (6)\\
+Slice & 10 (5) & 2 (0) & 0 (0)\\
+Convolution & 1 (1) & 0 (0) & 0 (0)\\\bottomrule
+\end{tabularx}
+\end{table}
+Across all 123 cases, certified nonacceptance comprises 81 unsupported
+operation-template cases, four graph pairs outside the schemas, one
+non-read-once structure, and two unresolved guard proofs. No certified
+dtype, compilation, loading, or timeout failure occurs. The certified backend accepts 35/123 cases overall.
+Ten inference templates use the complete constructor under its domain
+assumptions; twenty-one use additional sound schemas. All seven remaining
+inference tasks fail both backends and are outside the certified contracts.
+
+The public compile/load/rewrite suite passes 685 independent dense-value
+and ordered-shape checks and 142 rejection checks across eight test targets.
+It exercises degenerate extents, varying ranks, axis ordering, and malformed
+programs. Shared-IR regressions additionally check native/symbolic agreement,
+residual-program retention, and paired contraction reindexing. Detailed
+inventories accompany the artifacts; these development tests and corpus
+reruns do not constitute a new held-out evaluation.
+
+\paragraph{Paired specification accounting.}
+All 32 cases of the earlier size protocol are attempted, including
+unsuccessful pairs. Original idiomatic, expanded explicit, field-auto,
+omitted-field, and compact variants have distinct recorded sources.
+The primary XLA/TEPL footprint table additionally requires a reviewed
+XLA branch mapping and acceptance of all required representations.
+This yields 25 common cases; the larger expanded explicit/auto comparison
+has 28 pairs. Expanding descriptor copies costs 323 tokens; field-auto saves 216,
+omitting fields saves 224, and removing unused labels and empty blocks
+saves 278. Expanding a descriptor spread is not credited as a benefit
+of inference. The separate omission and cleanup steps retain the supplied
+conditions and non-axis fields. Lexical tokens exclude comments and
+whitespace, and the five responsibilities partition each included token
+exactly once. Shared dialect and compiler costs are excluded from every
+per-rule count and remain real reusable costs. The inherited invalid
+negative control remains rejected.

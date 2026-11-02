@@ -1,0 +1,23 @@
+from "../../../../examples/semantic/dialects/tensor.tepl" import TensorLang as t;
+use t::{dot,transpose};
+rule chain_explicit_1 {
+    A1: f32[B, D0, D1]
+    A2: f32[B, D1, D2]
+
+    (l1: dot A1 A2)
+    =>
+    (r1: dot A1 A2)
+    where {
+        B > 0
+        && D0 > 0
+        && D1 > 0
+        && D2 > 0
+        && l1.attrs.lhs_contracting_dimensions == [2]
+        && l1.attrs.rhs_contracting_dimensions == [1]
+        && l1.attrs.lhs_batching_dimensions == [0]
+        && l1.attrs.rhs_batching_dimensions == [0]
+    }
+    derive {
+        r1.attrs = { lhs_contracting_dimensions: [2], rhs_contracting_dimensions: [1], lhs_batching_dimensions: [0], rhs_batching_dimensions: [0] };
+    }
+}

@@ -1,0 +1,8 @@
+exec ${PAGER:-/usr/bin/less} "$0" || exit 1
+Executing tests from //labs/accepted_core:acceptance_test
+-----------------------------------------------------------------------------
+{
+  "negative_checks": 82,
+  "numeric_graph_checks": 33,
+  "samples": []
+}

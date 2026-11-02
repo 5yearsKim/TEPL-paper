@@ -1,0 +1,11 @@
+SemanticRule catalog_elementwise_divide_power
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: div(align[n4:lhs](Input(#0)), align[n4:rhs](pow(align[n3:lhs](Input(#1)), align[n3:rhs](Input(#2)))))
+      rhs-graph: Product(align[n10:lhs](Input(#0)), align[n10:rhs](pow(align[n9:lhs](Input(#1)), align[n9:rhs](Product(Const(-1), align[n8:input](Input(#2)))))))
+      declared-conditions: true
+      additional-guard: unresolved
+      reason: core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+error: cannot verify rule 'catalog_elementwise_divide_power': core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

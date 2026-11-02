@@ -1,0 +1,3109 @@
+diff --git a/xla/hlo/transforms/simplifiers/algebraic_simplifier.cc b/xla/hlo/transforms/simplifiers/algebraic_simplifier.cc
+index debd3f1da1..5915cf41c9 100644
+--- a/xla/hlo/transforms/simplifiers/algebraic_simplifier.cc
++++ b/xla/hlo/transforms/simplifiers/algebraic_simplifier.cc
+@@ -27,6 +27,7 @@ limitations under the License.
+ #include <optional>
+ #include <string>
+ #include <tuple>
++#include <type_traits>
+ #include <utility>
+ #include <vector>
+ 
+@@ -86,6 +87,39 @@ limitations under the License.
+ 
+ namespace xla {
+ 
++// Research-only opt-in counter. IDs use lines in the archived original file.
++using AlgebraicRewriteCounter = void (*)(int, const char*);
++namespace {
++AlgebraicRewriteCounter algebraic_rewrite_counter = nullptr;
++thread_local int algebraic_rewrite_depth = 0;
++template <class F>
++auto ObserveAlgebraicRewrite(int line, const char* function, F&& body)
++    -> std::invoke_result_t<F> {
++  if (!algebraic_rewrite_counter) return body();
++  using R = std::invoke_result_t<F>;
++  const bool outer = algebraic_rewrite_depth++ == 0;
++  if constexpr (std::is_void_v<R>) {
++    body();
++    --algebraic_rewrite_depth;
++    if (outer) algebraic_rewrite_counter(line, function);
++  } else {
++    auto result = body();
++    --algebraic_rewrite_depth;
++    bool success;
++    if constexpr (std::is_same_v<R, bool>) success = result;
++    else if constexpr (std::is_same_v<R, absl::StatusOr<bool>>)
++      success = result.ok() && result.value();
++    else success = result.ok();
++    if (outer && success) algebraic_rewrite_counter(line, function);
++    return result;
++  }
++}
++}  // namespace
++void SetAlgebraicRewriteCounter(AlgebraicRewriteCounter counter) {
++  algebraic_rewrite_counter = counter;
++}
++
++
+ namespace {
+ 
+ namespace m = match;
+@@ -797,7 +831,7 @@ absl::Status AlgebraicSimplifierVisitor::ScalarMultiplyReduction(
+     return absl::OkStatus();
+   }
+ 
+-  MarkAsChanged();
++  ObserveAlgebraicRewrite(800, __func__, [&]() { return MarkAsChanged(); });
+ 
+   // Combine all constant multipliers.
+   float multiplier = 1.0;
+@@ -841,7 +875,7 @@ void AlgebraicSimplifierVisitor::ReplaceWithBitcast(HloInstruction* instruction,
+ 
+   auto bitcast = instruction->AddInstruction(
+       HloInstruction::CreateBitcast(instruction->shape(), operand));
+-  CHECK_OK(ReplaceInstruction(instruction, bitcast));
++  CHECK_OK(ObserveAlgebraicRewrite(844, __func__, [&]() { return ReplaceInstruction(instruction, bitcast); }));
+ }
+ 
+ // Replace the old instruction with the new one if they are compatible, i.e.,
+@@ -862,9 +896,9 @@ bool AlgebraicSimplifierVisitor::ReplaceInstructionIfCompatible(
+   if (!SameShape(old_instruction, new_instruction)) {
+     return false;
+   }
+-  return ReplaceInstruction(old_instruction, new_instruction,
++  return ObserveAlgebraicRewrite(865, __func__, [&]() { return ReplaceInstruction(old_instruction, new_instruction,
+                             /*preserve_sharding=*/true,
+-                            /*preserve_frontend_attributes=*/true)
++                            /*preserve_frontend_attributes=*/true); })
+       .value();
+ }
+ 
+@@ -882,7 +916,7 @@ bool AlgebraicSimplifierVisitor::ReplaceInstructionIfCompatible(
+   }
+ 
+   if (new_instructions.size() == 1) {
+-    return ReplaceInstructionIfCompatible(old_instruction, new_instructions[0]);
++    return ObserveAlgebraicRewrite(885, __func__, [&]() { return ReplaceInstructionIfCompatible(old_instruction, new_instructions[0]); });
+   }
+   CHECK(!new_instructions.empty());
+   if (!old_instruction->shape().IsTuple() ||
+@@ -896,9 +930,9 @@ bool AlgebraicSimplifierVisitor::ReplaceInstructionIfCompatible(
+       return false;
+     }
+   }
+-  return ReplaceInstruction(old_instruction, MaybeMakeTuple(new_instructions),
++  return ObserveAlgebraicRewrite(899, __func__, [&]() { return ReplaceInstruction(old_instruction, MaybeMakeTuple(new_instructions),
+                             /*preserve_sharding=*/true,
+-                            /*preserve_frontend_attributes=*/true)
++                            /*preserve_frontend_attributes=*/true); })
+       .value();
+ }
+ 
+@@ -907,7 +941,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleAbs(HloInstruction* abs) {
+   VLOG(10) << "trying transform [Abs(A) => A] " << abs->ToString()
+            << " Abs operand is: " << abs_operand->ToString();
+   if (IsNonNegative(abs->operand(0), options_)) {
+-    return ReplaceInstruction(abs, abs_operand);
++    return ObserveAlgebraicRewrite(910, __func__, [&]() { return ReplaceInstruction(abs, abs_operand); });
+   }
+   return absl::OkStatus();
+ }
+@@ -918,12 +952,12 @@ absl::Status AlgebraicSimplifierVisitor::HandleAdd(HloInstruction* add) {
+ 
+   // A + 0 => A
+   VLOG(10) << "trying transform [A + 0 => A]: " << add->ToString();
+-  if (IsAll(rhs, 0) && ReplaceInstructionIfCompatible(add, lhs)) {
++  if (IsAll(rhs, 0) && ObserveAlgebraicRewrite(921, __func__, [&]() { return ReplaceInstructionIfCompatible(add, lhs); })) {
+     return absl::OkStatus();
+   }
+   // 0 + A => A
+   VLOG(10) << "trying transform [0 + A => A]: " << add->ToString();
+-  if (IsAll(lhs, 0) && ReplaceInstructionIfCompatible(add, rhs)) {
++  if (IsAll(lhs, 0) && ObserveAlgebraicRewrite(926, __func__, [&]() { return ReplaceInstructionIfCompatible(add, rhs); })) {
+     return absl::OkStatus();
+   }
+ 
+@@ -931,9 +965,9 @@ absl::Status AlgebraicSimplifierVisitor::HandleAdd(HloInstruction* add) {
+   // rules below simpler.
+   VLOG(10) << "trying transform [Const + A => A + Const]";
+   if (Match(add, m::Add(m::Constant(), m::NonConstant()))) {
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(934, __func__, [&]() { return ReplaceWithNewInstruction(
+         add,
+-        HloInstruction::CreateBinary(add->shape(), HloOpcode::kAdd, rhs, lhs));
++        HloInstruction::CreateBinary(add->shape(), HloOpcode::kAdd, rhs, lhs)); });
+   }
+ 
+   // Reassociate to allow constant folding.
+@@ -956,9 +990,9 @@ absl::Status AlgebraicSimplifierVisitor::HandleAdd(HloInstruction* add) {
+       sum_of_constants = add->AddInstruction(
+           HloInstruction::CreateBroadcast(add->shape(), sum_of_constants, {}));
+     }
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(959, __func__, [&]() { return ReplaceWithNewInstruction(
+         add, HloInstruction::CreateBinary(add->shape(), HloOpcode::kAdd, a,
+-                                          sum_of_constants));
++                                          sum_of_constants)); });
+   }
+ 
+   VLOG(10) << "trying transform [(C1 - A) + C2 => (C1 + C2) - A]";
+@@ -974,9 +1008,9 @@ absl::Status AlgebraicSimplifierVisitor::HandleAdd(HloInstruction* add) {
+       sum_of_constants = add->AddInstruction(
+           HloInstruction::CreateBroadcast(add->shape(), sum_of_constants, {}));
+     }
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(977, __func__, [&]() { return ReplaceWithNewInstruction(
+         add, HloInstruction::CreateBinary(add->shape(), HloOpcode::kSubtract,
+-                                          sum_of_constants, a));
++                                          sum_of_constants, a)); });
+   }
+ 
+   // A + (B - A) => B
+@@ -988,7 +1022,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleAdd(HloInstruction* add) {
+       (ShapeUtil::ElementIsIntegral(add->shape()) ||
+        options_.enable_fast_math())) {
+     VLOG(10) << "trying transform [x + (y - x) => y]: " << add->ToString();
+-    if (ReplaceInstructionIfCompatible(add, y)) {
++    if (ObserveAlgebraicRewrite(991, __func__, [&]() { return ReplaceInstructionIfCompatible(add, y); })) {
+       return absl::OkStatus();
+     }
+   }
+@@ -1031,7 +1065,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleAdd(HloInstruction* add) {
+         lhs->shape(), lhs, add_partial,
+         absl::MakeSpan(rhs->operands()).subspan(2));
+ 
+-    return ReplaceWithNewInstruction(add, std::move(dynamic_update_slice_full));
++    return ObserveAlgebraicRewrite(1034, __func__, [&]() { return ReplaceWithNewInstruction(add, std::move(dynamic_update_slice_full)); });
+   }
+ 
+   // A*C + B*C => (A+B)*C
+@@ -1067,12 +1101,12 @@ absl::Status AlgebraicSimplifierVisitor::HandleAdd(HloInstruction* add) {
+       (lhs->user_count() == 1 && rhs->user_count() == 1) &&
+       (ShapeUtil::ElementIsIntegral(add->shape()) ||
+        options_.enable_floats_are_real() || IsAllFpConstantPowerOf2(c))) {
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(1070, __func__, [&]() { return ReplaceWithNewInstruction(
+         add, HloInstruction::CreateBinary(
+                  add->shape(), HloOpcode::kMultiply,
+                  lhs->AddInstruction(HloInstruction::CreateBinary(
+                      add->shape(), HloOpcode::kAdd, a, b)),
+-                 c));
++                 c)); });
+   }
+ 
+   if (options_.is_layout_sensitive()) {
+@@ -1217,29 +1251,29 @@ absl::Status AlgebraicSimplifierVisitor::HandleAdd(HloInstruction* add) {
+           HloInstruction * new_update,
+           MakeConcatHlo({lhs_scatter_update, rhs_scatter_update},
+                         *update_concat_dimension));
+-      return ReplaceWithNewInstruction(
++      return ObserveAlgebraicRewrite(1220, __func__, [&]() { return ReplaceWithNewInstruction(
+           add, HloInstruction::CreateScatter(
+                    add->shape(), new_operand, new_index, new_update,
+-                   lhs->to_apply(), lhs_dnums, false, false));
++                   lhs->to_apply(), lhs_dnums, false, false)); });
+     }
+     ABSL_ASSIGN_OR_RETURN(HloInstruction * new_operand,
+                           MakeBinaryHlo(HloOpcode::kAdd, lhs_scatter_operand,
+                                         rhs_scatter_operand));
+     ABSL_RETURN_IF_ERROR(rhs->ReplaceOperandWith(0, new_operand));
+     ABSL_RETURN_IF_ERROR(lhs->ReplaceOperandWith(0, rhs));
+-    return ReplaceInstruction(add, lhs);
++    return ObserveAlgebraicRewrite(1230, __func__, [&]() { return ReplaceInstruction(add, lhs); });
+   } else if (rhs_scatter) {
+     ABSL_ASSIGN_OR_RETURN(
+         HloInstruction * new_operand,
+         MakeBinaryHlo(HloOpcode::kAdd, lhs, rhs_scatter_operand));
+     ABSL_RETURN_IF_ERROR(rhs->ReplaceOperandWith(0, new_operand));
+-    return ReplaceInstruction(add, rhs);
++    return ObserveAlgebraicRewrite(1236, __func__, [&]() { return ReplaceInstruction(add, rhs); });
+   } else if (lhs_scatter) {
+     ABSL_ASSIGN_OR_RETURN(
+         HloInstruction * new_operand,
+         MakeBinaryHlo(HloOpcode::kAdd, lhs_scatter_operand, rhs));
+     ABSL_RETURN_IF_ERROR(lhs->ReplaceOperandWith(0, new_operand));
+-    return ReplaceInstruction(add, lhs);
++    return ObserveAlgebraicRewrite(1242, __func__, [&]() { return ReplaceInstruction(add, lhs); });
+   }
+   return absl::OkStatus();
+ }
+@@ -1278,11 +1312,11 @@ absl::StatusOr<bool> AlgebraicSimplifierVisitor::TrySimplifyTautologicalCompare(
+   std::optional<LessThanCompareInfo> rhs_info = get_compare_info(rhs);
+   if (lhs_info && rhs_info && lhs_info->var == rhs_info->var) {
+     int64_t new_bound = std::min(lhs_info->constant, rhs_info->constant);
+-    ABSL_RETURN_IF_ERROR(ReplaceWithNewInstruction(
++    ABSL_RETURN_IF_ERROR(ObserveAlgebraicRewrite(1281, __func__, [&]() { return ReplaceWithNewInstruction(
+         conjunction,
+         HloInstruction::CreateCompare(lhs->shape(), lhs_info->var,
+                                       MakeScalarLike(lhs_info->var, new_bound),
+-                                      ComparisonDirection::kLt)));
++                                      ComparisonDirection::kLt)); }));
+     return true;
+   }
+   return false;
+@@ -1293,9 +1327,9 @@ absl::Status AlgebraicSimplifierVisitor::HandleAllGather(
+   if (all_gather->shape().IsArray() &&
+       Match(all_gather->mutable_operand(0),
+             m::Broadcast(m::ConstantScalar()))) {
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(1296, __func__, [&]() { return ReplaceWithNewInstruction(
+         all_gather,
+-        all_gather->mutable_operand(0)->CloneWithNewShape(all_gather->shape()));
++        all_gather->mutable_operand(0)->CloneWithNewShape(all_gather->shape())); });
+   }
+   return absl::OkStatus();
+ }
+@@ -1305,7 +1339,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleAllToAll(
+   if (all_to_all->shape().IsArray() &&
+       Match(all_to_all->mutable_operand(0),
+             m::Broadcast(m::ConstantScalar()))) {
+-    return ReplaceInstruction(all_to_all, all_to_all->mutable_operand(0));
++    return ObserveAlgebraicRewrite(1308, __func__, [&]() { return ReplaceInstruction(all_to_all, all_to_all->mutable_operand(0)); });
+   }
+   return absl::OkStatus();
+ }
+@@ -1332,9 +1366,9 @@ absl::Status AlgebraicSimplifierVisitor::HandleAllReduceOrReduceScatter(
+   switch (*reduction_kind) {
+     case ReductionKind::MIN:
+     case ReductionKind::MAX: {
+-      return ReplaceWithNewInstruction(
++      return ObserveAlgebraicRewrite(1335, __func__, [&]() { return ReplaceWithNewInstruction(
+           collective,
+-          HloInstruction::CreateBroadcast(collective->shape(), constant, {}));
++          HloInstruction::CreateBroadcast(collective->shape(), constant, {})); });
+     }
+     case ReductionKind::SUM: {
+       ABSL_ASSIGN_OR_RETURN(auto count_and_size,
+@@ -1367,9 +1401,9 @@ absl::Status AlgebraicSimplifierVisitor::HandleAllReduceOrReduceScatter(
+       HloInstruction* new_constant = computation_->AddInstruction(
+           HloInstruction::CreateConstant(std::move(new_literal)));
+ 
+-      return ReplaceWithNewInstruction(
++      return ObserveAlgebraicRewrite(1370, __func__, [&]() { return ReplaceWithNewInstruction(
+           collective, HloInstruction::CreateBroadcast(collective->shape(),
+-                                                      new_constant, {}));
++                                                      new_constant, {})); });
+     }
+     default:
+       return absl::OkStatus();
+@@ -1396,13 +1430,13 @@ absl::Status AlgebraicSimplifierVisitor::HandleAnd(
+     // A && True => A
+     VLOG(10) << "trying transform [A && True => A]: "
+              << logical_and->ToString();
+-    if (IsAll(rhs, 1) && ReplaceInstructionIfCompatible(logical_and, lhs)) {
++    if (IsAll(rhs, 1) && ObserveAlgebraicRewrite(1399, __func__, [&]() { return ReplaceInstructionIfCompatible(logical_and, lhs); })) {
+       return absl::OkStatus();
+     }
+     // True && A => A
+     VLOG(10) << "trying transform [True && A => A]: "
+              << logical_and->ToString();
+-    if (IsAll(lhs, 1) && ReplaceInstructionIfCompatible(logical_and, rhs)) {
++    if (IsAll(lhs, 1) && ObserveAlgebraicRewrite(1405, __func__, [&]() { return ReplaceInstructionIfCompatible(logical_and, rhs); })) {
+       return absl::OkStatus();
+     }
+   }
+@@ -1410,14 +1444,14 @@ absl::Status AlgebraicSimplifierVisitor::HandleAnd(
+   // A && False => False or A & 0 => 0
+   VLOG(10) << "trying transform [A && False => False]: "
+            << logical_and->ToString();
+-  if (IsAll(rhs, 0) && ReplaceInstructionIfCompatible(logical_and, rhs)) {
++  if (IsAll(rhs, 0) && ObserveAlgebraicRewrite(1413, __func__, [&]() { return ReplaceInstructionIfCompatible(logical_and, rhs); })) {
+     return absl::OkStatus();
+   }
+ 
+   // False && A => False or A & 0 => 0
+   VLOG(10) << "trying transform [False && A => False]: "
+            << logical_and->ToString();
+-  if (IsAll(lhs, 0) && ReplaceInstructionIfCompatible(logical_and, lhs)) {
++  if (IsAll(lhs, 0) && ObserveAlgebraicRewrite(1420, __func__, [&]() { return ReplaceInstructionIfCompatible(logical_and, lhs); })) {
+     return absl::OkStatus();
+   }
+ 
+@@ -1468,8 +1502,8 @@ absl::Status AlgebraicSimplifierVisitor::HandleBitcast(
+     auto new_unary = unary_op->parent()->AddInstruction(
+         unary_op->CloneWithNewOperands(inner_bitcast->operand(0)->shape(),
+                                        {inner_bitcast->mutable_operand(0)}));
+-    return ReplaceWithNewInstruction(
+-        bitcast, HloInstruction::CreateBitcast(bitcast->shape(), new_unary));
++    return ObserveAlgebraicRewrite(1471, __func__, [&]() { return ReplaceWithNewInstruction(
++        bitcast, HloInstruction::CreateBitcast(bitcast->shape(), new_unary)); });
+   }
+ 
+   // If a bitcast feeds a bitcast, make it a single bitcast.
+@@ -1482,7 +1516,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleBitcast(
+     auto new_bitcast = HloInstruction::CreateBitcast(bitcast->shape(), op);
+     HloInstruction* new_bitcast_ptr = new_bitcast.get();
+     ABSL_RETURN_IF_ERROR(
+-        ReplaceWithNewInstruction(bitcast, std::move(new_bitcast)));
++        ObserveAlgebraicRewrite(1485, __func__, [&]() { return ReplaceWithNewInstruction(bitcast, std::move(new_bitcast)); }));
+     bitcast = new_bitcast_ptr;
+   }
+ 
+@@ -1493,7 +1527,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleBitcast(
+   }
+ 
+   // All bitcasts can be eliminated (assuming layout constraints are satisfied).
+-  if (ReplaceInstructionIfCompatible(bitcast, new_bitcast)) {
++  if (ObserveAlgebraicRewrite(1496, __func__, [&]() { return ReplaceInstructionIfCompatible(bitcast, new_bitcast); })) {
+     bitcast = new_bitcast;
+   }
+ 
+@@ -1760,7 +1794,7 @@ bool AlgebraicSimplifierVisitor::SwapCopyBitcastCopy(
+             bitcast->CloneWithNewOperands(new_shape.value(), {op})));
+     VLOG(2) << "Replace with " << repl->operand(0)->ToString() << "\n"
+             << repl->ToString() << "\n";
+-    CHECK_OK(ReplaceWithNewInstruction(root_copy, std::move(repl)));
++    CHECK_OK(ObserveAlgebraicRewrite(1763, __func__, [&]() { return ReplaceWithNewInstruction(root_copy, std::move(repl)); }));
+     return true;
+   }
+ 
+@@ -1776,7 +1810,7 @@ bool AlgebraicSimplifierVisitor::SwapCopyBitcastCopy(
+             root_copy->CloneWithNewOperands(new_shape.value(), {op})));
+     VLOG(2) << "Replace with " << repl->operand(0)->ToString() << "\n"
+             << repl->ToString() << "\n";
+-    CHECK_OK(ReplaceWithNewInstruction(root_copy, std::move(repl)));
++    CHECK_OK(ObserveAlgebraicRewrite(1779, __func__, [&]() { return ReplaceWithNewInstruction(root_copy, std::move(repl)); }));
+     return true;
+   }
+   return false;
+@@ -1788,9 +1822,9 @@ absl::Status AlgebraicSimplifierVisitor::HandleBitcastConvert(
+ 
+   // In a chain of BitcastConverts, only keep the last one.
+   if (HloOpcode::kBitcastConvert == operand->opcode()) {
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(1791, __func__, [&]() { return ReplaceWithNewInstruction(
+         bitcast, HloInstruction::CreateBitcastConvert(
+-                     bitcast->shape(), operand->mutable_operand(0)));
++                     bitcast->shape(), operand->mutable_operand(0))); });
+   }
+ 
+   ABSL_ASSIGN_OR_RETURN(bool replaced,
+@@ -1806,7 +1840,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleBitcastConvert(
+     // would fail the HloVerifier.
+     if (ShapeUtil::EqualIgnoringElementType(bitcast->shape(),
+                                             operand->shape())) {
+-      ReplaceWithBitcast(bitcast);
++      ObserveAlgebraicRewrite(1809, __func__, [&]() { return ReplaceWithBitcast(bitcast); });
+       return absl::OkStatus();
+     }
+ 
+@@ -1829,33 +1863,33 @@ absl::Status AlgebraicSimplifierVisitor::HandleBitcastConvert(
+             : bitcast->shape();
+ 
+     if (last_dim_is_contiguous(shape_with_extra_dimension)) {
+-      ReplaceWithBitcast(bitcast);
++      ObserveAlgebraicRewrite(1832, __func__, [&]() { return ReplaceWithBitcast(bitcast); });
+       return absl::OkStatus();
+     }
+   }
+ 
+   // Eliminate bitcast converts between same shape.
+-  ReplaceInstructionIfCompatible(bitcast, bitcast->mutable_operand(0));
++  ObserveAlgebraicRewrite(1838, __func__, [&]() { return ReplaceInstructionIfCompatible(bitcast, bitcast->mutable_operand(0)); });
+   return absl::OkStatus();
+ }
+ 
+ absl::Status AlgebraicSimplifierVisitor::HandleCopy(HloInstruction* copy) {
+-  if (SwapCopyBitcastCopy(copy)) {
++  if (ObserveAlgebraicRewrite(1843, __func__, [&]() { return SwapCopyBitcastCopy(copy); })) {
+     return absl::OkStatus();
+   }
+   // If a copy feeds a copy, make it a single copy.
+   HloInstruction* op;
+   if (Match(copy, m::Copy(m::Copy(m::Op(&op))))) {
+     if (ShapeUtil::Equal(op->shape(), copy->shape())) {
+-      return ReplaceInstruction(copy, op);
++      return ObserveAlgebraicRewrite(1850, __func__, [&]() { return ReplaceInstruction(copy, op); });
+     }
+-    return ReplaceWithNewInstruction(
+-        copy, HloInstruction::CreateUnary(copy->shape(), HloOpcode::kCopy, op));
++    return ObserveAlgebraicRewrite(1852, __func__, [&]() { return ReplaceWithNewInstruction(
++        copy, HloInstruction::CreateUnary(copy->shape(), HloOpcode::kCopy, op)); });
+   }
+   // All copies can be eliminated (assuming layout constraints are satisfied).
+   if ((!copy->has_sharding() ||
+        copy->GetModule()->entry_computation()->root_instruction() != copy) &&
+-      ReplaceInstructionIfCompatible(copy, copy->mutable_operand(0))) {
++      ObserveAlgebraicRewrite(1858, __func__, [&]() { return ReplaceInstructionIfCompatible(copy, copy->mutable_operand(0)); })) {
+     return absl::OkStatus();
+   }
+ 
+@@ -1869,7 +1903,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleCopy(HloInstruction* copy) {
+     HloInstruction* bitcast_operand =
+         BitcastingOperandOfReshapeOrCopyChain(copy, options_);
+     if (bitcast_operand != nullptr) {
+-      ReplaceWithBitcast(copy, bitcast_operand);
++      ObserveAlgebraicRewrite(1872, __func__, [&]() { return ReplaceWithBitcast(copy, bitcast_operand); });
+       return absl::OkStatus();
+     }
+   }
+@@ -1878,10 +1912,10 @@ absl::Status AlgebraicSimplifierVisitor::HandleCopy(HloInstruction* copy) {
+   if (copy->operand(0)->opcode() == HloOpcode::kReshape &&
+       copy->operand(0)->user_count() == 1 &&
+       ShapeUtil::ReshapeIsBitcast(copy->operand(0)->shape(), copy->shape())) {
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(1881, __func__, [&]() { return ReplaceWithNewInstruction(
+         copy,
+         copy->operand(0)->CloneWithNewOperands(
+-            copy->shape(), {copy->mutable_operand(0)->mutable_operand(0)}));
++            copy->shape(), {copy->mutable_operand(0)->mutable_operand(0)})); });
+   }
+ 
+   if (options_.is_layout_sensitive()) {
+@@ -1972,7 +2006,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleCopy(HloInstruction* copy) {
+           if (copy_before != nullptr) {
+             VLOG(5) << "Copy-before: " << copy_before->ToString();
+           }
+-          return ReplaceInstruction(copy, new_reshape);
++          return ObserveAlgebraicRewrite(1975, __func__, [&]() { return ReplaceInstruction(copy, new_reshape); });
+         }
+       }
+     }
+@@ -1986,7 +2020,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleConcatenate(
+   absl::Span<HloInstruction* const> operands(concatenate->operands());
+   if (operands.size() == 1) {
+     // Unary concatenates are useless.
+-    ReplaceInstructionIfCompatible(concatenate, operands[0]);
++    ObserveAlgebraicRewrite(1989, __func__, [&]() { return ReplaceInstructionIfCompatible(concatenate, operands[0]); });
+     return absl::OkStatus();
+   }
+   // Filter out and remove empty operands.
+@@ -2009,7 +2043,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleConcatenate(
+     }
+     VLOG(10) << "trying to replace " << concatenate->ToString() << " with "
+              << replacement->ToString();
+-    ReplaceInstructionIfCompatible(concatenate, replacement);
++    ObserveAlgebraicRewrite(2012, __func__, [&]() { return ReplaceInstructionIfCompatible(concatenate, replacement); });
+     return absl::OkStatus();
+   }
+ 
+@@ -2034,10 +2068,10 @@ absl::Status AlgebraicSimplifierVisitor::HandleConcatenate(
+     }
+   }
+   if (unnested_concat_operands.size() != concatenate->operand_count()) {
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(2037, __func__, [&]() { return ReplaceWithNewInstruction(
+         concatenate, HloInstruction::CreateConcatenate(
+                          concatenate->shape(), unnested_concat_operands,
+-                         concatenate->concatenate_dimension()));
++                         concatenate->concatenate_dimension())); });
+   }
+ 
+   // Check if we can merge "adjacent" slice operands which take slices from the
+@@ -2105,7 +2139,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleConcatenate(
+   if (new_operands.size() < operands.size()) {
+     auto replacement = concatenate->AddInstruction(
+         concatenate->CloneWithNewOperands(concatenate->shape(), new_operands));
+-    ReplaceInstructionIfCompatible(concatenate, replacement);
++    ObserveAlgebraicRewrite(2108, __func__, [&]() { return ReplaceInstructionIfCompatible(concatenate, replacement); });
+     return absl::OkStatus();
+   }
+ 
+@@ -2141,7 +2175,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleConcatenate(
+     HloInstruction* pad = concatenate->AddInstruction(HloInstruction::CreatePad(
+         concatenate->shape(), operands[operand_to_pad],
+         operands[pad_value_operand]->mutable_operand(0), padding_config));
+-    return ReplaceInstruction(concatenate, pad);
++    return ObserveAlgebraicRewrite(2144, __func__, [&]() { return ReplaceInstruction(concatenate, pad); });
+   }
+ 
+   if (absl::c_count(operands, operands[0]) == operands.size() &&
+@@ -2155,10 +2189,10 @@ absl::Status AlgebraicSimplifierVisitor::HandleConcatenate(
+       broadcast_dims.push_back(i);
+     }
+     new_shape.DeleteDimension(concatenate_dimension);
+-    return ReplaceInstruction(
++    return ObserveAlgebraicRewrite(2158, __func__, [&]() { return ReplaceInstruction(
+         concatenate,
+         MakeBroadcastHlo(MakeReshapeHlo(new_shape, operands[0]).value(),
+-                         broadcast_dims, concatenate->shape()));
++                         broadcast_dims, concatenate->shape())); });
+   }
+   return absl::OkStatus();
+ }
+@@ -2187,7 +2221,7 @@ AlgebraicSimplifierVisitor::TrySimplifyTautologicalBitcastConvert(
+   const int64_t concat_dim = concat->concatenate_dimension();
+   ABSL_ASSIGN_OR_RETURN(HloInstruction * new_concat,
+                         MakeConcatHlo(outer_inputs, concat_dim));
+-  ABSL_RETURN_IF_ERROR(ReplaceInstruction(bitcast, new_concat));
++  ABSL_RETURN_IF_ERROR(ObserveAlgebraicRewrite(2190, __func__, [&]() { return ReplaceInstruction(bitcast, new_concat); }));
+ 
+   return true;
+ }
+@@ -2265,7 +2299,7 @@ AlgebraicSimplifierVisitor::TryRemoveUpcastAndDowncastSurroundingBinaryOp(
+       computation->AddInstruction(bin_op_instr->CloneWithNewOperands(
+           ShapeUtil::ChangeElementType(bin_op_instr->shape(), final_type),
+           {arg_1, arg_2}));
+-  ABSL_RETURN_IF_ERROR(ReplaceInstruction(final_convert_instr, new_bin_op));
++  ABSL_RETURN_IF_ERROR(ObserveAlgebraicRewrite(2268, __func__, [&]() { return ReplaceInstruction(final_convert_instr, new_bin_op); }));
+   return absl::OkStatus();
+ }
+ 
+@@ -2290,9 +2324,9 @@ absl::Status AlgebraicSimplifierVisitor::HandleConstant(
+   // Tuple constants aren't directly supported by any backend. Expand them into
+   // explicit Tuple instructions.
+   if (constant->shape().IsTuple()) {
+-    return ReplaceInstruction(
++    return ObserveAlgebraicRewrite(2293, __func__, [&]() { return ReplaceInstruction(
+         constant,
+-        BuildTupleConstant(computation_, constant->literal(), simplifier_));
++        BuildTupleConstant(computation_, constant->literal(), simplifier_)); });
+   }
+ 
+   if (constant->shape().element_type() == TOKEN) {
+@@ -2308,14 +2342,14 @@ absl::Status AlgebraicSimplifierVisitor::HandleConstant(
+         simplifier_->CreateConstantWithLayoutUpdated(std::move(unique_scalar)));
+     HloInstruction* broadcast = constant->AddInstruction(
+         HloInstruction::CreateBroadcast(constant->shape(), scalar, {}));
+-    return ReplaceInstruction(constant, broadcast);
++    return ObserveAlgebraicRewrite(2311, __func__, [&]() { return ReplaceInstruction(constant, broadcast); });
+   }
+ 
+   // If a literal is an increasing sequence from zero, replace it with an iota.
+   if (ShapeUtil::ElementsIn(constant->shape()) > 1 &&
+       constant->literal().IsR1Iota()) {
+-    return ReplaceWithNewInstruction(
+-        constant, HloInstruction::CreateIota(constant->shape(), 0));
++    return ObserveAlgebraicRewrite(2317, __func__, [&]() { return ReplaceWithNewInstruction(
++        constant, HloInstruction::CreateIota(constant->shape(), 0)); });
+   }
+ 
+   if (std::optional<int64_t> stride = constant->literal().IsR1StridedIota()) {
+@@ -2323,10 +2357,10 @@ absl::Status AlgebraicSimplifierVisitor::HandleConstant(
+     HloInstruction* stride_hlo = MakeScalarLike(constant, *stride);
+     HloInstruction* iota = constant->AddInstruction(
+         HloInstruction::CreateIota(constant->shape(), 0));
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(2326, __func__, [&]() { return ReplaceWithNewInstruction(
+         constant,
+         HloInstruction::CreateBinary(constant->shape(), HloOpcode::kMultiply,
+-                                     iota, stride_hlo));
++                                     iota, stride_hlo)); });
+   }
+ 
+   return absl::OkStatus();
+@@ -2339,12 +2373,12 @@ absl::Status AlgebraicSimplifierVisitor::HandleSubtract(HloInstruction* sub) {
+   if (options_.enable_fast_math() ||
+       ShapeUtil::ElementIsIntegral(sub->shape())) {
+     if (lhs == rhs) {
+-      return ReplaceInstruction(sub, MakeScalarLike(sub, 0));
++      return ObserveAlgebraicRewrite(2342, __func__, [&]() { return ReplaceInstruction(sub, MakeScalarLike(sub, 0)); });
+     }
+   }
+   // A - 0 => A
+   VLOG(10) << "trying transform [A - 0 => A]: " << sub->ToString();
+-  if (IsAll(rhs, 0) && ReplaceInstructionIfCompatible(sub, lhs)) {
++  if (IsAll(rhs, 0) && ObserveAlgebraicRewrite(2347, __func__, [&]() { return ReplaceInstructionIfCompatible(sub, lhs); })) {
+     return absl::OkStatus();
+   }
+ 
+@@ -2360,9 +2394,9 @@ absl::Status AlgebraicSimplifierVisitor::HandleSubtract(HloInstruction* sub) {
+       negative_const = rhs->AddInstruction(HloInstruction::CreateBroadcast(
+           broadcast->shape(), negative_const, broadcast->dimensions()));
+     }
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(2363, __func__, [&]() { return ReplaceWithNewInstruction(
+         sub, HloInstruction::CreateBinary(sub->shape(), HloOpcode::kAdd, lhs,
+-                                          negative_const));
++                                          negative_const)); });
+   }
+ 
+   // A - (A - B) => B
+@@ -2371,7 +2405,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleSubtract(HloInstruction* sub) {
+       (ShapeUtil::ElementIsIntegral(sub->shape()) ||
+        options_.enable_fast_math())) {
+     VLOG(10) << "trying transform [x - (x - y) => y]: " << sub->ToString();
+-    if (ReplaceInstructionIfCompatible(sub, rhs)) {
++    if (ObserveAlgebraicRewrite(2374, __func__, [&]() { return ReplaceInstructionIfCompatible(sub, rhs); })) {
+       return absl::OkStatus();
+     }
+   }
+@@ -2383,9 +2417,9 @@ absl::Status AlgebraicSimplifierVisitor::HandleSubtract(HloInstruction* sub) {
+       (ShapeUtil::ElementIsIntegral(sub->shape()) ||
+        options_.enable_fast_math())) {
+     VLOG(10) << "trying transform [x - (x + y) => -y]: " << sub->ToString();
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(2386, __func__, [&]() { return ReplaceWithNewInstruction(
+         sub,
+-        HloInstruction::CreateUnary(sub->shape(), HloOpcode::kNegate, rhs));
++        HloInstruction::CreateUnary(sub->shape(), HloOpcode::kNegate, rhs)); });
+   }
+ 
+   // (A + B) - A => B
+@@ -2398,7 +2432,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleSubtract(HloInstruction* sub) {
+        options_.enable_fast_math())) {
+     VLOG(10) << "trying transform [(x + y) - x => y]: " << sub->ToString();
+     HloInstruction* operand_to_replace_with = (x2 == rhs) ? x1 : x2;
+-    if (ReplaceInstructionIfCompatible(sub, operand_to_replace_with)) {
++    if (ObserveAlgebraicRewrite(2401, __func__, [&]() { return ReplaceInstructionIfCompatible(sub, operand_to_replace_with); })) {
+       return absl::OkStatus();
+     }
+   }
+@@ -2475,7 +2509,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleDivide(HloInstruction* divide) {
+   CHECK(Match(divide, m::Divide(m::Op(&a), m::Op(&b))));
+   // A/1 => A
+   VLOG(10) << "trying transform [A/1 => A]: " << divide->ToString();
+-  if (IsAll(b, 1) && ReplaceInstructionIfCompatible(divide, a)) {
++  if (IsAll(b, 1) && ObserveAlgebraicRewrite(2478, __func__, [&]() { return ReplaceInstructionIfCompatible(divide, a); })) {
+     return absl::OkStatus();
+   }
+ 
+@@ -2491,7 +2525,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleDivide(HloInstruction* divide) {
+                 return nullptr;
+               },
+               divide->shape().element_type())) {
+-    return ReplaceWithNewInstruction(divide, std::move(shift));
++    return ObserveAlgebraicRewrite(2494, __func__, [&]() { return ReplaceWithNewInstruction(divide, std::move(shift)); });
+   }
+ 
+   Shape* shape;
+@@ -2502,8 +2536,8 @@ absl::Status AlgebraicSimplifierVisitor::HandleDivide(HloInstruction* divide) {
+     VLOG(10) << "transform [exp(A)/exp(B) => exp(A-B)]: " << divide->ToString();
+     HloInstruction* subtract = divide->AddInstruction(
+         HloInstruction::CreateBinary(*shape, HloOpcode::kSubtract, a, b));
+-    return ReplaceWithNewInstruction(
+-        divide, HloInstruction::CreateUnary(*shape, HloOpcode::kExp, subtract));
++    return ObserveAlgebraicRewrite(2505, __func__, [&]() { return ReplaceWithNewInstruction(
++        divide, HloInstruction::CreateUnary(*shape, HloOpcode::kExp, subtract)); });
+   }
+ 
+   // A/exp(B) => A*exp(-B)
+@@ -2514,9 +2548,9 @@ absl::Status AlgebraicSimplifierVisitor::HandleDivide(HloInstruction* divide) {
+         HloInstruction::CreateUnary(divide->shape(), HloOpcode::kNegate, b));
+     HloInstruction* new_exp = divide->mutable_operand(1)->AddInstruction(
+         HloInstruction::CreateUnary(divide->shape(), HloOpcode::kExp, negate));
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(2517, __func__, [&]() { return ReplaceWithNewInstruction(
+         divide, HloInstruction::CreateBinary(divide->shape(),
+-                                             HloOpcode::kMultiply, a, new_exp));
++                                             HloOpcode::kMultiply, a, new_exp)); });
+   }
+ 
+   // A/pow(B,C) => A*pow(B,-C)
+@@ -2532,27 +2566,27 @@ absl::Status AlgebraicSimplifierVisitor::HandleDivide(HloInstruction* divide) {
+     HloInstruction* new_power =
+         divide->mutable_operand(1)->AddInstruction(HloInstruction::CreateBinary(
+             new_power_shape, HloOpcode::kPower, b, negate));
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(2535, __func__, [&]() { return ReplaceWithNewInstruction(
+         divide, HloInstruction::CreateBinary(
+-                    divide->shape(), HloOpcode::kMultiply, a, new_power));
++                    divide->shape(), HloOpcode::kMultiply, a, new_power)); });
+   }
+ 
+   // A/sqrt(B) => A*rsqrt(B).
+   if (Match(divide, m::Divide(m::Op(&a), m::Sqrt(m::Op(&b)).WithOneUse()))) {
+     auto* rsqrt = divide->mutable_operand(1)->AddInstruction(
+         HloInstruction::CreateUnary(divide->shape(), HloOpcode::kRsqrt, b));
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(2544, __func__, [&]() { return ReplaceWithNewInstruction(
+         divide, HloInstruction::CreateBinary(rsqrt->shape(),
+-                                             HloOpcode::kMultiply, a, rsqrt));
++                                             HloOpcode::kMultiply, a, rsqrt)); });
+   }
+ 
+   // A/rsqrt(B) => A*sqrt(B).
+   if (Match(divide, m::Divide(m::Op(&a), m::Rsqrt(m::Op(&b)).WithOneUse()))) {
+     auto* sqrt = divide->mutable_operand(1)->AddInstruction(
+         HloInstruction::CreateUnary(divide->shape(), HloOpcode::kSqrt, b));
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(2553, __func__, [&]() { return ReplaceWithNewInstruction(
+         divide, HloInstruction::CreateBinary(sqrt->shape(),
+-                                             HloOpcode::kMultiply, a, sqrt));
++                                             HloOpcode::kMultiply, a, sqrt)); });
+   }
+ 
+   // Simplifying integral division would produce unexpected results.
+@@ -2587,7 +2621,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleDivide(HloInstruction* divide) {
+             ABSL_ASSIGN_OR_RETURN(
+                 auto new_divide,
+                 MakeBinaryHlo(HloOpcode::kMultiply, a, inverse));
+-            return ReplaceInstruction(divide, new_divide);
++            return ObserveAlgebraicRewrite(2590, __func__, [&]() { return ReplaceInstruction(divide, new_divide); });
+           }
+           return absl::OkStatus();
+         },
+@@ -2611,9 +2645,9 @@ absl::Status AlgebraicSimplifierVisitor::HandleDivide(HloInstruction* divide) {
+         b->shape(), HloOpcode::kDivide, MakeScalarLike(b, 1), b));
+     auto* recip_bcast = bcast->AddInstruction(HloInstruction::CreateBroadcast(
+         divide->shape(), recip, bcast->dimensions()));
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(2614, __func__, [&]() { return ReplaceWithNewInstruction(
+         divide, HloInstruction::CreateBinary(
+-                    divide->shape(), HloOpcode::kMultiply, a, recip_bcast));
++                    divide->shape(), HloOpcode::kMultiply, a, recip_bcast)); });
+   }
+ 
+   // (A / B) / (C / D)  =>  (A / B)*(D / C) => (A * D) / (B * C)
+@@ -2626,7 +2660,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleDivide(HloInstruction* divide) {
+     ABSL_ASSIGN_OR_RETURN(auto new_divide, MakeBinaryHlo(HloOpcode::kDivide,
+                                                          a_times_d, b_times_c));
+ 
+-    return ReplaceInstruction(divide, new_divide);
++    return ObserveAlgebraicRewrite(2629, __func__, [&]() { return ReplaceInstruction(divide, new_divide); });
+   }
+ 
+   // (A / B) / C => A / (B * C)
+@@ -2635,7 +2669,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleDivide(HloInstruction* divide) {
+                           MakeBinaryHlo(HloOpcode::kMultiply, b, c));
+     ABSL_ASSIGN_OR_RETURN(auto new_divide,
+                           MakeBinaryHlo(HloOpcode::kDivide, a, b_times_c));
+-    return ReplaceInstruction(divide, new_divide);
++    return ObserveAlgebraicRewrite(2638, __func__, [&]() { return ReplaceInstruction(divide, new_divide); });
+   }
+ 
+   // A / (B / C) => (A*C) / B
+@@ -2644,7 +2678,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleDivide(HloInstruction* divide) {
+                           MakeBinaryHlo(HloOpcode::kMultiply, a, c));
+     ABSL_ASSIGN_OR_RETURN(auto new_divide,
+                           MakeBinaryHlo(HloOpcode::kDivide, a_times_c, b));
+-    return ReplaceInstruction(divide, new_divide);
++    return ObserveAlgebraicRewrite(2647, __func__, [&]() { return ReplaceInstruction(divide, new_divide); });
+   }
+ 
+   // If X is a convert from pred, then
+@@ -2660,7 +2694,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleDivide(HloInstruction* divide) {
+         HloInstruction::CreateBroadcast(divide->shape(), recip, {}));
+     ABSL_ASSIGN_OR_RETURN(auto mul,
+                           MakeBinaryHlo(HloOpcode::kMultiply, recip_bcast, a));
+-    return ReplaceInstruction(divide, mul);
++    return ObserveAlgebraicRewrite(2663, __func__, [&]() { return ReplaceInstruction(divide, mul); });
+   }
+ 
+   return absl::OkStatus();
+@@ -2739,11 +2773,11 @@ AlgebraicSimplifierVisitor::RemoveDegenerateDimensionFromDot(
+   dot->SetupDerivedInstruction(new_dot);
+ 
+   if (ShapeUtil::Compatible(dot->shape(), new_dot->shape())) {
+-    ABSL_RETURN_IF_ERROR(ReplaceInstruction(dot, new_dot));
++    ABSL_RETURN_IF_ERROR(ObserveAlgebraicRewrite(2742, __func__, [&]() { return ReplaceInstruction(dot, new_dot); }));
+   } else {
+-    ABSL_RETURN_IF_ERROR(ReplaceWithNewInstruction(
++    ABSL_RETURN_IF_ERROR(ObserveAlgebraicRewrite(2744, __func__, [&]() { return ReplaceWithNewInstruction(
+         dot, HloInstruction::CreateReshape(dot->shape(), new_dot),
+-        /*preserve_sharding=*/false, /*relay_control_dependency=*/true));
++        /*preserve_sharding=*/false, /*relay_control_dependency=*/true); }));
+   }
+   return true;
+ }
+@@ -2821,9 +2855,9 @@ absl::Status AlgebraicSimplifierVisitor::SimplifyTransposeOfBroadcast(
+       return absl::OkStatus();
+     }
+   }
+-  return ReplaceInstruction(
++  return ObserveAlgebraicRewrite(2824, __func__, [&]() { return ReplaceInstruction(
+       transpose, MakeBroadcastHlo(broadcast->mutable_operand(0), new_bcast_dims,
+-                                  transpose->shape()));
++                                  transpose->shape())); });
+ }
+ 
+ absl::StatusOr<bool>
+@@ -2883,9 +2917,9 @@ AlgebraicSimplifierVisitor::RemoveTransposesFromDotOperands(
+           ? SwapOperandsInDotPrecisionConfig(dot->precision_config())
+           : dot->precision_config()));
+   dot->SetupDerivedInstruction(new_dot);
+-  ABSL_RETURN_IF_ERROR(ReplaceWithNewInstruction(
++  ABSL_RETURN_IF_ERROR(ObserveAlgebraicRewrite(2886, __func__, [&]() { return ReplaceWithNewInstruction(
+       dot,
+-      HloInstruction::CreateTranspose(dot->shape(), new_dot, permutation)));
++      HloInstruction::CreateTranspose(dot->shape(), new_dot, permutation)); }));
+   return true;
+ }
+ 
+@@ -2952,8 +2986,8 @@ absl::StatusOr<bool> AlgebraicSimplifierVisitor::MoveDotParamToRhs(
+   SetupDerivedInstruction(dot, new_transpose,
+                           /*preserve_user_fusion_attr=*/false);
+   ABSL_RETURN_IF_ERROR(
+-      ReplaceInstruction(dot, new_transpose,
+-                         /*preserve_frontend_attributes=*/false));
++      ObserveAlgebraicRewrite(2955, __func__, [&]() { return ReplaceInstruction(dot, new_transpose,
++                         /*preserve_frontend_attributes=*/false); }));
+   return true;
+ }
+ 
+@@ -3782,7 +3816,7 @@ AlgebraicSimplifierVisitor::RewriteAsMultiplyDotWithZeroLhsContractingDim(
+     dot->SetupDerivedInstruction(new_rhs);
+   }
+   dot->SetupDerivedInstruction(new_instruction.get());
+-  return ReplaceWithNewInstruction(dot, std::move(new_instruction));
++  return ObserveAlgebraicRewrite(3785, __func__, [&]() { return ReplaceWithNewInstruction(dot, std::move(new_instruction)); });
+ }
+ 
+ absl::StatusOr<AlgebraicSimplifierVisitor::RewriteResult>
+@@ -4128,10 +4162,10 @@ AlgebraicSimplifierVisitor::AssociativeReorderNestedDot(HloDotInstruction* dot,
+       ABSL_ASSIGN_OR_RETURN(transposed_new_outer,
+                             MakeTransposeHlo(new_outer, permutation));
+       VLOG(10) << "Reordering with associativity and transpose";
+-      ABSL_RETURN_IF_ERROR(ReplaceInstruction(dot, transposed_new_outer));
++      ABSL_RETURN_IF_ERROR(ObserveAlgebraicRewrite(4131, __func__, [&]() { return ReplaceInstruction(dot, transposed_new_outer); }));
+     } else {
+       VLOG(10) << "Reordering with associativity";
+-      ABSL_RETURN_IF_ERROR(ReplaceInstruction(dot, new_outer));
++      ABSL_RETURN_IF_ERROR(ObserveAlgebraicRewrite(4134, __func__, [&]() { return ReplaceInstruction(dot, new_outer); }));
+     }
+     return RewriteResult::kRewritten;
+   }
+@@ -4198,7 +4232,7 @@ absl::Status AlgebraicSimplifierVisitor::RewriteBatchPlusContractingAsReduce(
+   absl::c_iota(reduce_dims, outer_dims + dnums.lhs_batch_dimensions_size());
+   new_dot = AddReduce(new_dot, reduce_dims, dot_type);
+   new_dot = AsType(new_dot, dot->shape().element_type());
+-  return ReplaceInstruction(dot, new_dot);
++  return ObserveAlgebraicRewrite(4201, __func__, [&]() { return ReplaceInstruction(dot, new_dot); });
+ }
+ 
+ bool AlgebraicSimplifierVisitor::SupportedDotPrecisionConfig(
+@@ -4232,8 +4266,8 @@ absl::Status AlgebraicSimplifierVisitor::HandleDot(HloInstruction* dot) {
+     auto zero =
+         dot->AddInstruction(simplifier_->CreateConstantWithLayoutUpdated(
+             LiteralUtil::Zero(dot->shape().element_type())));
+-    return ReplaceWithNewInstruction(
+-        dot, HloInstruction::CreateBroadcast(dot->shape(), zero, {}));
++    return ObserveAlgebraicRewrite(4235, __func__, [&]() { return ReplaceWithNewInstruction(
++        dot, HloInstruction::CreateBroadcast(dot->shape(), zero, {})); });
+   }
+ 
+   // If there are no contracting dimensions, a dot can be rewritten as
+@@ -4278,7 +4312,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleDot(HloInstruction* dot) {
+                           AssociativeReorderDotOperator(dot_cast));
+     if (dot_operator_reordered) {
+       VLOG(10) << "Reordering dot operand to its mirror";
+-      return ReplaceInstruction(dot, dot_operator_reordered);
++      return ObserveAlgebraicRewrite(4281, __func__, [&]() { return ReplaceInstruction(dot, dot_operator_reordered); });
+     }
+   }
+ 
+@@ -4303,7 +4337,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleDot(HloInstruction* dot) {
+     VLOG(10) << " Replaced dot " << dot->ToString()
+              << " with new dot operation: "
+              << dot_of_reorder_optimized->ToString();
+-    return ReplaceInstruction(dot, dot_of_reorder_optimized);
++    return ObserveAlgebraicRewrite(4306, __func__, [&]() { return ReplaceInstruction(dot, dot_of_reorder_optimized); });
+   }
+ 
+   ABSL_ASSIGN_OR_RETURN(HloInstruction * dot_of_concat_optimized,
+@@ -4311,7 +4345,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleDot(HloInstruction* dot) {
+   if (dot_of_concat_optimized) {
+     VLOG(10) << "Replaced dot(concat(...), constant) with add(dot(..., "
+                 "constant)...)";
+-    return ReplaceInstruction(dot, dot_of_concat_optimized);
++    return ObserveAlgebraicRewrite(4314, __func__, [&]() { return ReplaceInstruction(dot, dot_of_concat_optimized); });
+   }
+ 
+   // Simplify dot(ConstA, Gather(Index, ConstB)) to:
+@@ -4322,7 +4356,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleDot(HloInstruction* dot) {
+   if (dot_of_gather_optimized) {
+     VLOG(10) << "Replaced dot(constA, gather(i, constB)) with "
+                 "gather(i, dot*(constA, constB))";
+-    return ReplaceInstruction(dot, dot_of_gather_optimized);
++    return ObserveAlgebraicRewrite(4325, __func__, [&]() { return ReplaceInstruction(dot, dot_of_gather_optimized); });
+   }
+ 
+   ABSL_ASSIGN_OR_RETURN(bool removed_degenerate_dimensions,
+@@ -4470,7 +4504,7 @@ GatherOfPadInfo CheckPaddedDimsForGatherOfPad(
+ absl::Status AlgebraicSimplifierVisitor::HandleGather(HloInstruction* gather) {
+   const Shape& operand_shape = gather->operand(0)->shape();
+   if (ShapeUtil::IsZeroElementArray(operand_shape)) {
+-    return ReplaceInstruction(gather, MakeScalarLike(gather, 0));
++    return ObserveAlgebraicRewrite(4473, __func__, [&]() { return ReplaceInstruction(gather, MakeScalarLike(gather, 0)); });
+   }
+ 
+   // Gathering from a scalar operand is simply a broadcast of that scalar
+@@ -4484,7 +4518,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleGather(HloInstruction* gather) {
+     }
+     HloInstruction* new_gather =
+         MakeBroadcastHlo(new_operand, {}, gather->shape());
+-    return ReplaceInstruction(gather, new_gather);
++    return ObserveAlgebraicRewrite(4487, __func__, [&]() { return ReplaceInstruction(gather, new_gather); });
+   }
+   // If the operand of a gather is very small, it is easier to fuse a
+   // sequence of selects.
+@@ -4519,7 +4553,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleGather(HloInstruction* gather) {
+           HloInstruction::CreateTernary(gather->shape(), HloOpcode::kSelect,
+                                         index_mask, get_value(i), result));
+     }
+-    return ReplaceInstruction(gather, result);
++    return ObserveAlgebraicRewrite(4522, __func__, [&]() { return ReplaceInstruction(gather, result); });
+   }
+ 
+   const hlo_sharding_util::GatherScatterDims operand_passthrough_dims =
+@@ -4594,7 +4628,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleGather(HloInstruction* gather) {
+       }
+       result = gather->AddInstruction(HloInstruction::CreatePad(
+           gather->shape(), result, pad->mutable_operand(1), pad_config));
+-      return ReplaceInstruction(gather, result);
++      return ObserveAlgebraicRewrite(4597, __func__, [&]() { return ReplaceInstruction(gather, result); });
+     }
+   }
+ 
+@@ -4686,7 +4720,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleGather(HloInstruction* gather) {
+         }
+         result = gather->AddInstruction(HloInstruction::CreatePad(
+             gather->shape(), result, pad->mutable_operand(1), pad_config));
+-        return ReplaceInstruction(gather, result);
++        return ObserveAlgebraicRewrite(4689, __func__, [&]() { return ReplaceInstruction(gather, result); });
+       }
+     }
+   }
+@@ -4761,7 +4795,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleMaximum(
+ 
+   // max(x, x) -> x
+   if (lhs == rhs) {
+-    return ReplaceInstruction(maximum, lhs);
++    return ObserveAlgebraicRewrite(4764, __func__, [&]() { return ReplaceInstruction(maximum, lhs); });
+   }
+ 
+   // max(x, -inf) -> x
+@@ -4775,22 +4809,22 @@ absl::Status AlgebraicSimplifierVisitor::HandleMaximum(
+     PrimitiveType rhs_ty = rhs->shape().element_type();
+     Literal min_val_lhs = LiteralUtil::MinValue(lhs_ty);
+     if (rhs_ty == ty && IsAll(lhs, min_val_lhs)) {
+-      return ReplaceInstruction(maximum, rhs);
++      return ObserveAlgebraicRewrite(4778, __func__, [&]() { return ReplaceInstruction(maximum, rhs); });
+     }
+     Literal min_val_rhs = LiteralUtil::MinValue(rhs_ty);
+     if (lhs_ty == ty && IsAll(rhs, min_val_rhs)) {
+-      return ReplaceInstruction(maximum, lhs);
++      return ObserveAlgebraicRewrite(4782, __func__, [&]() { return ReplaceInstruction(maximum, lhs); });
+     }
+   }
+ 
+   // max(max(x, y), y) -> max(x, y)
+   // max(max(x, y), x) -> max(x, y)
+   if (Match(lhs, m::MaximumAnyOrder(m::Op(), m::Op().Is(rhs)))) {
+-    return ReplaceInstruction(maximum, lhs);
++    return ObserveAlgebraicRewrite(4789, __func__, [&]() { return ReplaceInstruction(maximum, lhs); });
+   }
+   // max(x, max(x, y)) -> max(x, y)
+   if (Match(rhs, m::Maximum(m::Op().Is(lhs), m::Op()))) {
+-    return ReplaceInstruction(maximum, rhs);
++    return ObserveAlgebraicRewrite(4793, __func__, [&]() { return ReplaceInstruction(maximum, rhs); });
+   }
+   // max(y, max(x, y)) -> max(y, x)
+   // Note that we cannot simplify to max(x, y) here, as for the case that x and
+@@ -4798,7 +4832,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleMaximum(
+   if (Match(rhs, m::Maximum(m::Op(), m::Op().Is(lhs)))) {
+     ABSL_RETURN_IF_ERROR(
+         maximum->ReplaceOperandWith(1, rhs->mutable_operand(0)));
+-    MarkAsChanged();
++    ObserveAlgebraicRewrite(4801, __func__, [&]() { return MarkAsChanged(); });
+     return absl::OkStatus();
+   }
+ 
+@@ -4816,7 +4850,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleMaximum(
+                           MinMaxToClamp(clamp_lower_bound_bcast, to_clamp,
+                                         clamp_upper_bound_bcast, simplifier_));
+     if (clamp) {
+-      return ReplaceWithNewInstruction(maximum, std::move(clamp));
++      return ObserveAlgebraicRewrite(4819, __func__, [&]() { return ReplaceWithNewInstruction(maximum, std::move(clamp)); });
+     }
+   }
+ 
+@@ -4830,7 +4864,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleMaximum(
+                 m::Clamp(&clamp, m::Op(&clamp_lower_bound), m::Op(&to_clamp),
+                          m::Op(&clamp_upper_bound))))) {
+     if (max_operand == clamp_lower_bound &&
+-        ReplaceInstructionIfCompatible(maximum, clamp)) {
++        ObserveAlgebraicRewrite(4833, __func__, [&]() { return ReplaceInstructionIfCompatible(maximum, clamp); })) {
+       return absl::OkStatus();
+     }
+   }
+@@ -4857,9 +4891,9 @@ absl::Status AlgebraicSimplifierVisitor::HandleMaximum(
+         MakeBinaryHlo(HloOpcode::kMaximum, lhs->mutable_operand(0),
+                       rhs->mutable_operand(0)));
+     VLOG(10) << "Sinking nondecreasing op through max";
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(4860, __func__, [&]() { return ReplaceWithNewInstruction(
+         maximum, HloInstruction::CreateUnary(maximum->shape(), lhs->opcode(),
+-                                             new_maximum));
++                                             new_maximum)); });
+   }
+ 
+   return absl::OkStatus();
+@@ -4872,7 +4906,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleMinimum(
+ 
+   // min(x, x) -> x
+   if (lhs == rhs) {
+-    return ReplaceInstruction(minimum, lhs);
++    return ObserveAlgebraicRewrite(4875, __func__, [&]() { return ReplaceInstruction(minimum, lhs); });
+   }
+ 
+   // min(x, inf) -> x
+@@ -4886,22 +4920,22 @@ absl::Status AlgebraicSimplifierVisitor::HandleMinimum(
+     PrimitiveType rhs_ty = rhs->shape().element_type();
+     Literal max_val_lhs = LiteralUtil::MaxValue(lhs_ty);
+     if (rhs_ty == ty && IsAll(lhs, max_val_lhs)) {
+-      return ReplaceInstruction(minimum, rhs);
++      return ObserveAlgebraicRewrite(4889, __func__, [&]() { return ReplaceInstruction(minimum, rhs); });
+     }
+     Literal max_val_rhs = LiteralUtil::MaxValue(rhs_ty);
+     if (lhs_ty == ty && IsAll(rhs, max_val_rhs)) {
+-      return ReplaceInstruction(minimum, lhs);
++      return ObserveAlgebraicRewrite(4893, __func__, [&]() { return ReplaceInstruction(minimum, lhs); });
+     }
+   }
+ 
+   // min(min(x, y), y) -> min(x, y)
+   // min(min(x, y), x) -> min(x, y)
+   if (Match(lhs, m::MinimumAnyOrder(m::Op(), m::Op().Is(rhs)))) {
+-    return ReplaceInstruction(minimum, lhs);
++    return ObserveAlgebraicRewrite(4900, __func__, [&]() { return ReplaceInstruction(minimum, lhs); });
+   }
+   // min(x, min(x, y)) -> min(x, y)
+   if (Match(rhs, m::Minimum(m::Op().Is(lhs), m::Op()))) {
+-    return ReplaceInstruction(minimum, rhs);
++    return ObserveAlgebraicRewrite(4904, __func__, [&]() { return ReplaceInstruction(minimum, rhs); });
+   }
+   // min(y, min(x, y)) -> min(y, x)
+   // Note that we cannot simplify to min(x, y) here, as for the case that x and
+@@ -4909,7 +4943,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleMinimum(
+   if (Match(rhs, m::Minimum(m::Op(), m::Op().Is(lhs)))) {
+     ABSL_RETURN_IF_ERROR(
+         minimum->ReplaceOperandWith(1, rhs->mutable_operand(0)));
+-    MarkAsChanged();
++    ObserveAlgebraicRewrite(4912, __func__, [&]() { return MarkAsChanged(); });
+     return absl::OkStatus();
+   }
+ 
+@@ -4927,7 +4961,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleMinimum(
+                           MinMaxToClamp(clamp_lower_bound_bcast, to_clamp,
+                                         clamp_upper_bound_bcast, simplifier_));
+     if (clamp) {
+-      return ReplaceWithNewInstruction(minimum, std::move(clamp));
++      return ObserveAlgebraicRewrite(4930, __func__, [&]() { return ReplaceWithNewInstruction(minimum, std::move(clamp)); });
+     }
+   }
+ 
+@@ -4944,7 +4978,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleClamp(HloInstruction* clamp) {
+   // clamp(a, clamp(a, x, b), b) -> clamp(a, x, b)
+   if (Match(to_clamp, m::Clamp(m::Op().Is(clamp_lower_bound), m::Op(),
+                                m::Op().Is(clamp_upper_bound))) &&
+-      ReplaceInstructionIfCompatible(clamp, to_clamp)) {
++      ObserveAlgebraicRewrite(4947, __func__, [&]() { return ReplaceInstructionIfCompatible(clamp, to_clamp); })) {
+     return absl::OkStatus();
+   }
+ 
+@@ -4964,7 +4998,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleClamp(HloInstruction* clamp) {
+     // pid/rid < runtime_bound => The clamp(0, pid/rid, upper_bound) is
+     // redundant if the runtime_bound <= upper_bound + 1;
+     if (runtime_bound != 1 && runtime_bound <= upper_bound + 1) {
+-      return ReplaceInstruction(clamp, to_clamp);
++      return ObserveAlgebraicRewrite(4967, __func__, [&]() { return ReplaceInstruction(clamp, to_clamp); });
+     }
+   }
+ 
+@@ -5013,7 +5047,7 @@ absl::Status AlgebraicSimplifierVisitor::TryToReorderConvAddMultiply(
+           bias->shape(), HloOpcode::kMultiply, bias, broadcast));
+   std::unique_ptr<HloInstruction> new_add =
+       add->CloneWithNewOperands(add->shape(), {new_conv, bias_multiply});
+-  return ReplaceWithNewInstruction(multiply, std::move(new_add));
++  return ObserveAlgebraicRewrite(5016, __func__, [&]() { return ReplaceWithNewInstruction(multiply, std::move(new_add)); });
+ }
+ 
+ absl::Status AlgebraicSimplifierVisitor::HandleMultiply(
+@@ -5022,12 +5056,12 @@ absl::Status AlgebraicSimplifierVisitor::HandleMultiply(
+   CHECK(Match(multiply, m::Multiply(m::Op(&lhs), m::Op(&rhs))));
+   // LHS*1 => LHS
+   VLOG(10) << "trying transform [LHS*1 => LHS]: " << multiply->ToString();
+-  if (IsAll(rhs, 1) && ReplaceInstructionIfCompatible(multiply, lhs)) {
++  if (IsAll(rhs, 1) && ObserveAlgebraicRewrite(5025, __func__, [&]() { return ReplaceInstructionIfCompatible(multiply, lhs); })) {
+     return absl::OkStatus();
+   }
+   // 1*RHS => RHS
+   VLOG(10) << "trying transform [1*RHS => RHS]: " << multiply->ToString();
+-  if (IsAll(lhs, 1) && ReplaceInstructionIfCompatible(multiply, rhs)) {
++  if (IsAll(lhs, 1) && ObserveAlgebraicRewrite(5030, __func__, [&]() { return ReplaceInstructionIfCompatible(multiply, rhs); })) {
+     return absl::OkStatus();
+   }
+ 
+@@ -5035,14 +5069,14 @@ absl::Status AlgebraicSimplifierVisitor::HandleMultiply(
+   if (IsAll(lhs, 0) &&
+       (options_.enable_fast_math() ||
+        primitive_util::IsIntegralType(multiply->shape().element_type())) &&
+-      ReplaceInstructionIfCompatible(multiply, lhs)) {
++      ObserveAlgebraicRewrite(5038, __func__, [&]() { return ReplaceInstructionIfCompatible(multiply, lhs); })) {
+     return absl::OkStatus();
+   }
+   // LHS*0 => 0
+   if (IsAll(rhs, 0) &&
+       (options_.enable_fast_math() ||
+        primitive_util::IsIntegralType(multiply->shape().element_type())) &&
+-      ReplaceInstructionIfCompatible(multiply, rhs)) {
++      ObserveAlgebraicRewrite(5045, __func__, [&]() { return ReplaceInstructionIfCompatible(multiply, rhs); })) {
+     return absl::OkStatus();
+   }
+ 
+@@ -5053,7 +5087,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleMultiply(
+               m::Multiply(m::Negate(m::Op(&a)), m::Negate(m::Op(&b))))) {
+       ABSL_RETURN_IF_ERROR(multiply->ReplaceOperandWith(0, a));
+       ABSL_RETURN_IF_ERROR(multiply->ReplaceOperandWith(1, b));
+-      MarkAsChanged();
++      ObserveAlgebraicRewrite(5056, __func__, [&]() { return MarkAsChanged(); });
+       return absl::OkStatus();
+     }
+   }
+@@ -5064,7 +5098,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleMultiply(
+         !ShapeUtil::ElementIsComplex(abs_operand->shape())) {
+       ABSL_RETURN_IF_ERROR(multiply->ReplaceOperandWith(0, abs_operand));
+       ABSL_RETURN_IF_ERROR(multiply->ReplaceOperandWith(1, abs_operand));
+-      MarkAsChanged();
++      ObserveAlgebraicRewrite(5067, __func__, [&]() { return MarkAsChanged(); });
+       return absl::OkStatus();
+     }
+   }
+@@ -5080,10 +5114,10 @@ absl::Status AlgebraicSimplifierVisitor::HandleMultiply(
+                           .WithShape(m::Shape().WithElementType(PRED)))))) {
+       HloInstruction* zero_like_multiply =
+           BroadcastZeros(computation_, multiply->shape());
+-      return ReplaceWithNewInstruction(
++      return ObserveAlgebraicRewrite(5083, __func__, [&]() { return ReplaceWithNewInstruction(
+           multiply, HloInstruction::CreateTernary(
+                         multiply->shape(), HloOpcode::kSelect, convert_operand,
+-                        operand, zero_like_multiply));
++                        operand, zero_like_multiply)); });
+     }
+   }
+ 
+@@ -5104,12 +5138,12 @@ absl::Status AlgebraicSimplifierVisitor::HandleMultiply(
+                 multiply->shape(), product_of_constants, {}));
+       }
+ 
+-      return ReplaceWithNewInstruction(
++      return ObserveAlgebraicRewrite(5107, __func__, [&]() { return ReplaceWithNewInstruction(
+           multiply, HloInstruction::CreateBinary(
+                         multiply->shape(), HloOpcode::kMultiply,
+                         multiply->AddInstruction(HloInstruction::CreateBinary(
+                             multiply->shape(), HloOpcode::kMultiply, a, b)),
+-                        product_of_constants));
++                        product_of_constants)); });
+     }
+   }
+ 
+@@ -5129,10 +5163,10 @@ absl::Status AlgebraicSimplifierVisitor::HandleMultiply(
+                 multiply->shape(), product_of_constants, {}));
+       }
+ 
+-      return ReplaceWithNewInstruction(
++      return ObserveAlgebraicRewrite(5132, __func__, [&]() { return ReplaceWithNewInstruction(
+           multiply,
+           HloInstruction::CreateBinary(multiply->shape(), HloOpcode::kMultiply,
+-                                       a, product_of_constants));
++                                       a, product_of_constants)); });
+     }
+   }
+ 
+@@ -5162,12 +5196,12 @@ absl::Status AlgebraicSimplifierVisitor::HandleMultiply(
+         auto new_mul = multiply->AddInstruction(HloInstruction::CreateBinary(
+             b->shape(), HloOpcode::kMultiply, b, constant));
+ 
+-        return ReplaceWithNewInstruction(
++        return ObserveAlgebraicRewrite(5165, __func__, [&]() { return ReplaceWithNewInstruction(
+             multiply,
+             HloInstruction::CreateBinary(
+                 multiply->shape(), HloOpcode::kMultiply, a,
+                 multiply->AddInstruction(HloInstruction::CreateBroadcast(
+-                    multiply->shape(), new_mul, dims))));
++                    multiply->shape(), new_mul, dims)))); });
+       }
+     }
+   }
+@@ -5189,10 +5223,10 @@ absl::Status AlgebraicSimplifierVisitor::HandleMultiply(
+           multiply->AddInstruction(HloInstruction::CreateBroadcast(
+               multiply->shape(), product_of_constants, {}));
+     }
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(5192, __func__, [&]() { return ReplaceWithNewInstruction(
+         multiply,
+         HloInstruction::CreateBinary(multiply->shape(), HloOpcode::kMultiply, a,
+-                                     product_of_constants));
++                                     product_of_constants)); });
+   }
+ 
+   VLOG(10) << "trying to transform exp(LHS) * exp(RHS) => exp(LHS+RHS) "
+@@ -5201,9 +5235,9 @@ absl::Status AlgebraicSimplifierVisitor::HandleMultiply(
+       Match(multiply, m::Multiply(m::Exp(m::Op(&lhs)), m::Exp(m::Op(&rhs))))) {
+     auto add = multiply->AddInstruction(HloInstruction::CreateBinary(
+         multiply->shape(), HloOpcode::kAdd, lhs, rhs));
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(5204, __func__, [&]() { return ReplaceWithNewInstruction(
+         multiply,
+-        HloInstruction::CreateUnary(multiply->shape(), HloOpcode::kExp, add));
++        HloInstruction::CreateUnary(multiply->shape(), HloOpcode::kExp, add)); });
+   }
+ 
+   VLOG(10) << "trying transform [sqrt(x) * sqrt(x) => x], for x >= 0 "
+@@ -5215,7 +5249,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleMultiply(
+               m::Sqrt(m::Op().WithPredicate(sqrt_x.capture_or_verify_fn())),
+               m::Sqrt(m::Op().WithPredicate(sqrt_x.capture_or_verify_fn())))) &&
+       IsNonNegative(sqrt_x.instr(), options_)) {
+-    return ReplaceInstruction(multiply, sqrt_x.instr());
++    return ObserveAlgebraicRewrite(5218, __func__, [&]() { return ReplaceInstruction(multiply, sqrt_x.instr()); });
+   }
+ 
+   VLOG(10) << "trying transform [rsqrt(x) * rsqrt(x) => 1/x], for x >= 0 "
+@@ -5227,10 +5261,10 @@ absl::Status AlgebraicSimplifierVisitor::HandleMultiply(
+                 m::Rsqrt(
+                     m::Op().WithPredicate(rsqrt_x.capture_or_verify_fn())))) &&
+       IsNonNegative(rsqrt_x.instr(), options_)) {
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(5230, __func__, [&]() { return ReplaceWithNewInstruction(
+         multiply, HloInstruction::CreateBinary(
+                       multiply->shape(), HloOpcode::kDivide,
+-                      MakeScalarLike(rsqrt_x.instr(), 1), rsqrt_x.instr()));
++                      MakeScalarLike(rsqrt_x.instr(), 1), rsqrt_x.instr())); });
+   }
+ 
+   return TryToReorderConvAddMultiply(multiply);
+@@ -5240,7 +5274,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleNegate(HloInstruction* negate) {
+   // negate(negate(x)) => x
+   HloInstruction* x;
+   if (Match(negate, m::Negate(m::Negate(m::Op(&x)))) &&
+-      ReplaceInstructionIfCompatible(negate, x)) {
++      ObserveAlgebraicRewrite(5243, __func__, [&]() { return ReplaceInstructionIfCompatible(negate, x); })) {
+     return absl::OkStatus();
+   }
+   return absl::OkStatus();
+@@ -5251,7 +5285,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleNot(
+   // not(not(x)) => x
+   HloInstruction* x;
+   if (Match(logical_not, m::Not(m::Not(m::Op(&x)))) &&
+-      ReplaceInstructionIfCompatible(logical_not, x)) {
++      ObserveAlgebraicRewrite(5254, __func__, [&]() { return ReplaceInstructionIfCompatible(logical_not, x); })) {
+     return absl::OkStatus();
+   }
+   return absl::OkStatus();
+@@ -5267,26 +5301,26 @@ absl::Status AlgebraicSimplifierVisitor::HandleOr(HloInstruction* logical_or) {
+     // A || True => True
+     VLOG(10) << "trying transform [A || True => True]: "
+              << logical_or->ToString();
+-    if (IsAll(rhs, 1) && ReplaceInstructionIfCompatible(logical_or, rhs)) {
++    if (IsAll(rhs, 1) && ObserveAlgebraicRewrite(5270, __func__, [&]() { return ReplaceInstructionIfCompatible(logical_or, rhs); })) {
+       return absl::OkStatus();
+     }
+     // True || A => True
+     VLOG(10) << "trying transform [True || A => True]: "
+              << logical_or->ToString();
+-    if (IsAll(lhs, 1) && ReplaceInstructionIfCompatible(logical_or, lhs)) {
++    if (IsAll(lhs, 1) && ObserveAlgebraicRewrite(5276, __func__, [&]() { return ReplaceInstructionIfCompatible(logical_or, lhs); })) {
+       return absl::OkStatus();
+     }
+   }
+ 
+   // A || False => A and A | 0 => A
+   VLOG(10) << "trying transform [A || False => A]: " << logical_or->ToString();
+-  if (IsAll(rhs, 0) && ReplaceInstructionIfCompatible(logical_or, lhs)) {
++  if (IsAll(rhs, 0) && ObserveAlgebraicRewrite(5283, __func__, [&]() { return ReplaceInstructionIfCompatible(logical_or, lhs); })) {
+     return absl::OkStatus();
+   }
+ 
+   // False || A => A and 0 | A => A
+   VLOG(10) << "trying transform [False || A => A]: " << logical_or->ToString();
+-  if (IsAll(lhs, 0) && ReplaceInstructionIfCompatible(logical_or, rhs)) {
++  if (IsAll(lhs, 0) && ObserveAlgebraicRewrite(5289, __func__, [&]() { return ReplaceInstructionIfCompatible(logical_or, rhs); })) {
+     return absl::OkStatus();
+   }
+ 
+@@ -5310,18 +5344,18 @@ absl::Status AlgebraicSimplifierVisitor::HandleXor(
+                       std::equal_to<const HloComputation*>(),
+                       /*layout_sensitive=*/true,
+                       /*sharding_sensitive=*/true))) {
+-    return ReplaceInstruction(logical_xor, MakeScalarLike(logical_xor, 0));
++    return ObserveAlgebraicRewrite(5313, __func__, [&]() { return ReplaceInstruction(logical_xor, MakeScalarLike(logical_xor, 0)); });
+   }
+ 
+   // A ^ False => A and A ^ 0 => A
+   VLOG(10) << "trying transform [A ^ False => A]: " << logical_xor->ToString();
+-  if (IsAll(rhs, 0) && ReplaceInstructionIfCompatible(logical_xor, lhs)) {
++  if (IsAll(rhs, 0) && ObserveAlgebraicRewrite(5318, __func__, [&]() { return ReplaceInstructionIfCompatible(logical_xor, lhs); })) {
+     return absl::OkStatus();
+   }
+ 
+   // False ^ A => A and 0 ^ A => A
+   VLOG(10) << "trying transform [False ^ A => A]: " << logical_xor->ToString();
+-  if (IsAll(lhs, 0) && ReplaceInstructionIfCompatible(logical_xor, rhs)) {
++  if (IsAll(lhs, 0) && ObserveAlgebraicRewrite(5324, __func__, [&]() { return ReplaceInstructionIfCompatible(logical_xor, rhs); })) {
+     return absl::OkStatus();
+   }
+ 
+@@ -5333,7 +5367,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleLog(HloInstruction* log) {
+   VLOG(10) << "trying transform [ln(exp(A)) => A]: " << log->ToString();
+   HloInstruction *a, *b;
+   if (options_.enable_fast_math() && Match(log, m::Log(m::Exp(m::Op(&a)))) &&
+-      ReplaceInstructionIfCompatible(log, a)) {
++      ObserveAlgebraicRewrite(5336, __func__, [&]() { return ReplaceInstructionIfCompatible(log, a); })) {
+     return absl::OkStatus();
+   }
+ 
+@@ -5353,26 +5387,26 @@ absl::Status AlgebraicSimplifierVisitor::HandleLog(HloInstruction* log) {
+         auto b_is_zero,
+         MakeCompareHlo(Comparison::Direction::kEq, b, MakeScalarLike(b, 0.0)));
+     simplifier_->UpdateLayout(b_is_zero->mutable_shape());
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(5356, __func__, [&]() { return ReplaceWithNewInstruction(
+         log, HloInstruction::CreateTernary(log->shape(), HloOpcode::kSelect,
+                                            b_is_zero, MakeScalarLike(log, 0.0),
+-                                           non_zero_b));
++                                           non_zero_b)); });
+   }
+ 
+   if (Match(log, m::Log(m::Sqrt(m::Op(&a))))) {
+     auto new_log = log->AddInstruction(
+         HloInstruction::CreateUnary(log->shape(), HloOpcode::kLog, a));
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(5365, __func__, [&]() { return ReplaceWithNewInstruction(
+         log, HloInstruction::CreateBinary(log->shape(), HloOpcode::kMultiply,
+-                                          new_log, MakeScalarLike(log, 0.5)));
++                                          new_log, MakeScalarLike(log, 0.5))); });
+   }
+ 
+   if (Match(log, m::Log(m::Rsqrt(m::Op(&a))))) {
+     auto new_log = log->AddInstruction(
+         HloInstruction::CreateUnary(log->shape(), HloOpcode::kLog, a));
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(5373, __func__, [&]() { return ReplaceWithNewInstruction(
+         log, HloInstruction::CreateBinary(log->shape(), HloOpcode::kMultiply,
+-                                          new_log, MakeScalarLike(log, -0.5)));
++                                          new_log, MakeScalarLike(log, -0.5))); });
+   }
+ 
+   return absl::OkStatus();
+@@ -5386,9 +5420,9 @@ absl::Status AlgebraicSimplifierVisitor::HandleGetTupleElement(
+     VLOG(10) << "trying transform "
+              << "[get_tuple_element(make_tuple({...,A_i,...}), i)] => A_i: "
+              << get_tuple_element->ToString();
+-    if (ReplaceInstructionIfCompatible(
++    if (ObserveAlgebraicRewrite(5389, __func__, [&]() { return ReplaceInstructionIfCompatible(
+             get_tuple_element,
+-            operand->mutable_operand(get_tuple_element->tuple_index()))) {
++            operand->mutable_operand(get_tuple_element->tuple_index())); })) {
+       return absl::OkStatus();
+     }
+   }
+@@ -5441,7 +5475,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleOptimizationBarrier(
+     return absl::OkStatus();
+   }
+ 
+-  MarkAsChanged();
++  ObserveAlgebraicRewrite(5444, __func__, [&]() { return MarkAsChanged(); });
+   std::vector<int64_t> index_map(used_elements.size(), -1);
+   std::vector<HloInstruction*> operands;
+   int64_t current_index = 0;
+@@ -5602,8 +5636,8 @@ absl::Status AlgebraicSimplifierVisitor::HandleBroadcast(
+           ShapeUtil::ElementsIn(operand->shape())) {
+     VLOG(10) << "transform broadcast(X) -> reshape(X) where "
+                 "n(broadcast(X)) == n(X)";
+-    return ReplaceWithNewInstruction(
+-        broadcast, HloInstruction::CreateReshape(broadcast->shape(), operand));
++    return ObserveAlgebraicRewrite(5605, __func__, [&]() { return ReplaceWithNewInstruction(
++        broadcast, HloInstruction::CreateReshape(broadcast->shape(), operand)); });
+   }
+ 
+   // A broadcast that has the same input and output rank can be converted into a
+@@ -5612,10 +5646,10 @@ absl::Status AlgebraicSimplifierVisitor::HandleBroadcast(
+           operand->shape().dimensions().size() &&
+       ShapeUtil::ElementsIn(broadcast->shape()) ==
+           ShapeUtil::ElementsIn(operand->shape())) {
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(5615, __func__, [&]() { return ReplaceWithNewInstruction(
+         broadcast, HloInstruction::CreateTranspose(
+                        broadcast->shape(), operand,
+-                       InversePermutation(broadcast->dimensions())));
++                       InversePermutation(broadcast->dimensions()))); });
+   }
+ 
+   // A broadcast of a reshape which merely inserts 1-sized dimensions can
+@@ -5642,10 +5676,10 @@ absl::Status AlgebraicSimplifierVisitor::HandleBroadcast(
+                 return builder.AddInstruction(
+                     xla::HloInstruction::CreateReshape(old_shape, param));
+               });
+-      return ReplaceWithNewInstruction(
++      return ObserveAlgebraicRewrite(5645, __func__, [&]() { return ReplaceWithNewInstruction(
+           broadcast,
+           HloInstruction::CreateBroadcast(broadcast->shape(),
+-                                          operand->mutable_operand(0), dims));
++                                          operand->mutable_operand(0), dims)); });
+     }
+   }
+ 
+@@ -5678,7 +5712,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleBroadcast(
+         // Use HloInstruction::ReplaceAllUsesWith instead of
+         // HloComputation::ReplaceWithNewInstruction because we are replacing an
+         // instruction other than the visited instruction.
+-        MarkAsChanged();
++        ObserveAlgebraicRewrite(5681, __func__, [&]() { return MarkAsChanged(); });
+         return user->ReplaceAllUsesWith(new_broadcast);
+       }
+     }
+@@ -5687,11 +5721,11 @@ absl::Status AlgebraicSimplifierVisitor::HandleBroadcast(
+ 
+   // broadcast(iota) -> iota.
+   if (operand->opcode() == HloOpcode::kIota) {
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(5690, __func__, [&]() { return ReplaceWithNewInstruction(
+         broadcast,
+         HloInstruction::CreateIota(
+             broadcast->shape(),
+-            dims[Cast<HloIotaInstruction>(operand)->iota_dimension()]));
++            dims[Cast<HloIotaInstruction>(operand)->iota_dimension()])); });
+   }
+ 
+   // Merge two consecutive broadcasts into a single one.
+@@ -5701,10 +5735,10 @@ absl::Status AlgebraicSimplifierVisitor::HandleBroadcast(
+     for (auto dim : operand->dimensions()) {
+       new_dimensions.push_back(dims[dim]);
+     }
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(5704, __func__, [&]() { return ReplaceWithNewInstruction(
+         broadcast,
+         HloInstruction::CreateBroadcast(
+-            broadcast->shape(), operand->mutable_operand(0), new_dimensions));
++            broadcast->shape(), operand->mutable_operand(0), new_dimensions)); });
+   }
+   if (options_.is_layout_sensitive()) {
+     return absl::OkStatus();
+@@ -5720,9 +5754,9 @@ absl::Status AlgebraicSimplifierVisitor::HandleBroadcast(
+         new_dims.push_back(dims[i]);
+       }
+     }
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(5723, __func__, [&]() { return ReplaceWithNewInstruction(
+         broadcast, HloInstruction::CreateBroadcast(broadcast->shape(),
+-                                                   new_operand, new_dims));
++                                                   new_operand, new_dims)); });
+   }
+   return absl::OkStatus();
+ }
+@@ -5737,37 +5771,37 @@ absl::Status AlgebraicSimplifierVisitor::HandleCompare(
+     // X u<  0 -> false
+     if (compare->comparison_direction() == ComparisonDirection::kLt &&
+         IsAll(rhs, 0)) {
+-      return ReplaceInstruction(compare, MakeScalarLike(compare, false));
++      return ObserveAlgebraicRewrite(5740, __func__, [&]() { return ReplaceInstruction(compare, MakeScalarLike(compare, false)); });
+     }
+     // X u>= 0 -> true
+     if (compare->comparison_direction() == ComparisonDirection::kGe &&
+         IsAll(rhs, 0)) {
+-      return ReplaceInstruction(compare, MakeScalarLike(compare, true));
++      return ObserveAlgebraicRewrite(5745, __func__, [&]() { return ReplaceInstruction(compare, MakeScalarLike(compare, true)); });
+     }
+     // 0 u>  X -> false
+     if (compare->comparison_direction() == ComparisonDirection::kGt &&
+         IsAll(lhs, 0)) {
+-      return ReplaceInstruction(compare, MakeScalarLike(compare, false));
++      return ObserveAlgebraicRewrite(5750, __func__, [&]() { return ReplaceInstruction(compare, MakeScalarLike(compare, false)); });
+     }
+     // 0 u<= X -> true
+     if (compare->comparison_direction() == ComparisonDirection::kLe &&
+         IsAll(lhs, 0)) {
+-      return ReplaceInstruction(compare, MakeScalarLike(compare, true));
++      return ObserveAlgebraicRewrite(5755, __func__, [&]() { return ReplaceInstruction(compare, MakeScalarLike(compare, true)); });
+     }
+   }
+ 
+   if (compare->comparison_direction() == ComparisonDirection::kLt &&
+       IsNonNegative(lhs, options_) && IsAll(rhs, 0)) {
+-    return ReplaceInstruction(compare, MakeScalarLike(compare, false));
++    return ObserveAlgebraicRewrite(5761, __func__, [&]() { return ReplaceInstruction(compare, MakeScalarLike(compare, false)); });
+   } else if (compare->comparison_direction() == ComparisonDirection::kGt &&
+              IsAll(lhs, 0) && IsNonNegative(rhs, options_)) {
+-    return ReplaceInstruction(compare, MakeScalarLike(compare, false));
++    return ObserveAlgebraicRewrite(5764, __func__, [&]() { return ReplaceInstruction(compare, MakeScalarLike(compare, false)); });
+   } else if (compare->comparison_direction() == ComparisonDirection::kGe &&
+              IsNonNegative(lhs, options_) && IsAll(rhs, 0)) {
+-    return ReplaceInstruction(compare, MakeScalarLike(compare, true));
++    return ObserveAlgebraicRewrite(5767, __func__, [&]() { return ReplaceInstruction(compare, MakeScalarLike(compare, true)); });
+   } else if (compare->comparison_direction() == ComparisonDirection::kLe &&
+              IsAll(lhs, 0) && IsNonNegative(rhs, options_)) {
+-    return ReplaceInstruction(compare, MakeScalarLike(compare, true));
++    return ObserveAlgebraicRewrite(5770, __func__, [&]() { return ReplaceInstruction(compare, MakeScalarLike(compare, true)); });
+   }
+   if (lhs == rhs &&
+       primitive_util::IsIntegralType(lhs->shape().element_type())) {
+@@ -5775,11 +5809,11 @@ absl::Status AlgebraicSimplifierVisitor::HandleCompare(
+       case ComparisonDirection::kGt:
+       case ComparisonDirection::kLt:
+       case ComparisonDirection::kNe:
+-        return ReplaceInstruction(compare, MakeScalarLike(compare, false));
++        return ObserveAlgebraicRewrite(5778, __func__, [&]() { return ReplaceInstruction(compare, MakeScalarLike(compare, false)); });
+       case ComparisonDirection::kEq:
+       case ComparisonDirection::kGe:
+       case ComparisonDirection::kLe:
+-        return ReplaceInstruction(compare, MakeScalarLike(compare, true));
++        return ObserveAlgebraicRewrite(5782, __func__, [&]() { return ReplaceInstruction(compare, MakeScalarLike(compare, true)); });
+     }
+   }
+   if (ShapeUtil::HasPrimitiveType(lhs->shape(), xla::PRED) &&
+@@ -5787,20 +5821,20 @@ absl::Status AlgebraicSimplifierVisitor::HandleCompare(
+     if (compare->comparison_direction() == ComparisonDirection::kNe) {
+       // A != false -> A
+       if (IsAll(rhs, false)) {
+-        return ReplaceInstruction(compare, lhs);
++        return ObserveAlgebraicRewrite(5790, __func__, [&]() { return ReplaceInstruction(compare, lhs); });
+       }
+       // false != A -> A
+       if (IsAll(lhs, false)) {
+-        return ReplaceInstruction(compare, rhs);
++        return ObserveAlgebraicRewrite(5794, __func__, [&]() { return ReplaceInstruction(compare, rhs); });
+       }
+     } else if (compare->comparison_direction() == ComparisonDirection::kEq) {
+       // A == true -> A
+       if (IsAll(rhs, true)) {
+-        return ReplaceInstruction(compare, lhs);
++        return ObserveAlgebraicRewrite(5799, __func__, [&]() { return ReplaceInstruction(compare, lhs); });
+       }
+       // true == A -> A
+       if (IsAll(lhs, true)) {
+-        return ReplaceInstruction(compare, rhs);
++        return ObserveAlgebraicRewrite(5803, __func__, [&]() { return ReplaceInstruction(compare, rhs); });
+       }
+     }
+   }
+@@ -5836,7 +5870,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleCompare(
+                         m::Op(&sel_on_true), m::Op(&sel_on_false))) &&
+         IsAll(sel_on_true, 1) && IsAll(sel_on_false, 0) &&
+         SameShape(compare->shape(), compare0->shape())) {
+-      return ReplaceInstruction(compare, compare0);
++      return ObserveAlgebraicRewrite(5839, __func__, [&]() { return ReplaceInstruction(compare, compare0); });
+     }
+   }
+ 
+@@ -5850,21 +5884,21 @@ absl::Status AlgebraicSimplifierVisitor::HandleCompare(
+     if (Match(lhs, m::Maximum(m::Op(&a), m::Op(&b)))) {
+       if (rhs == a) {  // Gt(Max(a,b), a) -> Gt(b,a)
+         ABSL_RETURN_IF_ERROR(compare->ReplaceOperandWith(0, b));
+-        MarkAsChanged();
++        ObserveAlgebraicRewrite(5853, __func__, [&]() { return MarkAsChanged(); });
+         return absl::OkStatus();
+       } else if (rhs == b) {  // Gt(Max(a,b), b) -> Gt(a,b)
+         ABSL_RETURN_IF_ERROR(compare->ReplaceOperandWith(0, a));
+-        MarkAsChanged();
++        ObserveAlgebraicRewrite(5857, __func__, [&]() { return MarkAsChanged(); });
+         return absl::OkStatus();
+       }
+     } else if (Match(rhs, m::Minimum(m::Op(&a), m::Op(&b)))) {
+       if (lhs == a) {  // Gt(a, Min(a,b)) -> Gt(a,b)
+         ABSL_RETURN_IF_ERROR(compare->ReplaceOperandWith(1, b));
+-        MarkAsChanged();
++        ObserveAlgebraicRewrite(5863, __func__, [&]() { return MarkAsChanged(); });
+         return absl::OkStatus();
+       } else if (lhs == b) {  // Gt(b, Min(a,b)) -> Gt(b,a)
+         ABSL_RETURN_IF_ERROR(compare->ReplaceOperandWith(1, a));
+-        MarkAsChanged();
++        ObserveAlgebraicRewrite(5867, __func__, [&]() { return MarkAsChanged(); });
+         return absl::OkStatus();
+       }
+     }
+@@ -5881,7 +5915,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleConvert(
+   // removed.  A conversion of a constant can be simplified by making a new
+   // constant.
+   if (src_type == dest_type) {
+-    return ReplaceInstruction(convert, convert->mutable_operand(0));
++    return ObserveAlgebraicRewrite(5884, __func__, [&]() { return ReplaceInstruction(convert, convert->mutable_operand(0)); });
+   }
+ 
+   // Eliminate a convert pair if it is a no-op. The following are a few
+@@ -5896,8 +5930,8 @@ absl::Status AlgebraicSimplifierVisitor::HandleConvert(
+   //    $TYPE1) , floor(A), A) -> a case where the first convert has a
+   //    fan-out
+   if (IsConvertPairNoOp(convert)) {
+-    return ReplaceInstruction(convert,
+-                              convert->mutable_operand(0)->mutable_operand(0));
++    return ObserveAlgebraicRewrite(5899, __func__, [&]() { return ReplaceInstruction(convert,
++                              convert->mutable_operand(0)->mutable_operand(0)); });
+   }
+ 
+   // Try to replace convert(constant) with a constant of the right type to begin
+@@ -5912,8 +5946,8 @@ absl::Status AlgebraicSimplifierVisitor::HandleConvert(
+     ABSL_ASSIGN_OR_RETURN(Literal dest_literal,
+                           constant->literal().Convert(dest_type));
+     VLOG(10) << "Replacing convert(constant) with constant";
+-    return ReplaceWithNewInstruction(
+-        convert, HloInstruction::CreateConstant(std::move(dest_literal)));
++    return ObserveAlgebraicRewrite(5915, __func__, [&]() { return ReplaceWithNewInstruction(
++        convert, HloInstruction::CreateConstant(std::move(dest_literal))); });
+   }
+ 
+   return TryRemoveUpcastAndDowncastSurroundingBinaryOp(convert);
+@@ -5935,17 +5969,17 @@ absl::Status AlgebraicSimplifierVisitor::HandleCustomCall(
+                   1))) &&
+       pad_to_static0 == pad_to_static1 &&
+       SameShape(custom_call->shape(), pad_to_static_operand->shape())) {
+-    return ReplaceInstruction(custom_call, pad_to_static_operand);
++    return ObserveAlgebraicRewrite(5938, __func__, [&]() { return ReplaceInstruction(custom_call, pad_to_static_operand); });
+   }
+   if (options_.is_layout_sensitive() &&
+       custom_call->IsCustomCall("LayoutConstraint")) {
+     if (SameShape(custom_call->shape(), custom_call->operand(0)->shape())) {
+-      return ReplaceInstruction(custom_call, custom_call->mutable_operand(0));
++      return ObserveAlgebraicRewrite(5943, __func__, [&]() { return ReplaceInstruction(custom_call, custom_call->mutable_operand(0)); });
+     }
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(5945, __func__, [&]() { return ReplaceWithNewInstruction(
+         custom_call,
+         HloInstruction::CreateUnary(custom_call->shape(), HloOpcode::kCopy,
+-                                    custom_call->mutable_operand(0)));
++                                    custom_call->mutable_operand(0))); });
+   }
+   return absl::OkStatus();
+ }
+@@ -5955,7 +5989,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleExp(
+   // Exp(0) => 1
+   if (Match(exponential, m::Exp(m::ConstantScalar(0))) ||
+       Match(exponential, m::Exp(m::Broadcast(m::ConstantScalar(0))))) {
+-    return ReplaceInstruction(exponential, MakeScalarLike(exponential, 1.0));
++    return ObserveAlgebraicRewrite(5958, __func__, [&]() { return ReplaceInstruction(exponential, MakeScalarLike(exponential, 1.0)); });
+   }
+   return absl::OkStatus();
+ }
+@@ -5966,7 +6000,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleComplex(
+   HloInstruction *c0, *c1;
+   if (Match(complex, m::Complex(m::Real(m::Op(&c0)), m::Imag(m::Op(&c1)))) &&
+       c0 == c1) {
+-    return ReplaceInstruction(complex, c0);
++    return ObserveAlgebraicRewrite(5969, __func__, [&]() { return ReplaceInstruction(complex, c0); });
+   }
+   return absl::OkStatus();
+ }
+@@ -5975,11 +6009,11 @@ absl::Status AlgebraicSimplifierVisitor::HandleComplex(
+ absl::Status AlgebraicSimplifierVisitor::HandleReal(HloInstruction* real) {
+   HloInstruction* op;
+   if (Match(real, m::Real(m::Complex(m::Op(&op), m::Op())))) {
+-    return ReplaceInstruction(real, op);
++    return ObserveAlgebraicRewrite(5978, __func__, [&]() { return ReplaceInstruction(real, op); });
+   }
+   // real(x) -> x if x is not complex.
+   if (!ShapeUtil::ElementIsComplex(real->operand(0)->shape())) {
+-    return ReplaceInstruction(real, real->mutable_operand(0));
++    return ObserveAlgebraicRewrite(5982, __func__, [&]() { return ReplaceInstruction(real, real->mutable_operand(0)); });
+   }
+   return absl::OkStatus();
+ }
+@@ -5988,12 +6022,12 @@ absl::Status AlgebraicSimplifierVisitor::HandleReal(HloInstruction* real) {
+ absl::Status AlgebraicSimplifierVisitor::HandleImag(HloInstruction* imag) {
+   HloInstruction* op;
+   if (Match(imag, m::Imag(m::Complex(m::Op(), m::Op(&op))))) {
+-    return ReplaceInstruction(imag, op);
++    return ObserveAlgebraicRewrite(5991, __func__, [&]() { return ReplaceInstruction(imag, op); });
+   }
+   // imag(x) -> 0 if x is not complex.
+   if (!ShapeUtil::ElementIsComplex(imag->operand(0)->shape())) {
+-    return ReplaceInstruction(imag,
+-                              BroadcastZeros(computation_, imag->shape()));
++    return ObserveAlgebraicRewrite(5995, __func__, [&]() { return ReplaceInstruction(imag,
++                              BroadcastZeros(computation_, imag->shape())); });
+   }
+   return absl::OkStatus();
+ }
+@@ -6004,16 +6038,16 @@ absl::Status AlgebraicSimplifierVisitor::HandleIota(
+   // zero.
+   auto* iota = Cast<HloIotaInstruction>(instruction);
+   if (iota->shape().dimensions(iota->iota_dimension()) <= 1) {
+-    return ReplaceInstruction(iota, MakeScalarLike(iota, 0));
++    return ObserveAlgebraicRewrite(6007, __func__, [&]() { return ReplaceInstruction(iota, MakeScalarLike(iota, 0)); });
+   }
+   return absl::OkStatus();
+ }
+ 
+ absl::Status AlgebraicSimplifierVisitor::HandlePad(HloInstruction* pad) {
+   if (ShapeUtil::IsZeroElementArray(pad->operand(0)->shape())) {
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(6014, __func__, [&]() { return ReplaceWithNewInstruction(
+         pad, HloInstruction::CreateBroadcast(pad->shape(),
+-                                             pad->mutable_operand(1), {}));
++                                             pad->mutable_operand(1), {})); });
+   }
+ 
+   // Interior padding on one sized dimensions have no effect. As a result it
+@@ -6029,10 +6063,10 @@ absl::Status AlgebraicSimplifierVisitor::HandlePad(HloInstruction* pad) {
+       }
+     }
+     if (cleared_interior_padding) {
+-      return ReplaceWithNewInstruction(
++      return ObserveAlgebraicRewrite(6032, __func__, [&]() { return ReplaceWithNewInstruction(
+           pad,
+           HloInstruction::CreatePad(pad->shape(), pad->mutable_operand(0),
+-                                    pad->mutable_operand(1), padding_config));
++                                    pad->mutable_operand(1), padding_config)); });
+     }
+   }
+ 
+@@ -6059,7 +6093,7 @@ absl::Status AlgebraicSimplifierVisitor::HandlePad(HloInstruction* pad) {
+   }
+ 
+   if (all_zero) {
+-    if (ReplaceInstructionIfCompatible(pad, pad->mutable_operand(0))) {
++    if (ObserveAlgebraicRewrite(6062, __func__, [&]() { return ReplaceInstructionIfCompatible(pad, pad->mutable_operand(0)); })) {
+       return absl::OkStatus();
+     }
+   }
+@@ -6136,7 +6170,7 @@ absl::Status AlgebraicSimplifierVisitor::HandlePad(HloInstruction* pad) {
+       simplifier_->UpdateLayout(pad2->mutable_shape());
+       auto broadcast2 = pad->AddInstruction(
+           HloInstruction::CreateBroadcast(pad_shape, pad2, padding_dimensions));
+-      return ReplaceInstruction(pad, broadcast2);
++      return ObserveAlgebraicRewrite(6139, __func__, [&]() { return ReplaceInstruction(pad, broadcast2); });
+     }
+   }
+ 
+@@ -6210,7 +6244,7 @@ absl::Status AlgebraicSimplifierVisitor::HandlePad(HloInstruction* pad) {
+     }
+     TF_RET_CHECK(equal(slice->shape(), pad->shape()));
+ 
+-    return ReplaceInstruction(pad, slice);
++    return ObserveAlgebraicRewrite(6213, __func__, [&]() { return ReplaceInstruction(pad, slice); });
+   }
+ 
+   return absl::OkStatus();
+@@ -6221,11 +6255,11 @@ absl::Status AlgebraicSimplifierVisitor::HandlePower(HloInstruction* power) {
+   HloInstruction *lhs, *rhs;
+   CHECK(Match(power, m::Power(m::Op(&lhs), m::Op(&rhs))));
+   if (IsAll(rhs, 0)) {
+-    return ReplaceInstruction(power, MakeScalarLike(power, 1));
++    return ObserveAlgebraicRewrite(6224, __func__, [&]() { return ReplaceInstruction(power, MakeScalarLike(power, 1)); });
+   }
+ 
+   VLOG(10) << "trying transform [pow(A, 1) => A]: " << power->ToString();
+-  if (IsAll(rhs, 1) && ReplaceInstructionIfCompatible(power, lhs)) {
++  if (IsAll(rhs, 1) && ObserveAlgebraicRewrite(6228, __func__, [&]() { return ReplaceInstructionIfCompatible(power, lhs); })) {
+     return absl::OkStatus();
+   }
+ 
+@@ -6235,16 +6269,16 @@ absl::Status AlgebraicSimplifierVisitor::HandlePower(HloInstruction* power) {
+       Match(power, m::Power(m::Exp(m::Op(&a)), m::Op(&b)))) {
+     auto a_times_b = power->AddInstruction(HloInstruction::CreateBinary(
+         power->shape(), HloOpcode::kMultiply, a, b));
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(6238, __func__, [&]() { return ReplaceWithNewInstruction(
+         power, HloInstruction::CreateUnary(power->shape(), HloOpcode::kExp,
+-                                           a_times_b));
++                                           a_times_b)); });
+   }
+ 
+   VLOG(10) << "trying transform [pow(A, 2) => A*A]: " << power->ToString();
+   if (IsAll(rhs, 2)) {
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(6245, __func__, [&]() { return ReplaceWithNewInstruction(
+         power, HloInstruction::CreateBinary(power->shape(),
+-                                            HloOpcode::kMultiply, lhs, lhs));
++                                            HloOpcode::kMultiply, lhs, lhs)); });
+   }
+ 
+   // Pow(A, 3) is used in GELU.
+@@ -6252,24 +6286,24 @@ absl::Status AlgebraicSimplifierVisitor::HandlePower(HloInstruction* power) {
+   if (IsAll(rhs, 3)) {
+     HloInstruction* tmp = power->AddInstruction(HloInstruction::CreateBinary(
+         power->shape(), HloOpcode::kMultiply, lhs, lhs));
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(6255, __func__, [&]() { return ReplaceWithNewInstruction(
+         power, HloInstruction::CreateBinary(power->shape(),
+-                                            HloOpcode::kMultiply, lhs, tmp));
++                                            HloOpcode::kMultiply, lhs, tmp)); });
+   }
+ 
+   VLOG(10) << "trying transform [pow(A, -1) => 1/A]: " << power->ToString();
+   if (IsAll(rhs, -1)) {
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(6262, __func__, [&]() { return ReplaceWithNewInstruction(
+         power, HloInstruction::CreateBinary(power->shape(), HloOpcode::kDivide,
+-                                            MakeScalarLike(lhs, 1), lhs));
++                                            MakeScalarLike(lhs, 1), lhs)); });
+   }
+ 
+   VLOG(10) << "trying transform [pow(A, 0.5) => sqrt(A)], for A >= 0: "
+            << power->ToString();
+   if (IsAllFloat(rhs, 0.5) && IsNonNegative(lhs, options_)) {
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(6270, __func__, [&]() { return ReplaceWithNewInstruction(
+         power,
+-        HloInstruction::CreateUnary(power->shape(), HloOpcode::kSqrt, lhs));
++        HloInstruction::CreateUnary(power->shape(), HloOpcode::kSqrt, lhs)); });
+   }
+ 
+   return absl::OkStatus();
+@@ -6355,7 +6389,7 @@ AlgebraicSimplifierVisitor::TryToSinkBroadcastAfterElementwiseOps(
+         broadcast->AddInstruction(HloInstruction::CreateBroadcast(
+             user->shape(), new_user, broadcast->dimensions()));
+     VLOG(4) << "  new broadcast: " << new_broadcast->ToString();
+-    ABSL_RETURN_IF_ERROR(user->ReplaceAllUsesWith(new_broadcast));
++    ABSL_RETURN_IF_ERROR(ObserveAlgebraicRewrite(6358, __func__, [&]() { return user->ReplaceAllUsesWith(new_broadcast); }));
+     changed = true;
+   }
+   return changed;
+@@ -6432,7 +6466,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleRemainder(
+ 
+   // (A % B) % B == A % B.
+   if (Match(a, m::Remainder(m::Op(), m::Op().Is(b)))) {
+-    return ReplaceInstruction(remainder, a);
++    return ObserveAlgebraicRewrite(6435, __func__, [&]() { return ReplaceInstruction(remainder, a); });
+   }
+ 
+   // A % B => A & (B - 1) if B is a power of 2.
+@@ -6447,7 +6481,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleRemainder(
+                 return nullptr;
+               },
+               remainder->shape().element_type())) {
+-    return ReplaceWithNewInstruction(remainder, std::move(shift));
++    return ObserveAlgebraicRewrite(6450, __func__, [&]() { return ReplaceWithNewInstruction(remainder, std::move(shift)); });
+   }
+ 
+   // If M < N, then {0, ..., M} % N ==> {0, ..., M}.
+@@ -6468,7 +6502,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleRemainder(
+     std::optional<int64_t> divisor_val = divisor->literal().GetIntegralAsS64(
+         std::vector<int64_t>(0, divisor->shape().dimensions().size()));
+     if (divisor_val && *divisor_val >= iota_upper_bound) {
+-      return ReplaceInstruction(remainder, iota);
++      return ObserveAlgebraicRewrite(6471, __func__, [&]() { return ReplaceInstruction(remainder, iota); });
+     }
+   }
+ 
+@@ -6501,10 +6535,10 @@ absl::Status AlgebraicSimplifierVisitor::HandleRemainder(
+           OverflowSafeAdd(*divisor_val, iota_upper_bound);
+       if (max_val.has_value() && primitive_util::FitsInIntegralType(
+                                      *max_val, iota->shape().element_type())) {
+-        return ReplaceWithNewInstruction(
++        return ObserveAlgebraicRewrite(6504, __func__, [&]() { return ReplaceWithNewInstruction(
+             remainder,
+             HloInstruction::CreateBinary(remainder->shape(),
+-                                         HloOpcode::kRemainder, iota, bcast));
++                                         HloOpcode::kRemainder, iota, bcast)); });
+       }
+     }
+   }
+@@ -6640,7 +6674,7 @@ AlgebraicSimplifierVisitor::TryRemovingBitcastOrReshapeTransposeChain(
+       bool replace_success = false;
+       if (options_.is_layout_sensitive()) {
+         if (ShapeUtil::Equal(instruction->shape(), new_operand->shape())) {
+-          ABSL_RETURN_IF_ERROR(ReplaceInstruction(instruction, new_operand));
++          ABSL_RETURN_IF_ERROR(ObserveAlgebraicRewrite(6643, __func__, [&]() { return ReplaceInstruction(instruction, new_operand); }));
+           replace_success = true;
+         } else if (options_.ReshapeIsBitcast(new_operand->shape(),
+                                              instruction->shape())) {
+@@ -6650,15 +6684,15 @@ AlgebraicSimplifierVisitor::TryRemovingBitcastOrReshapeTransposeChain(
+           DCHECK_EQ(ShapeUtil::ByteSizeOf(new_operand->shape()),
+                     ShapeUtil::ByteSizeOf(instruction->shape()))
+               << "ReshapeIsBitcast is true, but byte sizes differ.";
+-          ABSL_RETURN_IF_ERROR(ReplaceWithNewInstruction(
++          ABSL_RETURN_IF_ERROR(ObserveAlgebraicRewrite(6653, __func__, [&]() { return ReplaceWithNewInstruction(
+               instruction, HloInstruction::CreateBitcast(instruction->shape(),
+-                                                         new_operand)));
++                                                         new_operand)); }));
+           replace_success = true;
+         }
+       } else {  // Non-layout sensitive.
+         if (Shape::Equal().IgnoreLayout()(instruction->shape(),
+                                           new_operand->shape())) {
+-          ABSL_RETURN_IF_ERROR(ReplaceInstruction(instruction, new_operand));
++          ABSL_RETURN_IF_ERROR(ObserveAlgebraicRewrite(6661, __func__, [&]() { return ReplaceInstruction(instruction, new_operand); }));
+           replace_success = true;
+         }
+       }
+@@ -6711,9 +6745,9 @@ absl::StatusOr<bool> AlgebraicSimplifierVisitor::TryHoistTransposeOfReshape(
+           inner_reshape->mutable_operand(0)));
+   simplifier_->UpdateLayout(new_inner_reshape->mutable_shape());
+ 
+-  ABSL_RETURN_IF_ERROR(ReplaceWithNewInstruction(
++  ABSL_RETURN_IF_ERROR(ObserveAlgebraicRewrite(6714, __func__, [&]() { return ReplaceWithNewInstruction(
+       reshape, HloInstruction::CreateTranspose(
+-                   reshape->shape(), new_inner_reshape, new_transpose_dims)));
++                   reshape->shape(), new_inner_reshape, new_transpose_dims)); }));
+   return true;
+ }
+ 
+@@ -6733,30 +6767,30 @@ absl::Status AlgebraicSimplifierVisitor::HandleReshape(
+     auto empty_constant = simplifier_->CreateConstantWithLayoutUpdated(
+         Literal::CreateFromShape(reshaped_shape));
+ 
+-    return ReplaceWithNewInstruction(reshape, std::move(empty_constant),
++    return ObserveAlgebraicRewrite(6736, __func__, [&]() { return ReplaceWithNewInstruction(reshape, std::move(empty_constant),
+                                      /*preserve_sharding=*/false,
+-                                     /*relay_control_dependency=*/true);
++                                     /*relay_control_dependency=*/true); });
+   }
+ 
+   // Delete no-op reshapes, i.e. where shape = operand shape.
+   if (SameShape(reshape, operand)) {
+     VLOG(3) << "deleting no-op reshape";
+-    return ReplaceInstruction(reshape, operand,
+-                              /*preserve_frontend_attributes=*/false);
++    return ObserveAlgebraicRewrite(6744, __func__, [&]() { return ReplaceInstruction(reshape, operand,
++                              /*preserve_frontend_attributes=*/false); });
+   }
+ 
+   // Merge reshapes.
+   if (HloOpcode::kReshape == operand->opcode()) {
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(6750, __func__, [&]() { return ReplaceWithNewInstruction(
+         reshape,
+         HloInstruction::CreateReshape(reshape->shape(),
+                                       operand->mutable_operand(0)),
+-        /*preserve_sharding=*/false, /*relay_control_dependency=*/true);
++        /*preserve_sharding=*/false, /*relay_control_dependency=*/true); });
+   }
+ 
+   if (operand->opcode() == HloOpcode::kRng && operand->user_count() == 1) {
+     *operand->mutable_shape() = reshape->shape();
+-    return ReplaceInstruction(reshape, operand);
++    return ObserveAlgebraicRewrite(6759, __func__, [&]() { return ReplaceInstruction(reshape, operand); });
+   }
+ 
+   ABSL_ASSIGN_OR_RETURN(bool reshape_transpose_chain_removed,
+@@ -6882,7 +6916,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleReshape(
+             if (copy_after != nullptr) {
+               VLOG(5) << "Copy-after: " << copy_after->ToString();
+             }
+-            return ReplaceInstruction(reshape, new_copy);
++            return ObserveAlgebraicRewrite(6885, __func__, [&]() { return ReplaceInstruction(reshape, new_copy); });
+           }
+         }
+       }
+@@ -6895,12 +6929,12 @@ absl::Status AlgebraicSimplifierVisitor::HandleReshape(
+     auto opt_dims =
+         ReshapeLeavesDimensionsUnmodified(reshape, operand->dimensions());
+     if (opt_dims.has_value()) {
+-      return ReplaceWithNewInstruction(
++      return ObserveAlgebraicRewrite(6898, __func__, [&]() { return ReplaceWithNewInstruction(
+           reshape,
+           HloInstruction::CreateBroadcast(
+               reshape->shape(), reshape->mutable_operand(0)->mutable_operand(0),
+               *opt_dims),
+-          /*preserve_sharding=*/false, /*relay_control_dependency=*/true);
++          /*preserve_sharding=*/false, /*relay_control_dependency=*/true); });
+     }
+   }
+ 
+@@ -6942,7 +6976,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleReshape(
+         }
+         multiplier *= reshape->shape().dimensions(dim);
+       }
+-      return ReplaceInstruction(reshape, new_reshape);
++      return ObserveAlgebraicRewrite(6945, __func__, [&]() { return ReplaceInstruction(reshape, new_reshape); });
+     }
+   }
+ 
+@@ -6992,16 +7026,16 @@ absl::Status AlgebraicSimplifierVisitor::HandleReshape(
+       new_dus_operands[1] = new_slice;
+       auto new_dus =
+           dus->CloneWithNewOperands(reshape->shape(), new_dus_operands);
+-      return ReplaceWithNewInstruction(reshape, std::move(new_dus),
++      return ObserveAlgebraicRewrite(6995, __func__, [&]() { return ReplaceWithNewInstruction(reshape, std::move(new_dus),
+                                        /*preserve_sharding=*/false,
+-                                       /*relay_control_dependency=*/true);
++                                       /*relay_control_dependency=*/true); });
+     }
+   }
+ 
+   // Make this a bitcast if possible.
+   if (HloInstruction* bitcast_operand =
+           BitcastingOperandOfReshapeOrCopyChain(reshape, options_)) {
+-    ReplaceWithBitcast(reshape, bitcast_operand);
++    ObserveAlgebraicRewrite(7004, __func__, [&]() { return ReplaceWithBitcast(reshape, bitcast_operand); });
+   }
+   return absl::OkStatus();
+ }
+@@ -7031,7 +7065,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleReverse(
+     return reverse->shape().dimensions(i) == 1;
+   };
+   if (absl::c_all_of(reverse->dimensions(), dim_is_one)) {
+-    return ReplaceInstruction(reverse, reverse->mutable_operand(0));
++    return ObserveAlgebraicRewrite(7034, __func__, [&]() { return ReplaceInstruction(reverse, reverse->mutable_operand(0)); });
+   }
+   if (!options_.is_layout_sensitive()) {
+     absl::Span<const int64_t> reverse_dims = reverse->dimensions();
+@@ -7050,11 +7084,11 @@ absl::Status AlgebraicSimplifierVisitor::HandleReverse(
+                                std::back_inserter(intersect));
+       absl::c_set_difference(uni, intersect, std::back_inserter(sym_diff));
+       if (sym_diff.empty()) {
+-        return ReplaceInstruction(reverse, inner->mutable_operand(0));
++        return ObserveAlgebraicRewrite(7053, __func__, [&]() { return ReplaceInstruction(reverse, inner->mutable_operand(0)); });
+       }
+       absl::Span<const int64_t> new_dimensions = absl::MakeConstSpan(sym_diff);
+-      return ReplaceInstruction(
+-          reverse, *MakeReverseHlo(inner->mutable_operand(0), new_dimensions));
++      return ObserveAlgebraicRewrite(7056, __func__, [&]() { return ReplaceInstruction(
++          reverse, *MakeReverseHlo(inner->mutable_operand(0), new_dimensions)); });
+     }
+     // reverse(ElementWiseBinOp(x, constant)) ==>
+     // ElementWiseBinOp(reverse(x), constant)
+@@ -7076,18 +7110,18 @@ absl::Status AlgebraicSimplifierVisitor::HandleReverse(
+       HloInstruction* hlo;
+       if (match_with_scalar(inner->mutable_operand(0))) {
+         hlo = inner->mutable_operand(1);
+-        return ReplaceWithNewInstruction(
++        return ObserveAlgebraicRewrite(7079, __func__, [&]() { return ReplaceWithNewInstruction(
+             reverse,
+             HloInstruction::CreateBinary(inner->shape(), inner_opcode,
+                                          inner->mutable_operand(0),
+-                                         *MakeReverseHlo(hlo, reverse_dims)));
++                                         *MakeReverseHlo(hlo, reverse_dims))); });
+       } else if (match_with_scalar(inner->mutable_operand(1))) {
+         hlo = inner->mutable_operand(0);
+-        return ReplaceWithNewInstruction(
++        return ObserveAlgebraicRewrite(7086, __func__, [&]() { return ReplaceWithNewInstruction(
+             reverse,
+             HloInstruction::CreateBinary(inner->shape(), inner_opcode,
+                                          *MakeReverseHlo(hlo, reverse_dims),
+-                                         inner->mutable_operand(1)));
++                                         inner->mutable_operand(1))); });
+       } else {
+         return absl::OkStatus();
+       }
+@@ -7118,12 +7152,12 @@ absl::Status AlgebraicSimplifierVisitor::HandleReverse(
+           new_reverse_dims.push_back(new_dim);
+         }
+ 
+-        return ReplaceInstruction(
++        return ObserveAlgebraicRewrite(7121, __func__, [&]() { return ReplaceInstruction(
+             reverse,
+             *MakeReshapeHlo(
+                 *inner_shape,
+                 *MakeReverseHlo(reverse->mutable_operand(0)->mutable_operand(0),
+-                                new_reverse_dims)));
++                                new_reverse_dims))); });
+       }
+     }
+   }
+@@ -7191,7 +7225,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleShuffle(HloInstruction* hlo) {
+ 
+       // Replace if changed.
+       if (new_dimensions.empty()) {
+-        return ReplaceInstruction(shuffle, base_operand);
++        return ObserveAlgebraicRewrite(7194, __func__, [&]() { return ReplaceInstruction(shuffle, base_operand); });
+       }
+       if (base_operand != shuffle->operand(0) ||
+           new_dimensions != shuffle->dimensions() ||
+@@ -7199,7 +7233,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleShuffle(HloInstruction* hlo) {
+         auto new_shuffle = HloInstruction::CreateShuffle(
+             shuffle->shape(), base_operand, new_dimensions,
+             shuffle::Rotate(new_shifts));
+-        return ReplaceWithNewInstruction(shuffle, std::move(new_shuffle));
++        return ObserveAlgebraicRewrite(7202, __func__, [&]() { return ReplaceWithNewInstruction(shuffle, std::move(new_shuffle)); });
+       }
+       return absl::OkStatus();
+     }
+@@ -7241,18 +7275,18 @@ absl::StatusOr<bool> AlgebraicSimplifierVisitor::TrySimplifyScalarSlice(
+       operand_num++;
+     }
+ 
+-    bool replaced = ReplaceInstructionIfCompatible(
+-        slice, concat->mutable_operand(operand_num));
++    bool replaced = ObserveAlgebraicRewrite(7244, __func__, [&]() { return ReplaceInstructionIfCompatible(
++        slice, concat->mutable_operand(operand_num)); });
+     if (replaced) {
+       VLOG(10) << "Folding scalar slice of concat into concat operand";
+     } else {
+       VLOG(10) << "Folding scalar slice of concat into slice of concat operand";
+-      ABSL_RETURN_IF_ERROR(ReplaceWithNewInstruction(
++      ABSL_RETURN_IF_ERROR(ObserveAlgebraicRewrite(7250, __func__, [&]() { return ReplaceWithNewInstruction(
+           slice, HloInstruction::CreateSlice(
+                      slice->shape(), concat->mutable_operand(operand_num),
+                      {slice->slice_starts(0) - operand_start},
+                      {slice->slice_starts(0) - operand_start + 1},
+-                     slice->slice_strides())));
++                     slice->slice_strides())); }));
+     }
+     return true;
+   }
+@@ -7368,8 +7402,8 @@ absl::StatusOr<bool> AlgebraicSimplifierVisitor::TryToReorderSliceAndReshape(
+             new_slice_operand, new_slice_starts, new_slice_limits,
+             new_slice_strides));
+     simplifier_->UpdateLayout(new_slice->mutable_shape());
+-    ABSL_RETURN_IF_ERROR(ReplaceWithNewInstruction(
+-        slice, HloInstruction::CreateReshape(slice->shape(), new_slice)));
++    ABSL_RETURN_IF_ERROR(ObserveAlgebraicRewrite(7371, __func__, [&]() { return ReplaceWithNewInstruction(
++        slice, HloInstruction::CreateReshape(slice->shape(), new_slice)); }));
+     return true;
+   }
+   return false;
+@@ -7410,9 +7444,9 @@ absl::StatusOr<bool> AlgebraicSimplifierVisitor::TryToReorderSliceAndReverse(
+         HloInstruction::CreateSlice(slice->shape(), reverse_operand, new_starts,
+                                     new_limits, new_strides));
+     simplifier_->UpdateLayout(new_slice->mutable_shape());
+-    ABSL_RETURN_IF_ERROR(ReplaceWithNewInstruction(
++    ABSL_RETURN_IF_ERROR(ObserveAlgebraicRewrite(7413, __func__, [&]() { return ReplaceWithNewInstruction(
+         slice, HloInstruction::CreateReverse(new_slice->shape(), new_slice,
+-                                             reverse->dimensions())));
++                                             reverse->dimensions())); }));
+     // We do not delete the old reverse, since there might be another
+     // consumer of that reverse (i.e., full reverse output). DCE should take
+     // care of any deletion that is necessary if there was no use of reverse.
+@@ -7453,16 +7487,16 @@ absl::StatusOr<bool> AlgebraicSimplifierVisitor::RemoveRedundantStride(
+   }
+ 
+   HloInstruction* slice_operand = slice->mutable_operand(0);
+-  ABSL_RETURN_IF_ERROR(ReplaceWithNewInstruction(
++  ABSL_RETURN_IF_ERROR(ObserveAlgebraicRewrite(7456, __func__, [&]() { return ReplaceWithNewInstruction(
+       slice, HloInstruction::CreateSlice(slice->shape(), slice_operand,
+                                          slice->slice_starts(),
+-                                         new_slice_limits, new_slice_strides)));
++                                         new_slice_limits, new_slice_strides)); }));
+   return true;
+ }
+ 
+ absl::Status AlgebraicSimplifierVisitor::HandleSlice(HloInstruction* slice) {
+   // Delete no-op slices, i.e. where shape = operand shape.
+-  if (ReplaceInstructionIfCompatible(slice, slice->mutable_operand(0))) {
++  if (ObserveAlgebraicRewrite(7465, __func__, [&]() { return ReplaceInstructionIfCompatible(slice, slice->mutable_operand(0)); })) {
+     return absl::OkStatus();
+   }
+ 
+@@ -7508,10 +7542,10 @@ absl::Status AlgebraicSimplifierVisitor::HandleSlice(HloInstruction* slice) {
+       HloInstruction* broadcast =
+           MakeBroadcastHlo(pad->mutable_operand(1), {}, slice->shape());
+       *(broadcast->mutable_shape()) = slice->shape();
+-      return ReplaceInstruction(slice, broadcast);
++      return ObserveAlgebraicRewrite(7511, __func__, [&]() { return ReplaceInstruction(slice, broadcast); });
+     }
+     if (slice_undoes_pad &&
+-        ReplaceInstructionIfCompatible(slice, pad_operand)) {
++        ObserveAlgebraicRewrite(7514, __func__, [&]() { return ReplaceInstructionIfCompatible(slice, pad_operand); })) {
+       return absl::OkStatus();
+     }
+     if (slice_inside_pad) {
+@@ -7519,7 +7553,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleSlice(HloInstruction* slice) {
+                             MakeSliceHlo(pad_operand, new_starts, new_limits,
+                                          slice->slice_strides()));
+       *(new_slice->mutable_shape()) = slice->shape();
+-      return ReplaceInstruction(slice, new_slice);
++      return ObserveAlgebraicRewrite(7522, __func__, [&]() { return ReplaceInstruction(slice, new_slice); });
+     }
+   }
+ 
+@@ -7572,7 +7606,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleSlice(HloInstruction* slice) {
+         }
+         if (slice_matches_dus &&
+             hlo_instruction_utils::IsUnstridedSlice(slice) &&
+-            ReplaceInstructionIfCompatible(slice, dus_update)) {
++            ObserveAlgebraicRewrite(7575, __func__, [&]() { return ReplaceInstructionIfCompatible(slice, dus_update); })) {
+           return absl::OkStatus();
+         }
+         if (slice_inside_dus &&
+@@ -7582,7 +7616,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleSlice(HloInstruction* slice) {
+                                 MakeSliceHlo(dus_update, new_starts, new_limits,
+                                              slice->slice_strides()));
+           *(new_slice->mutable_shape()) = slice->shape();
+-          return ReplaceInstruction(slice, new_slice);
++          return ObserveAlgebraicRewrite(7585, __func__, [&]() { return ReplaceInstruction(slice, new_slice); });
+         }
+       }
+     }
+@@ -7598,10 +7632,10 @@ absl::Status AlgebraicSimplifierVisitor::HandleSlice(HloInstruction* slice) {
+       new_slice_starts[i] += operand_slice->slice_starts(i);
+       new_slice_limits[i] += operand_slice->slice_starts(i);
+     }
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(7601, __func__, [&]() { return ReplaceWithNewInstruction(
+         slice, HloInstruction::CreateSlice(
+                    slice->shape(), operand_slice->mutable_operand(0),
+-                   new_slice_starts, new_slice_limits, slice->slice_strides()));
++                   new_slice_starts, new_slice_limits, slice->slice_strides())); });
+   }
+ 
+   auto only_broadcast_dims_sliced = [&] {
+@@ -7618,11 +7652,11 @@ absl::Status AlgebraicSimplifierVisitor::HandleSlice(HloInstruction* slice) {
+     return true;
+   };
+   if (only_broadcast_dims_sliced()) {
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(7621, __func__, [&]() { return ReplaceWithNewInstruction(
+         slice,
+         HloInstruction::CreateBroadcast(
+             slice->shape(), slice->mutable_operand(0)->mutable_operand(0),
+-            slice->mutable_operand(0)->dimensions()));
++            slice->mutable_operand(0)->dimensions())); });
+   }
+ 
+   ABSL_ASSIGN_OR_RETURN(bool replaced, TrySimplifyScalarSlice(slice));
+@@ -7665,7 +7699,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleSlice(HloInstruction* slice) {
+             slice->shape(), new_slice, broadcast->dimensions()));
+     VLOG(3) << "New slice: " << slice->ToString();
+     VLOG(3) << "New broadcast: " << new_broadcast->ToString();
+-    return ReplaceInstruction(slice, new_broadcast);
++    return ObserveAlgebraicRewrite(7668, __func__, [&]() { return ReplaceInstruction(slice, new_broadcast); });
+   }
+ 
+   // Try to reorder slice of dot to the operand it comes from
+@@ -7752,7 +7786,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleSlice(HloInstruction* slice) {
+             ShapeUtil::TrueNumDimensions(new_lhs->shape()),
+             ShapeUtil::TrueNumDimensions(new_rhs->shape()), dnums)) {
+       VLOG(10) << "Reordering slice into dot operands";
+-      return ReplaceInstruction(slice, new_dot);
++      return ObserveAlgebraicRewrite(7755, __func__, [&]() { return ReplaceInstruction(slice, new_dot); });
+     }
+   }
+ 
+@@ -7786,7 +7820,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleSlice(HloInstruction* slice) {
+     if (start_operand && limit_operand &&
+         *start_operand + 1 == *limit_operand &&
+         SameShape(concat->operand(*start_operand), slice)) {
+-      return ReplaceInstruction(slice, concat->mutable_operand(*start_operand));
++      return ObserveAlgebraicRewrite(7789, __func__, [&]() { return ReplaceInstruction(slice, concat->mutable_operand(*start_operand)); });
+     }
+     if (start_operand && limit_operand &&
+         *limit_operand - *start_operand < concat->operand_count()) {
+@@ -7810,9 +7844,9 @@ absl::Status AlgebraicSimplifierVisitor::HandleSlice(HloInstruction* slice) {
+         concat->SetupDerivedInstruction(new_concat);
+         operand = new_concat;
+       }
+-      return ReplaceWithNewInstruction(
++      return ObserveAlgebraicRewrite(7813, __func__, [&]() { return ReplaceWithNewInstruction(
+           slice, HloInstruction::CreateSlice(slice->shape(), operand, starts,
+-                                             limits, strides));
++                                             limits, strides)); });
+     }
+   }
+ 
+@@ -7893,8 +7927,8 @@ absl::Status AlgebraicSimplifierVisitor::HandleSlice(HloInstruction* slice) {
+               /*init_value=*/reduce_window->mutable_operand(1),
+               /*dimensions_to_reduce=*/effective_reduce_dims,
+               /*reduce_computation=*/reduce_window->to_apply()));
+-      return ReplaceWithNewInstruction(
+-          slice, HloInstruction::CreateReshape(slice->shape(), reduce));
++      return ObserveAlgebraicRewrite(7896, __func__, [&]() { return ReplaceWithNewInstruction(
++          slice, HloInstruction::CreateReshape(slice->shape(), reduce)); });
+     }
+   }
+ 
+@@ -7931,7 +7965,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleRsqrt(HloInstruction* rsqrt) {
+   if (rsqrt_operand->opcode() == HloOpcode::kPower &&
+       IsAll(rsqrt_operand->operand(1), -2) &&
+       IsNonNegative(rsqrt_operand->operand(0), options_)) {
+-    return ReplaceInstruction(rsqrt, rsqrt_operand->mutable_operand(0));
++    return ObserveAlgebraicRewrite(7934, __func__, [&]() { return ReplaceInstruction(rsqrt, rsqrt_operand->mutable_operand(0)); });
+   }
+ 
+   VLOG(10) << "trying transform [rsqrt(1/A)) => sqrt(A)], for A >= 0 "
+@@ -7939,9 +7973,9 @@ absl::Status AlgebraicSimplifierVisitor::HandleRsqrt(HloInstruction* rsqrt) {
+   if (rsqrt_operand->opcode() == HloOpcode::kDivide &&
+       IsAll(rsqrt_operand->operand(0), 1) &&
+       IsNonNegative(rsqrt_operand->operand(1), options_)) {
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(7942, __func__, [&]() { return ReplaceWithNewInstruction(
+         rsqrt, HloInstruction::CreateUnary(rsqrt->shape(), HloOpcode::kSqrt,
+-                                           rsqrt_operand->mutable_operand(1)));
++                                           rsqrt_operand->mutable_operand(1))); });
+   }
+ 
+   return absl::OkStatus();
+@@ -7955,12 +7989,12 @@ absl::Status AlgebraicSimplifierVisitor::HandleDynamicSlice(
+   }
+   auto operand = dynamic_slice->mutable_operand(0);
+   if (ShapeUtil::IsScalar(dynamic_slice->shape())) {
+-    return ReplaceInstruction(dynamic_slice, operand);
++    return ObserveAlgebraicRewrite(7958, __func__, [&]() { return ReplaceInstruction(dynamic_slice, operand); });
+   }
+   // DynamicSlice where operand has the same size as the output is simply equal
+   // to operand.
+   if (SameShape(operand, dynamic_slice)) {
+-    return ReplaceInstruction(dynamic_slice, operand);
++    return ObserveAlgebraicRewrite(7963, __func__, [&]() { return ReplaceInstruction(dynamic_slice, operand); });
+   }
+ 
+   // DynamicSlice clamps the offset. If the slice size has the same size on a
+@@ -7980,10 +8014,10 @@ absl::Status AlgebraicSimplifierVisitor::HandleDynamicSlice(
+     for (int64_t dim : same_size_dims_to_simplify) {
+       new_operands[dim + 1] = zero;
+     }
+-    return ReplaceInstruction(
++    return ObserveAlgebraicRewrite(7983, __func__, [&]() { return ReplaceInstruction(
+         dynamic_slice,
+         dynamic_slice->AddInstruction(dynamic_slice->CloneWithNewOperands(
+-            dynamic_slice->shape(), new_operands)));
++            dynamic_slice->shape(), new_operands))); });
+   }
+ 
+   HloInstruction* broadcast_operand;
+@@ -8018,7 +8052,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleDynamicSlice(
+             dynamic_slice->shape(), new_dynamic_slice, operand->dimensions()));
+     VLOG(3) << "New dynamic slice: " << dynamic_slice->ToString();
+     VLOG(3) << "New broadcast: " << new_broadcast->ToString();
+-    return ReplaceInstruction(dynamic_slice, new_broadcast);
++    return ObserveAlgebraicRewrite(8021, __func__, [&]() { return ReplaceInstruction(dynamic_slice, new_broadcast); });
+   }
+ 
+   HloInstruction *reshape, *reshape_operand;
+@@ -8044,9 +8078,9 @@ absl::Status AlgebraicSimplifierVisitor::HandleDynamicSlice(
+             ShapeUtil::MakeShape(dynamic_slice->shape().element_type(),
+                                  slice_sizes),
+             reshape_operand, starts, slice_sizes));
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(8047, __func__, [&]() { return ReplaceWithNewInstruction(
+         dynamic_slice, HloInstruction::CreateReshape(dynamic_slice->shape(),
+-                                                     new_dynamic_slice));
++                                                     new_dynamic_slice)); });
+   }
+ 
+   HloInstruction *transpose, *transpose_operand;
+@@ -8062,10 +8096,10 @@ absl::Status AlgebraicSimplifierVisitor::HandleDynamicSlice(
+                                    dynamic_slice->operands().end()),
+                     output_to_input),
+             Permute(dynamic_slice->dynamic_slice_sizes(), output_to_input)));
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(8065, __func__, [&]() { return ReplaceWithNewInstruction(
+         dynamic_slice,
+         HloInstruction::CreateTranspose(dynamic_slice->shape(), new_slice,
+-                                        transpose->dimensions()));
++                                        transpose->dimensions())); });
+   }
+ 
+   // Convert a dynamic slice into a slice if all offsets are constant, the
+@@ -8102,10 +8136,10 @@ absl::Status AlgebraicSimplifierVisitor::HandleDynamicSlice(
+       slice_limits[i] =
+           std::min(max_offset, *offset) + dynamic_slice->shape().dimensions(i);
+     }
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(8105, __func__, [&]() { return ReplaceWithNewInstruction(
+         dynamic_slice,
+         HloInstruction::CreateSlice(dynamic_slice->shape(), operand,
+-                                    slice_starts, slice_limits, slice_strides));
++                                    slice_starts, slice_limits, slice_strides)); });
+   }
+ 
+   // Convert the dynamic slice of an iota to just a reference to the index
+@@ -8176,9 +8210,9 @@ absl::Status AlgebraicSimplifierVisitor::HandleDynamicSlice(
+               result->shape(), HloOpcode::kMultiply, result, multiplier));
+         }
+ 
+-        return ReplaceWithNewInstruction(
++        return ObserveAlgebraicRewrite(8179, __func__, [&]() { return ReplaceWithNewInstruction(
+             dynamic_slice,
+-            HloInstruction::CreateReshape(dynamic_slice->shape(), result));
++            HloInstruction::CreateReshape(dynamic_slice->shape(), result)); });
+       }
+     }
+   }
+@@ -8214,7 +8248,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleDynamicSlice(
+       ABSL_RETURN_IF_ERROR(
+           dynamic_slice->ReplaceOperandWith(i, combined_index));
+     }
+-    MarkAsChanged();
++    ObserveAlgebraicRewrite(8217, __func__, [&]() { return MarkAsChanged(); });
+   }
+   return absl::OkStatus();
+ }
+@@ -8323,14 +8357,14 @@ absl::Status AlgebraicSimplifierVisitor::HandleDynamicUpdateSlice(
+       VLOG(2) << " with pad:" << pad->ToString();
+       VLOG(2) << " Computation before rewrite is: "
+               << dynamic_update_slice->parent()->ToString();
+-      return ReplaceInstruction(dynamic_update_slice, pad);
++      return ObserveAlgebraicRewrite(8326, __func__, [&]() { return ReplaceInstruction(dynamic_update_slice, pad); });
+     }
+   }
+ 
+   // DynamicUpdateSlice where operand and dus_update have the same size is
+   // equal to dus_update.
+   if (SameShape(dynamic_update_slice, dus_update)) {
+-    return ReplaceInstruction(dynamic_update_slice, dus_update);
++    return ObserveAlgebraicRewrite(8333, __func__, [&]() { return ReplaceInstruction(dynamic_update_slice, dus_update); });
+   }
+ 
+   // Rewriting dynamic_update_slice(pad(x), y) to concat(x, y) if y overwrites
+@@ -8419,7 +8453,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleDynamicUpdateSlice(
+           ABSL_ASSIGN_OR_RETURN(HloInstruction * concat,
+                                 MakeConcatHlo(concat_operands, padded_dim));
+           *(concat->mutable_shape()) = dynamic_update_slice->shape();
+-          return ReplaceInstruction(dynamic_update_slice, concat);
++          return ObserveAlgebraicRewrite(8422, __func__, [&]() { return ReplaceInstruction(dynamic_update_slice, concat); });
+         }
+       }
+     }
+@@ -8443,18 +8477,18 @@ absl::Status AlgebraicSimplifierVisitor::HandleDynamicUpdateSlice(
+     for (int64_t dim : same_size_dims_to_simplify) {
+       new_operands[dim + 2] = zero;
+     }
+-    return ReplaceInstruction(
++    return ObserveAlgebraicRewrite(8446, __func__, [&]() { return ReplaceInstruction(
+         dynamic_update_slice,
+         dynamic_update_slice->AddInstruction(
+             dynamic_update_slice->CloneWithNewOperands(
+-                dynamic_update_slice->shape(), new_operands)));
++                dynamic_update_slice->shape(), new_operands))); });
+   }
+ 
+   // If any dimension of dus_update is 0, elide the DynamicUpdateSlice.  This
+   // optimization becomes invalid should we later prefer to warn about out of
+   // bound indices.
+   if (ShapeUtil::IsZeroElementArray(dus_update->shape())) {
+-    return ReplaceInstruction(dynamic_update_slice, updated);
++    return ObserveAlgebraicRewrite(8457, __func__, [&]() { return ReplaceInstruction(dynamic_update_slice, updated); });
+   }
+ 
+   // dus(a,dus(ds(a,id),c,inner_id)),id) is equivalent to dus(a,c,inner_id + id)
+@@ -8488,7 +8522,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleDynamicUpdateSlice(
+       ABSL_RETURN_IF_ERROR(
+           dynamic_update_slice->ReplaceOperandWith(i, combined_index));
+     }
+-    MarkAsChanged();
++    ObserveAlgebraicRewrite(8491, __func__, [&]() { return MarkAsChanged(); });
+     return absl::OkStatus();
+   }
+   return absl::OkStatus();
+@@ -8631,13 +8665,13 @@ absl::Status AlgebraicSimplifierVisitor::BroadcastReduce(
+           init_values[i]->AddInstruction(HloInstruction::CreateBroadcast(
+               reduce->shape().tuple_shapes(i), init_values[i], {})));
+     }
+-    return ReplaceWithNewInstruction(
+-        reduce, HloInstruction::CreateTuple(broadcast_inits));
++    return ObserveAlgebraicRewrite(8634, __func__, [&]() { return ReplaceWithNewInstruction(
++        reduce, HloInstruction::CreateTuple(broadcast_inits)); });
+   }
+ 
+-  return ReplaceWithNewInstruction(
++  return ObserveAlgebraicRewrite(8638, __func__, [&]() { return ReplaceWithNewInstruction(
+       reduce, HloInstruction::CreateBroadcast(reduce_result_shape,
+-                                              init_for_single_output, {}));
++                                              init_for_single_output, {})); });
+ }
+ 
+ absl::Status AlgebraicSimplifierVisitor::ReplaceReduceWithReshape(
+@@ -8654,13 +8688,13 @@ absl::Status AlgebraicSimplifierVisitor::ReplaceReduceWithReshape(
+           reduce->AddInstruction(HloInstruction::CreateReshape(
+               reduce->shape().tuple_shapes(i), reduce_inputs[i])));
+     }
+-    return ReplaceWithNewInstruction(
+-        reduce, HloInstruction::CreateTuple(reshaped_args));
++    return ObserveAlgebraicRewrite(8657, __func__, [&]() { return ReplaceWithNewInstruction(
++        reduce, HloInstruction::CreateTuple(reshaped_args)); });
+   }
+ 
+-  return ReplaceWithNewInstruction(
++  return ObserveAlgebraicRewrite(8661, __func__, [&]() { return ReplaceWithNewInstruction(
+       reduce, HloInstruction::CreateReshape(reduce_result_shape,
+-                                            init_for_single_output));
++                                            init_for_single_output)); });
+ }
+ 
+ std::optional<absl::Status>
+@@ -8767,7 +8801,7 @@ AlgebraicSimplifierVisitor::ReorderReduceDotToDotReduce(
+       if (old_flops / static_cast<double>(new_flops) >
+           options_.raise_slice_and_reduce_through_dot_threshold()) {
+         VLOG(10) << "Reordering reduce into dot operands";
+-        return ReplaceInstruction(reduce, new_dot);
++        return ObserveAlgebraicRewrite(8770, __func__, [&]() { return ReplaceInstruction(reduce, new_dot); });
+       }
+     }
+   }
+@@ -8798,10 +8832,10 @@ absl::Status AlgebraicSimplifierVisitor::MergeReduces(
+                          reduce->dimensions().size());
+   std::merge(arg_dims.begin(), arg_dims.end(), reduce_dims.begin(),
+              reduce_dims.end(), std::back_inserter(new_dimensions));
+-  return ReplaceWithNewInstruction(
++  return ObserveAlgebraicRewrite(8801, __func__, [&]() { return ReplaceWithNewInstruction(
+       reduce,
+       HloInstruction::CreateReduce(reduce_result_shape, arg->mutable_operand(0),
+-                                   init_value, new_dimensions, function));
++                                   init_value, new_dimensions, function)); });
+ }
+ 
+ absl::Status AlgebraicSimplifierVisitor::HandleReduce(HloInstruction* hlo) {
+@@ -8837,8 +8871,8 @@ absl::Status AlgebraicSimplifierVisitor::HandleReduce(HloInstruction* hlo) {
+     auto new_reduce = reduce->AddInstruction(
+         HloInstruction::CreateReduce(reduce_result_shape, arg, init_value,
+                                      reduce->dimensions(), new_function));
+-    return ReplaceWithNewInstruction(reduce,
+-                                     HloInstruction::CreateTuple({new_reduce}));
++    return ObserveAlgebraicRewrite(8840, __func__, [&]() { return ReplaceWithNewInstruction(reduce,
++                                     HloInstruction::CreateTuple({new_reduce})); });
+   }
+ 
+   // If the reduction results in the same number of elements, then the only
+@@ -8867,7 +8901,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleReduce(HloInstruction* hlo) {
+     auto users = reduce->users();
+     auto* negated_reduce = arg->AddInstruction(HloInstruction::CreateUnary(
+         reduce->shape(), HloOpcode::kNegate, reduce));
+-    MarkAsChanged();
++    ObserveAlgebraicRewrite(8870, __func__, [&]() { return MarkAsChanged(); });
+     return reduce->ReplaceUsesWith(users, negated_reduce);
+   }
+ 
+@@ -8894,8 +8928,8 @@ absl::Status AlgebraicSimplifierVisitor::HandleReduce(HloInstruction* hlo) {
+       HloInstruction* idx_bcast = reduce->AddInstruction(
+           HloInstruction::CreateBroadcast(idx_shape, idx_const, {}));
+ 
+-      return ReplaceWithNewInstruction(
+-          reduce, HloInstruction::CreateTuple({val_bcast, idx_bcast}));
++      return ObserveAlgebraicRewrite(8897, __func__, [&]() { return ReplaceWithNewInstruction(
++          reduce, HloInstruction::CreateTuple({val_bcast, idx_bcast})); });
+     }
+   }
+ 
+@@ -8943,7 +8977,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleReduce(HloInstruction* hlo) {
+     // If new transpose dimensions are sorted, then there is no need to
+     // transpose reduce result.
+     if (absl::c_is_sorted(new_transpose_dimensions)) {
+-      return ReplaceInstruction(reduce, new_reduce);
++      return ObserveAlgebraicRewrite(8946, __func__, [&]() { return ReplaceInstruction(reduce, new_reduce); });
+     }
+     for (auto& d : new_transpose_dimensions) {
+       auto old_dim = d;
+@@ -8956,7 +8990,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleReduce(HloInstruction* hlo) {
+     ABSL_ASSIGN_OR_RETURN(
+         HloInstruction * new_transpose,
+         MakeTransposeHlo(new_reduce, new_transpose_dimensions));
+-    return ReplaceInstruction(reduce, new_transpose);
++    return ObserveAlgebraicRewrite(8959, __func__, [&]() { return ReplaceInstruction(reduce, new_transpose); });
+   }
+ 
+   // If a reduce feeds a reduce with the same computation and initial value,
+@@ -9006,7 +9040,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleReduce(HloInstruction* hlo) {
+       }
+     }
+     if (can_move_reshape_into_reduce) {
+-      MarkAsChanged();
++      ObserveAlgebraicRewrite(9009, __func__, [&]() { return MarkAsChanged(); });
+       absl::flat_hash_set<int64_t> dimensions_not_to_reduce;
+       for (auto dim_pair : unmodified_dims) {
+         if (arg_dim_in_output[dim_pair.second]) {
+@@ -9020,10 +9054,10 @@ absl::Status AlgebraicSimplifierVisitor::HandleReduce(HloInstruction* hlo) {
+           new_reduce_dimensions.push_back(i);
+         }
+       }
+-      return ReplaceWithNewInstruction(
++      return ObserveAlgebraicRewrite(9023, __func__, [&]() { return ReplaceWithNewInstruction(
+           reduce, HloInstruction::CreateReduce(
+                       reduce_result_shape, arg->mutable_operand(0), init_value,
+-                      new_reduce_dimensions, function));
++                      new_reduce_dimensions, function)); });
+     }
+ 
+     // Case 2: Check whether the reshape only modifies non-reduction dimensions.
+@@ -9047,7 +9081,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleReduce(HloInstruction* hlo) {
+                         reduce->to_apply(), &reduce->metadata()));
+       ABSL_ASSIGN_OR_RETURN(HloInstruction * new_reshape,
+                             MakeReshapeHlo(reduce->shape(), new_reduce));
+-      return ReplaceInstruction(reduce, new_reshape);
++      return ObserveAlgebraicRewrite(9050, __func__, [&]() { return ReplaceInstruction(reduce, new_reshape); });
+     }
+   }
+ 
+@@ -9083,7 +9117,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleReduce(HloInstruction* hlo) {
+         }
+         old_reduce = new_reduce;
+       }
+-      return ReplaceInstruction(reduce, old_reduce);
++      return ObserveAlgebraicRewrite(9086, __func__, [&]() { return ReplaceInstruction(reduce, old_reduce); });
+     }
+   }
+ 
+@@ -9131,13 +9165,13 @@ absl::Status AlgebraicSimplifierVisitor::HandleReduce(HloInstruction* hlo) {
+                    /*preferred_element_type=*/dot->shape().element_type()));
+     dot->SetupDerivedInstruction(new_dot);
+     if (reduce_dims.empty()) {
+-      return ReplaceInstruction(hlo, new_dot);
++      return ObserveAlgebraicRewrite(9134, __func__, [&]() { return ReplaceInstruction(hlo, new_dot); });
+     }
+     ABSL_ASSIGN_OR_RETURN(
+         auto new_reduce,
+         MakeReduceHlo(new_dot, init_value, reduce_dims, HloOpcode::kAdd));
+     reduce->SetupDerivedInstruction(new_reduce);
+-    return ReplaceInstruction(hlo, new_reduce);
++    return ObserveAlgebraicRewrite(9140, __func__, [&]() { return ReplaceInstruction(hlo, new_reduce); });
+   }
+ 
+   // Replace Use(ReduceMax(Arg)) with Use(Gte(ReduceArgMax, 0)).
+@@ -9154,9 +9188,9 @@ absl::Status AlgebraicSimplifierVisitor::HandleReduce(HloInstruction* hlo) {
+         });
+     if (arg_max_candidate != arg->users().end()) {
+       // Replace 'reduce' uses with GTE(ArgMax, 0).
+-      return ReplaceWithNewInstruction(
++      return ObserveAlgebraicRewrite(9157, __func__, [&]() { return ReplaceWithNewInstruction(
+           reduce, HloInstruction::CreateGetTupleElement(*arg_max_candidate,
+-                                                        /*index=*/0));
++                                                        /*index=*/0)); });
+     }
+   }
+ 
+@@ -9174,9 +9208,9 @@ absl::Status AlgebraicSimplifierVisitor::HandleReduce(HloInstruction* hlo) {
+         });
+     if (arg_min_candidate != arg->users().end()) {
+       // Replace 'reduce' uses with GTE(ArgMin, 0).
+-      return ReplaceWithNewInstruction(
++      return ObserveAlgebraicRewrite(9177, __func__, [&]() { return ReplaceWithNewInstruction(
+           reduce, HloInstruction::CreateGetTupleElement(*arg_min_candidate,
+-                                                        /*index=*/0));
++                                                        /*index=*/0)); });
+     }
+   }
+ 
+@@ -9195,11 +9229,11 @@ absl::Status AlgebraicSimplifierVisitor::HandleReduce(HloInstruction* hlo) {
+              m::OrAnyOrder(m::Parameter(0), m::Parameter(1))))) {
+     if (broadcast_arg->shape().dimensions().empty() &&
+         reduce->dimensions().size() == arg->shape().dimensions().size()) {
+-      return ReplaceWithNewInstruction(
++      return ObserveAlgebraicRewrite(9198, __func__, [&]() { return ReplaceWithNewInstruction(
+           reduce,
+           HloInstruction::CreateBinary(
+               reduce_result_shape, function->root_instruction()->opcode(),
+-              broadcast_arg, reduce->mutable_operand(1)));
++              broadcast_arg, reduce->mutable_operand(1))); });
+     }
+   }
+ 
+@@ -9250,9 +9284,9 @@ absl::Status AlgebraicSimplifierVisitor::HandleReduce(HloInstruction* hlo) {
+         }
+       }
+ 
+-      return ReplaceWithNewInstruction(
++      return ObserveAlgebraicRewrite(9253, __func__, [&]() { return ReplaceWithNewInstruction(
+           reduce, HloInstruction::CreateBroadcast(
+-                      reduce_result_shape, new_reduce, new_broadcast_dims));
++                      reduce_result_shape, new_reduce, new_broadcast_dims)); });
+     }
+   }
+ 
+@@ -9303,9 +9337,9 @@ absl::Status AlgebraicSimplifierVisitor::HandleReduce(HloInstruction* hlo) {
+               MakeBroadcastHlo(init_value, {}, multiplied_scalar->shape()),
+               multiplied_scalar));
+       VLOG(10) << "Converting common reduce(broadcast) dimensions to multiply";
+-      return ReplaceWithNewInstruction(
++      return ObserveAlgebraicRewrite(9306, __func__, [&]() { return ReplaceWithNewInstruction(
+           reduce, HloInstruction::CreateBroadcast(new_broadcast_shape, add,
+-                                                  new_broadcast_dims));
++                                                  new_broadcast_dims)); });
+     }
+   }
+ 
+@@ -9323,9 +9357,9 @@ absl::Status AlgebraicSimplifierVisitor::HandleReducePrecision(
+           primitive_util::ExponentWidth(element_type) &&
+       reduce_precision->mantissa_bits() + 1 ==
+           primitive_util::SignificandWidth(element_type)) {
+-    return ReplaceInstruction(
++    return ObserveAlgebraicRewrite(9326, __func__, [&]() { return ReplaceInstruction(
+         /*old_instruction=*/hlo,
+-        /*new_instruction=*/reduce_precision->mutable_operand(0));
++        /*new_instruction=*/reduce_precision->mutable_operand(0)); });
+   }
+   return absl::OkStatus();
+ }
+@@ -9342,10 +9376,10 @@ absl::Status AlgebraicSimplifierVisitor::HandleReduceWindow(
+   auto replace_with_span = [&](const std::vector<HloInstruction*>& elements) {
+     CHECK(multi_output_reduce_window || elements.size() == 1);
+     if (multi_output_reduce_window) {
+-      return ReplaceWithNewInstruction(reduce_window,
+-                                       HloInstruction::CreateTuple(elements));
++      return ObserveAlgebraicRewrite(9345, __func__, [&]() { return ReplaceWithNewInstruction(reduce_window,
++                                       HloInstruction::CreateTuple(elements)); });
+     }
+-    return ReplaceInstruction(reduce_window, elements[0]);
++    return ObserveAlgebraicRewrite(9348, __func__, [&]() { return ReplaceInstruction(reduce_window, elements[0]); });
+   };
+   // For tuple reduce, we require all reduce shapes to be the same, up to the
+   // element types, so we can use just the first operand and the first result as
+@@ -9403,8 +9437,8 @@ absl::Status AlgebraicSimplifierVisitor::HandleReduceWindow(
+         reduce_window->AddInstruction(HloInstruction::CreateReduceWindow(
+             *output_shapes[0], inputs[0], init_values[0],
+             reduce_window->window(), new_function));
+-    return ReplaceWithNewInstruction(
+-        reduce_window, HloInstruction::CreateTuple({new_reduce_window}));
++    return ObserveAlgebraicRewrite(9406, __func__, [&]() { return ReplaceWithNewInstruction(
++        reduce_window, HloInstruction::CreateTuple({new_reduce_window})); });
+   }
+   if (multi_output_reduce_window) {
+     return absl::OkStatus();
+@@ -9525,10 +9559,10 @@ absl::Status AlgebraicSimplifierVisitor::HandleReduceWindow(
+           reduce_window->AddInstruction(HloInstruction::CreateBroadcast(
+               reduce_window->shape(), val_const, {}));
+ 
+-      return ReplaceWithNewInstruction(
++      return ObserveAlgebraicRewrite(9528, __func__, [&]() { return ReplaceWithNewInstruction(
+           reduce_window,
+           HloInstruction::CreateBinary(reduce_window->shape(),
+-                                       HloOpcode::kMultiply, val_bcast, count));
++                                       HloOpcode::kMultiply, val_bcast, count)); });
+     }
+   }
+ 
+@@ -9574,7 +9608,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleReduceWindow(
+                             MakePadHlo(new_op, init_value, padding_config));
+     }
+ 
+-    return ReplaceInstruction(reduce_window, new_op);
++    return ObserveAlgebraicRewrite(9577, __func__, [&]() { return ReplaceInstruction(reduce_window, new_op); });
+   }
+ 
+   if (options_.enable_window_reduce_to_reduce_replacement()) {
+@@ -9617,9 +9651,9 @@ absl::Status AlgebraicSimplifierVisitor::HandleReduceWindow(
+           /*init_value=*/reduce_window->mutable_operand(1),
+           /*dimensions_to_reduce=*/effective_reduce_dims,
+           /*reduce_computation=*/function));
+-      return ReplaceWithNewInstruction(
++      return ObserveAlgebraicRewrite(9620, __func__, [&]() { return ReplaceWithNewInstruction(
+           reduce_window,
+-          HloInstruction::CreateReshape(reduce_window->shape(), reduce));
++          HloInstruction::CreateReshape(reduce_window->shape(), reduce)); });
+     }
+   }
+ 
+@@ -9788,10 +9822,10 @@ absl::Status AlgebraicSimplifierVisitor::HandleReduceWindow(
+     auto fadd = [hlo](std::unique_ptr<HloInstruction> x) {
+       return hlo->AddInstruction(std::move(x));
+     };
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(9791, __func__, [&]() { return ReplaceWithNewInstruction(
+         reduce_window, HloInstruction::CreateBroadcastSequence(
+                            /*output_shape=*/reduce_window->shape(),
+-                           /*operand=*/new_reduce_window_operand, fadd));
++                           /*operand=*/new_reduce_window_operand, fadd)); });
+   }
+ 
+   // Carry out the folding of the pad into reduce_window.
+@@ -9815,29 +9849,29 @@ absl::Status AlgebraicSimplifierVisitor::HandleReduceWindow(
+     }
+   }
+ 
+-  return ReplaceWithNewInstruction(
++  return ObserveAlgebraicRewrite(9818, __func__, [&]() { return ReplaceWithNewInstruction(
+       reduce_window, HloInstruction::CreateReduceWindow(
+                          /*shape=*/reduce_window->shape(),
+                          /*operand=*/new_reduce_window_operand,
+                          /*init_value=*/reduce_window->mutable_operand(1),
+                          /*window=*/new_window,
+-                         /*reduce_computation=*/function));
++                         /*reduce_computation=*/function)); });
+ }
+ 
+ absl::Status AlgebraicSimplifierVisitor::HandleSelect(HloInstruction* select) {
+   // select(x, y, y) -> y.
+   if (select->operand(1) == select->operand(2) &&
+-      ReplaceInstructionIfCompatible(select, select->mutable_operand(1))) {
++      ObserveAlgebraicRewrite(9830, __func__, [&]() { return ReplaceInstructionIfCompatible(select, select->mutable_operand(1)); })) {
+     return absl::OkStatus();
+   }
+   // select(true, x, y) -> x.
+   if (IsAll(select->operand(0), true) &&
+-      ReplaceInstructionIfCompatible(select, select->mutable_operand(1))) {
++      ObserveAlgebraicRewrite(9835, __func__, [&]() { return ReplaceInstructionIfCompatible(select, select->mutable_operand(1)); })) {
+     return absl::OkStatus();
+   }
+   // select(false, x, y) -> y.
+   if (IsAll(select->operand(0), false) &&
+-      ReplaceInstructionIfCompatible(select, select->mutable_operand(2))) {
++      ObserveAlgebraicRewrite(9840, __func__, [&]() { return ReplaceInstructionIfCompatible(select, select->mutable_operand(2)); })) {
+     return absl::OkStatus();
+   }
+   // select(not(pred), a, b) -> select(pred, b, a)
+@@ -9845,23 +9879,23 @@ absl::Status AlgebraicSimplifierVisitor::HandleSelect(HloInstruction* select) {
+     auto pred_operand = select->mutable_operand(0)->mutable_operand(0);
+     auto on_true = select->mutable_operand(1);
+     auto on_false = select->mutable_operand(2);
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(9848, __func__, [&]() { return ReplaceWithNewInstruction(
+         select,
+         HloInstruction::CreateTernary(select->shape(), HloOpcode::kSelect,
+-                                      pred_operand, on_false, on_true));
++                                      pred_operand, on_false, on_true)); });
+   }
+   // select(PRED, PRED, PRED)
+   if (ShapeUtil::HasPrimitiveType(select->shape(), xla::PRED)) {
+     // select(a, true, false) -> a
+     if (IsAll(select->operand(1), true) && IsAll(select->operand(2), false)) {
+-      return ReplaceInstruction(select, select->mutable_operand(0));
++      return ObserveAlgebraicRewrite(9857, __func__, [&]() { return ReplaceInstruction(select, select->mutable_operand(0)); });
+     }
+     // select(a, false, true) -> not(a)
+     if (IsAll(select->operand(1), false) && IsAll(select->operand(2), true)) {
+-      return ReplaceWithNewInstruction(
++      return ObserveAlgebraicRewrite(9861, __func__, [&]() { return ReplaceWithNewInstruction(
+           select, HloInstruction::CreateUnary(
+                       select->mutable_operand(0)->shape(), HloOpcode::kNot,
+-                      select->mutable_operand(0)));
++                      select->mutable_operand(0))); });
+     }
+     // select(compare(a, b, GT/GE), a, b) => or(a, b)
+     // select(compare(a, b, LT/LE), a, b) => and(a, b)
+@@ -9873,21 +9907,21 @@ absl::Status AlgebraicSimplifierVisitor::HandleSelect(HloInstruction* select) {
+       auto cmp_dir = compare->comparison_direction();
+       if (cmp_dir == ComparisonDirection::kGt ||
+           cmp_dir == ComparisonDirection::kGe) {
+-        return ReplaceWithNewInstruction(
++        return ObserveAlgebraicRewrite(9876, __func__, [&]() { return ReplaceWithNewInstruction(
+             select, HloInstruction::CreateBinary(select->shape(),
+-                                                 HloOpcode::kOr, lhs, rhs));
++                                                 HloOpcode::kOr, lhs, rhs)); });
+       }
+       if (cmp_dir == ComparisonDirection::kLt ||
+           cmp_dir == ComparisonDirection::kLe) {
+-        return ReplaceWithNewInstruction(
++        return ObserveAlgebraicRewrite(9882, __func__, [&]() { return ReplaceWithNewInstruction(
+             select, HloInstruction::CreateBinary(select->shape(),
+-                                                 HloOpcode::kAnd, lhs, rhs));
++                                                 HloOpcode::kAnd, lhs, rhs)); });
+       }
+       if (cmp_dir == ComparisonDirection::kEq) {
+-        return ReplaceInstruction(select, rhs);
++        return ObserveAlgebraicRewrite(9887, __func__, [&]() { return ReplaceInstruction(select, rhs); });
+       }
+       if (cmp_dir == ComparisonDirection::kNe) {
+-        return ReplaceInstruction(select, lhs);
++        return ObserveAlgebraicRewrite(9890, __func__, [&]() { return ReplaceInstruction(select, lhs); });
+       }
+     }
+   }
+@@ -9932,7 +9966,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleSelect(HloInstruction* select) {
+     std::unique_ptr<HloInstruction> new_xs =
+         HloInstruction::CreateDynamicUpdateSlice(select->shape(), xs, new_x2,
+                                                  i);
+-    return ReplaceWithNewInstruction(select, std::move(new_xs));
++    return ObserveAlgebraicRewrite(9935, __func__, [&]() { return ReplaceWithNewInstruction(select, std::move(new_xs)); });
+   }
+ 
+   return absl::OkStatus();
+@@ -9945,18 +9979,18 @@ absl::Status AlgebraicSimplifierVisitor::HandleScatter(HloInstruction* hlo) {
+                      [](const HloInstruction* updates) {
+                        return ShapeUtil::IsZeroElementArray(updates->shape());
+                      }) &&
+-      ReplaceInstructionIfCompatible(scatter, scatter->scatter_operands())) {
++      ObserveAlgebraicRewrite(9948, __func__, [&]() { return ReplaceInstructionIfCompatible(scatter, scatter->scatter_operands()); })) {
+     return absl::OkStatus();
+   }
+   if (scatter->scatter_operand_count() == 1 &&
+       ShapeUtil::IsZeroElementArray(scatter->scatter_indices()->shape()) &&
+       SameShape(scatter, scatter->scatter_operands()[0]) &&
+       SameShape(scatter, scatter->scatter_updates()[0])) {
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(9955, __func__, [&]() { return ReplaceWithNewInstruction(
+         scatter, HloInstruction::CreateMap(scatter->shape(),
+                                            {scatter->scatter_operands()[0],
+                                             scatter->scatter_updates()[0]},
+-                                           scatter->to_apply()));
++                                           scatter->to_apply())); });
+   }
+   return absl::OkStatus();
+ }
+@@ -9967,11 +10001,11 @@ absl::Status AlgebraicSimplifierVisitor::HandleSort(HloInstruction* sort) {
+   if (ShapeUtil::IsZeroElementArray(operand->shape()) ||
+       operand->shape().dimensions(dimension_to_sort) <= 1) {
+     if (sort->operand_count() == 1) {
+-      return ReplaceInstruction(sort, operand);
++      return ObserveAlgebraicRewrite(9970, __func__, [&]() { return ReplaceInstruction(sort, operand); });
+     }
+     // If it is key/value sort, the output of sort is a tuple.
+-    return ReplaceWithNewInstruction(
+-        sort, HloInstruction::CreateTuple(sort->operands()));
++    return ObserveAlgebraicRewrite(9973, __func__, [&]() { return ReplaceWithNewInstruction(
++        sort, HloInstruction::CreateTuple(sort->operands())); });
+   }
+   return absl::OkStatus();
+ }
+@@ -9995,13 +10029,13 @@ absl::Status AlgebraicSimplifierVisitor::HandleSqrt(HloInstruction* sqrt) {
+           sqrt->parent()->AddInstruction(HloInstruction::CreateUnary(
+               abs_shape, HloOpcode::kAbs, sqrt_operand->mutable_operand(0)));
+ 
+-      return ReplaceWithNewInstruction(
+-          sqrt, HloInstruction::CreateConvert(sqrt_operand->shape(), abs));
++      return ObserveAlgebraicRewrite(9998, __func__, [&]() { return ReplaceWithNewInstruction(
++          sqrt, HloInstruction::CreateConvert(sqrt_operand->shape(), abs)); });
+     }
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(10001, __func__, [&]() { return ReplaceWithNewInstruction(
+         sqrt, HloInstruction::CreateUnary(
+                   sqrt_operand->mutable_operand(0)->shape(), HloOpcode::kAbs,
+-                  sqrt_operand->mutable_operand(0)));
++                  sqrt_operand->mutable_operand(0))); });
+   }
+   return absl::OkStatus();
+ }
+@@ -10096,7 +10130,7 @@ absl::StatusOr<bool> AlgebraicSimplifierVisitor::TryFoldTransposeIntoScatter(
+       scatter->unique_indices());
+ 
+   ABSL_RETURN_IF_ERROR(
+-      ReplaceWithNewInstruction(transpose, std::move(new_scatter)));
++      ObserveAlgebraicRewrite(10099, __func__, [&]() { return ReplaceWithNewInstruction(transpose, std::move(new_scatter)); }));
+   return true;
+ }
+ 
+@@ -10111,15 +10145,15 @@ absl::Status AlgebraicSimplifierVisitor::HandleTranspose(
+   if (std::is_sorted(transpose->dimensions().begin(),
+                      transpose->dimensions().end())) {
+     VLOG(10) << "deleting no-op transpose";
+-    return ReplaceInstruction(transpose, operand);
++    return ObserveAlgebraicRewrite(10114, __func__, [&]() { return ReplaceInstruction(transpose, operand); });
+   }
+ 
+   if (HloOpcode::kTranspose == operand->opcode()) {
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(10118, __func__, [&]() { return ReplaceWithNewInstruction(
+         transpose, HloInstruction::CreateTranspose(
+                        transpose->shape(), operand->mutable_operand(0),
+                        ComposePermutations(operand->dimensions(),
+-                                           transpose->dimensions())));
++                                           transpose->dimensions()))); });
+   }
+ 
+   ABSL_ASSIGN_OR_RETURN(bool chain_removed,
+@@ -10184,11 +10218,11 @@ absl::Status AlgebraicSimplifierVisitor::HandleTranspose(
+     DotDimensionNumbers new_dnums = dnums;
+     std::swap(*new_dnums.mutable_lhs_contracting_dimensions(),
+               *new_dnums.mutable_rhs_contracting_dimensions());
+-    ABSL_RETURN_IF_ERROR(ReplaceWithNewInstruction(
++    ABSL_RETURN_IF_ERROR(ObserveAlgebraicRewrite(10187, __func__, [&]() { return ReplaceWithNewInstruction(
+         transpose,
+         HloInstruction::CreateDot(
+             transpose->shape(), /*lhs=*/rhs, /*rhs=*/lhs, new_dnums,
+-            SwapOperandsInDotPrecisionConfig(dot->precision_config()))));
++            SwapOperandsInDotPrecisionConfig(dot->precision_config()))); }));
+     return true;
+   };
+   ABSL_ASSIGN_OR_RETURN(bool did_transpose_of_dot, do_transpose_of_dot());
+@@ -10253,7 +10287,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleTranspose(
+       *new_dot->mutable_shape()->mutable_layout() = transpose->shape().layout();
+ 
+       dot->SetupDerivedInstruction(new_dot);
+-      CHECK_OK(ReplaceInstruction(transpose, new_dot));
++      CHECK_OK(ObserveAlgebraicRewrite(10256, __func__, [&]() { return ReplaceInstruction(transpose, new_dot); }));
+       return true;
+     }());
+     if (did_transform) {
+@@ -10264,18 +10298,18 @@ absl::Status AlgebraicSimplifierVisitor::HandleTranspose(
+   // Replace transpose with a reshape if more than one degenerate method is
+   // permuted.
+   if (OnlyPermutesDegenerateDims(transpose->shape(), transpose->dimensions())) {
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(10267, __func__, [&]() { return ReplaceWithNewInstruction(
+         transpose, HloInstruction::CreateReshape(
+-                       transpose->shape(), transpose->mutable_operand(0)));
++                       transpose->shape(), transpose->mutable_operand(0))); });
+   }
+ 
+   if (operand->opcode() == HloOpcode::kRng && operand->user_count() == 1) {
+     *operand->mutable_shape() = transpose->shape();
+-    return ReplaceInstruction(transpose, operand);
++    return ObserveAlgebraicRewrite(10274, __func__, [&]() { return ReplaceInstruction(transpose, operand); });
+   }
+ 
+   if (options_.is_layout_sensitive() && TransposeIsBitcast(transpose)) {
+-    ReplaceWithBitcast(transpose);
++    ObserveAlgebraicRewrite(10278, __func__, [&]() { return ReplaceWithBitcast(transpose); });
+     return absl::OkStatus();
+   }
+ 
+@@ -10428,7 +10462,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleTranspose(
+           return true;
+         }()));
+     if (did_transform) {
+-      MarkAsChanged();
++      ObserveAlgebraicRewrite(10431, __func__, [&]() { return MarkAsChanged(); });
+       return absl::OkStatus();
+     }
+   }
+@@ -10502,7 +10536,7 @@ absl::StatusOr<bool> AlgebraicSimplifierVisitor::FoldConvInputPad(
+         convolution->CloneWithNewOperands(convolution->shape(), {a, b});
+     new_conv->set_window(new_window);
+     ABSL_RETURN_IF_ERROR(
+-        ReplaceWithNewInstruction(convolution, std::move(new_conv)));
++        ObserveAlgebraicRewrite(10505, __func__, [&]() { return ReplaceWithNewInstruction(convolution, std::move(new_conv)); }));
+     return true;
+   }
+   return false;
+@@ -10573,7 +10607,7 @@ absl::StatusOr<bool> AlgebraicSimplifierVisitor::FoldConvFilterPad(
+       convolution->shape(), {lhs, rhs->mutable_operand(0)});
+   new_conv->set_window(new_window);
+   ABSL_RETURN_IF_ERROR(
+-      ReplaceWithNewInstruction(convolution, std::move(new_conv)));
++      ObserveAlgebraicRewrite(10576, __func__, [&]() { return ReplaceWithNewInstruction(convolution, std::move(new_conv)); }));
+   return true;
+ }
+ 
+@@ -10587,7 +10621,7 @@ absl::StatusOr<bool> AlgebraicSimplifierVisitor::SwapConvOperands(
+                             DynCast<HloConvolutionInstruction>(convolution),
+                             options_.conv_is_lowerable_callback()));
+   if (changed) {
+-    MarkAsChanged();
++    ObserveAlgebraicRewrite(10590, __func__, [&]() { return MarkAsChanged(); });
+   }
+   return changed;
+ }
+@@ -10665,7 +10699,7 @@ AlgebraicSimplifierVisitor::PromoteConvolutionToF32IfNotOnednnCompatible(
+       to_conv->AddInstruction(HloInstruction::CreateConvert(
+           ShapeUtil::ChangeElementType(to_conv->shape(), from_dtype), to_conv));
+ 
+-  ABSL_RETURN_IF_ERROR(ReplaceInstruction(*convolution, from_conv));
++  ABSL_RETURN_IF_ERROR(ObserveAlgebraicRewrite(10668, __func__, [&]() { return ReplaceInstruction(*convolution, from_conv); }));
+   *convolution = to_conv;
+   return false;
+ }
+@@ -10787,7 +10821,7 @@ absl::StatusOr<bool> AlgebraicSimplifierVisitor::SimplifyConvToDot(
+       convolution->precision_config()));
+ 
+   ABSL_RETURN_IF_ERROR(
+-      ReplaceInstruction(convolution, add_bitcast(convolution_shape, dot)));
++      ObserveAlgebraicRewrite(10790, __func__, [&]() { return ReplaceInstruction(convolution, add_bitcast(convolution_shape, dot)); }));
+   return true;
+ }
+ 
+@@ -10898,7 +10932,7 @@ absl::StatusOr<bool> AlgebraicSimplifierVisitor::SimplifyConvToMultiply(
+     ABSL_ASSIGN_OR_RETURN(result, MakeReshapeHlo(convolution_shape, sum));
+   }
+ 
+-  ABSL_RETURN_IF_ERROR(ReplaceInstruction(convolution, result));
++  ABSL_RETURN_IF_ERROR(ObserveAlgebraicRewrite(10901, __func__, [&]() { return ReplaceInstruction(convolution, result); }));
+   return true;
+ }
+ 
+@@ -10911,7 +10945,7 @@ absl::Status AlgebraicSimplifierVisitor::HandleConvolution(
+   // Zero-sized input or filter.
+   if (ShapeUtil::IsZeroElementArray(convolution->operand(0)->shape()) ||
+       ShapeUtil::IsZeroElementArray(convolution->operand(1)->shape())) {
+-    return ReplaceInstruction(convolution, MakeScalarLike(convolution, 0));
++    return ObserveAlgebraicRewrite(10914, __func__, [&]() { return ReplaceInstruction(convolution, MakeScalarLike(convolution, 0)); });
+   }
+ 
+   // Try to merge padding/dilation of the input with the convolution's window.
+@@ -10961,8 +10995,8 @@ absl::Status AlgebraicSimplifierVisitor::HandleMap(HloInstruction* map) {
+   auto* map_computation = map->to_apply();
+   auto* map_root = map_computation->root_instruction();
+   if (map_root->opcode() == HloOpcode::kParameter) {
+-    ReplaceInstructionIfCompatible(
+-        map, map->mutable_operand(map_root->parameter_number()));
++    ObserveAlgebraicRewrite(10964, __func__, [&]() { return ReplaceInstructionIfCompatible(
++        map, map->mutable_operand(map_root->parameter_number())); });
+     return absl::OkStatus();
+   }
+   if (map_root->opcode() == HloOpcode::kConstant) {
+@@ -10971,11 +11005,11 @@ absl::Status AlgebraicSimplifierVisitor::HandleMap(HloInstruction* map) {
+     }
+     auto clone = map_root->CloneWithNewOperands(map_root->shape(), {});
+     if (ShapeUtil::IsScalar(map->shape())) {
+-      return ReplaceWithNewInstruction(map, std::move(clone));
++      return ObserveAlgebraicRewrite(10974, __func__, [&]() { return ReplaceWithNewInstruction(map, std::move(clone)); });
+     }
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(10976, __func__, [&]() { return ReplaceWithNewInstruction(
+         map, HloInstruction::CreateBroadcast(
+-                 map->shape(), map->AddInstruction(std::move(clone)), {}));
++                 map->shape(), map->AddInstruction(std::move(clone)), {})); });
+   }
+   // Inline the map if the map computation only contains an elementwise
+   // operation that can accept arbitrary shapes.
+@@ -10991,12 +11025,13 @@ absl::Status AlgebraicSimplifierVisitor::HandleMap(HloInstruction* map) {
+         map->mutable_operand(root_operand->parameter_number()));
+   }
+   auto clone = map_root->CloneWithNewOperands(map->shape(), new_operands);
+-  return ReplaceWithNewInstruction(map, std::move(clone));
++  return ObserveAlgebraicRewrite(10994, __func__, [&]() { return ReplaceWithNewInstruction(map, std::move(clone)); });
+ }
+ 
+ absl::StatusOr<bool> AlgebraicSimplifier::RunImpl(
+     HloModule* module,
+     const absl::flat_hash_set<absl::string_view>& execution_threads) {
++  if (algebraic_rewrite_counter) algebraic_rewrite_counter(0, "RunImpl");
+   bool changed = false;
+   AlgebraicSimplifierVisitor visitor(options_, this);
+   for (auto* comp : module->MakeNonfusionComputations(execution_threads)) {
+@@ -11035,14 +11070,14 @@ absl::Status AlgebraicSimplifierVisitor::HandleConditional(
+   if (pred->opcode() == HloOpcode::kConvert &&
+       pred->operand(0)->shape().element_type() == PRED &&
+       conditional->branch_computations().size() == 2) {
+-    return ReplaceWithNewInstruction(
++    return ObserveAlgebraicRewrite(11038, __func__, [&]() { return ReplaceWithNewInstruction(
+         conditional,
+         HloInstruction::CreateConditional(
+             conditional->shape(), pred->mutable_operand(0),
+             conditional->mutable_operand(2),          // True Op (Branch 1)
+             conditional->branch_computations()[1],    // True Comp (Branch 1)
+             conditional->mutable_operand(1),          // False Op (Branch 0)
+-            conditional->branch_computations()[0]));  // False Comp (Branch 0)
++            conditional->branch_computations()[0])); });  // False Comp (Branch 0)
+   }
+ 
+   return absl::OkStatus();

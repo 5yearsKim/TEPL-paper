@@ -1,0 +1,11 @@
+SemanticRule broadcast_multiply
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: Product(align[n4:lhs](align[n1:input](Input(#0))), align[n4:rhs](align[n3:input](Input(#1))))
+      rhs-graph: align[n8:input](Product(align[n7:lhs](Input(#0)), align[n7:rhs](Input(#1))))
+      verified: source-layout guard certificate and core emission theorem
+      declared-conditions:
+        m0
+      additional-guard: true
+      reason: core schema guard and supplied metadata certified; sound for all legal extents
+      let m0 = &&(==(attr_left.attrs.dimensions, attr_right.attrs.dimensions), ==(attr_left.attrs.new_extents, attr_right.attrs.new_extents))
+

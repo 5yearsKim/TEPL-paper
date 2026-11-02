@@ -1,0 +1,12 @@
+SemanticRule catalog_reduction_broadcast_original_axes
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: Reduce(n2.K, align[n2:input](align[n1:input](Input(#0))))
+      rhs-graph: align[n5:input](Reduce(n4.K, align[n4:input](Input(#0))))
+      verified: source-layout guard certificate and core emission theorem
+      declared-conditions:
+        ==(len(shape(Input(#0))), 1)
+        m0
+      additional-guard: true
+      reason: core schema guard and supplied metadata certified; sound for all legal extents
+      let m0 = &&(&&(==(attr_b.attrs.dimensions, [0]), ==(len(attr_b.attrs.new_extents), 1)), ==(attr_r.attrs.dimensions, [0]))
+

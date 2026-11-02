@@ -1,0 +1,89 @@
+\subsection{Batched Reassociation: Program and Correctness}
+\label{app:batched-reassociation-program}
+\label{extended:sec:partitioning}
+Consider batched reassociation:
+\begin{equation}
+ T=\operatorname{dot}(X,Y),\quad O=\operatorname{dot}(T,Z)
+ \quad\Rightarrow\quad
+ U=\operatorname{dot}(Y,Z),\quad O'=\operatorname{dot}(X,U).
+\end{equation}
+The following program gives all eight RHS attribute lists. Let $b_X,b_Y$ be the inner source dot's batch lists,
+$b_Z$ the outer source dot's right batch list, and $b=|b_X|$. The guard
+requires the outer left batch list to equal $\operatorname{range}(b)$,
+the positions of the inner batch group $\vec B$, in the same order. It imposes
+no fixed rank, contraction-list length, or contiguity restriction.
+For checked metadata arithmetic, we additionally require
+$n_X+n_Y+n_Z\le\mathsf{Max}$, where $n_W=\operatorname{rank}(W)$ and
+$\mathsf{Max}=2^{63}-1$. This conservative bound ensures representable
+lengths and offsets; it is an explicit guard, not an inferred condition.
+
+Let $k_X,k_Y$ be the inner source dot's contraction lists and
+$d_\ell,d_r$ the outer source dot's lists in $T,Z$. The inner free groups
+are $\vec I$ from $X$ and $\vec J$ from $Y$, with shared contracted group
+$\vec K$. Write $\lbrack\!\lbrack e\rbrack\!\rbrack_p$ for partial metadata
+evaluation. Using the paired matching of
+Section~\ref{sec:symbolic-axis-partitioning}, the following expressions
+use only source shapes and attributes:
+\begin{equation}
+\begin{aligned}
+ i_X&=\ocomp(\operatorname{range}(n_X),b_X\Vert k_X),\\
+ j_Y&=\ocomp(\operatorname{range}(n_Y),b_Y\Vert k_Y),\\
+ q_I&=b+\operatorname{range}(|i_X|),\\
+ q_J&=b+|i_X|+\operatorname{range}(|j_Y|),\\
+ (u_G,v_G)&=\mpo(d_\ell,q_G),\quad z_G=\gath(d_r,u_G)
+                 \quad(\vec G\in\{\vec I,\vec J\}),\\
+ f_Y&=\ocomp(\operatorname{range}(n_Y),
+                      b_Y\Vert\gath(j_Y,v_J)),\\
+ f_Z&=\ocomp(\operatorname{range}(n_Z),b_Z\Vert z_J),\\
+ s_I&=b+|f_Y|+\pos(f_Z,z_I),\qquad
+ s_K=b+\pos(f_Y,k_Y).
+\end{aligned}
+\label{eq:batched-program-locals}
+\end{equation}
+Here $u_G$ indexes slots in the outer contraction list, while $v_G$
+indexes axes within the producer group; only $u_G$ selects the partners
+in $d_r$. The outer contraction group is
+$\vec D=\gath(\operatorname{Ord}_T,d_\ell)$.
+For $\vec G\in\{\vec I,\vec J\}$, define its selected subgroup as
+$\vec G_{\mathrm{sel}}=\gath(\vec G,v_G)$; the remaining subgroup
+$\vec G_{\mathrm{rem}}$ preserves the other axes in their original order.
+Here $\pos(a,b)$ returns the positions of entries of $b$ in $a$, in
+$b$'s order. The lists $q_I,q_J$ account for the batch prefix of the source interface
+$\vec B\Vert \vec I\Vert \vec J$. The final two expressions locate the selected $\vec I$
+axes and $\vec K$ in the replacement interface
+\begin{equation}
+ \operatorname{Ord}_U=\vec B\Vert\gath(\operatorname{Ord}_Y,f_Y)
+                  \Vert\gath(\operatorname{Ord}_Z,f_Z).
+ \label{eq:batched-u-interface}
+\end{equation}
+The source-derived lengths supply every offset; the executable program
+contains no query of an unknown RHS interface.
+
+\begin{table}[!htbp]
+\caption{Complete metadata program for guarded batched reassociation.
+Locals are defined in Equation~\eqref{eq:batched-program-locals}.}
+\label{tab:reassociation-program}
+\small
+\begin{tabularx}{\linewidth}{@{}lYY@{}}\toprule
+Attribute & $U=\operatorname{dot}(Y,Z)$ & $O'=\operatorname{dot}(X,U)$\\\midrule
+Left batch & $b_Y$ & $b_X$\\
+Right batch & $b_Z$ & $\operatorname{range}(b)$\\
+Left contraction & $\gath(j_Y,v_J)$ & $\gath(i_X,v_I)\Vert k_X$\\
+Right contraction & $z_J$ & $s_I\Vert s_K$\\\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsubsection{Correctness}
+\label{app:reassociation-validation}
+Let $C$ be the batch-preservation and integer-bound guard above.
+\begin{proposition}[Guarded reassociation program]
+\label{prop:reassociation-program}
+For every legal source match satisfying $C$, the program in
+Table~\ref{tab:reassociation-program} evaluates to legal attributes and
+preserves the ordered output shape and values under exact real arithmetic.
+Ranks, batch lengths, and contraction lengths may vary; free groups may
+be interleaved in the operands. Zero and singleton extents are allowed.
+\end{proposition}
+\input{sections/appendix-reassociation-proof}
+
+\input{sections/appendix-reassociation}

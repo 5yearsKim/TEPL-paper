@@ -1,0 +1,26 @@
+SemanticRule catalog_broadcast_slice_broadcast_only
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: Read(input, IndexOffset(attrs.starts, IndexScale(attrs.strides, Coords(O)))) over align[n1:input](Input(#0))
+      rhs-graph: align[n4:input](Input(#0))
+      law: ordered-axis-split
+      law: paired-axis-selection
+      law: ordered-partition-traversal
+      law: index-scale-normalization
+      law: index-offset-normalization
+      law: index-add-normalization
+      law: index-substitution
+      law: axis-map-restriction
+      declared-conditions:
+        ==(len(shape(Input(#0))), 1)
+        &&(m0, ==(index(attr_s.attrs.strides, 0), 1))
+      additional-guard: unresolved
+        extent_le(m1, slice(attr_s.attrs.sizes, 1, +(1, len(attr_b.attrs.new_extents))))
+      guard-origins (unresolved obligations):
+        [legality obligation] extent_le(m1, slice(attr_s.attrs.sizes, 1, +(1, len(attr_b.attrs.new_extents))))
+      reason: metadata definedness: declared conditions and LHS legality do not establish legality obligation: extent_le(extent_sub(slice(@#0.sizes, 1, +(1, len(@#1.new_extents))), slice(@#0.sizes, 1, +(1, len(@#1.new_extents)))), slice(@#0.sizes, 1, +(1, len(@#1.new_extents))))
+      let m0 = &&(&&(==(attr_b.attrs.dimensions, [0]), ==(index(attr_s.attrs.starts, 0), 0)), ==(index(attr_s.attrs.sizes, 0), index(shape(Input(#0)), 0)))
+      let m1 = extent_sub(slice(attr_s.attrs.sizes, 1, +(1, len(attr_b.attrs.new_extents))), slice(attr_s.attrs.sizes, 1, +(1, len(attr_b.attrs.new_extents))))
+error: cannot verify rule 'catalog_broadcast_slice_broadcast_only': metadata definedness: declared conditions and LHS legality do not establish legality obligation: extent_le(extent_sub(slice(@#0.sizes, 1, +(1, len(@#1.new_extents))), slice(@#0.sizes, 1, +(1, len(@#1.new_extents)))), slice(@#0.sizes, 1, +(1, len(@#1.new_extents))))
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

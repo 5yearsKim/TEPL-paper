@@ -1,0 +1,20 @@
+SemanticRule catalog_dot_scalar_multipliers
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: Reduce(n5.K, Product(align[n5:lhs](Product(align[n3:lhs](align[n1:input](Input(#0))), align[n3:rhs](Input(#1)))), align[n5:rhs](Input(#2))))
+      rhs-graph: Product(align[n11:lhs](align[n7:input](Input(#0))), align[n11:rhs](Reduce(n10.K, Product(align[n10:lhs](Input(#1)), align[n10:rhs](Input(#2))))))
+      verified: source-layout guard certificate and core emission theorem
+      declared-conditions:
+        ==(len(shape(Input(#1))), 2)
+        ==(dtype(Input(#1)), dtype_f32())
+        ==(len(shape(Input(#2))), 2)
+        ==(index(shape(Input(#1)), 1), index(shape(Input(#2)), 0))
+        ==(dtype(Input(#2)), dtype_f32())
+        ==(len(shape(Input(#0))), 0)
+        ==(dtype(Input(#0)), dtype_f32())
+        m2
+      additional-guard: true
+      reason: core schema guard and supplied metadata certified; sound for all legal extents
+      let m0 = &&(==(attr_b.attrs.dimensions, []), ==(attr_b.attrs.new_extents, [index(shape(Input(#1)), 0), index(shape(Input(#1)), 1)]))
+      let m1 = &&(&&(m0, ==(attr_d.attrs.lhs_batching_dimensions, [])), ==(attr_d.attrs.rhs_batching_dimensions, []))
+      let m2 = &&(&&(m1, ==(attr_d.attrs.lhs_contracting_dimensions, [1])), ==(attr_d.attrs.rhs_contracting_dimensions, [0]))
+

@@ -1,0 +1,27 @@
+SemanticRule scalar_broadcast_reverse
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: Read(input, IndexReverse(Coords(S), attrs.dimensions)) over align[n1:input](Input(#0))
+      rhs-graph: align[n4:input](Input(#0))
+      law: index-reverse-normalization
+      law: index-add-normalization
+      law: index-substitution
+      verified: capture access + reduction domains + ordered axes + shape + dtype + legality
+      lhs-normalized: Read(#0, access@0, coords(n1.S))
+      rhs-normalized: Read(#0, access@3)
+      constructor auto#2:
+        dimensions = []
+        new_extents = attr_b.attrs.new_extents
+      declared-conditions:
+        ==(attr_b.attrs.dimensions, [])
+      additional-guard: true
+      reason: valid for all legal LHS metadata satisfying the declared conditions under the selected arithmetic policy
+      coordinate frame (fresh identities; domain lengths remain symbolic):
+        input0 = group(extents=shape(Input(#0)))
+        n1.S = group(extents=shape(Input(#0)))
+        n1.N = group(extents=attr_b.attrs.new_extents)
+        n2.S = group(extents=attr_b.attrs.new_extents)
+        access@0 = n1.S
+        access@3 = n1.S
+        lhs-output = n2.S
+        rhs-output = n2.S
+

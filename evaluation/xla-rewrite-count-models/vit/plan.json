@@ -1,0 +1,7 @@
+{
+  "input_sha256": "6fe057aac995fd754451005d811ce182b7a470fd610af7d73bf0d939fe47bd28",
+  "model_compilations": 1,
+  "numerical_executions": 0,
+  "scope": "All AlgebraicSimplifier invocations in one normal XLA CPU compilation",
+  "driver_sha256": "81c8be861cc128d04580e1e37e8e7bfc4d7c4084e2acacb4c9ecd2d9f93d0a19"
+}

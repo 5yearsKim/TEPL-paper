@@ -1,22 +1,244 @@
-\section{From Mathematical Synthesis to Symbolic Programs}
+\section{From Axis Mappings to Attribute Programs}
 \label{sec:method}
-The preceding sections define and prove a mathematical synthesis algorithm.
-Its completeness guarantee does not extend to the symbolic implementation:
-attribute construction, guard proving, and condition suggestions may remain
-unresolved even for valid rewrites.
-However, the mathematical algorithm selects logical axes for given
-metadata, while the compiler must generate attribute programs before
-tensor ranks and axis positions are known. The challenge is to express
-these selections and orderings as computations over source metadata.
 
-TEPL bridges this gap through three mechanisms. Axes IR represents varying
-numbers of axes as ordered symbolic groups. Symbolic axis mapping connects
-these groups across operations while preserving their positions and pairings.
-Attribute program synthesis uses these mappings to generate expressions
-that compute replacement attributes from source metadata.
-At each match, evaluating these expressions on concrete metadata produces
-the positional attribute lists.
-The following subsections explain these mechanisms through concrete examples.
-\input{sections/05a-axes-ir}
-\input{sections/05b-axis-mapping}
-\input{sections/05c-synthesis}
+Section~\ref{sec:mathematical-synthesis} defines the complete constructor.
+This section compiles that same constructor into a symbolic metadata
+program, before a match supplies concrete ranks or axis lists. Axis
+mappings locate groups; partitioning separates their roles. The generated
+program retains any group computations that are not simplified during
+compilation. Native execution and checked symbolic lowering consume
+the same program; they do not implement separate canonical constructors.
+
+\subsection{Symbolic Axis Mapping}
+\label{sec:symbolic-axis-mapping}
+Section~\ref{sec:mathematical-synthesis} chooses logical axes for each RHS
+operation, but operation attributes require zero-based dimension positions.
+Compilation must express those positions using source metadata, before a
+match supplies concrete ranks and axis lists. Symbolic mappings track where
+variable-length groups occur and compose their position expressions into
+RHS attributes.
+
+A mapping associates a group $\vec G$ with a position-list expression $q_G$
+in tensor $t$:
+\begin{equation}
+ \gath(\operatorname{Ord}_t,q_G)=\vec G.
+ \label{eq:mapping}
+\end{equation}
+Here $\gath$ selects metadata-list entries at the specified positions.
+$\operatorname{Ord}_t$ and $q_G$ are program expressions. At a match,
+source replay assigns logical-axis identities from input-port connections;
+equal extents never identify axes. Intermediate orders are expressions
+constructed by Section~\ref{sec:mathematical-synthesis}'s passes.
+Replaying source declarations supplies mappings from captured axis fields
+and derived lists, such as ordered complements for free axes. For example,
+$\operatorname{Ord}_T=[i_0,i_1,j_0,j_1]$ consists of groups
+$\vec I=[i_0,i_1]$ and $\vec J=[j_0,j_1]$, with position lists
+$q_I=[0,1]$ and $q_J=[2,3]$.
+
+\noindent\textbf{Composing mappings.}
+A selection $h$ within $\vec G$ has positions $\gath(q_G,h)$ in tensor
+$t$, because
+\begin{equation}
+ \gath(\gath(\operatorname{Ord}_t,q_G),h)=\gath(\operatorname{Ord}_t,\gath(q_G,h)).
+ \label{eq:gather-composition}
+\end{equation}
+Both selectors must be valid. For example, selecting $j_1$ within $\vec J$
+uses $h=[1]$, giving $\gath(q_J,h)=\gath([2,3],[1])=[3]$ in $T$.
+
+\subsection{Symbolic Axis Partitioning}
+\label{sec:symbolic-axis-partitioning}
+Continuing the example in Section~\ref{sec:symbolic-axis-mapping},
+Figure~\ref{fig:axis-partitioning} shows a consumer contracting positions $d_\ell=[3,0]$ in $T$, paired
+with $d_r=[2,0]$ in another operand $Z$. The selected axes $[j_1,i_0]$
+cross the producer groups, so each group must be split into selected and
+remaining axes.
+
+\paperfigure{1}{figures/Symbolic Axis Partitioning (Dot Reassociation).pdf}{Symbolic axis partitioning for unbatched dot reassociation. Splitting selected axes by producer origin preserves their contraction partners. The figure uses $c_L,c_R$ for the text's $d_\ell,d_r$, $L$ for the selected contraction group, and $F=[f]$ for $Z$'s free group.}{fig:axis-partitioning}{Three panels show the intermediate tensor T with axes i0, i1, j0, j1; selection of positions 3 and 0; partition into selected and remaining I and J subgroups; and preservation of partners at positions 2 and 0 of Z. A table distinguishes positions within producer groups from slots in the contraction list and corresponding partner positions.}
+
+For each $\vec G\in\{\vec I,\vec J\}$, compute
+\begin{equation}
+ (u_G,v_G)=\mpo(d_\ell,q_G),\qquad z_G=\gath(d_r,u_G).
+ \label{eq:symbolic-partition-selectors}
+\end{equation}
+Paired matching finds common entries in $d_\ell$'s order, satisfying
+$\gath(d_\ell,u_G)=\gath(q_G,v_G)$. Thus $u_G$ indexes slots in the
+consumer's contraction list, whereas $v_G$ indexes axes within $\vec G$.
+The selected subgroup is $\gath(\vec G,v_G)$; the ordered complement of
+$v_G$ selects the remainder. These subgroups are disjoint and cover $\vec G$,
+but concatenating them need not restore its order.
+
+The figure's middle panel gives $(u_I,v_I)=([1],[0])$ and
+$(u_J,v_J)=([0],[1])$. Applying these consumer slots to $d_r$ gives
+$z_I=[0]$ and $z_J=[2]$, preserving the pairings shown in the right panel.
+These pairings determine the replacement contractions; group positions
+$v_G$ cannot substitute for consumer slots $u_G$.
+
+\subsection{Symbolic Attribute-Program Construction}
+\label{sec:symbolic-program-construction}
+Mappings and partitions represent the sets and ordered groups of
+Section~\ref{sec:mathematical-synthesis}. The compiler appends expressions
+for its three passes: canonical retained axes, required-order checks, and
+positional attributes. For example, mandatory axes are represented by
+\begin{equation}
+ M_v=\left(\bigcup_{X\in U_v}\operatorname{set}(I_X)\right)
+ \cap\left(\operatorname{set}(F)\cup
+             \bigcup_{X\notin U_v}\operatorname{set}(I_X)\right).
+ \label{eq:emitted-mandatory}
+\end{equation}
+The subtree input sets $U_v$ are known at compilation; the source frames
+$I_X$ and $F$ are supplied by replay at a match. Intersections and
+differences implement the canonical role partitions; ordered filters and
+concatenation implement the chosen layouts. Position queries convert the
+resulting groups to RHS attributes. The same group order is used on both
+sides of each paired contraction.
+
+\noindent\textbf{One symbolic program.}
+The compiler translates Section~\ref{sec:mathematical-synthesis}'s construction
+into one program containing feasibility checks and computations of RHS
+attributes. The mappings and partitions above express these computations
+without concrete ranks or axis lists. Shared axis-group computations are
+represented once and reused across attributes. This program is the compiler's
+metadata intermediate representation (IR).
+
+At compile time, TEPL lowers this symbolic metadata program into expressions
+over source attributes, using axis mappings, partitioning, and simplification. For example, the selected subgroup $\gath(\vec J,v_J)$ has
+positions $\gath(q_J,v_J)$ in $T$. The mapping for $\vec J$ yields this position
+expression. At matching time, source metadata
+supplies the lists: $q_J=[2,3]$ and $v_J=[1]$ give the position list $[3]$.
+Thus compilation derives the formula; matching evaluates it to obtain the
+RHS attribute. These computations operate on axis metadata, not tensor values.
+A fresh validator checks the lowered expressions, their definedness,
+and the rewrite obligations under the written guard.
+
+Program construction does not require every computation to simplify.
+If bounded symbolic lowering fails, the shared program is retained, but
+Rust/C++ code generation requires this lowering to succeed. Direct
+interpretation of the retained program is described in
+Section~\ref{sec:implementation-scope}.
+
+\begin{theorem}[Symbolic compilation correspondence]
+\label{thm:symbolic-compilation}
+For every admitted semantic plan in Section~\ref{sec:formal-scope}, compilation
+constructs a finite metadata program $(E_q,E_f)$ independently of concrete
+ranks and the written guard. For every legal metadata instance $p$ in that
+section's completeness domain,
+\begin{align}
+ \lbrack\!\lbrack E_q\rbrack\!\rbrack_p&=\operatorname{check}(p),
+ \label{eq:emitted-check}\\
+ \operatorname{check}(p)&\Rightarrow
+ \lbrack\!\lbrack E_f\rbrack\!\rbrack_p=\operatorname{build}_{\tau}(p).
+ \label{eq:emitted-build}
+\end{align}
+Here $\tau$ fixes unconstrained paired orders using the left operand's
+order. The predicate is total on the domain; builders are defined when it
+holds. Sufficient resources and representable metadata are assumed.
+\end{theorem}
+\begin{proof}[Proof sketch]
+The compiler translates each step of Section~\ref{sec:mathematical-synthesis}
+into metadata operations that compute the same axis sets, ordering checks,
+and positional attributes. Appendix~\ref{app:symbolic-compilation-proof}
+proves this correspondence and shows that program construction terminates
+without concrete metadata, the written guard, or successful simplification.
+\end{proof}
+Together with Theorem~\ref{thm:complete-synthesis}, this establishes
+completeness of the generated feasibility/builder program on the stated
+domain. Guard certification and checked symbolic lowering have separate
+acceptance obligations; neither is claimed complete.
+
+Appendix~\ref{app:batched-reassociation-program} gives the complete generated
+attribute program for guarded batched reassociation.
+
+\subsection{Acceptance and Implementation Boundary}
+\label{sec:compilation-scope}
+Table~\ref{tab:guarantee-map} collects the guarantees and their domains.
+\begin{table}[!htbp]
+\caption{Guarantees and their scope.}
+\label{tab:guarantee-map}
+\small
+\begin{tabularx}{\linewidth}{@{}lY@{}}\toprule
+Result & Guarantee\\\midrule
+Constructor (Theorem~\ref{thm:complete-synthesis}) & Complete under D1--D4, read-once components, exact arithmetic, and extents $\ge2$; all RHS axis fields unknown.\\
+Compilation (Theorem~\ref{thm:symbolic-compilation}) & Shared metadata IR realizes the constructor for admitted plans; compilation does not discharge guards.\\
+Certified acceptance (Theorem~\ref{thm:accepted-core}) & Sound native portable execution under a certified guard; extents $\ge0$. Guard certification is sufficient, not complete.\\
+Validation (Theorem~\ref{thm:validator-soundness}) & Sound completed candidates, including supplied fields, within the calculus; extents $\ge0$.\\
+Certified schemas (Lemma~\ref{lem:certified-extensions}) & Sound broadcast/reverse, product, negation, and unit-view schemas, including certified supplied fields; no completeness claim.\\
+Default extensions & Broader reasoning outside the proved fragments has empirical support only.\\\bottomrule
+\end{tabularx}
+\end{table}
+Program construction and acceptance are separate. Acceptance requires
+certification under the written guard for the whole-axis constructor or
+the sound schemas in Appendix~\ref{app:axis-extensions}.
+Schemas may preserve supplied fields when their equality with generated
+metadata is certified; other candidates use the independent validator.
+
+\paragraph{A small guard checker.}
+Guard certification uses sufficient, explicit checks rather than
+asking the general normalizer to simplify the entire generated program.
+First, it recognizes five source/target structures with constructive
+feasibility arguments: sum movement across contraction; transpose folding into contraction with
+one free axis on the folded side; unary chains of
+sums and permutations with sufficient RHS operations; equal expanded
+component trees; and batched reassociation under the prefix-routing guard
+of Appendix~\ref{app:batched-reassociation-program}.
+Second, when input ranks and every source axis list are fixed by capture
+constraints or positive conjuncts of $C$, it evaluates $E_q$ on that axis
+layout with every extent set to two. This is an exact abstraction of
+\emph{axis topology}: replay's port classes, ordered interfaces, and every
+node of $E_q$ depend only on ranks and axis lists. No tensor values are
+sampled. Therefore one successful abstract evaluation proves $E_q$ for
+all legal extent assignments having that layout. The checker extracts no
+facts from disjunctions or unmet obligations and adds no guard.
+Appendix~\ref{app:accepted-core-proof} specifies these checks and their
+constructive arguments.
+
+The certified backend checks identity dtype transport for views, numeric
+dtype preservation for sums and negation, and equal numeric input dtypes
+for contraction and pointwise addition/product. Target numeric requirements
+must follow from source legality. Custom dtype behavior is conservatively rejected.
+
+\begin{theorem}[End-to-end certified acceptance]
+\label{thm:accepted-core}
+Assuming the trusted contracts in Section~\ref{sec:implementation-scope}, if
+a rule satisfies the certification checks described above, native execution of its successfully
+loaded program computes a legal replacement preserving values and ordered
+shape for every legal source match satisfying its original guard $C$.
+This holds under declared algebraic semantics, for nonnegative extents,
+sufficient resources, and representable metadata.
+\end{theorem}
+\begin{proof}
+For canonical emission, acceptance requires template admission, independent
+automatic RHS fields, the dtype checks above, and guard certification. The
+guard-checker lemmas establish $C\Rightarrow E_q$ from source legality.
+Canonical dtype contracts preserve a common input dtype; source numeric
+legality discharges every target numeric requirement.
+The builder induction in Theorem~\ref{thm:symbolic-compilation} uses membership,
+ordering, and paired extent equality, none of which requires a lower
+extent bound. Its value argument uses finite sums and products and remains
+valid for empty and singleton domains. Thus a true predicate suffices for
+defined attributes, legal operations, and semantic equality. Only the
+\emph{necessity} direction of completeness requires the minimum-extent
+assumption; no completeness claim is made here for degenerate extents.
+For the additional schemas, Lemma~\ref{lem:certified-extensions} supplies
+the corresponding constructor argument. Guard certification checks its
+conditions and equality of any supplied fields with the generated fields.
+Materialization and loading preserve the checked DAG, schedule, and guard;
+native evaluation executes the same metadata primitives.
+\end{proof}
+
+Portable programs store the canonical or schema DAG and its source/target schedule.
+The loader regenerates the DAG, checks exact equality, binds the schedule
+to actual operation contracts and fields, and reruns the guard checker on
+the serialized conditions. The native evaluator caches the DAG when loading
+and evaluates source replay and its builders per match. A failed canonical
+predicate is an invariant failure, not an additional applicability guard;
+resource exhaustion is reported separately. The loader checks this metadata
+certificate; declaration semantics and their agreement with an execution
+backend remain trusted.
+
+These checks do not decide arbitrary guard implications. An unresolved
+certification proof returns \code{Unknown}, without concluding infeasibility.
+The validator checks inferred or supplied expression candidates. The
+ordinary ordered strategy symbolically lowers the same canonical IR into
+attribute expressions; generated Rust/C++ still require that lowering to succeed. Native
+portable execution retains the residual IR. Broader general construction and
+sound schema extensions remain outside the complete-constructor theorem.

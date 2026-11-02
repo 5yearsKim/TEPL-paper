@@ -1,0 +1,39 @@
+Computing main repo mapping: 
+Loading: 
+Loading: 0 packages loaded
+Analyzing: 3 targets (0 packages loaded, 0 targets configured)
+Analyzing: 3 targets (0 packages loaded, 0 targets configured)
+
+INFO: Analyzed 3 targets (1 packages loaded, 141 targets configured).
+[12 / 21] Compiling tests/codegen_reference.cc; 1s linux-sandbox ... (3 actions running)
+[15 / 22] Compiling tests/codegen_reference.cc; 2s linux-sandbox ... (3 actions running)
+INFO: From Compiling tests/codegen_reference.cc:
+tests/codegen_reference.cc: In function 'int main()':
+tests/codegen_reference.cc:109:14: warning: unused variable 'public_count' [-Wunused-variable]
+  109 |   const auto public_count =
+      |              ^~~~~~~~~~~~
+[22 / 24] 1 / 3 tests; Testing //tests:cpp_codegen_test; 1s linux-sandbox ... (2 actions running)
+[22 / 24] 1 / 3 tests; Testing //tests:cpp_codegen_test; 10s linux-sandbox ... (2 actions running)
+[22 / 24] 1 / 3 tests; Testing //tests:cpp_codegen_test; 38s linux-sandbox ... (2 actions running)
+[23 / 24] 2 / 3 tests; Testing //tests:cpp_codegen_test; 40s linux-sandbox
+[23 / 24] 2 / 3 tests; Testing //tests:cpp_codegen_test; 50s linux-sandbox
+[23 / 24] 2 / 3 tests; Testing //tests:cpp_codegen_test; 80s linux-sandbox
+[23 / 24] 2 / 3 tests; Testing //tests:cpp_codegen_test; 140s linux-sandbox
+[23 / 24] 2 / 3 tests; Testing //tests:cpp_codegen_test; 200s linux-sandbox
+[23 / 24] 2 / 3 tests; Testing //tests:cpp_codegen_test; 260s linux-sandbox
+[23 / 24] 2 / 3 tests; Testing //tests:cpp_codegen_test; 320s linux-sandbox
+[23 / 24] 2 / 3 tests; Testing //tests:cpp_codegen_test; 381s linux-sandbox
+[23 / 24] 2 / 3 tests; Testing //tests:cpp_codegen_test; 441s linux-sandbox
+[23 / 24] 2 / 3 tests; Testing //tests:cpp_codegen_test; 501s linux-sandbox
+[23 / 24] 2 / 3 tests; Testing //tests:cpp_codegen_test; 561s linux-sandbox
+[23 / 24] 2 / 3 tests; Testing //tests:cpp_codegen_test; 611s linux-sandbox
+INFO: Found 3 test targets...
+INFO: Elapsed time: 827.609s, Critical Path: 614.97s
+INFO: 21 processes: 3 action cache hit, 12 internal, 12 linux-sandbox.
+INFO: Build completed successfully, 21 total actions
+//tests:codegen_cpp_test                                                 PASSED in 0.1s
+//tests:cpp_codegen_test                                                 PASSED in 824.1s
+//tests:rust_codegen_test                                                PASSED in 38.7s
+
+Executed 3 out of 3 tests: 3 tests pass.
+There were tests whose specified size is too big. Use the --test_verbose_timeout_warnings command line option to see which ones these are.

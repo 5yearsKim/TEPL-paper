@@ -1,0 +1,2634 @@
+diff --git a/design/attribute-synthesis.md b/design/attribute-synthesis.md
+index f22e77c..121635a 100644
+--- a/design/attribute-synthesis.md
++++ b/design/attribute-synthesis.md
+@@ -38,8 +38,9 @@ prove that every attribute assignment is impossible.
+ 
+ Shared lowering/reasoning lives in `//src/core/semantics:reasoning`. Synthesis and
+ `//src/core/semantics:proof` depend on it without depending on each other.
+-`//src/core/semantics:rule_proof` coordinates them. The concrete ordered adapters
+-have a separate `//src/core/attr_synth:ordered` target using `//src/inference`.
++`//src/core/semantics:rule_proof` coordinates them. The ordered strategies share `//src/inference` component decomposition and
++validation. The `//src/core/attr_synth:ordered` target exposes compilation to
++standalone concrete callers.
+ 
+ The identity route copies descriptors for matching operation trees. Verification
+ checks operation/operand/attribute identity, including repeated captures, before
+@@ -61,50 +62,73 @@ membership, ordering requirements, and positional descriptor construction.
+ | `construct(...)` | Construct symbolic positional fields bottom-up |
+ 
+ `contract.*` recognizes generalized contractions with batch/left-free/right-free
+-output order and unrestricted full permutations. It rejects extra contraction
+-assertions and recognizes ordinary permutation legality for transposes. This is
+-a conservative recognizer, not a decision procedure for equivalent spellings.
++output order, unrestricted full permutations, whole-axis unary sums preserving
++survivor order, and attribute-free addition of equally shaped operands. Extra
++semantic restrictions are rejected. This is a conservative recognizer, not a
++decision procedure for equivalent spellings.
++
++Addition is processed around the single-component constructor: distribute the
++source, require an explicit separated RHS sum, and match components by distinct
++input sets. Every component is read-once, although input sets may overlap.
++Source descriptor copies keep their captured identities. RHS unknowns remain
++independent across the original replacement tree; distribution never copies them.
++Component axis partitions remain separate, and actual additions must have equal
++ordered operand shapes.
+ 
+ After identity fails, an admitted ordered attempt can record
+-`law: ordered-requirements-construction`. Ordering constraints must follow from
+-source legality and written conditions. They are never inserted as runtime
+-applicability guards. Failure of admission or bounded symbolic reasoning leaves
++`law: ordered-requirements-construction`. Generation returns source-only
++feasibility obligations and attribute expressions defined when those obligations
++hold. Generation does not specialize its predicate using the written guard
++or call the guard prover as a construction precondition. A fresh
++verifier must prove feasibility from source legality and the written conditions,
++then check builder definedness, legality, and equivalence. Generation may succeed
++while guard verification remains Unknown. Feasibility is never assumed or inserted
++as an automatic runtime guard. Admission or bounded verification failure leaves
+ general synthesis available.
+ 
+-The complete concrete solver retains its original contraction/permutation,
+-read-once, extent-at-least-two domain; rank-zero tensors and empty attribute
++The concrete solver covers contraction, permutation, summation, and separated
++addition in its extent-at-least-two domain. `Compilation::domain_requirements`
++exposes that domain separately from admission. Rank-zero tensors and empty axis
+ lists are allowed. Singleton/zero extents, mixed supplied/automatic descriptors,
+-and repeated captures can be supported by other verified compiler routes without
+-expanding that solver's completeness claim.
++and repeated captures within a component remain outside its completeness claim;
++other verified compiler routes may support them.
+ 
+ ## Native metadata evaluation
+ 
+ [`src/inference/evaluate.h`](../src/inference/evaluate.h) interprets completed
+ instructions from [`inference.h`](../src/shared/metadata/inference.h), without
+-compiler plans or symbolic search. The ordered `concrete.*` convenience APIs
+-adapt plans for compiler-side callers and solver tests.
++compiler plans or symbolic search. `ordered::compile` adapts semantic plans for
++compiler-side callers and solver tests.
+ 
+ 1. Extract named physical input ports and captured positional attributes. Retain
+    the complete port partition, including reduced classes, and output order.
+-2. Derive required live classes at each RHS subtree from capture supports and
+-   the final output interface.
+-3. Propagate ordering requirements from the root. Contractions require
+-   nondecreasing batch/left-free/right-free roles; a transpose removes its
+-   child's ordering requirement.
+-4. Check subsequences and block order with ordinary metadata expressions.
+-5. Choose complete layouts and translate common logical pairing sequences into
+-   positions on both operands.
++2. Derive mandatory classes M from capture support and the output interface,
++   then canonical retained classes P bottom-up. Inputs keep all axes; permutations
++   preserve them; sums retain mandatory child axes; contractions retain mandatory
++   shared axes and all unpaired axes.
++3. Propagate required subsequences from the root. Contractions require
++   batch/left-free/right-free block order; a transpose removes its child's order
++   requirement; a sum passes the surviving-axis requirement unchanged.
++4. Check distinctness, membership in P, input subsequences, contraction block
++   order, and exact equality of the root retained set with the target output set.
++5. Choose complete layouts and translate logical selections into positional
++   fields. Sums remove selected child axes and preserve survivor order.
++
++For additive programs these passes run independently per matched component.
++Their predicates are conjoined and independent assignments combined. Results
++expose component networks rather than a merged global partition. Serialized
++component schedules are validated against the original trees.
+ 
+ Logical identity is a physical-port equivalence class, never an extent or a
+ capture-support set alone. `analyze` establishes requirements without deciding
+-applicability; `construct` requires established preconditions;
++applicability; `construct` checks feasibility before using analyzed metadata;
+ `replayReplacement` checks actual replacement descriptors. The standalone
+ `feasibility` and `evaluate` APIs support certificates and mathematical tests.
+ `inference::check()` independently rebuilds source requirements and checks actual
+ RHS layouts, partitions, and output order without trusting constructor choices.
+ 
+-Only a checked order inversion yields an impossibility certificate in the
+-admitted concrete domain. Missing metadata, unsupported operations, invalid
++A checked order inversion or retained-set obstruction yields an impossibility
++certificate in the admitted concrete domain. Missing metadata, unsupported operations, invalid
+ source descriptors, out-of-domain extents, and exhausted work have separate
+ outcomes. Concrete impossibility is not currently used to reject an entire
+ rank-polymorphic rule schema.
+diff --git a/labs/xla_rewrite/README.md b/labs/xla_rewrite/README.md
+index 046364d..e08eb7f 100644
+--- a/labs/xla_rewrite/README.md
++++ b/labs/xla_rewrite/README.md
+@@ -6,6 +6,7 @@ express, compile and verify.
+ - [Catalog](catalog/README.md): pinned XLA sources, equations, conditions and counting policy.
+ - [TEPL project](tepl/README.md): local HLO dialects, explicit rules and input graphs.
+ - [Coverage](coverage/README.md): experiment inputs, tools and reproduction commands.
++- [Operation-family coverage](coverage/reports/operation_families.md): overlapping case counts by participating operations, with separate transpose and reshape families.
+ - [Attribute synthesis report](coverage/reports/attribute_synthesis.md): field-level axis inference, verification-only outcomes, and theorem admission candidates.
+ - [Compilation report](coverage/reports/compilation.md): language coverage and executable compilation.
+ - [Specification size](specification_size/README.md): matched explicit/inferred rule sizes, token attribution, and XLA excerpt review.
+diff --git a/labs/xla_rewrite/coverage/README.md b/labs/xla_rewrite/coverage/README.md
+index ac0c3e7..5b734b1 100644
+--- a/labs/xla_rewrite/coverage/README.md
++++ b/labs/xla_rewrite/coverage/README.md
+@@ -20,6 +20,9 @@ or legacy non-axis synthesis.
+ - [Specification size](../specification_size/README.md): a fresh paired axis-only run with whole-rule token counts and a savings breakdown.
+ - [Case table](reports/synthesis_cases.md): one outcome per original case,
+   including exclusions and the separate negative control.
++- [Operation-family coverage](reports/operation_families.md): overlapping family
++  memberships across the 209 rewrite cases, with separate transpose and reshape
++  families, representative operations, and counts with percentages.
+ - [Protocol](reports/axis_only_scope.md): migration, normalization, admission,
+   and success criteria.
+ - [TEPL project](../tepl/README.md): source fixtures and canonical migrated rules.
+@@ -72,6 +75,9 @@ mathematical procedure is not fully implemented by the production search.
+ | [scripts/run_synthesis.py](scripts/run_synthesis.py) | One-task runner; no legacy inference modes |
+ | [scripts/synthesis_report.py](scripts/synthesis_report.py) | Integrity validation and report generation |
+ | [tests/test_synthesis.py](tests/test_synthesis.py) | Migration, domain, and success-accounting regressions |
++| [data/operation_family_mapping.json](data/operation_family_mapping.json) | Complete operation-to-family mapping for corpus reporting |
++| [data/case_families.json](data/case_families.json) | Generated per-case memberships and family counts, excluding the control from summaries |
++| [scripts/operation_families.py](scripts/operation_families.py) | Generate or check the family classification and report without rerunning measurements |
+ 
+ ## Corpus and structural compilation
+ 
+diff --git a/schema/rewrite-program.schema.json b/schema/rewrite-program.schema.json
+index 47d9805..9a40fb1 100644
+--- a/schema/rewrite-program.schema.json
++++ b/schema/rewrite-program.schema.json
+@@ -245,6 +245,7 @@
+         "axis_rhs_group_members",
+         "axis_rhs_group_positions",
+         "axis_contract",
++        "axis_feasible",
+         "axis_live",
+         "difference"
+       ]
+@@ -314,7 +315,9 @@
+       "enum": [
+         "input",
+         "permutation",
+-        "contraction"
++        "contraction",
++        "summation",
++        "addition"
+       ]
+     },
+     "position": {
+@@ -1370,6 +1373,28 @@
+       ],
+       "additionalProperties": false
+     },
++    "inference_component": {
++      "type": "object",
++      "properties": {
++        "source": {
++          "type": "array",
++          "items": {
++            "$ref": "#/$defs/inference_instruction"
++          }
++        },
++        "replacement": {
++          "type": "array",
++          "items": {
++            "$ref": "#/$defs/inference_instruction"
++          }
++        }
++      },
++      "required": [
++        "source",
++        "replacement"
++      ],
++      "additionalProperties": false
++    },
+     "inference_program": {
+       "type": "object",
+       "properties": {
+@@ -1387,6 +1412,12 @@
+           "items": {
+             "$ref": "#/$defs/inference_instruction"
+           }
++        },
++        "components": {
++          "type": "array",
++          "items": {
++            "$ref": "#/$defs/inference_component"
++          }
+         }
+       },
+       "required": [
+diff --git a/src/core/attr_synth/BUILD.bazel b/src/core/attr_synth/BUILD.bazel
+index 19163e4..7093aa0 100644
+--- a/src/core/attr_synth/BUILD.bazel
++++ b/src/core/attr_synth/BUILD.bazel
+@@ -17,6 +17,7 @@ cc_library(
+         "//src/core/semantics:model",
+         "//src/core/semantics:reasoning",
+         "//src/shared/metadata",
++        "//src/inference",
+     ],
+     visibility = ["//visibility:public"],
+ )
+diff --git a/src/core/attr_synth/ordered/README.md b/src/core/attr_synth/ordered/README.md
+index de5ff6a..a6357be 100644
+--- a/src/core/attr_synth/ordered/README.md
++++ b/src/core/attr_synth/ordered/README.md
+@@ -1,24 +1,44 @@
+ # Ordered synthesis implementation
+ 
+-This directory owns contraction/permutation recognition, ordering requirements,
+-and descriptor construction. It implements the original ordered specialization;
+-broader signed/weighted mathematical state-table procedures are research work.
++This directory implements direct axis-attribute construction for algebraic
++contraction, full permutation, whole-axis unary summation, and separated addition.
++Recognition uses declared axis/value semantics, not operation or field names.
+ 
+ | Files/API | Responsibility |
+ | --- | --- |
+-| `contract.*`, `recognize(Definition)` | Conservative structural recognition |
+-| `admit(Plan, Mode)` | Semantic/tree and attribute-policy checks |
+-| `compile(Plan, Mode)` | Completed instructions and field adapters |
+-| `deriveRequirements(...)` | Required live classes and subsequences |
+-| `construct(...)` | Bottom-up positional descriptor construction |
+-| `concrete.*` | Plan adapters for native evaluation and certificates |
++| `contract.*`, `recognize(Definition)` | Conservative semantic recognition |
++| `admit(Plan, Mode)` | Explicit structural admission and a reason on rejection |
++| `compile(Plan, Mode)` | Reusable schedules, component scopes, field adapters, and domain requirements |
++| `deriveRequirements(...)` | Mandatory axes M, retained axes P, and required subsequences |
++| `construct(...)` | Symbolic feasibility obligations and conditional attribute expressions |
++| `//src/inference` | Concrete analysis, feasibility, construction, and independent replay |
+ 
+-Candidates require independent verification under the original conditions.
+-Admission failure allows general synthesis to continue; it does not prove
+-infeasibility. Logical identity uses physical-port equivalence, not equal extents.
++Admission requires ideal algebraic arithmetic, read-once components, matching
++input sets, and independent unrestricted RHS attributes. The concrete domain
++requires input extents at least two; scalar inputs and empty selections are legal.
++Domain requirements are separate from structural admission and feasibility.
++
++The source is distributed into components by linearity and bilinearity. Component
++input sets must be distinct. The RHS must already be an explicit sum of read-once
++components with matching input sets; normalization never duplicates RHS holes.
++Captured source descriptors retain their identities in every distributed copy.
++Each component owns its port partition, even when components share inputs.
++Original addition nodes are also checked for equal ordered operand shapes.
++
++The single-component solver first computes M and P bottom-up, then propagates
++required orders. Feasibility includes distinctness, membership, subsequences,
++contraction block order, and exact root retained-set equality. Summation removes
++unneeded retained axes without reordering survivors; a later sum may have an
++empty reduction list after a contraction eliminates its axes early.
++
++Symbolic generation does not use the written guard to simplify its predicate,
++prove feasibility, or assume it. The independent
++verifier must establish the generated obligations from source legality and the
++written guard before checking the conditional builders. A guard proof may remain
++Unknown after successful generation. No runtime guard is automatically added.
+ 
+ The [synthesis design](../../../../design/attribute-synthesis.md) describes
+-integration, concrete-domain restrictions, evaluation, and validation. The
++integration, evaluation, and validation. The
+ [research index](../../../../research/attribute-synthesis/README.md) identifies
+ current proofs and their relationship to implementation.
+ 
+diff --git a/src/core/attr_synth/ordered/compile.cc b/src/core/attr_synth/ordered/compile.cc
+index 2e92845..7fef743 100644
+--- a/src/core/attr_synth/ordered/compile.cc
++++ b/src/core/attr_synth/ordered/compile.cc
+@@ -1,54 +1,9 @@
+ #include "src/core/attr_synth/ordered/compile.h"
+ 
+-#include <functional>
+-
+-#include "src/inference/evaluate.h"
+-
+ namespace tepl::core::attr_synth::ordered {
+-using namespace semantics;
+ Compilation compile(const Plan& plan, inference::Mode mode) {
+   auto admission = admit(plan, mode);
+   if (!admission.admitted()) return {{}, admission.reason};
+-  inference::Program out;
+-  out.mode = mode;
+-  auto block = [&](std::size_t root) {
+-    std::vector<inference::Instruction> code;
+-    std::function<std::size_t(std::size_t)> visit = [&](std::size_t id) {
+-      const auto& n = plan.nodes.at(id);
+-      inference::Instruction i;
+-      i.node = id;
+-      std::set<std::size_t> captures;
+-      for (auto child : n.inputs) {
+-        auto c = visit(child);
+-        i.inputs.push_back(c);
+-        captures.insert(code[c].captures.begin(), code[c].captures.end());
+-      }
+-      if (n.capture) {
+-        i.capture = n.capture->value;
+-        captures.insert(*i.capture);
+-      } else {
+-        i.descriptor = n.descriptor->value;
+-        if (n.operation) i.operation = n.operation->value;
+-        const auto& c = admission.operations.at(id);
+-        if (c.kind == Contract::Kind::Permutation) {
+-          i.kind = inference::Kind::Permutation;
+-          i.fields = {c.permutation};
+-        } else {
+-          i.kind = inference::Kind::Contraction;
+-          i.fields = {c.left_batch, c.right_batch, c.left_contract,
+-                      c.right_contract};
+-        }
+-      }
+-      i.captures.assign(captures.begin(), captures.end());
+-      code.push_back(std::move(i));
+-      return code.size() - 1;
+-    };
+-    visit(root);
+-    return code;
+-  };
+-  out.source = block(plan.lhs);
+-  out.replacement = block(plan.rhs);
+-  inference::validate(out);
+-  return {std::move(out), {}};
++  return {std::move(admission.program), {}};
+ }
+ }  // namespace tepl::core::attr_synth::ordered
+diff --git a/src/core/attr_synth/ordered/compile.h b/src/core/attr_synth/ordered/compile.h
+index f81a673..e655b71 100644
+--- a/src/core/attr_synth/ordered/compile.h
++++ b/src/core/attr_synth/ordered/compile.h
+@@ -7,6 +7,7 @@ namespace tepl::core::attr_synth::ordered {
+ struct Compilation {
+   std::optional<inference::Program> program;
+   std::string reason;
++  inference::DomainRequirements domain_requirements;
+ };
+ Compilation compile(const Plan&, inference::Mode = inference::Mode::Synthesize);
+ }  // namespace tepl::core::attr_synth::ordered
+diff --git a/src/core/attr_synth/ordered/construct.cc b/src/core/attr_synth/ordered/construct.cc
+index ae91ef0..d487832 100644
+--- a/src/core/attr_synth/ordered/construct.cc
++++ b/src/core/attr_synth/ordered/construct.cc
+@@ -5,46 +5,55 @@
+ 
+ namespace tepl::core::attr_synth::ordered {
+ using namespace semantics;
+-
+-TensorMeaning construct(Context& c, Lowerer& lowerer, const Admission& admitted,
+-                        const Requirements& required,
+-                        const S& reduction_order) {
+-  if (!admitted.admitted())
+-    throw std::invalid_argument("construction needs an admitted ordered tree");
+-  for (const auto& constraint : required.order_constraints)
+-    c.require(constraint, GuardKind::CoordinateOrder);
++Construction construct(Context& c, const Admission& admitted,
++                       const Requirements& required,
++                       const Correspondence& match, const S& reduction_order) {
++  if (!admitted.admitted() || !admitted.program.components.empty())
++    throw std::invalid_argument(
++        "construction needs an admitted single component");
++  Construction result;
++  result.candidate.feasibility = required.feasibility;
+   auto extend = [&](const S& q, const S& set, const S& traversal) {
+     return call("concat", {q, c.filter(traversal, c.difference(set, q))});
+   };
+-  std::function<TensorMeaning(std::size_t)> build = [&](std::size_t id) {
++  std::function<S(std::size_t)> build = [&](std::size_t id) -> S {
+     c.tick();
+     const auto& n = c.plan.nodes.at(id);
+-    if (n.capture) return lowerer.lower(id);
+-    std::vector<TensorMeaning> inputs;
++    if (n.capture) return result.layouts[id] = match.anchors.at(id);
++    std::vector<S> inputs;
+     for (auto child : n.inputs) inputs.push_back(build(child));
+     const auto& contract = admitted.operations.at(id);
+     const auto& r = required.nodes.at(id);
+-    auto assign = [&](std::size_t field, const S& value) {
+-      c.assignAttribute(n.descriptor->value, field, value);
++    auto& fields = result.candidate.constructors[n.descriptor->value];
++    fields.resize(n.definition->fields.size());
++    auto assign = [&](std::size_t field, const S& axes, const S& chosen) {
++      fields.at(field) = c.canonical(c.positions(axes, chosen));
+     };
++    S output;
+     if (contract.kind == Contract::Kind::Permutation) {
+-      auto output = extend(r.required_order, r.live, inputs[0].axes);
+-      assign(contract.permutation, c.positions(inputs[0].axes, output));
++      output = extend(r.required_order, r.retained_axes, inputs[0]);
++      assign(contract.permutation, inputs[0], output);
++    } else if (contract.kind == Contract::Kind::Summation) {
++      auto removed = c.filter(
++          inputs[0], c.difference(required.nodes.at(n.inputs[0]).retained_axes,
++                                  r.retained_axes));
++      assign(contract.dimensions, inputs[0], removed);
++      output = c.filter(inputs[0], r.retained_axes);
+     } else {
+-      auto qb = c.filter(r.required_order, r.batch);
+-      auto batches = extend(qb, r.batch, inputs[0].axes);
+-      auto contractions = extend(c.filter(reduction_order, r.contract),
+-                                 r.contract, inputs[0].axes);
+-      assign(contract.left_batch, c.positions(inputs[0].axes, batches));
+-      assign(contract.right_batch, c.positions(inputs[1].axes, batches));
+-      assign(contract.left_contract, c.positions(inputs[0].axes, contractions));
+-      assign(contract.right_contract,
+-             c.positions(inputs[1].axes, contractions));
++      auto batches =
++          extend(c.filter(r.required_order, r.batch), r.batch, inputs[0]);
++      auto contractions =
++          extend(c.filter(reduction_order, r.contract), r.contract, inputs[0]);
++      assign(contract.left_batch, inputs[0], batches);
++      assign(contract.right_batch, inputs[1], batches);
++      assign(contract.left_contract, inputs[0], contractions);
++      assign(contract.right_contract, inputs[1], contractions);
++      output = call("concat", {batches, c.filter(inputs[0], r.left_free),
++                               c.filter(inputs[1], r.right_free)});
+     }
+-    return lowerer.operation(id, std::move(inputs));
++    return result.layouts[id] = output;
+   };
+-  auto result = build(c.plan.rhs);
+-  c.note("ordered-requirements-construction");
++  build(c.plan.rhs);
+   return result;
+ }
+ }  // namespace tepl::core::attr_synth::ordered
+diff --git a/src/core/attr_synth/ordered/construct.h b/src/core/attr_synth/ordered/construct.h
+index abbbb96..22f5168 100644
+--- a/src/core/attr_synth/ordered/construct.h
++++ b/src/core/attr_synth/ordered/construct.h
+@@ -3,13 +3,13 @@
+ #include "src/core/attr_synth/ordered/requirements.h"
+ 
+ namespace tepl::core::attr_synth::ordered {
+-using semantics::Lowerer;
+-using semantics::TensorMeaning;
+-
+-// Instantiates requirements bottom-up. General verification still checks the
+-// candidate independently; this does not claim completeness of symbolic
+-// correspondence or bounded proof search.
+-TensorMeaning construct(Context&, Lowerer&, const Admission&,
+-                        const Requirements&, const S& reduction_order);
+-
++// Compilation chooses reusable metadata expressions, without proving that the
++// written guard implies feasibility. Builders are defined when feasibility
++// holds; the independent verifier discharges that obligation before use.
++struct Construction {
++  semantics::ConstructorCandidate candidate;
++  std::map<std::size_t, S> layouts;
++};
++Construction construct(Context&, const Admission&, const Requirements&,
++                       const Correspondence&, const S& reduction_order);
+ }  // namespace tepl::core::attr_synth::ordered
+diff --git a/src/core/attr_synth/ordered/contract.cc b/src/core/attr_synth/ordered/contract.cc
+index 92c5747..417cac0 100644
+--- a/src/core/attr_synth/ordered/contract.cc
++++ b/src/core/attr_synth/ordered/contract.cc
+@@ -2,6 +2,9 @@
+ 
+ #include <functional>
+ #include <set>
++#include <stdexcept>
++
++#include "src/inference/evaluate.h"
+ 
+ namespace tepl::core::attr_synth::ordered {
+ using namespace semantics;
+@@ -13,9 +16,19 @@ std::optional<Contract> recognize(const Definition& d) {
+   };
+   if (c->kind == Contract::Kind::Permutation)
+     return read(*d.value, 0) ? c : std::nullopt;
++  if (c->kind == Contract::Kind::Addition) {
++    return d.value->kind == Value::Kind::Add && d.value->args.size() == 2 &&
++                   ((read(*d.value->args[0], 0) &&
++                     read(*d.value->args[1], 1)) ||
++                    (read(*d.value->args[0], 1) && read(*d.value->args[1], 0)))
++               ? c
++               : std::nullopt;
++  }
+   if (d.value->kind != Value::Kind::Reduce || d.value->args.size() != 1 ||
+       d.value->index != c->contract_group)
+     return {};
++  if (c->kind == Contract::Kind::Summation)
++    return read(*d.value->args[0], 0) ? c : std::nullopt;
+   const auto& product = *d.value->args[0];
+   if (product.kind != Value::Kind::Product || product.args.size() != 2 ||
+       !((read(*product.args[0], 0) && read(*product.args[1], 1)) ||
+@@ -40,19 +53,27 @@ Admission admit(const Plan& p, inference::Mode mode) {
+     if (id >= p.nodes.size()) return fail("invalid ordered tree node");
+     const auto& n = p.nodes[id];
+     if (n.capture) {
+-      if (!n.inputs.empty() || !(rhs ? target_captures : source_captures)
+-                                    .insert(n.capture->value)
+-                                    .second)
+-        return fail("ordered trees require each capture exactly once");
++      if (!n.inputs.empty()) return fail("ordered capture has operands");
++      (rhs ? target_captures : source_captures).insert(n.capture->value);
+       return true;
+     }
+-    if (!n.definition || !n.descriptor || n.literal)
+-      return fail("ordered trees require contraction/permutation definitions");
++    if (!n.definition || n.literal)
++      return fail(
++          "ordered trees require contraction/permutation/summation "
++          "definitions");
+     auto c = recognize(*n.definition);
+     if (!c) return fail("operation is outside ordered axis/value contracts");
+-    if (n.inputs.size() != (c->kind == Contract::Kind::Permutation ? 1u : 2u))
++    const bool addition = c->kind == Contract::Kind::Addition;
++    if (!addition && !n.descriptor)
++      return fail("ordered operation requires an axis descriptor");
++    if (addition && n.descriptor)
++      return fail("ordered addition must be attribute-free");
++    if (n.inputs.size() !=
++        ((c->kind == Contract::Kind::Contraction || addition) ? 2u : 1u))
+       return fail("ordered operation has wrong operand count");
+-    if (rhs && mode == inference::Mode::Synthesize) {
++    if (addition) {
++      // Components, rather than addition nodes, own independent descriptors.
++    } else if (rhs && mode == inference::Mode::Synthesize) {
+       if (!p.attributes(n).allAuto() ||
+           !target_descriptors.insert(n.descriptor->value).second)
+         return fail(
+@@ -79,6 +100,77 @@ Admission admit(const Plan& p, inference::Mode mode) {
+   for (auto id : target_descriptors)
+     if (source_descriptors.contains(id))
+       fail("RHS descriptors cannot share source attributes");
++  if (!out.admitted()) return out;
++  out.program.mode = mode;
++  auto schedule = [&](std::size_t root) {
++    std::vector<inference::Instruction> code;
++    std::function<std::size_t(std::size_t)> emit = [&](std::size_t id) {
++      const auto& n = p.nodes.at(id);
++      inference::Instruction i;
++      i.node = id;
++      std::set<std::size_t> captures;
++      for (auto child : n.inputs) {
++        auto input = emit(child);
++        i.inputs.push_back(input);
++        captures.insert(code[input].captures.begin(),
++                        code[input].captures.end());
++      }
++      if (n.capture) {
++        i.capture = n.capture->value;
++        captures.insert(*i.capture);
++      } else {
++        if (n.descriptor) i.descriptor = n.descriptor->value;
++        if (n.operation) i.operation = n.operation->value;
++        const auto& c = out.operations.at(id);
++        switch (c.kind) {
++          case Contract::Kind::Permutation:
++            i.kind = inference::Kind::Permutation;
++            i.fields = {c.permutation};
++            break;
++          case Contract::Kind::Summation:
++            i.kind = inference::Kind::Summation;
++            i.fields = {c.dimensions};
++            break;
++          case Contract::Kind::Contraction:
++            i.kind = inference::Kind::Contraction;
++            i.fields = {c.left_batch, c.right_batch, c.left_contract,
++                        c.right_contract};
++            break;
++          case Contract::Kind::Addition:
++            i.kind = inference::Kind::Addition;
++            break;
++        }
++      }
++      i.captures.assign(captures.begin(), captures.end());
++      code.push_back(std::move(i));
++      return code.size() - 1;
++    };
++    emit(root);
++    return code;
++  };
++  out.program.source = schedule(p.lhs);
++  out.program.replacement = schedule(p.rhs);
++  try {
++    out.program.components = inference::decompose(out.program);
++    inference::validate(out.program);
++  } catch (const std::invalid_argument& e) {
++    out.reason = e.what();
++  }
+   return out;
+ }
++
++Plan componentPlan(const Plan& original, const inference::Component& pair) {
++  auto plan = original;
++  auto select = [&](const std::vector<inference::Instruction>& code) {
++    for (const auto& i : code) {
++      auto& node = plan.nodes.at(i.node);
++      node.inputs.clear();
++      for (auto input : i.inputs) node.inputs.push_back(code.at(input).node);
++    }
++    return code.back().node;
++  };
++  plan.lhs = select(pair.source);
++  plan.rhs = select(pair.replacement);
++  return plan;
++}
+ }  // namespace tepl::core::attr_synth::ordered
+diff --git a/src/core/attr_synth/ordered/contract.h b/src/core/attr_synth/ordered/contract.h
+index 42840f1..9218e83 100644
+--- a/src/core/attr_synth/ordered/contract.h
++++ b/src/core/attr_synth/ordered/contract.h
+@@ -21,12 +21,16 @@ std::optional<Contract> recognize(const Definition&);
+ 
+ struct Admission {
+   std::map<std::size_t, Contract> operations;
++  inference::Program program;
+   std::string reason;
+   bool admitted() const { return reason.empty(); }
+ };
+ 
+-// Read-once trees, equal named captures, independent unrestricted RHS fields.
+-// This checks schema structure; concrete extent-domain checks are separate.
++// Read-once components, matched capture sets, independent unrestricted RHS
++// fields. This checks schema structure; concrete extent-domain checks are
++// separate. Preserve original descriptor identities while selecting an expanded
++// pair.
++Plan componentPlan(const Plan&, const inference::Component&);
+ Admission admit(const Plan&, inference::Mode = inference::Mode::Synthesize);
+ 
+ }  // namespace tepl::core::attr_synth::ordered
+diff --git a/src/core/attr_synth/ordered/requirements.cc b/src/core/attr_synth/ordered/requirements.cc
+index 7fd365f..ff995a0 100644
+--- a/src/core/attr_synth/ordered/requirements.cc
++++ b/src/core/attr_synth/ordered/requirements.cc
+@@ -7,42 +7,74 @@ namespace tepl::core::attr_synth::ordered {
+ using namespace semantics;
+ Requirements deriveRequirements(Context& c, const Admission& admitted,
+                                 const Correspondence& match, const S& output) {
+-  if (!admitted.admitted())
+-    throw std::invalid_argument("requirements need an admitted ordered tree");
++  if (!admitted.admitted() || !admitted.program.components.empty())
++    throw std::invalid_argument(
++        "requirements need an admitted single component");
+   Requirements result;
+-  std::function<void(std::size_t, S)> visit = [&](std::size_t id, S q) {
++  // Mandatory support is computed before general interface propagation. The
++  // latter also carries private input axes, which a sum is allowed to remove.
++  std::function<void(std::size_t)> retain = [&](std::size_t id) {
+     c.tick();
+     const auto& n = c.plan.nodes.at(id);
++    for (auto child : n.inputs) retain(child);
+     auto& r = result.nodes[id];
+-    r.live = match.boundaries.at(id);
++    r.mandatory_axes = match.mandatory_boundaries.at(id);
++    if (n.capture) {
++      r.retained_axes = c.support(match.anchors.at(id));
++      return;
++    }
++    const auto& left = result.nodes.at(n.inputs[0]).retained_axes;
++    auto kind = admitted.operations.at(id).kind;
++    if (kind == Contract::Kind::Permutation) {
++      r.retained_axes = left;
++    } else if (kind == Contract::Kind::Summation) {
++      r.retained_axes = c.intersect(left, r.mandatory_axes);
++      r.contract = c.difference(left, r.retained_axes);
++      r.left_free = r.retained_axes;
++    } else {
++      const auto& right = result.nodes.at(n.inputs[1]).retained_axes;
++      auto shared = c.intersect(left, right);
++      r.batch = c.intersect(shared, r.mandatory_axes);
++      r.contract = c.difference(shared, r.mandatory_axes);
++      r.left_free = c.difference(left, right);
++      r.right_free = c.difference(right, left);
++      r.retained_axes =
++          call("union_axes", {r.batch, r.left_free, r.right_free});
++    }
++  };
++  retain(c.plan.rhs);
++  result.feasibility.push_back(
++      call("same_set", {result.nodes.at(c.plan.rhs).retained_axes, output}));
++  std::function<void(std::size_t, S)> visit = [&](std::size_t id, S q) {
++    c.tick();
++    const auto& n = c.plan.nodes.at(id);
++    auto& r = result.nodes.at(id);
+     r.required_order = std::move(q);
++    result.feasibility.push_back(call("distinct_axes", {r.required_order}));
++    result.feasibility.push_back(
++        call("subset", {r.required_order, r.retained_axes}));
+     if (n.capture) {
+-      result.order_constraints.push_back(call(
++      result.feasibility.push_back(call(
+           "==", {r.required_order,
+                  c.filter(match.anchors.at(id), c.support(r.required_order))}));
+       return;
+     }
+-    if (admitted.operations.at(id).kind == Contract::Kind::Permutation) {
++    auto kind = admitted.operations.at(id).kind;
++    if (kind == Contract::Kind::Permutation) {
+       visit(n.inputs[0], call("empty_axes", {}));
+-      return;
++    } else if (kind == Contract::Kind::Summation) {
++      visit(n.inputs[0], r.required_order);
++    } else {
++      auto qb = c.filter(r.required_order, r.batch);
++      auto ql = c.filter(r.required_order, r.left_free);
++      auto qr = c.filter(r.required_order, r.right_free);
++      result.feasibility.push_back(
++          call("==", {r.required_order, call("concat", {qb, ql, qr})}));
++      visit(n.inputs[0], ql);
++      visit(n.inputs[1], qr);
+     }
+-    auto left = match.boundaries.at(n.inputs[0]);
+-    auto right = match.boundaries.at(n.inputs[1]);
+-    auto shared = c.intersect(left, right);
+-    r.batch = c.intersect(shared, r.live);
+-    r.contract = c.difference(shared, r.live);
+-    r.left_free = c.difference(left, right);
+-    r.right_free = c.difference(right, left);
+-    auto qb = c.filter(r.required_order, r.batch);
+-    auto ql = c.filter(r.required_order, r.left_free);
+-    auto qr = c.filter(r.required_order, r.right_free);
+-    result.order_constraints.push_back(
+-        call("==", {r.required_order, call("concat", {qb, ql, qr})}));
+-    visit(n.inputs[0], ql);
+-    visit(n.inputs[1], qr);
+   };
+   visit(c.plan.rhs, output);
+   return result;
+ }
+-
+ }  // namespace tepl::core::attr_synth::ordered
+diff --git a/src/core/attr_synth/ordered/requirements.h b/src/core/attr_synth/ordered/requirements.h
+index 8f65819..830e121 100644
+--- a/src/core/attr_synth/ordered/requirements.h
++++ b/src/core/attr_synth/ordered/requirements.h
+@@ -9,14 +9,16 @@ using semantics::Correspondence;
+ using semantics::S;
+ 
+ struct NodeRequirements {
+-  S live;
++  S mandatory_axes;  // M_v: output axes or axes needed outside this subtree.
++  S retained_axes;   // P_v: canonical intermediate interface.
+   S batch, contract, left_free, right_free;
+   S required_order;  // Only a subsequence requirement, never a chosen layout.
+ };
+ 
+ struct Requirements {
+   std::map<std::size_t, NodeRequirements> nodes;
+-  std::vector<S> order_constraints;
++  // Conjunction of total source-metadata predicates on the admitted domain.
++  std::vector<S> feasibility;
+ };
+ 
+ // Derives roles and propagates order requirements without assigning attributes.
+diff --git a/src/core/attr_synth/synthesize.cc b/src/core/attr_synth/synthesize.cc
+index a634f2b..406963b 100644
+--- a/src/core/attr_synth/synthesize.cc
++++ b/src/core/attr_synth/synthesize.cc
+@@ -11,18 +11,37 @@ using namespace semantics;
+ namespace {
+ Result run(const Plan& plan, std::size_t max_work,
+            std::chrono::steady_clock::time_point deadline,
+-           const ordered::Admission* admitted = nullptr) {
+-  Context c{plan, max_work, deadline};
++           const ordered::Admission* admitted = nullptr,
++           const Plan* whole = nullptr) {
++  // The exact check/build program must describe every legal metadata instance,
++  // including ones outside the written guard. Specialization belongs to the
++  // independent verifier, not to generation of the feasibility predicate.
++  std::optional<Plan> metadata_plan;
++  if (admitted) {
++    metadata_plan = plan;
++    metadata_plan->assumptions.clear();
++  }
++  Context c{metadata_plan ? *metadata_plan : plan, max_work, deadline};
+   Result result;
+   auto& candidate = result.candidate;
+   std::string phase = "source lowering";
+   try {
++    if (whole) {
++      std::function<void(std::size_t)> scope = [&](std::size_t id) {
++        c.sourceScope(id, false);
++        for (auto child : whole->nodes.at(id).inputs) scope(child);
++      };
++      scope(whole->lhs);
++    }
+     c.sourceScope(plan.lhs);
+     auto lhs = lowerSource(c);
++    result.output_shape = lhs.shape;
+     phase = "metadata definedness";
+-    for (const auto& value : plan.derived_metadata) c.checkMetadata(value);
+-    for (const auto& [value, type] : plan.constructed_metadata)
+-      c.checkMetadataType(value, type);
++    if (!admitted) {
++      for (const auto& value : plan.derived_metadata) c.checkMetadata(value);
++      for (const auto& [value, type] : plan.constructed_metadata)
++        c.checkMetadataType(value, type);
++    }
+     auto lt = normalize(c, lhs.value);
+     phase = "coordinate correspondence";
+     auto rt = normalize(c, arithmeticSkeleton(c, plan.rhs));
+@@ -34,17 +53,25 @@ Result run(const Plan& plan, std::size_t max_work,
+     target.interfaces = &match.interfaces;
+     target.expected_dtype = lhs.dtype;
+     auto reductions = call("unique_axes", {call("concat", std::move(all))});
+-    if (admitted)
+-      ordered::construct(
+-          c, target, *admitted,
+-          ordered::deriveRequirements(c, *admitted, match, lhs.axes),
+-          reductions);
+-    else
++    if (admitted) {
++      candidate = ordered::construct(c, *admitted,
++                                     ordered::deriveRequirements(
++                                         c, *admitted, match, lhs.axes),
++                                     match, reductions)
++                      .candidate;
++    } else {
+       construct(c, target, match, lhs, reductions, lt);
++    }
+     for (const auto& n : plan.nodes)
+       if (plan.needsSynthesis(n)) {
++        if (admitted && !candidate.constructors.contains(n.descriptor->value))
++          continue;
+         auto& fields = candidate.constructors[n.descriptor->value];
+         for (std::size_t f = 0; f < n.definition->fields.size(); ++f) {
++          if (admitted) {
++            c.checkConstructor(n, f, fields.at(f));
++            continue;
++          }
+           auto value = plan.attributes(n).isAuto(f)
+                            ? c.canonical(c.field(n, f))
+                            : plan.attributes(n).fields.at(f);
+@@ -120,9 +147,33 @@ Result synthesize(const Plan& plan, Strategy strategy, std::size_t max_work,
+       return identity(plan, max_work, deadline);
+     case Strategy::Ordered: {
+       auto admitted = ordered::admit(plan);
+-      if (admitted.admitted()) return run(plan, max_work, deadline, &admitted);
+       Result result;
+-      result.reason = admitted.reason;
++      if (!admitted.admitted()) {
++        result.reason = admitted.reason;
++        return result;
++      }
++      if (admitted.program.components.empty())
++        return run(plan, max_work, deadline, &admitted);
++      for (const auto& pair : admitted.program.components) {
++        auto component = ordered::componentPlan(plan, pair);
++        auto single = ordered::admit(component);
++        auto part = run(component, max_work, deadline, &single, &plan);
++        if (!part.constructed) return part;
++        if (result.output_shape)
++          result.candidate.feasibility.push_back(
++              call("==", {result.output_shape, part.output_shape}));
++        else
++          result.output_shape = part.output_shape;
++        result.candidate.constructors.insert(
++            part.candidate.constructors.begin(),
++            part.candidate.constructors.end());
++        result.candidate.feasibility.insert(result.candidate.feasibility.end(),
++                                            part.candidate.feasibility.begin(),
++                                            part.candidate.feasibility.end());
++      }
++      result.constructed = true;
++      result.steps.push_back("law: ordered-requirements-construction");
++      result.steps.push_back("law: separated-additive-components");
+       return result;
+     }
+     case Strategy::General:
+diff --git a/src/core/attr_synth/synthesize.h b/src/core/attr_synth/synthesize.h
+index 13c85ca..ef5302d 100644
+--- a/src/core/attr_synth/synthesize.h
++++ b/src/core/attr_synth/synthesize.h
+@@ -13,6 +13,7 @@ enum class Strategy { Identity, Ordered, General };
+ // Steps and guard origins are diagnostics, never proof evidence.
+ struct Result {
+   bool constructed = false;
++  semantics::SymbolPtr output_shape;
+   semantics::ConstructorCandidate candidate;
+   std::string reason;
+   std::vector<semantics::RuleProof::GuardOrigin> guard_origins;
+diff --git a/src/core/semantics/context.cc b/src/core/semantics/context.cc
+index a88487e..2738931 100644
+--- a/src/core/semantics/context.cc
++++ b/src/core/semantics/context.cc
+@@ -65,7 +65,7 @@ void Context::assignAttribute(std::size_t descriptor, std::size_t field,
+   }
+   attributes_.resolved.clear();
+ }
+-void Context::sourceScope(std::size_t id) {
++void Context::sourceScope(std::size_t id, bool import_assumptions) {
+   tick();
+   const auto& n = plan.nodes.at(id);
+   source_.nodes.insert(id);
+@@ -74,8 +74,8 @@ void Context::sourceScope(std::size_t id) {
+     source_.fields[n.descriptor->value] = n.definition->fields.size();
+     source_.field_nodes[n.descriptor->value] = id;
+   }
+-  for (auto child : n.inputs) sourceScope(child);
+-  if (id == plan.lhs)
++  for (auto child : n.inputs) sourceScope(child, false);
++  if (import_assumptions && id == plan.lhs)
+     for (const auto& assumption : plan.assumptions) {
+       validateSource(assumption);
+       learn(assumption);
+diff --git a/src/core/semantics/context.h b/src/core/semantics/context.h
+index 6994b3a..1b82965 100644
+--- a/src/core/semantics/context.h
++++ b/src/core/semantics/context.h
+@@ -57,7 +57,7 @@ class Context {
+ 
+   void enableSetReasoning() { sets_ready_ = true; }
+   void tick();
+-  void sourceScope(std::size_t);
++  void sourceScope(std::size_t, bool import_assumptions = true);
+   void validateSource(const S&);
+   void wellFormed(const S&);
+   void checkMetadata(const S&);
+diff --git a/src/core/semantics/ir.h b/src/core/semantics/ir.h
+index 4c55c08..ab8c72f 100644
+--- a/src/core/semantics/ir.h
++++ b/src/core/semantics/ir.h
+@@ -36,6 +36,8 @@ enum class ProofStatus { Proved, Unknown };
+ enum class GuardKind { Legality, CoordinateOrder, ReductionDomain };
+ const char* guardKindName(GuardKind);
+ struct ConstructorCandidate {
++  // Proof obligations, never assumptions or automatically inserted guards.
++  std::vector<SymbolPtr> feasibility;
+   std::map<std::size_t, std::vector<SymbolPtr>> constructors;
+   std::vector<SymbolPtr> guard;
+ };
+diff --git a/src/core/semantics/plan.cc b/src/core/semantics/plan.cc
+index 70c536c..9b2f71a 100644
+--- a/src/core/semantics/plan.cc
++++ b/src/core/semantics/plan.cc
+@@ -120,6 +120,9 @@ struct Builder {
+       auto role = argument(1);
+       auto group = contract->kind == axis::OrderedContract::Kind::Permutation
+                        ? 0
++                   : contract->kind == axis::OrderedContract::Kind::Summation
++                       ? (role == 1 ? contract->contract_group
++                                    : contract->left_free_group)
+                    : role == 0 ? contract->batch_group
+                    : role == 1 ? contract->contract_group
+                    : role == 2 ? contract->left_free_group
+@@ -603,6 +606,8 @@ bool compile(CompilationContext& context, InspectedRule& rule) {
+               else
+                 throw std::runtime_error("unrecognized semantic axis group");
+             }
++            if (contract->kind == axis::OrderedContract::Kind::Summation)
++              role = group == contract->contract_group ? 1 : 2;
+             if (ref->rhs && rule.descriptors.at(it->descriptor->value).kind ==
+                                 Descriptor::Kind::kInferred) {
+               query = role == 0   ? B::kAxisBatch
+@@ -668,6 +673,7 @@ bool compile(CompilationContext& context, InspectedRule& rule) {
+           if (auto* b = std::get_if<BuiltinCall>(&e.value))
+             found = builtins::isReplacementAxisQuery(b->builtin) ||
+                     b->builtin == builtins::Builtin::kAxisDomain ||
++                    b->builtin == builtins::Builtin::kAxisFeasible ||
+                     b->builtin == builtins::Builtin::kAxisSourcePartition;
+           forEachExpressionChild(
+               e, [&](const auto& child) { found |= axisQueries(child); });
+diff --git a/src/core/semantics/proof/verify.cc b/src/core/semantics/proof/verify.cc
+index a24160f..050691b 100644
+--- a/src/core/semantics/proof/verify.cc
++++ b/src/core/semantics/proof/verify.cc
+@@ -26,6 +26,17 @@ RuleProof verify(const Plan& plan, const ConstructorCandidate& candidate,
+     for (const auto& value : plan.derived_metadata) c.checkMetadata(value);
+     for (const auto& [value, type] : plan.constructed_metadata)
+       c.checkMetadataType(value, type);
++    // These source-only expressions are total on the admitted domain. Prove
++    // them from source legality and the written guard before checking any
++    // conditional builder expression. No feasibility fact is assumed.
++    for (const auto& condition : candidate.feasibility) {
++      c.validateSource(condition);
++      if (condition->sort != Symbol::Sort::Boolean)
++        throw ProofFailure("feasibility obligation must be Boolean",
++                           FailureKind::InvalidCandidate);
++      c.wellFormed(condition);
++      c.require(condition, GuardKind::CoordinateOrder);
++    }
+     for (const auto& n : plan.nodes)
+       if (plan.needsSynthesis(n)) {
+         const auto& fields = candidate.constructors.at(n.descriptor->value);
+diff --git a/src/core/semantics/restrictions.cc b/src/core/semantics/restrictions.cc
+index 263098c..68bf58b 100644
+--- a/src/core/semantics/restrictions.cc
++++ b/src/core/semantics/restrictions.cc
+@@ -57,6 +57,11 @@ bool hasWitness(const Plan& plan, const Rule& rule) {
+         continue;
+       }
+       auto left = ranks.at(n.inputs[0]);
++      if (n.kind == inference::Kind::Addition) {
++        // Actual shape legality is checked by analyze below.
++        ranks.push_back(left);
++        continue;
++      }
+       auto& fields = metadata.descriptors[*n.descriptor];
+       if (n.kind == inference::Kind::Permutation) {
+         if (fields.empty()) {
+@@ -68,6 +73,14 @@ bool hasWitness(const Plan& plan, const Rule& rule) {
+                          fields[n.fields[0]].end());
+         }
+         ranks.push_back(left);
++      } else if (n.kind == inference::Kind::Summation) {
++        if (fields.empty()) {
++          fields.resize(1);
++          for (std::size_t i = 0; i < left; ++i)
++            if (attempt > 4 && choose(2)) fields[n.fields[0]].push_back(i);
++        }
++        if (fields[n.fields[0]].size() > left) break;
++        ranks.push_back(left - fields[n.fields[0]].size());
+       } else {
+         auto right = ranks.at(n.inputs[1]);
+         if (fields.empty()) {
+@@ -228,6 +241,7 @@ std::string suggestRestrictions(const Plan& input, const Rule& rule,
+             identity);
+         continue;
+       }
++      if (contract->kind != axis::OrderedContract::Kind::Contraction) continue;
+       for (std::size_t operand = 0; operand < 2; ++operand) {
+         auto child = n.inputs[operand];
+         const auto& producer = plan.nodes[child];
+diff --git a/src/core/semantics/suggestion.cc b/src/core/semantics/suggestion.cc
+index 9cb6fe7..45a4722 100644
+--- a/src/core/semantics/suggestion.cc
++++ b/src/core/semantics/suggestion.cc
+@@ -147,6 +147,8 @@ class Suggestion {
+     const auto& n = p.nodes.at(id);
+     auto c = *axis::recognizeOrdered(*n.definition);
+     auto group = c.kind == axis::OrderedContract::Kind::Permutation ? 0
++                 : c.kind == axis::OrderedContract::Kind::Summation
++                     ? (role == 1 ? c.contract_group : c.left_free_group)
+                  : role == 0 ? c.batch_group
+                  : role == 1 ? c.contract_group
+                  : role == 2 ? c.left_free_group
+diff --git a/src/core/semantics/symbolic/correspondence.cc b/src/core/semantics/symbolic/correspondence.cc
+index 34a7590..be6d919 100644
+--- a/src/core/semantics/symbolic/correspondence.cc
++++ b/src/core/semantics/symbolic/correspondence.cc
+@@ -157,6 +157,7 @@ Correspondence correspond(Context& c, const TensorMeaning& lhs, const Terms& lt,
+         return leaves;
+       };
+   visit(c.plan.rhs);
++  result.mandatory_boundaries = result.boundaries;
+   // Value dependencies alone do not determine a broadcast's tensor interface.
+   // Propagate the consumer's output frame through whole-operand bindings. This
+   // follows the declared shape contract, including renamed/custom operations;
+diff --git a/src/core/semantics/symbolic/normalize.h b/src/core/semantics/symbolic/normalize.h
+index a6d1ff8..45e56fd 100644
+--- a/src/core/semantics/symbolic/normalize.h
++++ b/src/core/semantics/symbolic/normalize.h
+@@ -23,6 +23,8 @@ std::string show(const Terms&);
+ struct Correspondence {
+   std::map<std::size_t, S> anchors;
+   std::map<std::size_t, S> boundaries;
++  // Value support boundaries before general interface propagation.
++  std::map<std::size_t, S> mandatory_boundaries;
+   std::map<std::size_t, S> interfaces;
+ };
+ Correspondence correspond(Context&, const TensorMeaning&, const Terms&,
+diff --git a/src/executable/codec.h b/src/executable/codec.h
+index b633179..8ccd757 100644
+--- a/src/executable/codec.h
++++ b/src/executable/codec.h
+@@ -450,6 +450,8 @@ struct Codec<core::builtins::Builtin> {
+         return "axis_rhs_group_positions";
+       case core::builtins::Builtin::kAxisContract:
+         return "axis_contract";
++      case core::builtins::Builtin::kAxisFeasible:
++        return "axis_feasible";
+       case core::builtins::Builtin::kAxisLive:
+         return "axis_live";
+       case core::builtins::Builtin::kAxisDifference:
+@@ -521,6 +523,7 @@ struct Codec<core::builtins::Builtin> {
+     if (j == "axis_rhs_group_positions")
+       return core::builtins::Builtin::kAxisRhsGroupPositions;
+     if (j == "axis_contract") return core::builtins::Builtin::kAxisContract;
++    if (j == "axis_feasible") return core::builtins::Builtin::kAxisFeasible;
+     if (j == "axis_live") return core::builtins::Builtin::kAxisLive;
+     if (j == "difference") return core::builtins::Builtin::kAxisDifference;
+     throw std::invalid_argument("invalid builtin");
+@@ -712,6 +715,10 @@ struct Codec<inference::Kind> {
+         return "permutation";
+       case inference::Kind::Contraction:
+         return "contraction";
++      case inference::Kind::Summation:
++        return "summation";
++      case inference::Kind::Addition:
++        return "addition";
+     }
+     throw std::invalid_argument("invalid inference_kind");
+   }
+@@ -719,6 +726,8 @@ struct Codec<inference::Kind> {
+     if (j == "input") return inference::Kind::Input;
+     if (j == "permutation") return inference::Kind::Permutation;
+     if (j == "contraction") return inference::Kind::Contraction;
++    if (j == "summation") return inference::Kind::Summation;
++    if (j == "addition") return inference::Kind::Addition;
+     throw std::invalid_argument("invalid inference_kind");
+   }
+ };
+@@ -958,6 +967,11 @@ struct Codec<inference::Instruction> {
+   static inference::Instruction unpack(const Json&);
+ };
+ template <>
++struct Codec<inference::Component> {
++  static Json pack(const inference::Component&);
++  static inference::Component unpack(const Json&);
++};
++template <>
+ struct Codec<inference::Program> {
+   static Json pack(const inference::Program&);
+   static inference::Program unpack(const Json&);
+@@ -2085,11 +2099,24 @@ inline inference::Instruction Codec<inference::Instruction>::unpack(
+   v.fields = detail::unpack<decltype(v.fields)>(j.at("fields"));
+   return v;
+ }
++inline Json Codec<inference::Component>::pack(const inference::Component& v) {
++  Json j = Json::object();
++  j["source"] = detail::pack(v.source);
++  j["replacement"] = detail::pack(v.replacement);
++  return j;
++}
++inline inference::Component Codec<inference::Component>::unpack(const Json& j) {
++  inference::Component v{};
++  v.source = detail::unpack<decltype(v.source)>(j.at("source"));
++  v.replacement = detail::unpack<decltype(v.replacement)>(j.at("replacement"));
++  return v;
++}
+ inline Json Codec<inference::Program>::pack(const inference::Program& v) {
+   Json j = Json::object();
+   j["mode"] = detail::pack(v.mode);
+   j["source"] = detail::pack(v.source);
+   j["replacement"] = detail::pack(v.replacement);
++  if (!v.components.empty()) j["components"] = detail::pack(v.components);
+   return j;
+ }
+ inline inference::Program Codec<inference::Program>::unpack(const Json& j) {
+@@ -2097,6 +2124,8 @@ inline inference::Program Codec<inference::Program>::unpack(const Json& j) {
+   v.mode = detail::unpack<decltype(v.mode)>(j.at("mode"));
+   v.source = detail::unpack<decltype(v.source)>(j.at("source"));
+   v.replacement = detail::unpack<decltype(v.replacement)>(j.at("replacement"));
++  if (j.contains("components"))
++    v.components = detail::unpack<decltype(v.components)>(j.at("components"));
+   return v;
+ }
+ inline Json Codec<Rule>::pack(const Rule& v) {
+diff --git a/src/executable/schema_data.h b/src/executable/schema_data.h
+index 40f230e..2ef66f2 100644
+--- a/src/executable/schema_data.h
++++ b/src/executable/schema_data.h
+@@ -249,6 +249,7 @@ inline constexpr std::string_view kSchema = R"TEPL_SCHEMA({
+         "axis_rhs_group_members",
+         "axis_rhs_group_positions",
+         "axis_contract",
++        "axis_feasible",
+         "axis_live",
+         "difference"
+       ]
+@@ -318,7 +319,9 @@ inline constexpr std::string_view kSchema = R"TEPL_SCHEMA({
+       "enum": [
+         "input",
+         "permutation",
+-        "contraction"
++        "contraction",
++        "summation",
++        "addition"
+       ]
+     },
+     "position": {
+@@ -1374,6 +1377,28 @@ inline constexpr std::string_view kSchema = R"TEPL_SCHEMA({
+       ],
+       "additionalProperties": false
+     },
++    "inference_component": {
++      "type": "object",
++      "properties": {
++        "source": {
++          "type": "array",
++          "items": {
++            "$ref": "#/$defs/inference_instruction"
++          }
++        },
++        "replacement": {
++          "type": "array",
++          "items": {
++            "$ref": "#/$defs/inference_instruction"
++          }
++        }
++      },
++      "required": [
++        "source",
++        "replacement"
++      ],
++      "additionalProperties": false
++    },
+     "inference_program": {
+       "type": "object",
+       "properties": {
+@@ -1391,6 +1416,12 @@ inline constexpr std::string_view kSchema = R"TEPL_SCHEMA({
+           "items": {
+             "$ref": "#/$defs/inference_instruction"
+           }
++        },
++        "components": {
++          "type": "array",
++          "items": {
++            "$ref": "#/$defs/inference_component"
++          }
+         }
+       },
+       "required": [
+diff --git a/src/executable/validate.cc b/src/executable/validate.cc
+index 2d466a3..27e255e 100644
+--- a/src/executable/validate.cc
++++ b/src/executable/validate.cc
+@@ -38,26 +38,39 @@ void validateInference(const ProgramData& p, const Rule& r) {
+               "inference capture mismatch");
+       return id;
+     }
+-    require(operation && operation->value < p.operations.size() && descriptor &&
++    require(operation && operation->value < p.operations.size() &&
+                 n.operation == operation->value &&
+-                n.descriptor == descriptor->value,
++                n.descriptor ==
++                    (descriptor ? std::optional<std::size_t>{descriptor->value}
++                                : std::nullopt),
+             "inference operation/descriptor mismatch");
+     const auto& op = p.operations[operation->value];
+     require(bool(op.axis_contract), "inference operation lacks axis contract");
+     auto c = core::axis::recognizeOrdered(*op.axis_contract);
+     require(c.has_value(), "inference operation is outside ordered templates");
++    if (c->kind == core::axis::OrderedContract::Kind::Addition) {
++      require(n.kind == inference::Kind::Addition && n.fields.empty() &&
++                  !descriptor && !op.attributes,
++              "inference addition must be attribute-free");
++      return id;
++    }
+     auto kind = c->kind == core::axis::OrderedContract::Kind::Permutation
+                     ? inference::Kind::Permutation
++                : c->kind == core::axis::OrderedContract::Kind::Summation
++                    ? inference::Kind::Summation
+                     : inference::Kind::Contraction;
+     auto fields =
+         kind == inference::Kind::Permutation
+             ? std::vector<std::size_t>{c->permutation}
++        : kind == inference::Kind::Summation
++            ? std::vector<std::size_t>{c->dimensions}
+             : std::vector<std::size_t>{c->left_batch, c->right_batch,
+                                        c->left_contract, c->right_contract};
+     require(n.kind == kind && n.fields == fields,
+             "inference field adapter mismatch");
+-    require(op.attributes && descriptor->value < r.descriptors.size(),
+-            "invalid inference descriptor");
++    require(
++        op.attributes && descriptor && descriptor->value < r.descriptors.size(),
++        "invalid inference descriptor");
+     for (const auto& field :
+          p.attribute_schemas.at(op.attributes->value).fields)
+       require((field.type == "u64" || field.type == "i64") &&
+diff --git a/src/inference/evaluate.cc b/src/inference/evaluate.cc
+index add537a..d04c60d 100644
+--- a/src/inference/evaluate.cc
++++ b/src/inference/evaluate.cc
+@@ -106,7 +106,7 @@ struct Replay {
+       for (std::size_t i = 0; i < it->second.size(); ++i) {
+         work.tick();
+         work.size(network.ports.size() + 1);
+-        if (it->second[i] < 2)
++        if (it->second[i] < DomainRequirements::minimum_extent)
+           throw Failure{Status::OutsideDomain, "ordered extents must be >= 2"};
+         layout.push_back(network.ports.size());
+         network.ports.push_back({capture, i, it->second[i]});
+@@ -153,6 +153,21 @@ struct Replay {
+       auto& out = layouts[id];
+       if (n.kind == Kind::Input) {
+         out = network.inputs.at(*n.capture);
++      } else if (n.kind == Kind::Addition) {
++        const auto& left = layouts[n.inputs[0]];
++        const auto& right = layouts[n.inputs[1]];
++        if (left.size() != right.size())
++          throw Failure{invalid, "addition operand ranks differ"};
++        for (std::size_t i = 0; i < left.size(); ++i) {
++          work.tick();
++          if (network.ports[left[i]].extent != network.ports[right[i]].extent)
++            throw Failure{invalid, "addition operand shapes differ"};
++        }
++        // This schedule checks source legality only. Additive equivalence is
++        // checked in separate component networks; never join their ports here.
++        out = left;
++        groups[n.node].resize(5);
++        groups[n.node][4] = out;
+       } else {
+         auto it = attributes.find(*n.descriptor);
+         if (it == attributes.end())
+@@ -172,6 +187,17 @@ struct Replay {
+           if (permutation.size() != left.size())
+             throw Failure{invalid, "permutation is not full rank"};
+           for (auto i : permutation) out.push_back(left[i]);
++        } else if (n.kind == Kind::Summation) {
++          const auto& dimensions = fields[n.fields[0]];
++          selection(dimensions, left.size(), left_used);
++          for (auto i : dimensions) g[1].push_back(left[i]);
++          for (std::size_t i = 0; i < left.size(); ++i) {
++            work.tick();
++            if (!left_used.contains(i)) {
++              out.push_back(left[i]);
++              g[2].push_back(left[i]);
++            }
++          }
+         } else {
+           const auto& right = layouts[n.inputs[1]];
+           const auto& lb = fields[n.fields[0]];
+@@ -255,18 +281,36 @@ struct Analysis {
+         work.tick();
+         if (!intersect(s, captures, work).empty() &&
+             (final.contains(a) || !difference(s, captures, work).empty()))
+-          r.live.insert(a);
++          r.mandatory_axes.insert(a);
+       }
+       if (n.kind == Kind::Contraction) {
+         const auto& left =
+-            result.requirements.at(program.replacement[n.inputs[0]].node).live;
++            result.requirements.at(program.replacement[n.inputs[0]].node)
++                .retained_axes;
+         const auto& right =
+-            result.requirements.at(program.replacement[n.inputs[1]].node).live;
++            result.requirements.at(program.replacement[n.inputs[1]].node)
++                .retained_axes;
+         auto shared = intersect(left, right, work);
+-        r.batch = intersect(shared, r.live, work);
+-        r.contract = difference(shared, r.live, work);
++        r.batch = intersect(shared, r.mandatory_axes, work);
++        r.contract = difference(shared, r.mandatory_axes, work);
+         r.left_free = difference(left, right, work);
+         r.right_free = difference(right, left, work);
++        r.retained_axes = r.batch;
++        r.retained_axes.insert(r.left_free.begin(), r.left_free.end());
++        r.retained_axes.insert(r.right_free.begin(), r.right_free.end());
++      } else if (n.kind == Kind::Input) {
++        r.retained_axes = set(result.source.inputs.at(*n.capture), work);
++      } else {
++        const auto& child =
++            result.requirements.at(program.replacement[n.inputs[0]].node)
++                .retained_axes;
++        r.retained_axes = n.kind == Kind::Summation
++                              ? intersect(child, r.mandatory_axes, work)
++                              : child;
++        if (n.kind == Kind::Summation) {
++          r.contract = difference(child, r.retained_axes, work);
++          r.left_free = r.retained_axes;
++        }
+       }
+     }
+   }
+@@ -282,6 +326,9 @@ struct Analysis {
+       if (n.kind == Kind::Permutation)
+         result.requirements[program.replacement[n.inputs[0]].node]
+             .required_order = {};
++      if (n.kind == Kind::Summation)
++        result.requirements[program.replacement[n.inputs[0]].node]
++            .required_order = r.required_order;
+       if (n.kind == Kind::Contraction) {
+         result.requirements[program.replacement[n.inputs[0]].node]
+             .required_order = filter(r.required_order, r.left_free, work);
+@@ -294,10 +341,27 @@ struct Analysis {
+   std::optional<Obstruction> obstruction() {
+     std::map<std::size_t, const Instruction*> instructions;
+     for (const auto& n : program.replacement) instructions[n.node] = &n;
++    const auto root = program.replacement.back().node;
++    const auto& retained = result.requirements.at(root).retained_axes;
++    if (retained != final) {
++      auto extra = difference(retained, final, work);
++      auto missing = difference(final, retained, work);
++      auto axis = extra.empty() ? *missing.begin() : *extra.begin();
++      return Obstruction{root, axis, axis, Obstruction::Kind::RetainedSet};
++    }
+     for (const auto& [id, r] : result.requirements) {
+       work.tick();
++      auto q = set(r.required_order, work);
++      if (q.size() != r.required_order.size() ||
++          !difference(q, r.retained_axes, work).empty()) {
++        auto extra = difference(q, r.retained_axes, work);
++        auto axis = extra.empty() ? r.required_order.front() : *extra.begin();
++        return Obstruction{id, axis, axis, Obstruction::Kind::Requirement};
++      }
+       const auto& n = *instructions.at(id);
+-      if (n.kind == Kind::Permutation || r.required_order.size() < 2) continue;
++      if (n.kind == Kind::Permutation || n.kind == Kind::Summation ||
++          r.required_order.size() < 2)
++        continue;
+       std::map<AxisId, std::size_t> input_positions;
+       if (n.capture) {
+         const auto& order = result.source.inputs.at(*n.capture);
+@@ -333,8 +397,13 @@ struct Analysis {
+       auto& fields = result.attributes[*n.descriptor];
+       fields.resize(n.fields.size());
+       if (n.kind == Kind::Permutation) {
+-        output = extend(r.required_order, r.live, left, work);
++        output = extend(r.required_order, r.retained_axes, left, work);
+         fields[n.fields[0]] = positions(left, output, work);
++      } else if (n.kind == Kind::Summation) {
++        auto removed = difference(set(left, work), r.retained_axes, work);
++        fields[n.fields[0]] =
++            positions(left, filter(left, removed, work), work);
++        output = filter(left, r.retained_axes, work);
+       } else {
+         const auto& right =
+             result.layouts.at(program.replacement[n.inputs[1]].node);
+@@ -373,7 +442,36 @@ Result run(const Program& p, const Metadata& m, const Limits& limits,
+     validate(p);
+     Replay replay(p, m, m.descriptors, work);
+     auto source = replay.run(p.source);
+-    if (analyze_only) {
++    if (!p.components.empty()) {
++      // The original schedule establishes legality, not a shared additive
++      // axis network. Only the component results expose equivalence classes.
++      out.status = analyze_only ? Status::Analyzed
++                   : construct  ? Status::Solved
++                                : Status::Feasible;
++      if (!analyze_only && p.mode == Mode::Validate) {
++        auto attrs = explicitAttributes(p, m);
++        Replay rhs(p, m, attrs, work, Status::InvalidReplacement);
++        rhs.run(p.replacement);  // Check every actual addition's shape.
++        out.status = Status::Solved;
++      }
++      for (const auto& component : p.components) {
++        Program single{p.mode, component.source, component.replacement, {}};
++        auto r = run(single, m, {work.remaining, work.max_axes}, construct,
++                     analyze_only);
++        work.charge(r.work);
++        if (r.status != out.status) {
++          out.status = r.status;
++          out.reason = r.reason;
++        }
++        out.components.push_back(std::move(r));
++        if (out.status != Status::Analyzed && out.status != Status::Solved &&
++            out.status != Status::Feasible)
++          break;
++      }
++      if (out.status == Status::Solved)
++        for (const auto& r : out.components)
++          out.attributes.insert(r.attributes.begin(), r.attributes.end());
++    } else if (analyze_only) {
+       Analysis a(p, work, std::move(source));
+       if (p.mode == Mode::Synthesize) {
+         a.boundaries();
+@@ -404,7 +502,8 @@ Result run(const Program& p, const Metadata& m, const Limits& limits,
+       a.ordering();
+       if (auto witness = a.obstruction()) {
+         a.result.status = Status::Impossible;
+-        a.result.reason = "required axes have incompatible relative order";
++        a.result.reason =
++            "retained axes or required relative order are incompatible";
+         a.result.obstruction = witness;
+       } else if (construct) {
+         a.construct();
+@@ -440,14 +539,53 @@ Result construct(const Program& p, const Result& analysis,
+     if (p.mode != Mode::Synthesize || analysis.status != Status::Analyzed)
+       throw std::invalid_argument(
+           "constructor requires analyzed synthesis metadata");
++    validate(p);
++    if (!p.components.empty()) {
++      if (analysis.components.size() != p.components.size())
++        throw std::invalid_argument("missing component analysis");
++      out.status = Status::Solved;
++      for (std::size_t i = 0; i < p.components.size(); ++i) {
++        const auto& component = p.components[i];
++        Program single{p.mode, component.source, component.replacement, {}};
++        auto r = inference::construct(single, analysis.components[i],
++                                      {work.remaining, work.max_axes});
++        work.charge(r.work);
++        out.components.push_back(std::move(r));
++        if (out.components.back().status != Status::Solved) {
++          out.status = out.components.back().status;
++          out.reason = out.components.back().reason;
++          break;
++        }
++      }
++      if (out.status == Status::Solved)
++        for (const auto& r : out.components)
++          out.attributes.insert(r.attributes.begin(), r.attributes.end());
++      out.work = work.initial - work.remaining;
++      return out;
++    }
+     Analysis a(p, work, analysis.source);
+-    a.result.requirements = analysis.requirements;
++    a.boundaries();
++    a.ordering();
++    if (a.result.requirements != analysis.requirements)
++      throw std::invalid_argument("inconsistent analyzed requirements");
++    if (auto witness = a.obstruction()) {
++      a.result.status = Status::Impossible;
++      a.result.reason =
++          "retained axes or required relative order are incompatible";
++      a.result.obstruction = witness;
++      a.result.work = work.initial - work.remaining;
++      return std::move(a.result);
++    }
+     a.construct();
+     a.result.status = Status::Solved;
+     out = std::move(a.result);
+   } catch (const Failure& f) {
++    out = {};
+     out.status = f.status;
+     out.reason = f.reason;
++  } catch (const std::invalid_argument& e) {
++    out = {};
++    out.reason = e.what();
+   }
+   out.work = work.initial - work.remaining;
+   return out;
+@@ -460,16 +598,30 @@ Result replayReplacement(const Program& p, const Metadata& m,
+     validate(p);
+     auto attrs = explicitAttributes(p, m);
+     Replay replay(p, m, attrs, work, Status::InvalidReplacement);
+-    out.source = replay.run(p.replacement);
+-    out.replay_layouts = replay.outputs;
+-    out.replay_groups = std::move(replay.groups);
+-    out.layouts = std::move(replay.outputs);
++    auto network = replay.run(p.replacement);
++    if (p.components.empty()) {
++      out.source = std::move(network);
++      out.replay_layouts = replay.outputs;
++      out.replay_groups = std::move(replay.groups);
++      out.layouts = std::move(replay.outputs);
++    } else {
++      for (const auto& component : p.components) {
++        Program single{p.mode, component.source, component.replacement, {}};
++        auto r = replayReplacement(single, m, {work.remaining, work.max_axes});
++        work.charge(r.work);
++        if (r.status != Status::Analyzed) throw Failure{r.status, r.reason};
++        out.components.push_back(std::move(r));
++      }
++    }
+     out.attributes = std::move(attrs);
+     out.status = Status::Analyzed;
+   } catch (const Failure& f) {
+     out = {};
+     out.status = f.status;
+     out.reason = f.reason;
++  } catch (const std::invalid_argument& e) {
++    out = {};
++    out.reason = e.what();
+   }
+   out.work = work.initial - work.remaining;
+   return out;
+@@ -483,6 +635,36 @@ bool check(const Program& p, const Metadata& m, const Result& r) {
+     validate(p);
+     Replay replay(p, m, m.descriptors, work);
+     auto source = replay.run(p.source);
++    if (!p.components.empty()) {
++      if (r.source != SourceNetwork{}) return false;
++      if (!r.requirements.empty() || !r.layouts.empty() || r.obstruction ||
++          r.components.empty() || r.components.size() > p.components.size())
++        return false;
++      Attributes attributes;
++      bool impossible = false;
++      for (std::size_t i = 0; i < r.components.size(); ++i) {
++        const auto& component = p.components[i];
++        const auto& certificate = r.components[i];
++        Program single{p.mode, component.source, component.replacement, {}};
++        if (!check(single, m, certificate)) return false;
++        impossible |= certificate.status == Status::Impossible;
++        if (r.status != Status::Impossible && certificate.status != r.status)
++          return false;
++        attributes.insert(certificate.attributes.begin(),
++                          certificate.attributes.end());
++      }
++      if (r.status == Status::Impossible)
++        return impossible && r.attributes.empty();
++      if (r.components.size() != p.components.size() ||
++          r.attributes != attributes)
++        return false;
++      if (r.status == Status::Solved) {
++        Replay rhs(p, m, r.attributes, work, Status::InvalidReplacement);
++        rhs.run(p.replacement);
++        return true;
++      }
++      return r.status == Status::Feasible;
++    }
+     if (source != r.source) return false;
+     if (p.mode == Mode::Validate) {
+       if (r.status != Status::Solved || !r.requirements.empty() ||
+diff --git a/src/inference/evaluate.h b/src/inference/evaluate.h
+index ddc0680..59f2344 100644
+--- a/src/inference/evaluate.h
++++ b/src/inference/evaluate.h
+@@ -31,13 +31,14 @@ struct SourceNetwork {
+   bool operator==(const SourceNetwork&) const = default;
+ };
+ struct Requirements {
+-  AxisSet live, batch, contract, left_free, right_free;
++  AxisSet mandatory_axes, retained_axes, batch, contract, left_free, right_free;
+   AxisSequence required_order;
+   bool operator==(const Requirements&) const = default;
+ };
+ struct Obstruction {
+   std::size_t node = 0;
+   AxisId first = 0, second = 0;
++  enum class Kind { Order, RetainedSet, Requirement } kind = Kind::Order;
+   bool operator==(const Obstruction&) const = default;
+ };
+ enum class Status {
+@@ -55,6 +56,8 @@ enum class Status {
+ };
+ struct Result {
+   Status status = Status::Unsupported;
++  // Each additive component has its own physical-port equivalence classes.
++  std::vector<Result> components;
+   std::string reason;
+   SourceNetwork source;
+   std::map<std::size_t, Requirements> requirements;
+@@ -72,6 +75,10 @@ struct Limits {
+   std::size_t axes = std::numeric_limits<std::size_t>::max();
+ };
+ 
++// Expand the source by linearity/bilinearity, flatten only actual top-level
++// RHS sums, and match distinct read-once components by capture set. Throws on
++// unsupported components or shared RHS descriptors.
++std::vector<Component> decompose(const Program&);
+ // Structural validation of completed instructions; throws invalid_argument.
+ void validate(const Program&);
+ // Analyze once and either construct attributes or replay the explicit RHS.
+@@ -79,7 +86,7 @@ void validate(const Program&);
+ Result evaluate(const Program&, const Metadata&, const Limits& = {});
+ // Shared analysis performs no feasibility decision and chooses no attributes.
+ Result analyze(const Program&, const Metadata&, const Limits& = {});
+-// Used after the explicit where obligations have passed. No predicate is run.
++// Build from reusable analysis, checking the feasibility precondition first.
+ Result construct(const Program&, const Result& analysis, const Limits& = {});
+ // Interpret supplied RHS attributes, exposing its network without comparison.
+ Result replayReplacement(const Program&, const Metadata&, const Limits& = {});
+diff --git a/src/inference/validate.cc b/src/inference/validate.cc
+index 2027278..c4e730b 100644
+--- a/src/inference/validate.cc
++++ b/src/inference/validate.cc
+@@ -1,68 +1,153 @@
+ #include <algorithm>
+-#include <numeric>
++#include <iterator>
+ #include <stdexcept>
+ 
+ #include "src/inference/evaluate.h"
+ 
+ namespace tepl::inference {
+-void validate(const Program& p) {
+-  auto require = [](bool ok, const char* reason) {
+-    if (!ok) throw std::invalid_argument(reason);
++namespace {
++void require(bool ok, const char* reason) {
++  if (!ok) throw std::invalid_argument(reason);
++}
++void schedule(const std::vector<Instruction>& code) {
++  require(!code.empty(), "empty inference schedule");
++  std::set<std::size_t> nodes;
++  std::vector<std::size_t> uses(code.size());
++  for (std::size_t i = 0; i < code.size(); ++i) {
++    const auto& n = code[i];
++    require(nodes.insert(n.node).second, "duplicate inference node");
++    std::set<std::size_t> support;
++    for (auto child : n.inputs) {
++      require(child < i, "inference schedule is not producer-first");
++      require(++uses[child] == 1, "inference block must be a tree");
++      support.insert(code[child].captures.begin(), code[child].captures.end());
++    }
++    if (n.kind == Kind::Input) {
++      require(n.capture && !n.descriptor && !n.operation && n.inputs.empty() &&
++                  n.fields.empty(),
++              "invalid inference input instruction");
++      support.insert(*n.capture);
++    } else if (n.kind == Kind::Addition) {
++      require(!n.capture && !n.descriptor && n.inputs.size() == 2 &&
++                  n.fields.empty(),
++              "addition must be attribute-free and binary");
++    } else {
++      require(n.kind == Kind::Permutation || n.kind == Kind::Contraction ||
++                  n.kind == Kind::Summation,
++              "unknown inference instruction");
++      auto arity = n.kind == Kind::Contraction ? 2u : 1u;
++      auto count = n.kind == Kind::Contraction ? 4u : 1u;
++      require(!n.capture && n.descriptor && n.inputs.size() == arity &&
++                  n.fields.size() == count,
++              "invalid inference operation instruction");
++      auto fields = n.fields;
++      std::sort(fields.begin(), fields.end());
++      for (std::size_t f = 0; f < fields.size(); ++f)
++        require(fields[f] == f, "inference fields must form a bijection");
++    }
++    require(
++        n.captures == std::vector<std::size_t>(support.begin(), support.end()),
++        "incorrect compiled subtree capture set");
++  }
++  for (std::size_t i = 0; i + 1 < code.size(); ++i)
++    require(uses[i] == 1, "unreachable inference instruction");
++}
++using Code = std::vector<Instruction>;
++using Alternatives = std::vector<Code>;
++// Source distribution copies captured fields, never replacement holes.
++Alternatives expand(const Code& code, std::size_t root, bool source,
++                    bool allow_sum = true) {
++  const auto& n = code.at(root);
++  if (n.kind == Kind::Addition) {
++    require(allow_sum, "RHS must be an explicit sum of eligible components");
++    auto left = expand(code, n.inputs[0], source);
++    auto right = expand(code, n.inputs[1], source);
++    left.insert(left.end(), std::make_move_iterator(right.begin()),
++                std::make_move_iterator(right.end()));
++    return left;
++  }
++  if (n.kind == Kind::Input) return {Code{n}};
++  auto left = expand(code, n.inputs[0], source, source);
++  auto right = n.inputs.size() == 2 ? expand(code, n.inputs[1], source, source)
++                                    : Alternatives{Code{}};
++  Alternatives result;
++  for (const auto& l : left)
++    for (const auto& r : right) {
++      auto combined = l;
++      auto instruction = n;
++      instruction.inputs = {l.size() - 1};
++      std::set<std::size_t> captures(l.back().captures.begin(),
++                                     l.back().captures.end());
++      if (!r.empty()) {
++        instruction.inputs.push_back(l.size() + r.size() - 1);
++        captures.insert(r.back().captures.begin(), r.back().captures.end());
++        for (auto i : r) {
++          for (auto& input : i.inputs) input += l.size();
++          combined.push_back(std::move(i));
++        }
++      }
++      instruction.captures.assign(captures.begin(), captures.end());
++      combined.push_back(std::move(instruction));
++      result.push_back(std::move(combined));
++    }
++  return result;
++}
++std::map<std::vector<std::size_t>, Code> components(Alternatives alternatives) {
++  std::map<std::vector<std::size_t>, Code> result;
++  for (auto& code : alternatives) {
++    std::set<std::size_t> seen;
++    for (const auto& n : code)
++      if (n.capture)
++        require(seen.insert(*n.capture).second,
++                "ordered components require each capture exactly once");
++    auto captures = code.back().captures;
++    require(!captures.empty(),
++            "ordered components require a nonempty input set");
++    require(result.emplace(captures, std::move(code)).second,
++            "additive components must have distinct input sets");
++  }
++  return result;
++}
++}  // namespace
++
++std::vector<Component> decompose(const Program& p) {
++  schedule(p.source);
++  schedule(p.replacement);
++  auto source = components(expand(p.source, p.source.size() - 1, true));
++  auto replacement =
++      components(expand(p.replacement, p.replacement.size() - 1, false));
++  require(source.size() == replacement.size(),
++          "component input sets must match");
++  std::vector<Component> result;
++  for (auto& [captures, left] : source) {
++    auto right = replacement.find(captures);
++    require(right != replacement.end(), "component input sets must match");
++    result.push_back({std::move(left), std::move(right->second)});
++  }
++  auto has_addition = [](const Code& code) {
++    return std::any_of(code.begin(), code.end(),
++                       [](const auto& i) { return i.kind == Kind::Addition; });
+   };
++  if (!has_addition(p.source) && !has_addition(p.replacement)) return {};
++  return result;
++}
++
++void validate(const Program& p) {
+   require(p.mode == Mode::Synthesize || p.mode == Mode::Validate,
+           "unknown inference mode");
++  auto expected = decompose(p);
++  require(p.components == expected,
++          "incorrect compiled component decomposition");
+   std::set<std::size_t> source_descriptors, replacement_descriptors;
+-  auto block = [&](const std::vector<Instruction>& code, bool source) {
+-    require(!code.empty(), "empty inference schedule");
+-    std::set<std::size_t> nodes, captures;
+-    std::vector<std::size_t> uses(code.size());
+-    for (std::size_t i = 0; i < code.size(); ++i) {
+-      const auto& n = code[i];
+-      require(nodes.insert(n.node).second, "duplicate inference node");
+-      std::set<std::size_t> support;
+-      for (auto child : n.inputs) {
+-        require(child < i, "inference schedule is not producer-first");
+-        require(++uses[child] == 1, "inference block must be a tree");
+-        support.insert(code[child].captures.begin(),
+-                       code[child].captures.end());
+-      }
+-      if (n.kind == Kind::Input) {
+-        require(n.capture && !n.descriptor && !n.operation &&
+-                    n.inputs.empty() && n.fields.empty(),
+-                "invalid inference input instruction");
+-        require(captures.insert(*n.capture).second,
+-                "repeated inference capture");
+-        support.insert(*n.capture);
+-      } else {
+-        require(n.kind == Kind::Permutation || n.kind == Kind::Contraction,
+-                "unknown inference instruction");
+-        auto arity = n.kind == Kind::Permutation ? 1u : 2u;
+-        auto count = n.kind == Kind::Permutation ? 1u : 4u;
+-        require(!n.capture && n.descriptor && n.inputs.size() == arity &&
+-                    n.fields.size() == count,
+-                "invalid inference operation instruction");
+-        auto fields = n.fields;
+-        std::sort(fields.begin(), fields.end());
+-        for (std::size_t f = 0; f < fields.size(); ++f)
+-          require(fields[f] == f, "inference fields must form a bijection");
+-        if (source)
+-          source_descriptors.insert(*n.descriptor);
+-        else if (p.mode == Mode::Synthesize)
+-          require(replacement_descriptors.insert(*n.descriptor).second,
+-                  "synthesized descriptors must be independent");
++  for (const auto& n : p.source)
++    if (n.descriptor) source_descriptors.insert(*n.descriptor);
++  if (p.mode == Mode::Synthesize)
++    for (const auto& n : p.replacement)
++      if (n.descriptor) {
++        require(replacement_descriptors.insert(*n.descriptor).second,
++                "synthesized descriptors must be independent");
++        require(!source_descriptors.contains(*n.descriptor),
++                "synthesized descriptor shares source metadata");
+       }
+-      require(n.captures ==
+-                  std::vector<std::size_t>(support.begin(), support.end()),
+-              "incorrect compiled subtree capture set");
+-    }
+-    for (std::size_t i = 0; i + 1 < code.size(); ++i)
+-      require(uses[i] == 1, "unreachable inference instruction");
+-    return captures;
+-  };
+-  require(block(p.source, true) == block(p.replacement, false),
+-          "inference blocks must use the same captures");
+-  for (auto d : replacement_descriptors)
+-    require(!source_descriptors.contains(d),
+-            "synthesized descriptor shares source metadata");
+ }
+ }  // namespace tepl::inference
+diff --git a/src/rewrite/axis_analysis.cc b/src/rewrite/axis_analysis.cc
+index 9b8dba6..786c85c 100644
+--- a/src/rewrite/axis_analysis.cc
++++ b/src/rewrite/axis_analysis.cc
+@@ -87,8 +87,18 @@ Value AxisAnalysis::query(core::builtins::Builtin b,
+   using B = core::builtins::Builtin;
+   const auto& s = source();
+   if (b == B::kAxisDomain) return s.status == inference::Status::Analyzed;
++  if (b == B::kAxisFeasible) {
++    if (rule_.inference->mode == inference::Mode::Validate) metadata(true);
++    auto r = inference::feasibility(*rule_.inference, metadata_,
++                                    {budget_.steps, budget_.max_list});
++    charge(r);
++    return r.status == inference::Status::Feasible ||
++           r.status == inference::Status::Solved;
++  }
+   if (s.status != inference::Status::Analyzed)
+     throw ConditionUnavailable(s.reason);
++  if (!rule_.inference->components.empty())
++    throw ConditionUnavailable("additive axes require a component scope");
+   if (b == B::kAxisRhsLegal)
+     return replacement().status == inference::Status::Analyzed;
+   if (b == B::kAxisCaptureOrder)
+@@ -160,7 +170,7 @@ Value AxisAnalysis::query(core::builtins::Builtin b,
+   const inference::AxisSet* set = nullptr;
+   if (b == B::kAxisBatch) set = &r.batch;
+   if (b == B::kAxisContract) set = &r.contract;
+-  if (b == B::kAxisLive) set = &r.live;
++  if (b == B::kAxisLive) set = &r.retained_axes;
+   if (b == B::kAxisLeftFree) set = &r.left_free;
+   if (b == B::kAxisRightFree) set = &r.right_free;
+   if (!set) throw EvaluationError("unknown axis query");
+diff --git a/src/shared/builtins/catalog.cc b/src/shared/builtins/catalog.cc
+index d88ce1c..c29a320 100644
+--- a/src/shared/builtins/catalog.cc
++++ b/src/shared/builtins/catalog.cc
+@@ -80,6 +80,7 @@ bool isAxisQuery(Builtin b) {
+     case Builtin::kAxisSourceGroupMembers:
+     case Builtin::kAxisContract:
+     case Builtin::kAxisLive:
++    case Builtin::kAxisFeasible:
+     case Builtin::kAxisDomain:
+     case Builtin::kAxisRequired:
+     case Builtin::kAxisBatch:
+diff --git a/src/shared/builtins/catalog.def b/src/shared/builtins/catalog.def
+index fd4390b..6fcd648 100644
+--- a/src/shared/builtins/catalog.def
++++ b/src/shared/builtins/catalog.def
+@@ -53,5 +53,6 @@ TEPL_BUILTIN(kAxisRhsGroupOrder, "axis_rhs_group_order", kList, kNodeGroup, kAxi
+ TEPL_BUILTIN(kAxisRhsGroupMembers, "axis_rhs_group_members", kList, kNodeGroup, kAxisSet, false, kCommon, 2, false)
+ TEPL_BUILTIN(kAxisRhsGroupPositions, "axis_rhs_group_positions", kList, kNodeGroup, kIntegerList, false, kCommon, 2, false)
+ TEPL_BUILTIN(kAxisContract, "axis_contract", kList, kInteger, kAxisSet, false, kCommon, 2, false)
++TEPL_BUILTIN(kAxisFeasible, "axis_feasible", kList, kNoArguments, kBoolean, false, kCommon, 2, false)
+ TEPL_BUILTIN(kAxisLive, "axis_live", kList, kInteger, kAxisSet, false, kCommon, 2, false)
+ TEPL_BUILTIN(kAxisDifference, "difference", kList, kAxisSets, kAxisSet, false, kCommon, 6, false)
+diff --git a/src/shared/catalog/axis_conditions.cc b/src/shared/catalog/axis_conditions.cc
+index 12c849f..9afa162 100644
+--- a/src/shared/catalog/axis_conditions.cc
++++ b/src/shared/catalog/axis_conditions.cc
+@@ -1,5 +1,6 @@
+ #include "src/shared/catalog/axis_conditions.h"
+ 
++#include <algorithm>
+ #include <map>
+ #include <set>
+ #include <stdexcept>
+@@ -37,6 +38,8 @@ class Formula {
+   }
+ };
+ TypedExprPtr requiredExpression(const inference::Program& p, std::size_t node) {
++  if (!p.components.empty())
++    throw std::invalid_argument("axis requirements need a component scope");
+   Formula f{{}, [](Type) { return TypeId{0}; }};
+   if (node == p.replacement.back().node) return f.call(B::kAxisSourceOrder);
+   for (const auto& parent : p.replacement)
+@@ -44,6 +47,8 @@ TypedExprPtr requiredExpression(const inference::Program& p, std::size_t node) {
+       if (p.replacement[parent.inputs[i]].node == node) {
+         if (parent.kind == inference::Kind::Permutation)
+           return f.make(listType(logicalAxisType()), ListExpr{});
++        if (parent.kind == inference::Kind::Summation)
++          return requiredExpression(p, parent.node);
+         return f.call(B::kAxisFilter,
+                       {requiredExpression(p, parent.node),
+                        f.query(i == 0 ? B::kAxisLeftFree : B::kAxisRightFree,
+@@ -136,6 +141,10 @@ std::vector<TypedExprPtr> axisConditions(
+     const std::function<TypeId(Type)>& type) {
+   Formula f{origin, type};
+   std::vector<TypedExprPtr> result{f.call(B::kAxisDomain)};
++  if (!p.components.empty()) {
++    result.push_back(f.call(B::kAxisFeasible));
++    return result;
++  }
+   if (p.mode == inference::Mode::Validate) {
+     result.push_back(f.call(B::kAxisRhsLegal));
+     result.push_back(
+@@ -144,6 +153,15 @@ std::vector<TypedExprPtr> axisConditions(
+         f.equal(f.call(B::kAxisSourceOrder), f.call(B::kAxisRhsOrder)));
+     return result;
+   }
++  if (std::any_of(
++          p.source.begin(), p.source.end(),
++          [](const auto& n) { return n.kind == inference::Kind::Summation; }) ||
++      std::any_of(
++          p.replacement.begin(), p.replacement.end(),
++          [](const auto& n) { return n.kind == inference::Kind::Summation; })) {
++    result.push_back(f.call(B::kAxisFeasible));
++    return result;
++  }
+   for (const auto& n : p.replacement) {
+     auto q = f.query(B::kAxisRequired, n.node);
+     if (n.kind == inference::Kind::Input)
+@@ -183,7 +201,9 @@ WhereSchedule scheduleWhere(const RuleData& r) {
+         [&](const auto& v) {
+           using T = std::decay_t<decltype(v)>;
+           if constexpr (std::is_same_v<T, BuiltinCall>)
+-            result = builtins::isReplacementAxisQuery(v.builtin);
++            result = builtins::isReplacementAxisQuery(v.builtin) ||
++                     (v.builtin == B::kAxisFeasible && r.inference &&
++                      r.inference->mode == inference::Mode::Validate);
+           else if constexpr (std::is_same_v<T, LocalRef>)
+             result = dependent.contains(v.local.value);
+           else if constexpr (std::is_same_v<T, DescriptorRef> ||
+diff --git a/src/shared/metadata/inference.h b/src/shared/metadata/inference.h
+index c9e58dd..9d7999c 100644
+--- a/src/shared/metadata/inference.h
++++ b/src/shared/metadata/inference.h
+@@ -1,6 +1,7 @@
+ #pragma once
+ 
+ #include <cstddef>
++#include <cstdint>
+ #include <optional>
+ #include <vector>
+ 
+@@ -8,24 +9,35 @@ namespace tepl::inference {
+ 
+ // Completed metadata instructions. There are no definition ASTs, symbolic
+ // holes, or general proof queries in this representation.
++struct DomainRequirements {
++  static constexpr std::uint64_t minimum_extent = 2;
++  // Rank-zero inputs and empty axis selections are included in the domain.
++};
+ enum class Mode { Synthesize, Validate };
+-enum class Kind { Input, Permutation, Contraction };
++enum class Kind { Input, Permutation, Contraction, Summation, Addition };
+ struct Instruction {
+   Kind kind = Kind::Input;
+   std::size_t node = 0;
+   std::optional<std::size_t> capture, descriptor, operation;
+   std::vector<std::size_t> inputs;    // Earlier instructions in this block.
+   std::vector<std::size_t> captures;  // Sorted subtree capture set.
+-  // Canonical role order: permutation; or left/right batch, left/right
+-  // contract.
++  // Canonical role order: permutation or reduction dimensions; or left/right
++  // batch, left/right contract.
+   std::vector<std::size_t> fields;
+   bool operator==(const Instruction&) const = default;
+ };
++struct Component {
++  std::vector<Instruction> source, replacement;
++  bool operator==(const Component&) const = default;
++};
+ struct Program {
+   Mode mode = Mode::Synthesize;
+   // Postorder schedules; each root is the final instruction. Reversing the
+   // replacement schedule gives a valid parent-before-child traversal.
+   std::vector<Instruction> source, replacement;
++  // Empty for a single component. Source expansion preserves captured
++  // descriptors; replacement schedules contain original, independent holes.
++  std::vector<Component> components;
+   bool operator==(const Program&) const = default;
+ };
+ 
+diff --git a/src/shared/metadata/ordered.cc b/src/shared/metadata/ordered.cc
+index a8691be..1faf0cd 100644
+--- a/src/shared/metadata/ordered.cc
++++ b/src/shared/metadata/ordered.cc
+@@ -46,6 +46,19 @@ bool permutationAssertion(const Meta& m, std::size_t p) {
+ 
+ std::optional<OrderedContract> recognizeOrdered(const ShapeContract& d) {
+   if (!d.output || !d.extent_fields.empty()) return {};
++  if (d.operands.size() == 2 && d.fields.empty() && d.groups.size() == 1 &&
++      d.assertions.empty() &&
++      d.implicit_operands == std::set<std::size_t>{0, 1} &&
++      d.output->kind == Meta::Kind::Group && d.output->index == 0) {
++    const auto& group = d.groups[0];
++    if (group.domain || group.bindings.size() != 2) return {};
++    std::set<std::size_t> operands;
++    for (const auto& binding : group.bindings)
++      if (binding.operand > 1 || !operands.insert(binding.operand).second ||
++          !all(*binding.positions, binding.operand))
++        return {};
++    return OrderedContract{OrderedContract::Kind::Addition};
++  }
+   if (d.operands.size() == 1 && d.fields.size() == 1 && d.groups.size() == 1 &&
+       d.implicit_operands == std::set<std::size_t>{0}) {
+     const auto& g = d.groups[0];
+@@ -58,6 +71,27 @@ std::optional<OrderedContract> recognizeOrdered(const ShapeContract& d) {
+       if (!permutationAssertion(*a, 0)) return {};
+     return OrderedContract{OrderedContract::Kind::Permutation};
+   }
++  // Whole-axis unary reduction. No extra assertions or domain/extent fields:
++  // the selected axes are unrestricted, and the complement preserves order.
++  if (d.operands.size() == 1 && d.fields.size() == 1 && d.groups.size() == 2 &&
++      d.assertions.empty() && d.implicit_operands == std::set<std::size_t>{0} &&
++      d.output->kind == Meta::Kind::Group && d.output->index < 2) {
++    OrderedContract c{OrderedContract::Kind::Summation};
++    c.left_free_group = d.output->index;
++    c.contract_group = 1 - c.left_free_group;
++    const auto& reduced = d.groups[c.contract_group];
++    const auto& retained = d.groups[c.left_free_group];
++    if (reduced.domain || retained.domain || reduced.bindings.size() != 1 ||
++        retained.bindings.size() != 1 || reduced.bindings[0].operand != 0 ||
++        retained.bindings[0].operand != 0 ||
++        !field(*reduced.bindings[0].positions, 0))
++      return {};
++    const auto& positions = *retained.bindings[0].positions;
++    if (!named(positions, "ordered_complement", 2) ||
++        !all(*positions.args[0], 0) || !field(*positions.args[1], 0))
++      return {};
++    return c;
++  }
+   if (d.operands.size() != 2 || d.fields.size() != 4 || d.groups.size() != 4 ||
+       !d.assertions.empty() ||
+       d.implicit_operands != std::set<std::size_t>{0, 1})
+diff --git a/src/shared/metadata/ordered.h b/src/shared/metadata/ordered.h
+index 68045f5..92cafe2 100644
+--- a/src/shared/metadata/ordered.h
++++ b/src/shared/metadata/ordered.h
+@@ -6,12 +6,12 @@
+ 
+ namespace tepl::core::axis {
+ struct OrderedContract {
+-  enum class Kind { Contraction, Permutation } kind;
++  enum class Kind { Contraction, Permutation, Summation, Addition } kind;
+   std::size_t batch_group = 0, contract_group = 0;
+   std::size_t left_free_group = 0, right_free_group = 0;
+   std::size_t left_batch = 0, right_batch = 0;
+   std::size_t left_contract = 0, right_contract = 0;
+-  std::size_t permutation = 0;
++  std::size_t permutation = 0, dimensions = 0;
+ };
+ // Shape/axis template only. The compiler additionally checks scalar semantics.
+ std::optional<OrderedContract> recognizeOrdered(const ShapeContract&);
+diff --git a/tests/BUILD.bazel b/tests/BUILD.bazel
+index 0f53e57..194e109 100644
+--- a/tests/BUILD.bazel
++++ b/tests/BUILD.bazel
+@@ -34,7 +34,7 @@ cc_test(
+     srcs = ["ordered_synthesis_test.cc", "index_constructor_eval.h", "index_reference.h"],
+     args = ["$(rlocationpath //:examples/semantic/dialects/tensor.tepl)"],
+     data = ["//:examples/semantic/tepl.toml", "//:examples/semantic/dialects/tensor.tepl"],
+-    deps = ["//src/core/attr_synth:ordered", "//src/core/syntax:syntax", "//src/core:pipeline", "//src/core/semantics:reasoning", "@rules_cc//cc/runfiles"],
++    deps = ["//src/core/attr_synth", "//src/core/attr_synth:ordered", "//src/core/syntax:syntax", "//src/core:pipeline", "//src/core/semantics:reasoning", "//src/core/semantics:proof", "//src/executable", "//src/shared/catalog", "@rules_cc//cc/runfiles"],
+ )
+ 
+ cc_test(
+diff --git a/tests/attribute_reasoning_test.cc b/tests/attribute_reasoning_test.cc
+index a760d5b..808daae 100644
+--- a/tests/attribute_reasoning_test.cc
++++ b/tests/attribute_reasoning_test.cc
+@@ -131,11 +131,17 @@ rule remove {(p: transpose (dot A B))=>(dot A B)
+   expect(trans.find("len(p.attrs.permutation) == 2") != std::string::npos,
+          "recommendations preserve user restrictions");
+   compile(trans);
+-  expect(suggest(R"(
++  auto impossible = parseRule(R"(
+ rule impossible {(p: transpose (dot A B))=>(dot A B)
+  where {p.attrs.permutation == [] && p.attrs.permutation == [0]}}
+-)")
+-             .empty(),
++)");
++  auto inspected = core::inspect(
++      *impossible.program, {core::SemanticPolicy::kAlgebraic, true, {}, true});
++  // Guard-independent construction can now reach a vacuous verification of
++  // this contradictory guard. Neither a proof nor Unknown warrants suggesting
++  // a restriction without a concrete legal witness.
++  expect(inspected.ok() &&
++             inspected.program->rules[0].semantic_plan->suggested_rule.empty(),
+          "never recommend a condition without a concrete legal witness");
+ }
+ void independentVerification() {
+diff --git a/tests/ordered_synthesis_test.cc b/tests/ordered_synthesis_test.cc
+index 6fe66a6..13bad03 100644
+--- a/tests/ordered_synthesis_test.cc
++++ b/tests/ordered_synthesis_test.cc
+@@ -9,12 +9,17 @@
+ 
+ #include "rules_cc/cc/runfiles/runfiles.h"
+ #include "src/core/attr_synth/ordered/compile.h"
++#include "src/core/attr_synth/synthesize.h"
+ #include "src/core/pipeline.h"
+ #include "src/core/semantics/context.h"
++#include "src/core/semantics/graph.h"
++#include "src/core/semantics/proof/verify.h"
+ #include "src/core/semantics/symbolic/expr.h"
+ #include "src/core/semantics/symbolic/metadata_sequences.h"
+ #include "src/core/syntax/parse.h"
++#include "src/executable/codec.h"
+ #include "src/inference/evaluate.h"
++#include "src/shared/catalog/axis_conditions.h"
+ #include "tests/index_constructor_eval.h"
+ 
+ namespace {
+@@ -48,6 +53,9 @@ Plan parse(const std::string& rule) {
+   expect(parsed.ok(), "ordered fixture parses");
+   auto inspected = tepl::core::inspect(
+       *parsed.program, {tepl::core::SemanticPolicy::kAlgebraic, true});
++  if (!inspected.ok())
++    for (const auto& diagnostic : inspected.diagnostics)
++      std::cerr << diagnostic.message << " in " << rule << "\n";
+   expect(inspected.ok(), "ordered fixture checks");
+   return *inspected.program->rules.at(0).semantic_plan;
+ }
+@@ -109,7 +117,7 @@ void matricesAndDomains() {
+   corrupt.source.classes[0] = corrupt.source.classes[1];
+   expect(!check(p, m, corrupt), "corrupt source provenance rejected");
+   corrupt = result;
+-  corrupt.requirements.at(p.rhs).live.clear();
++  corrupt.requirements.at(p.rhs).mandatory_axes.clear();
+   expect(!check(p, m, corrupt), "corrupt boundary certificate rejected");
+   auto singleton = m;
+   singleton.shapes[0][0] = 1;
+@@ -416,6 +424,23 @@ std::vector<Oracle> enumerate(const Plan& p, std::size_t id,
+     }
+     return out;
+   }
++  if (c.kind == ord::Contract::Kind::Summation) {
++    for (const auto& l : left)
++      for (std::size_t mask = 0; mask < (std::size_t{1} << l.output.size());
++           ++mask) {
++        auto next = l;
++        next.output.clear();
++        List dimensions;
++        for (std::size_t i = 0; i < l.output.size(); ++i)
++          if (mask & (std::size_t{1} << i))
++            dimensions.push_back(i);
++          else
++            next.output.push_back(l.output[i]);
++        next.attributes[node.descriptor->value] = {dimensions};
++        out.push_back(std::move(next));
++      }
++    return out;
++  }
+   for (const auto& l : left)
+     for (const auto& r : enumerate(p, node.inputs[1], ports, total)) {
+       struct Pair {
+@@ -582,7 +607,370 @@ void exhaustive() {
+             << " checked obstructions\n";
+ }
+ 
++void summations() {
++  using namespace tepl::inference;
++  using Metadata = tepl::inference::Metadata;
++  using Status = tepl::inference::Status;
++  auto p =
++      parse("rule r {(d: dot (s: reduce_sum A) B) => (reduce_sum (dot A B))}");
++  expect(ord::admit(p).admitted(), "whole-axis summation is admitted");
++  auto sum = p.nodes[p.lhs].inputs[0];
++  Metadata m{{{0, {2, 3}}, {1, {3, 4}}}, {}};
++  m.descriptors[p.nodes[sum].descriptor->value] = {{0}};
++  setDot(p, m, p.lhs, {}, {}, {0}, {0});
++  auto result = solve(p, m);
++  expect(result.status == Status::Solved && check(p, m, result),
++         "a dot temporarily retains a private axis for a later sum");
++  auto dot = p.nodes[p.rhs].inputs[0];
++  expect(result.requirements.at(dot).mandatory_axes.size() == 1 &&
++             result.requirements.at(dot).retained_axes.size() == 2,
++         "mandatory and retained axes are distinct");
++  expect(result.attributes.at(p.nodes[p.rhs].descriptor->value) ==
++             std::vector<List>{{0}},
++         "sum removes the private row axis");
++  expect(result.source.ports.size() == 4 && result.source.classes.size() == 4,
++         "source replay preserves summed input-port identities");
++
++  auto early =
++      parse("rule r {(s: reduce_sum (d: dot A B)) => (reduce_sum (dot A B))}");
++  Metadata em{{{0, {2}}, {1, {2}}}, {}};
++  setDot(early, em, early.nodes[early.lhs].inputs[0], {0}, {0});
++  em.descriptors[early.nodes[early.lhs].descriptor->value] = {{0}};
++  auto er = solve(early, em);
++  expect(er.status == Status::Solved && check(early, em, er) &&
++             er.attributes.at(early.nodes[early.rhs].descriptor->value) ==
++                 std::vector<List>{{}},
++         "early contraction permits an empty sum");
++
++  auto negative = parse("rule r {(s: reduce_sum A) => (transpose A)}");
++  Metadata nm{{{0, {2, 3}}}, {}};
++  nm.descriptors[negative.nodes[negative.lhs].descriptor->value] = {{0, 1}};
++  auto nr = solve(negative, nm);
++  expect(nr.status == Status::Impossible && check(negative, nm, nr),
++         "a transpose cannot remove axes from a non-scalar input");
++  auto code = *ord::compile(negative).program;
++  auto analysis = analyze(code, nm);
++  expect(
++      tepl::inference::construct(code, analysis).status == Status::Impossible,
++      "the builder enforces its feasibility precondition");
++  auto generated = tepl::core::attr_synth::synthesize(
++      negative, tepl::core::attr_synth::Strategy::Ordered);
++  expect(generated.constructed && !generated.candidate.feasibility.empty(),
++         "check/build expressions compile even without an implied guard");
++  expect(verify(negative, generated.candidate).status == ProofStatus::Unknown,
++         "unproved feasibility does not become an assumption");
++  auto json = tepl::executable::detail::Codec<Program>::pack(code);
++  auto restored = tepl::executable::detail::Codec<Program>::unpack(json);
++  expect(restored == code &&
++             feasibility(restored, nm).status == Status::Impossible,
++         "summation instructions and adapters survive serialization");
++  expect(tepl::core::completed::axisWhere(code).find("axis_feasible") !=
++             std::string::npos,
++         "generated checks include retained-set feasibility");
++  nm.descriptors[negative.nodes[negative.lhs].descriptor->value] = {{0, 0}};
++  expect(solve(negative, nm).status == Status::InvalidSource,
++         "duplicate reduction dimensions are illegal source metadata");
++  auto identity = parse(
++      "rule r {A: [M,N] (s: reduce_sum A) => (reduce_sum A) where "
++      "{s.attrs.dimensions == range(0)}}");
++  auto identity_recipe = tepl::core::attr_synth::synthesize(
++      identity, tepl::core::attr_synth::Strategy::Ordered);
++  auto identity_proof = verify(identity, identity_recipe.candidate);
++  expect(identity_recipe.constructed &&
++             identity_proof.status == ProofStatus::Proved,
++         "ordered summation candidates can pass independent verification: " +
++             identity_proof.reason);
++  auto renamed = *p.nodes[sum].definition;
++  renamed.fields = {"axes_to_remove"};
++  for (auto& group : renamed.groups) group.name = "renamed";
++  expect(ord::recognize(renamed).has_value(), "sum recognition ignores names");
++  renamed.assertions.push_back(renamed.output);
++  expect(!ord::recognize(renamed), "restricted sum axes are outside admission");
++}
++
++void guardIndependentFeasibility() {
++  auto p = parse(
++      "rule r {A: [M,N] (s: reduce_sum A) => (transpose A) where "
++      "{s.attrs.dimensions == range(0)}}");
++  auto generated = tepl::core::attr_synth::synthesize(
++      p, tepl::core::attr_synth::Strategy::Ordered);
++  expect(generated.constructed, "guard-independent feasibility compiles");
++  auto domain = p;
++  domain.assumptions.clear();
++  Context coordinates{domain, 1000000};
++  coordinates.sourceScope(domain.lhs);
++  lowerSource(coordinates);
++  RuleProof recipe;
++  recipe.constructors = generated.candidate.constructors;
++  for (const auto& [_, group] : coordinates.source().groups)
++    recipe.axis_definitions.push_back(group);
++  for (const auto& dimensions : {List{}, List{0}, List{0, 1}}) {
++    Metadata metadata{{{2, 3}}, {}};
++    metadata.descriptors[p.nodes[p.lhs].descriptor->value] = {dimensions};
++    tepl::test::ConstructorEvaluator evaluator(metadata, recipe);
++    bool feasible = true;
++    for (const auto& condition : generated.candidate.feasibility)
++      feasible &= std::get<bool>(evaluator.eval(condition));
++    expect(feasible == dimensions.empty(),
++           "the predicate stays exact outside the written guard");
++  }
++}
++
++void exhaustiveSummations() {
++  using Status = tepl::inference::Status;
++  std::size_t decisions = 0, impossible = 0;
++  for (const auto& rule :
++       {"rule r {(dot (reduce_sum A) B) => (reduce_sum (dot A B))}",
++        "rule r {(reduce_sum (dot A B)) => (dot (reduce_sum A) B)}",
++        "rule r {(reduce_sum (transpose A)) => (transpose (reduce_sum A))}",
++        "rule r {(transpose (reduce_sum A)) => (reduce_sum (transpose A))}",
++        "rule r {(reduce_sum A) => (transpose A)}",
++        "rule r {(reduce_sum (dot A B)) => (reduce_sum (dot B A))}"}) {
++    auto p = parse(rule);
++    auto code = *ord::compile(p).program;
++    auto generated = tepl::core::attr_synth::synthesize(
++        p, tepl::core::attr_synth::Strategy::Ordered);
++    expect(generated.constructed,
++           "rank-independent sum recipe compiles: " + generated.reason);
++    Context coordinates{p, 1000000};
++    coordinates.sourceScope(p.lhs);
++    lowerSource(coordinates);
++    RuleProof recipe;
++    recipe.constructors = generated.candidate.constructors;
++    for (const auto& [_, group] : coordinates.source().groups)
++      recipe.axis_definitions.push_back(group);
++    for (unsigned rank_a = 0; rank_a <= 2; ++rank_a)
++      for (unsigned rank_b = 0;
++           rank_b <= (code.source.back().captures.size() == 2 ? 2u : 0u);
++           ++rank_b) {
++        tepl::inference::Metadata metadata;
++        std::vector<AxisSequence> ports(2);
++        std::size_t total = 0;
++        for (std::size_t c = 0; c < code.source.back().captures.size(); ++c) {
++          auto rank = c == 0 ? rank_a : rank_b;
++          metadata.shapes[c] = std::vector<std::uint64_t>(rank, 2);
++          for (unsigned i = 0; i < rank; ++i) ports[c].push_back(total++);
++        }
++        std::set<std::string> targets;
++        for (const auto& rhs : enumerate(p, p.rhs, ports, total))
++          targets.insert(signature(rhs));
++        for (const auto& source : enumerate(p, p.lhs, ports, total)) {
++          metadata.descriptors = source.attributes;
++          auto result = tepl::inference::evaluate(code, metadata);
++          bool exists = targets.contains(signature(source));
++          expect(
++              (result.status == Status::Solved) == exists &&
++                  tepl::inference::check(code, metadata, result),
++              "sum feasibility agrees with exhaustive positional assignments");
++          Metadata symbolic_metadata;
++          for (const auto& [_, shape] : metadata.shapes)
++            symbolic_metadata.shapes.emplace_back(shape.begin(), shape.end());
++          symbolic_metadata.descriptors = metadata.descriptors;
++          tepl::test::ConstructorEvaluator evaluator(symbolic_metadata, recipe);
++          bool feasible = true;
++          for (const auto& condition : generated.candidate.feasibility)
++            feasible &= std::get<bool>(evaluator.eval(condition));
++          expect(feasible == exists,
++                 "symbolic and concrete sum predicates agree");
++          if (feasible) {
++            auto attributes = evaluator.construct();
++            auto completed = metadata;
++            completed.descriptors.insert(attributes.begin(), attributes.end());
++            auto replay = tepl::inference::replayReplacement(code, completed);
++            expect(
++                replay.status == Status::Analyzed &&
++                    replay.source.classes == result.source.classes &&
++                    replay.source.output == result.source.output,
++                "symbolic sum builders preserve the concrete source network");
++          }
++          ++decisions;
++          impossible += !exists;
++        }
++      }
++  }
++  expect(decisions > 100 && impossible > 0,
++         "sum oracle covers positive and negative cases");
++  std::cout << decisions << " exhaustive sum decisions, " << impossible
++            << " checked obstructions\n";
++}
++
++void additiveComponents() {
++  using namespace tepl::inference;
++  using Metadata = tepl::inference::Metadata;
++  using Status = tepl::inference::Status;
++  auto p = parse("rule r {(d: dot (add A B) C) => (add (dot A C) (dot B C))}");
++  auto compiled = ord::compile(p);
++  expect(
++      compiled.program && compiled.program->components.size() == 2,
++      "distribution compiles into two matched components: " + compiled.reason);
++  Metadata m{{{0, {2, 3}}, {1, {2, 3}}, {2, {3, 4}}}, {}};
++  setDot(p, m, p.lhs, {}, {}, {1}, {0});
++  auto result = evaluate(*compiled.program, m);
++  expect(
++      result.status == Status::Solved && check(p, m, result),
++      "distribution constructs and independently checks component witnesses: " +
++          result.reason);
++  expect(result.components.size() == 2 &&
++             result.components[0].source.ports.size() == 4 &&
++             result.components[1].source.ports.size() == 4,
++         "overlapping captures retain separate component networks");
++  auto predicate = feasibility(*compiled.program, m);
++  expect(predicate.status == Status::Feasible && predicate.attributes.empty() &&
++             check(p, m, predicate),
++         "component predicates are conjoined");
++  auto analysis = analyze(*compiled.program, m);
++  auto built = tepl::inference::construct(*compiled.program, analysis);
++  expect(built.status == Status::Solved && check(p, m, built),
++         "component analysis is reusable by the builder");
++  auto generated = tepl::core::attr_synth::synthesize(
++      p, tepl::core::attr_synth::Strategy::Ordered);
++  expect(generated.constructed && generated.candidate.constructors.size() == 2,
++         "symbolic component builders compile: " + generated.reason);
++  auto proof = verify(p, generated.candidate);
++  expect(
++      proof.status == ProofStatus::Proved,
++      "original verifier proves the distributed constructors: " + proof.reason);
++  auto json = tepl::executable::detail::Codec<Program>::pack(*compiled.program);
++  auto restored = tepl::executable::detail::Codec<Program>::unpack(json);
++  expect(restored == *compiled.program &&
++             tepl::inference::check(restored, m, evaluate(restored, m)),
++         "component scopes and captured fields survive serialization");
++  auto corrupt = restored;
++  corrupt.components[1].source.back().fields = {0, 1, 2, 3};
++  if (corrupt == restored)
++    corrupt.components[1].source.back().fields = {1, 0, 2, 3};
++  expect(evaluate(corrupt, m).status == Status::Unsupported,
++         "serialized expansion is checked against original schedules");
++  m.shapes[1] = {7, 3};
++  expect(evaluate(restored, m).status == Status::InvalidSource,
++         "every original addition must have matching operand shapes");
++  for (const auto& rule : {"rule r {(add A A) => (add A A)}",
++                           "rule r {(add (dot A B) C) => (add A (dot B C))}",
++                           "rule r {(dot (add A B) C) => (dot (add A B) C)}",
++                           "rule r {(add (dot A A) B) => (add (dot A A) B)}"})
++    expect(!ord::admit(parse(rule)).admitted(),
++           "unsupported additive component structure is rejected");
++  auto overlap = parse(
++      "rule r {(add (x: dot A B) (y: dot A C)) => (add (transpose (dot B A)) "
++      "(transpose (dot C A)))}");
++  Metadata om{{{0, {2, 2}}, {1, {2, 2}}, {2, {2, 2}}}, {}};
++  setDot(overlap, om, overlap.nodes[overlap.lhs].inputs[0], {}, {}, {1}, {0});
++  setDot(overlap, om, overlap.nodes[overlap.lhs].inputs[1], {}, {}, {0}, {0});
++  auto different = solve(overlap, om);
++  expect(different.status == Status::Solved && check(overlap, om, different) &&
++             different.source.ports.empty() &&
++             different.components[0].source.classes !=
++                 different.components[1].source.classes,
++         "shared tensors do not identify partitions in different summands");
++  auto explicit_plan = overlap;
++  for (const auto& [descriptor, _] : different.attributes)
++    explicit_plan.descriptors.at(descriptor) = {};
++  auto explicit_code = *ord::compile(explicit_plan, Mode::Validate).program;
++  om.descriptors.insert(different.attributes.begin(),
++                        different.attributes.end());
++  auto explicit_result = evaluate(explicit_code, om);
++  expect(explicit_result.status == Status::Solved &&
++             tepl::inference::check(explicit_code, om, explicit_result),
++         "explicit additive attributes are compared in separate networks");
++  auto replayed = replayReplacement(explicit_code, om);
++  expect(replayed.status == Status::Analyzed && replayed.source.ports.empty() &&
++             replayed.components.size() == 2,
++         "direct RHS replay preserves additive component scopes");
++  const auto& changed = explicit_code.components[0].replacement;
++  auto dot_instruction =
++      std::find_if(changed.begin(), changed.end(),
++                   [](const auto& n) { return n.kind == Kind::Contraction; });
++  auto& bad = om.descriptors.at(
++      *dot_instruction->descriptor)[dot_instruction->fields[2]];
++  bad[0] = 1 - bad[0];
++  expect(evaluate(explicit_code, om).status == Status::NotEquivalent,
++         "matching output shapes do not hide a wrong component partition");
++  auto sum_distribution = parse(
++      "rule r {(s: reduce_sum (add A B)) => (add (reduce_sum A) (reduce_sum "
++      "B))}");
++  Metadata summed{{{0, {2, 3}}, {1, {2, 3}}}, {}};
++  summed.descriptors[sum_distribution.nodes[sum_distribution.lhs]
++                         .descriptor->value] = {{0}};
++  auto sr = solve(sum_distribution, summed);
++  expect(sr.status == Status::Solved && check(sum_distribution, summed, sr),
++         "summation distributes through separated components");
++  summed.shapes[1] = {7, 3};
++  expect(
++      solve(sum_distribution, summed).status == Status::InvalidSource,
++      "matching reduced output shapes cannot hide an illegal inner addition");
++  auto commuted = parse("rule r {(add A B) => (add B A)}");
++  Metadata cm{{{0, {2, 3}}, {1, {2, 3}}}, {}};
++  auto cr = solve(commuted, cm);
++  expect(
++      cr.status == Status::Solved && cr.attributes.empty() &&
++          check(commuted, cm, cr),
++      "attribute-free components match by capture set rather than sum order");
++  auto product = parse(
++      "rule r {(d: dot (add A B) (add C D)) => (add (add (dot A C) (dot A D)) "
++      "(add (dot B C) (dot B D)))}");
++  auto expanded = ord::compile(product);
++  expect(expanded.program && expanded.program->components.size() == 4,
++         "bilinear expansion produces four distinct components");
++  for (const auto& component : expanded.program->components)
++    expect(component.source.back().descriptor ==
++               product.nodes[product.lhs].descriptor->value,
++           "distribution preserves captured source descriptor identity");
++  auto shared = p;
++  auto left = shared.nodes[shared.rhs].inputs[0];
++  auto right = shared.nodes[shared.rhs].inputs[1];
++  shared.nodes[right].descriptor = shared.nodes[left].descriptor;
++  expect(!ord::admit(shared).admitted(),
++         "RHS component holes remain independent");
++}
++
+ void compilerIntegration() {
++  auto sum_rule = parse(R"(
++rule sum_rows {
++  A: [M,K] B: [K,N]
++  (d: dot (s: reduce_sum A) B) => (reduce_sum (dot A B))
++  where {
++    s.attrs.dimensions == [0]
++    && d.attrs.lhs_contracting_dimensions == [0]
++    && d.attrs.rhs_contracting_dimensions == [0]
++    && d.attrs.lhs_batching_dimensions == range(0)
++    && d.attrs.rhs_batching_dimensions == range(0)
++  }
++})");
++  auto generated_sum = tepl::core::attr_synth::synthesize(
++      sum_rule, tepl::core::attr_synth::Strategy::Ordered);
++  expect(generated_sum.constructed,
++         "ordered sum constructors compile: " + generated_sum.reason);
++  // Evaluate the symbolic recipe independently of the concrete solver. The
++  // bounded verifier may still leave a valid guarded rewrite Unknown.
++  auto metadata_domain = sum_rule;
++  metadata_domain.assumptions.clear();
++  Context source{metadata_domain, 1000000};
++  source.sourceScope(sum_rule.lhs);
++  lowerSource(source);
++  RuleProof recipe;
++  recipe.constructors = generated_sum.candidate.constructors;
++  recipe.guard = generated_sum.candidate.feasibility;
++  for (const auto& [_, group] : source.source().groups)
++    recipe.axis_definitions.push_back(group);
++  auto source_sum = sum_rule.nodes[sum_rule.lhs].inputs[0];
++  Metadata sm{{{2, 3}, {3, 4}}, {}};
++  sm.descriptors[sum_rule.nodes[source_sum].descriptor->value] = {{0}};
++  sm.descriptors[sum_rule.nodes[sum_rule.lhs].descriptor->value] =
++      dotFields(*sum_rule.nodes[sum_rule.lhs].definition, {}, {}, {0}, {0});
++  tepl::test::ConstructorEvaluator sum_eval(sm, recipe);
++  expect(sum_eval.applicable(),
++         "symbolic sum feasibility holds for legal metadata");
++  auto fields = sum_eval.construct();
++  auto target_dot = sum_rule.nodes[sum_rule.rhs].inputs[0];
++  expect(
++      fields.at(sum_rule.nodes[sum_rule.rhs].descriptor->value) ==
++              std::vector<List>{{0}} &&
++          fields.at(sum_rule.nodes[target_dot].descriptor->value) ==
++              dotFields(*sum_rule.nodes[target_dot].definition, {}, {}, {1},
++                        {0}),
++      "symbolic builders generate the reduction and paired contraction axes");
++  expect(generated_sum.candidate.guard.empty(),
++         "no implicit runtime guard is added");
+   auto p = parse(R"(
+ rule internal_order {
+   A: [M,N] B: [K]
+@@ -631,6 +1019,10 @@ int main(int argc, char** argv) {
+     permutationComprehensions();
+     compiledPrograms();
+     exhaustive();
++    summations();
++    guardIndependentFeasibility();
++    exhaustiveSummations();
++    additiveComponents();
+     compilerIntegration();
+   } catch (const std::exception& e) {
+     std::cerr << e.what() << '\n';
+diff --git a/tools/build_program_schema.py b/tools/build_program_schema.py
+index 0e725e0..acb6450 100644
+--- a/tools/build_program_schema.py
++++ b/tools/build_program_schema.py
+@@ -94,9 +94,10 @@ struct('expr','core::completed::TypedExpr','origin:origin type:id value:expr_val
+ struct('local','core::Local','id:id name:string type:id')
+ struct('derivation','core::completed::Derivation','target:id? value:expr* origin:origin')
+ enum('inference_mode','inference::Mode','synthesize:Synthesize validate:Validate')
+-enum('inference_kind','inference::Kind','input:Input permutation:Permutation contraction:Contraction')
++enum('inference_kind','inference::Kind','input:Input permutation:Permutation contraction:Contraction summation:Summation addition:Addition')
+ struct('inference_instruction','inference::Instruction','kind:inference_kind node:id capture:id? descriptor:id? operation:id? inputs:id[] captures:id[] fields:id[]')
+-struct('inference_program','inference::Program','mode:inference_mode source:inference_instruction[] replacement:inference_instruction[]')
++struct('inference_component','inference::Component','source:inference_instruction[] replacement:inference_instruction[]')
++struct('inference_program','inference::Program','mode:inference_mode source:inference_instruction[] replacement:inference_instruction[] components:inference_component[]')
+ struct('rule','Rule','id:id name:string source_name:string origin:origin captures:capture[] dimensions:dimension[] descriptors:descriptor[] lhs:pattern* constraints:constraint[] conditions:expr*[] locals:local[] derivations:derivation[] rhs:build* dtypes:dtype_variable[] inference:inference_program?')
+ struct('attribute','core::AttributeValue','kind:attribute_kind text:string elements:attribute[]')
+ struct('graph_node','core::ConcreteNode','kind:node_kind origin:origin text:string dtype:dtype? shape:extent[]? operation:id? operands:id[] attributes:attribute[]')
+@@ -153,6 +154,7 @@ for name,(typ,values) in E.items():
+ for name,(typ,fields,init) in D.items():
+     defs[name]=obj({key:ref(t) for key,t in fields.items()})
+     if name == 'rule': defs[name]['required'].remove('inference')
++    if name == 'inference_program': defs[name]['required'].remove('components')
+     code += ['template<> struct Codec<'+typ+'> { static Json pack(const '+typ+'&); static '+typ+' unpack(const Json&); };']
+ for name,(typ,values) in V.items():
+     defs[name]={'oneOf':[obj({'kind':{'const':tag},'data':ref(t)}) for tag,t in values.items()]}
+@@ -170,6 +172,8 @@ for name,(typ,fields,init) in D.items():
+             code += ['if(!v.label.empty()) j["label"] = v.label;']
+         elif name=='rule' and key=='inference':
+             code+=['if(v.inference) j[\"inference\"] = detail::pack(v.inference);']
++        elif name=='inference_program' and key=='components':
++            code += ['if(!v.components.empty()) j["components"] = detail::pack(v.components);']
+         elif name=='graph_node' and key=='shape':
+             code+=['j["shape"]=nullptr; if(v.shape){j["shape"]=Json::array();for(auto d:*v.shape)j["shape"].push_back(std::to_string(d));}']
+         elif name=='axis_value' and key=='constant': code+=['j["constant"]=std::to_string(v.constant);']
+@@ -180,6 +184,8 @@ for name,(typ,fields,init) in D.items():
+             code += ['if(j.contains("label")) v.label = j.at("label").get<std::string>();']
+         elif name=='rule' and key=='inference':
+             code+=['if(j.contains(\"inference\")) v.inference = detail::unpack<decltype(v.inference)>(j.at(\"inference\"));']
++        elif name=='inference_program' and key=='components':
++            code += ['if(j.contains("components")) v.components = detail::unpack<decltype(v.components)>(j.at("components"));']
+         elif name=='graph_node' and key=='shape':
+             code+=['if(!j.at("shape").is_null()){v.shape.emplace();for(const auto& d:j.at("shape"))v.shape->push_back(parseExtent(d.get<std::string>()));}']
+         elif name=='axis_value' and key=='constant': code+=['v.constant=parseSigned(j.at("constant").get<std::string>());']

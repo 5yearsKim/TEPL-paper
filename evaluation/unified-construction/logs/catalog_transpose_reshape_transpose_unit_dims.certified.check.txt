@@ -1,0 +1,13 @@
+SemanticRule catalog_transpose_reshape_transpose_unit_dims
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: align[n1:input](Input(#0))
+      rhs-graph: align[n4:input](Reduce(n3.U, align[n3:input](Input(#0))))
+      declared-conditions:
+        ==(len(shape(Input(#0))), 2)
+        &&(==(index(shape(Input(#0)), 0), 1), ==(attr_p.attrs.permutation, [1, 0]))
+      additional-guard: unresolved
+      reason: outside certified view/reindexing schemas
+error: cannot verify rule 'catalog_transpose_reshape_transpose_unit_dims': outside certified view/reindexing schemas
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

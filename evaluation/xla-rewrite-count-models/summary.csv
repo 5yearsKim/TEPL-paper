@@ -1,0 +1,5 @@
+workload,rule_variants,applications,semantic_model_variants,associated_native_applications,direct_variants,unit_view_candidates,conditional_variants,outside_variants,pass_invocations
+DLRM training FP32,32,201,20,103,14,6,6,6,8
+ViT mixed BF16/FP32,17,1850,9,809,4,5,5,3,8
+ResNet-50 FP32,10,1027,5,483,1,4,2,3,9
+GPT-2 small FP32,14,1693,6,795,2,4,4,4,7

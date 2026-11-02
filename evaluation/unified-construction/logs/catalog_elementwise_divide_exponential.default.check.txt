@@ -1,0 +1,28 @@
+SemanticRule catalog_elementwise_divide_exponential
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: div(align[n3:lhs](Input(#0)), align[n3:rhs](exp(align[n2:input](Input(#1)))))
+      rhs-graph: Product(align[n8:lhs](Input(#0)), align[n8:rhs](exp(align[n7:input](Product(Const(-1), align[n6:input](Input(#1)))))))
+      law: ordered-axis-split
+      law: paired-axis-selection
+      law: ordered-partition-traversal
+      law: scalar-divide-exponential
+      law: constant-arithmetic
+      law: axis-map-restriction
+      verified: capture access + reduction domains + ordered axes + shape + dtype + legality
+      lhs-normalized: Product(Read(#0, access@0), exp(Product(Const(-1), Read(#1, access@1))))
+      rhs-normalized: Product(Read(#0, access@4), exp(Product(Const(-1), Read(#1, access@5))))
+      declared-conditions: true
+      additional-guard: true
+      reason: valid for all legal LHS metadata satisfying the declared conditions under the selected arithmetic policy
+      coordinate frame (fresh identities; domain lengths remain symbolic):
+        input0 = group(extents=shape(Input(#0)))
+        input1 = group(extents=shape(Input(#1)))
+        n2.S = group(extents=shape(Input(#1)))
+        n3.S = group(extents=shape(Input(#0)))
+        access@0 = n3.S
+        access@1 = gather(n3.S, range(len(shape(Input(#1)))))
+        access@4 = n3.S
+        access@5 = gather(n3.S, range(len(shape(Input(#1)))))
+        lhs-output = n3.S
+        rhs-output = gather(gather(n3.S, range(len(shape(Input(#1))))), range(len(shape(Input(#0)))))
+

@@ -1,0 +1,23 @@
+SemanticRule catalog_elementwise_power_exp
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: pow(align[n3:lhs](exp(align[n1:input](Input(#0)))), align[n3:rhs](Input(#1)))
+      rhs-graph: exp(align[n7:input](Product(align[n6:lhs](Input(#0)), align[n6:rhs](Input(#1)))))
+      law: scalar-power-exponential
+      verified: capture access + reduction domains + ordered axes + shape + dtype + legality
+      lhs-normalized: exp(Product(Read(#0, access@0), Read(#1, access@2)))
+      rhs-normalized: exp(Product(Read(#0, access@4), Read(#1, access@5)))
+      declared-conditions: true
+      additional-guard: true
+      reason: valid for all legal LHS metadata satisfying the declared conditions under the selected arithmetic policy
+      coordinate frame (fresh identities; domain lengths remain symbolic):
+        input0 = group(extents=shape(Input(#0)))
+        n1.S = group(extents=shape(Input(#0)))
+        input2 = group(extents=shape(Input(#1)))
+        n3.S = group(extents=shape(Input(#0)))
+        access@0 = n3.S
+        access@2 = gather(n3.S, range(len(shape(Input(#1)))))
+        access@4 = n3.S
+        access@5 = gather(n3.S, range(len(shape(Input(#1)))))
+        lhs-output = n3.S
+        rhs-output = n3.S
+

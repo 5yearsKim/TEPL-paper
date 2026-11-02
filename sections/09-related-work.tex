@@ -2,43 +2,61 @@
 \label{sec:related-work}
 
 \paragraph{Declarative rewrite languages.}
-MLIR's declarative rewrite rules (DRR) and PDLL simplify compiler rewrite
-development by letting authors describe matching and replacement patterns
-declaratively. DRR generates C++ implementations from TableGen
-definitions~\cite{mlir-drr}, while PDLL provides a dedicated pattern language
-with custom constraints and replacement logic~\cite{mlir-pdll}. These
-systems focus on expressing and implementing rewrites over MLIR operations.
-TEPL has a different focus: expressing and reasoning about tensor rewrites
-through operation semantics. It brings together semantics for tensors of
-arbitrary rank, applicability conditions, and attribute transformations in
-one language.
+MLIR's DRR generates C++ rewrites from TableGen patterns~\cite{mlir-drr};
+PDLL supplies a dedicated language with custom constraints and replacement
+logic~\cite{mlir-pdll}. Alive combines a DSL for LLVM peephole optimizations,
+semantic verification, counterexamples, and C++ generation~\cite{alive}.
+TEPL's contribution is not declarative rewriting or verification alone:
+it constructs positional tensor-attribute programs for a specified RHS
+graph across varying ranks.
+
+Alive-Infer learns preconditions for Alive optimizations from positive
+and negative examples and verifies the resulting conditions~\cite{alive-infer}.
+TEPL uses a bounded sufficient search without a weakest-precondition
+guarantee; its main target remains the missing axis program.
 
 \paragraph{Tensor rewrite verification.}
 TensorRight verifies tensor graph rewrites for inputs of arbitrary rank and
 size~\cite{tensorright}. Authors specify both sides of a rewrite and its
-preconditions. TensorRight uses \emph{aggregated axes} to represent axis
-groups and proves that SMT verification up to a finite rank bound suffices
-to establish correctness for arbitrary ranks.
+preconditions. TensorRight uses aggregated axes to represent axis groups and
+proves that SMT verification of all instances up to sufficient finite rank
+bounds establishes correctness for arbitrary ranks.
 
-TensorRight verifies a rewrite whose axis relationships are supplied.
-In contrast, TEPL accepts a specified RHS operation graph with missing
-axis fields and synthesizes programs that compute them from source
-metadata. This requires determining intermediate axes, satisfying
-output-order constraints, and translating axis correspondences into
-operand positions. TEPL then verifies the completed rewrite.
+TEPL focuses on constructing executable tensor rewrites by synthesizing
+attribute transformation logic for a fixed RHS operation graph. Synthesizing
+this logic requires tracking both axis relationships and their positions:
+for example, a dot operation needs contraction lists that specify which axes
+to pair across its operands. TensorRight uses unordered named axes to
+abstract away axis order, while TEPL uses ordered axis
+groups and symbolic axis mapping to construct these positional attributes.
 
 The systems also address different completeness questions. TensorRight
 establishes when bounded-rank verification suffices to verify a supplied
 rewrite for arbitrary ranks. TEPL's constructive completeness theorem
-establishes when synthesis can find correct RHS attributes, under the stated
-restrictions and assumptions.
+establishes that synthesis decides whether valid RHS attributes exist and
+constructs them whenever they do, under the stated restrictions and
+assumptions.
+
+\paragraph{Tensor Representation.}
+Glenside separates tensor access structure from computation through access
+patterns, enabling layout-aware rewrites and mapping to hardware
+accelerators~\cite{glenside}. SPORES represents linear-algebra expressions
+in relational algebra and uses equality saturation to explore equivalent
+expressions~\cite{spores}. Both provide representations that support
+program transformations. TEPL focuses on synthesizing the positional
+attributes needed to make a fixed RHS operation graph legal and equivalent
+to the LHS.
 
 \paragraph{Synthesis from semantics.}
-Sketch lets authors write partial programs with holes, which a synthesizer
-fills to satisfy a semantic specification~\cite{sketch}. TEPL follows this
-idea by letting authors specify a tensor rewrite's operation structure while
-delegating missing attribute transformation logic to the compiler. Related
-synthesis approaches include finding programs within a specified grammar
-in SyGuS~\cite{sygus}, composing library components to synthesize loop-free
-programs~\cite{loop-free-synthesis}, and inferring rewrite rules through
-equality saturation in Ruler~\cite{ruler}.
+Sketch~\cite{sketch}, SyGuS~\cite{sygus}, and component
+synthesis~\cite{loop-free-synthesis} provide general approaches to
+constructing programs from semantic constraints. In compiler optimization,
+synthesis can also discover rewrite rules: Ruler uses equality saturation
+for rule inference~\cite{ruler}, while Newcomb et al. synthesize Halide
+rules from compiler failures and study rule correctness and
+termination~\cite{halide-rules}. Axon brings synthesis to tensor kernels,
+synthesizing target instructions and exploring
+tensor-kernel transformations~\cite{axon}. TEPL addresses a more specific
+construction problem: given a fixed replacement graph, it synthesizes
+rank-dependent axis programs that supply the missing positional
+attributes and establishes when this construction is complete.

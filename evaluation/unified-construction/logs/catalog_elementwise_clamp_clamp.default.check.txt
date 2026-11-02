@@ -1,0 +1,28 @@
+SemanticRule catalog_elementwise_clamp_clamp
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: clamp(align[n6:low](Input(#0)), align[n6:input](clamp(align[n4:low](Input(#0)), align[n4:input](Input(#1)), align[n4:high](Input(#2)))), align[n6:high](Input(#2)))
+      rhs-graph: clamp(align[n10:low](Input(#0)), align[n10:input](Input(#1)), align[n10:high](Input(#2)))
+      law: scalar-clamp-idempotent
+      verified: capture access + reduction domains + ordered axes + shape + dtype + legality
+      lhs-normalized: clamp(Read(#0, access@1), Read(#1, access@2), Read(#2, access@3))
+      rhs-normalized: clamp(Read(#0, access@7), Read(#1, access@8), Read(#2, access@9))
+      declared-conditions: true
+      additional-guard: true
+      reason: valid for all legal LHS metadata satisfying the declared conditions under the selected arithmetic policy
+      coordinate frame (fresh identities; domain lengths remain symbolic):
+        input0 = group(extents=shape(Input(#0)))
+        input1 = group(extents=shape(Input(#0)))
+        input2 = group(extents=shape(Input(#1)))
+        input3 = group(extents=shape(Input(#2)))
+        n4.S = group(extents=shape(Input(#0)))
+        input5 = group(extents=shape(Input(#2)))
+        n6.S = group(extents=shape(Input(#0)))
+        access@1 = n6.S
+        access@2 = n6.S
+        access@3 = n6.S
+        access@7 = n6.S
+        access@8 = n6.S
+        access@9 = n6.S
+        lhs-output = n6.S
+        rhs-output = n6.S
+

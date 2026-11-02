@@ -1,0 +1,92 @@
+\section{Historical Per-Rule Validation Results}
+\label{sec:sample-rule-results}
+This appendix preserves selected historical observations from the two runs in
+Table~\ref{tab:evaluation-provenance}.
+The selected rows illustrate successful construction, verification-only
+success, and unresolved obligations; selection is explanatory and does
+not define the evaluation cohort. All 123 case records are preserved in
+\code{evaluation/recorded-results.json}, including raw check output and
+compiler hashes. \code{tools/import_recorded_evaluation.py --check}
+checks the imported evidence against the original experiment files when
+the TEPL checkout is available.
+
+\begin{table}[!htbp]
+\caption{Historical runs, both dated 2026-10-29. The new single-binary rerun is reported in Section~\ref{sec:evaluation}.}
+\label{tab:evaluation-provenance}
+\small
+\begin{tabularx}{\linewidth}{@{}lYrrr@{}}\toprule
+Run & Compiler SHA-256 prefix & Cases & Axis successes & Verification only\\\midrule
+A & \code{a647eb68c4de} & 112 & 31/32 & 65/80\\
+B & \code{96258055f908} & 11 & 0/6 & 2/5\\\bottomrule
+\end{tabularx}
+\end{table}
+
+\input{sections/recorded-results-table}
+\FloatBarrier
+
+\paragraph{A recorded constructor.}
+For \code{transpose_compose}, the recorded compiler output contains
+\begin{lstlisting}[language={}]
+constructor auto#2:
+  permutation = gather(attr_inner.attrs.permutation,
+                       attr_outer.attrs.permutation)
+declared-conditions: true
+additional-guard: true
+\end{lstlisting}
+The full log also records output-coordinate agreement and successful
+compilation and serialized-program validation. The constructor has the
+core derivation in Appendix~\ref{app:transpose-validation}; the diagnostic
+log is not itself a proof certificate. The dot reassociation row is the
+corpus's matrix case with source axis conditions; it does not establish
+that the compiler accepted every generalized-dot layout discussed in
+Section~\ref{sec:method}.
+
+\paragraph{Unresolved axis tasks.}
+The seven diagnostics below are the first unmet obligations in the
+recorded checks. Resolving one does not ensure that later obligations
+will pass. Every row has outcome \code{Unknown}; none establishes that
+no correct assignment exists.
+
+\begin{table}[!htbp]
+\caption{The seven unresolved axis tasks across runs A and B.}
+\label{tab:axis-failure-diagnostics}
+\small
+\begin{tabularx}{\linewidth}{@{}p{0.47\linewidth}Y@{}}\toprule
+Recorded case & First diagnostic or relevant restriction\\\midrule
+\nolinkurl{catalog_broadcast_divide_broadcast}
+& Normalized terms do not match; recorded rule lacks a nonzero-divisor guard\\
+\nolinkurl{slice_reverse}
+& Derived metadata not established within its attribute type\\
+\nolinkurl{expr_slice_reverse_general}
+& Unsupported pointwise metadata comprehension\\
+\nolinkurl{expr_convolution_scale_filter_bias}
+& Intermediate shape equality unproved\\
+\nolinkurl{catalog_broadcast_slice_broadcast_only}
+& Supplied-metadata extent inequality unproved\\
+\nolinkurl{catalog_broadcast_slice_broadcast}
+& Sliced input bounds unproved\\
+\nolinkurl{catalog_dot_slice_output}
+& Positive extents for an attribute unproved\\\bottomrule
+\end{tabularx}
+\end{table}
+
+\paragraph{Verification-only failure and negative control.}
+The slice-composition row requests no axis inference. Its supplied start
+expression adds the source starts, but the checker cannot establish that
+this result fits the attribute's integer type. Thus semantic support and
+a plausible attribute formula do not suffice for acceptance. Run A also
+records a separate subtraction-to-addition negative control with an
+unproved outcome. The control is excluded from all coverage denominators;
+its failure is not reported as a formal counterexample result.
+
+\paragraph{Reproduction boundary.}
+The import script checks and preserves both the original rule source and
+the migrated task for all 123 cases, alongside their recorded hashes and
+command outputs. It does not relabel them as a current compiler run.
+Run A and run B have compiler SHA-256 prefixes
+\code{a647eb68c4de} and \code{96258055f908}, respectively, with recorded
+checkout revision \code{a65c09e2a1bb}. Commands containing temporary paths
+are historical. Repeating the experiments requires the matching compiler
+and source snapshots or a separately reported new run. The per-rule wall
+times include command startup and differ from the repeated, phase-level
+scalability experiment in Section~\ref{sec:evaluation-cost}.

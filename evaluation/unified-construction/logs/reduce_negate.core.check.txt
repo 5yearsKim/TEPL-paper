@@ -1,0 +1,11 @@
+SemanticRule reduce_negate
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: Reduce(n2.K, align[n2:input](Product(Const(-1), align[n1:input](Input(#0)))))
+      rhs-graph: Product(Const(-1), align[n5:input](Reduce(n4.K, align[n4:input](Input(#0)))))
+      declared-conditions: true
+      additional-guard: unresolved
+      reason: core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+error: cannot verify rule 'reduce_negate': core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

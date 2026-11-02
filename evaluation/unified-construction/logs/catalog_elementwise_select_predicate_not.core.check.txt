@@ -1,0 +1,13 @@
+SemanticRule catalog_elementwise_select_predicate_not
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: select(align[n3:pred](Input(#0)), align[n3:lhs](Literal(0)), align[n3:rhs](Literal(1)))
+      rhs-graph: not(align[n5:input](Input(#0)))
+      declared-conditions:
+        ==(len(shape(Input(#0))), 0)
+        ==(dtype(Input(#0)), dtype_bool())
+      additional-guard: unresolved
+      reason: core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+error: cannot verify rule 'catalog_elementwise_select_predicate_not': core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

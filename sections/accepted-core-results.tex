@@ -1,0 +1,80 @@
+\subsection{Accepted Core: Complete Compilation and Native Application}
+\label{app:accepted-core-results}
+The separate accepted-core snapshot uses optimized binaries whose complete hashes
+and changed source bytes are retained in \code{evaluation/accepted-core/}.
+The 12 rules preserve their earlier guards and omitted RHS fields; only import
+paths are adapted by embedding the shared dialect, and concrete graphs are added.
+All 36 public check/compile/validate commands succeed. The C++ driver independently
+checks 33 numerical graph results and 82 rejection controls outside timing.
+
+\begin{table}[!htbp]
+\caption{Accepted core path: median milliseconds over ten measured rounds.
+Compilation begins with parsed source; loading includes schema and certificate
+validation. Rewrite cost is the ordinary graph, averaged over 100 applications
+per round, including matching, metadata and graph mutation.}
+\label{tab:accepted-core-cost}
+\small
+\begin{tabularx}{\linewidth}{@{}Yrrr@{}}\toprule
+Rule & Compile & Load/validate & Rewrite\\\midrule
+Batched reassociation & 43.971 & 15.812 & 0.091\\
+Sum movement & 0.794 & 11.918 & 0.042\\
+Transpose / sum & 0.660 & 11.086 & 0.027\\
+Sum distribution & 0.638 & 11.429 & 0.033\\
+Dot distribution & 0.731 & 12.178 & 0.071\\
+Sum merging & 0.547 & 10.874 & 0.019\\
+5-dot chain & 1.590 & 32.772 & 0.198\\
+6-dot chain & 1.818 & 37.527 & 0.245\\
+7-dot chain & 2.114 & 42.493 & 0.297\\
+8-dot chain & 2.382 & 47.759 & 0.339\\
+9-dot chain & 2.598 & 52.679 & 0.402\\
+10-dot chain & 2.741 & 57.660 & 0.456\\
+\bottomrule\end{tabularx}
+\end{table}
+
+\paragraph{Measured boundaries.}
+Parsing is outside all timers. Compilation includes resolution, type and semantic
+preparation, guard certification, DAG generation, materialization, lowering and
+final executable validation. Load/validation includes JSON decoding, schema checks,
+schedule/descriptor binding, canonical DAG regeneration and guard rechecking.
+The immutable loaded snapshot caches its emission. Each timed native application
+copies the input graph, validates it, matches, checks original conditions, replays
+source metadata, evaluates the DAG, constructs the replacement, checks legality,
+and commits one rewrite. It performs no symbolic inference. Numerical dense-tensor
+interpretation is independent and outside timing; TEPL builds graphs, not kernels.
+
+One warmup and ten measured rounds per rule give 627 raw phase/graph samples,
+including 363 batches of 100 graph applications. The table uses ordinary graphs;
+raw samples also include every degenerate and interleaved graph. Rule order is
+fixed on one machine, so small latency differences are not general performance
+claims. All measured compile calls succeed. These are costs of a certified
+acceptance route with narrower guard reasoning, not paired speedups of the
+earlier general candidate-search backend.
+
+\paragraph{Concrete checks and controls.}
+Sum movement is applied to ordinary, interleaved, zero-batch, zero-reduction,
+singleton and scalar inputs. Each other family has ordinary, singleton and
+zero-extent graphs; every chain has ordinary and singleton inputs. The original
+chain guards exclude zero extents. The reference interpreter calculates shapes
+and tensor values directly from physical positions and integer input data,
+without the symbolic normalizer, emitted DAG, or constructor. Every loaded rule
+performs exactly one rewrite and agrees with this reference.
+
+For every rule, loading rejects independently corrupted DAG nodes, check
+references, and attribute references, as well as strict policy and a missing
+core capability. Removing the reassociation routing condition is rejected.
+For every long chain, removing the source guard, omitting a required source
+axis-list equality, or putting that fact inside a disjunction is rejected.
+Type controls additionally reject custom dtype output, altered portable dtype
+programs, and a newly introduced numeric premise.
+These controls total 82 rejection checks; unresolved proofs are not classified
+as counterexamples. The existing exhaustive constructor/emitter oracle tests
+remain separate evidence, and none of these finite checks replaces the proof.
+
+\paragraph{Scope.}
+The six families retain arbitrary-rank guards; the chain inputs already fix
+rank three and source axis lists. The latter use exact topology abstraction
+while preserving arbitrary legal extent assignments. No success is added to
+the historical XLA corpus. Generated Rust/C++ exports do not yet interpret the
+new capability; native portable execution is the measured integration. Large
+optimizer graphs, developer effort and end-to-end optimizer speedups remain
+unmeasured.

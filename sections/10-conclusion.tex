@@ -1,25 +1,21 @@
 \section{Conclusion}
 \label{sec:conclusion}
-TEPL is a DSL for writing readable tensor rewrite rules and applying them
-in practice. At compile time, it generates programs to compute RHS
-attributes, reducing the manual attribute transformation logic. We prove
-constructive completeness for a restricted set of operations and rewrite
-structures: under the stated assumptions, our synthesis algorithm finds
-correct attributes whenever they exist. To integrate attribute synthesis
-into the language, we propose Axes IR and symbolic axis mapping, which
-represent operation semantics and track coordinate relationships, enabling
-the compiler to construct RHS attribute programs.
+TEPL is a DSL for writing readable tensor rewrite rules and applying them in
+practice. Using Axes IR and symbolic axis mapping, it generates programs at
+compile time to compute RHS attributes, reducing manual attribute
+transformation logic. We prove constructive completeness for a restricted
+set of operations and rewrite structures: under the stated assumptions,
+synthesis finds correct attributes whenever they exist.
 
-The current implementation also supports rewrites outside the completeness
-fragment. For these additional rewrites, an
-independent verifier checks soundness under the declared semantics and
-written conditions. Coverage remains limited, particularly for tensor
-operations involving general indexing or general reductions.
+The implementation also supports rewrites outside this fragment, checking
+synthesized candidates with an independent verifier under the declared
+algebraic semantics and written conditions. Coverage remains limited,
+particularly for general indexing and richer reductions.
 
-In our XLA evaluation, TEPL supports the operation semantics required by
-123 of 209 concrete rewrite cases and successfully infers and verifies
-31 of the 38 cases requiring axis inference (81.6\%). Across the 31
-successful cases, inferred TEPL uses 80.1\% fewer tokens than the
-corresponding XLA implementations and 17.8\% fewer than explicit TEPL.
-These results show how declarative rewrite rules and automatic axis
-inference can reduce the manual work required to implement tensor rewrites.
+In our XLA evaluation, TEPL models the operation semantics required by 123
+of 209 cases and synthesizes attributes for 31 of 38 eligible cases (81.6\%).
+Integration into XLA's existing simplifier demonstrates practical
+application. Across 25 audited cases, inference and its permitted cleanup
+reduce TEPL token counts by 17.8\% compared with explicit RHS attributes.
+These results show how declarative tensor rewrites can delegate attribute
+construction to the compiler.

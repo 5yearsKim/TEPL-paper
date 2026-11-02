@@ -1,0 +1,32 @@
+9035:       absl::InlinedVector<int64_t, 8> new_reduce_dims;
+9036:       for (auto dim : dimensions) {
+9037:         auto matching_dim_it = absl::c_find_if(
+9038:             unmodified_dims,
+9039:             [&](const auto& dim_pair) { return dim_pair.second == dim; });
+9040:         CHECK(matching_dim_it != unmodified_dims.end());
+9041:         new_reduce_dims.push_back(matching_dim_it->first);
+9042:       }
+9043: 
+9044:       ABSL_ASSIGN_OR_RETURN(
+9045:           HloInstruction * new_reduce,
+9046:           MakeReduceHlo(arg->mutable_operand(0), init_value, new_reduce_dims,
+9047:                         reduce->to_apply(), &reduce->metadata()));
+9048:       ABSL_ASSIGN_OR_RETURN(HloInstruction * new_reshape,
+9049:                             MakeReshapeHlo(reduce->shape(), new_reduce));
+9050:       return ReplaceInstruction(reduce, new_reshape);
+9051:     }
+9052:   }
+9053: 
+9054:   // Convert Reduce(concat({a,b,...})) to
+9055:   //  map(reduce(a),map(reduce(b),...,))
+9056:   // provided that the shapes of a,b,... have the same dimensions, or
+9057:   // enable_unconditional_reduce_of_concat_replacement() is true.
+9058:   //
+9059:   // This should make fusion easier or use less memory bandwidth in the unfused
+9060:   // case.
+9061:   if (arg->opcode() == HloOpcode::kConcatenate &&
+9062:       absl::c_linear_search(reduce->dimensions(),
+9063:                             arg->concatenate_dimension())) {
+9064:     bool same_shapes = true;
+9065:     for (int64_t i = 1; i < arg->operand_count(); ++i) {
+9066:       if (!Shape::Equal().IgnoreLayout()(arg->operand(i)->shape(),

@@ -1,0 +1,16 @@
+SemanticRule expr_divide_right_quotient
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: div(align[n4:lhs](Input(#0)), align[n4:rhs](div(align[n3:lhs](Input(#1)), align[n3:rhs](Input(#2)))))
+      rhs-graph: div(align[n9:lhs](Product(align[n7:lhs](Input(#0)), align[n7:rhs](Input(#2)))), align[n9:rhs](Input(#1)))
+      law: ordered-axis-split
+      law: paired-axis-selection
+      law: ordered-partition-traversal
+      law: commutative-matching
+      law: axis-map-restriction
+      declared-conditions: true
+      additional-guard: unresolved
+      reason: normalized coefficients, tensor accesses, or reduction domains differ
+error: cannot verify rule 'expr_divide_right_quotient': normalized coefficients, tensor accesses, or reduction domains differ
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

@@ -1,0 +1,7 @@
+{
+  "revision": "494f2dac8273981ad03b650056ebff4bec661f97",
+  "binary_sha256": "24d933d91076eb4d016a2d813f8611c1c18e1fe4981c6002111d824b7681a4dd",
+  "build": "bazel build -c opt //:tepl //labs/reasoning_scalability:inference_benchmark",
+  "tracked_patch_sha256": "581894844014873a12f7482180b8a444f73496813eb50174bee4f0482a1bc2df",
+  "snapshot": "/tmp/tepl-paper-evaluation"
+}

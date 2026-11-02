@@ -1,0 +1,15 @@
+SemanticRule catalog_elementwise_compare_self
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: compare(align[n2:lhs](Input(#0)), align[n2:rhs](Input(#0)), attrs.direction)
+      rhs-graph: Literal(1)
+      declared-conditions:
+        ==(len(shape(Input(#0))), 0)
+        ==(dtype(Input(#0)), dtype_i32())
+        m0
+      additional-guard: unresolved
+      reason: core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+      let m0 = ||(||(==(attr_c.attrs.direction, 0), ==(attr_c.attrs.direction, 2)), ==(attr_c.attrs.direction, 4))
+error: cannot verify rule 'catalog_elementwise_compare_self': core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

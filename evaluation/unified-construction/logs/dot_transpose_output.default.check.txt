@@ -1,0 +1,40 @@
+SemanticRule dot_transpose_output
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: align[n3:input](Reduce(n2.K, Product(align[n2:lhs](Input(#0)), align[n2:rhs](Input(#1)))))
+      rhs-graph: Reduce(n6.K, Product(align[n6:lhs](Input(#1)), align[n6:rhs](Input(#0))))
+      law: ordered-axis-split
+      law: paired-axis-selection
+      law: commutative-matching
+      law: axis-map-restriction
+      verified: capture access + reduction domains + ordered axes + shape + dtype + legality
+      law: ordered-requirements-construction
+      lhs-normalized: Reduce(n2.K, Product(Read(#0, access@0), Read(#1, access@1)))
+      rhs-normalized: Reduce(n2.K, Product(Read(#1, access@4), Read(#0, access@5)))
+      constructor auto#2:
+        lhs_contracting_dimensions = attr_d.attrs.rhs_contracting_dimensions
+        rhs_contracting_dimensions = attr_d.attrs.lhs_contracting_dimensions
+        lhs_batching_dimensions = gather(attr_d.attrs.rhs_batching_dimensions, order_positions(m0))
+        rhs_batching_dimensions = gather(attr_d.attrs.lhs_batching_dimensions, order_positions(m0))
+      declared-conditions:
+        ==(len(shape(Input(#0))), 2)
+        ==(len(shape(Input(#1))), 2)
+        ==(index(shape(Input(#0)), 1), index(shape(Input(#1)), 0))
+        m2
+      additional-guard: true
+      reason: valid for all legal LHS metadata satisfying the declared conditions under the selected arithmetic policy
+      let m0 = gather(inverse(attr_p.attrs.permutation), range(len(attr_d.attrs.lhs_batching_dimensions)))
+      let m1 = &&(&&(==(attr_p.attrs.permutation, [1, 0]), ==(attr_d.attrs.lhs_batching_dimensions, [])), ==(attr_d.attrs.rhs_batching_dimensions, []))
+      let m2 = &&(&&(m1, ==(attr_d.attrs.lhs_contracting_dimensions, [1])), ==(attr_d.attrs.rhs_contracting_dimensions, [0]))
+      coordinate frame (fresh identities; domain lengths remain symbolic):
+        input0 = group(extents=shape(Input(#0)))
+        input1 = group(extents=shape(Input(#1)))
+        n2.K = group(extents=gather(shape(Input(#0)), [1]))
+        n2.I = group(extents=gather(shape(Input(#0)), [0]))
+        n2.J = group(extents=gather(shape(Input(#1)), [1]))
+        access@0 = gather(concat(n2.K, n2.I), [1, 0])
+        access@1 = gather(concat(n2.K, n2.J), [0, 1])
+        access@4 = gather(concat(n2.K, n2.J), [0, 1])
+        access@5 = gather(concat(n2.K, n2.I), [1, 0])
+        lhs-output = gather(concat(n2.I, n2.J), [1, 0])
+        rhs-output = concat(n2.J, gather(n2.I, [0]))
+

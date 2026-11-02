@@ -1,0 +1,31 @@
+Computing main repo mapping: 
+Loading: 
+Loading: 0 packages loaded
+Analyzing: 8 targets (0 packages loaded, 0 targets configured)
+Analyzing: 8 targets (0 packages loaded, 0 targets configured)
+
+INFO: Analyzed 8 targets (0 packages loaded, 0 targets configured).
+[3 / 21] 2 / 8 tests; Compiling labs/accepted_core/accepted_core.cc; 1s linux-sandbox ... (6 actions running)
+[4 / 21] 2 / 8 tests; Compiling labs/accepted_core/accepted_core.cc; 6s linux-sandbox ... (6 actions, 5 running)
+[7 / 22] 3 / 8 tests; Compiling labs/accepted_core/accepted_core.cc; 7s linux-sandbox ... (5 actions running)
+[17 / 25] 4 / 8 tests; Compiling tests/ordered_synthesis_test.cc; 8s linux-sandbox ... (4 actions running)
+[20 / 26] 4 / 8 tests; Compiling tests/ordered_synthesis_test.cc; 10s linux-sandbox ... (4 actions running)
+[21 / 26] 5 / 8 tests; Compiling tests/ordered_synthesis_test.cc; 11s linux-sandbox ... (3 actions running)
+[23 / 26] 7 / 8 tests; Compiling tests/ordered_synthesis_test.cc; 12s linux-sandbox
+[24 / 26] 7 / 8 tests; [Prepa] Linking tests/ordered_synthesis_test
+[26 / 27] 7 / 8 tests; Testing //tests:ordered_synthesis_test; 1s linux-sandbox
+INFO: Found 8 test targets...
+INFO: Elapsed time: 20.046s, Critical Path: 19.84s
+INFO: 25 processes: 2 action cache hit, 7 internal, 24 linux-sandbox.
+INFO: Build completed successfully, 25 total actions
+//tests:attribute_reasoning_test                                (cached) PASSED in 2.1s
+//tests:codegen_test                                            (cached) PASSED in 0.1s
+//labs/accepted_core:acceptance_test                                     PASSED in 4.0s
+//labs/accepted_core:extensions_test                                     PASSED in 3.2s
+//tests:axis_auto_test                                                   PASSED in 0.4s
+//tests:ordered_synthesis_test                                           PASSED in 2.5s
+//tests:reverse_test                                                     PASSED in 1.4s
+//tests:rewrite_test                                                     PASSED in 0.5s
+
+Executed 6 out of 8 tests: 8 tests pass.
+There were tests whose specified size is too big. Use the --test_verbose_timeout_warnings command line option to see which ones these are.

@@ -1,0 +1,44 @@
+SemanticRule dot_move_reverse
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: Reduce(n3.K, Product(align[n3:lhs](Read(input, IndexReverse(Coords(S), attrs.dimensions)) over Input(#0)), align[n3:rhs](Input(#1))))
+      rhs-graph: Reduce(n7.K, Product(align[n7:lhs](Input(#0)), align[n7:rhs](Read(input, IndexReverse(Coords(S), attrs.dimensions)) over Input(#1))))
+      law: index-reverse-normalization
+      law: index-add-normalization
+      law: index-substitution
+      law: ordered-axis-split
+      law: paired-axis-selection
+      law: index-reverse-cancellation
+      law: reduction-reflection
+      law: axis-map-restriction
+      verified: capture access + reduction domains + ordered axes + shape + dtype + legality
+      law: axis-selector-matching
+      lhs-normalized: Reduce(n3.K, Product(Read(#0, access@0, coords(gather(n3.K, [0]))), Read(#1, access@2, index_reverse(coords(gather(n3.K, [0])), shape(Input(#0)), dimensions=[0]))))
+      rhs-normalized: Reduce(gather(gather(n3.K, [0]), [0]), Product(Read(#0, access@4), Read(#1, access@5, index_reverse(coords(gather(gather(n3.K, [0]), [0])), shape(Input(#0)), dimensions=[0]))))
+      constructor auto#2:
+        dimensions = [0]
+      constructor auto#3:
+        lhs_contracting_dimensions = [0]
+        rhs_contracting_dimensions = [0]
+        lhs_batching_dimensions = []
+        rhs_batching_dimensions = []
+      declared-conditions:
+        ==(len(shape(Input(#0))), 1)
+        ==(len(shape(Input(#1))), 1)
+        ==(index(shape(Input(#0)), 0), index(shape(Input(#1)), 0))
+        m1
+      additional-guard: true
+      reason: valid for all legal LHS metadata satisfying the declared conditions under the selected arithmetic policy
+      let m0 = &&(&&(==(attr_r.attrs.dimensions, [0]), ==(attr_d.attrs.lhs_batching_dimensions, [])), ==(attr_d.attrs.rhs_batching_dimensions, []))
+      let m1 = &&(&&(m0, ==(attr_d.attrs.lhs_contracting_dimensions, [0])), ==(attr_d.attrs.rhs_contracting_dimensions, [0]))
+      coordinate frame (fresh identities; domain lengths remain symbolic):
+        input0 = group(extents=shape(Input(#0)))
+        n1.S = group(extents=shape(Input(#0)))
+        input2 = group(extents=shape(Input(#1)))
+        n3.K = group(extents=gather(shape(Input(#0)), [0]))
+        access@0 = gather(n3.K, [0])
+        access@2 = gather(n3.K, [0])
+        access@4 = gather(n3.K, [0])
+        access@5 = gather(n3.K, [0])
+        lhs-output = empty_axes()
+        rhs-output = empty_axes()
+

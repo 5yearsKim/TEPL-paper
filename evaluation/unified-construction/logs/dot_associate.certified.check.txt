@@ -1,0 +1,19 @@
+SemanticRule dot_associate
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: Reduce(n4.K, Product(align[n4:lhs](Reduce(n2.K, Product(align[n2:lhs](Input(#0)), align[n2:rhs](Input(#1))))), align[n4:rhs](Input(#2))))
+      rhs-graph: Reduce(n9.K, Product(align[n9:lhs](Input(#0)), align[n9:rhs](Reduce(n8.K, Product(align[n8:lhs](Input(#1)), align[n8:rhs](Input(#2)))))))
+      verified: source-layout guard certificate and core emission theorem
+      declared-conditions:
+        ==(len(shape(Input(#0))), 2)
+        ==(len(shape(Input(#1))), 2)
+        ==(index(shape(Input(#0)), 1), index(shape(Input(#1)), 0))
+        ==(len(shape(Input(#2))), 2)
+        ==(index(shape(Input(#1)), 1), index(shape(Input(#2)), 0))
+        m3
+      additional-guard: true
+      reason: core guard implies canonical feasibility; DAG builder is sound for all legal extents
+      let m0 = &&(==(attr_inner.attrs.lhs_batching_dimensions, []), ==(attr_inner.attrs.rhs_batching_dimensions, []))
+      let m1 = &&(&&(m0, ==(attr_inner.attrs.lhs_contracting_dimensions, [1])), ==(attr_inner.attrs.rhs_contracting_dimensions, [0]))
+      let m2 = &&(&&(m1, ==(attr_outer.attrs.lhs_batching_dimensions, [])), ==(attr_outer.attrs.rhs_batching_dimensions, []))
+      let m3 = &&(&&(m2, ==(attr_outer.attrs.lhs_contracting_dimensions, [1])), ==(attr_outer.attrs.rhs_contracting_dimensions, [0]))
+

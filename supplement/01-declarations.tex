@@ -1,0 +1,25 @@
+\section{Attribute Declaration Sketches}
+\label{supp-app:language-declarations}
+The following declarations illustrate the attribute roles in
+Section~\ref{paper-sec:attribute-roles}. The slice has unit stride;
+\code{starts} gives its offsets and \code{sizes} its output extents.
+
+\begin{lstlisting}[language=TEPL]
+dialect TensorLang {
+    op transpose(input: tensor) -> tensor {
+        attrs {
+            permutation: axis[];
+        }
+        // Other blocks, such as axes and semantics, can follow.
+        ...
+    }
+
+    op slice(input: tensor) -> tensor {
+        attrs {
+            starts: coordinate[];
+            sizes: extent[];
+        }
+        ...
+    }
+}
+\end{lstlisting}

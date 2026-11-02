@@ -1,0 +1,27 @@
+{
+  "previous": "evaluation/certified-extensions",
+  "acceptance_changes": [],
+  "counts": {
+    "axis": {
+      "tasks": 38,
+      "default": 31,
+      "core": 10,
+      "certified": 31
+    },
+    "verification": {
+      "tasks": 85,
+      "default": 67,
+      "core": 2,
+      "certified": 4
+    },
+    "all": {
+      "tasks": 123,
+      "default": 98,
+      "core": 12,
+      "certified": 35
+    }
+  },
+  "source_bytes_unchanged": true,
+  "first_diagnostic_changes": [],
+  "all_123_acceptances_and_diagnostics_equal": true
+}

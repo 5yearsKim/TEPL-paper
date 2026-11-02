@@ -1,0 +1,13 @@
+SemanticRule broadcast_add
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: Add(align[n4:lhs](align[n1:input](Input(#0))), align[n4:rhs](align[n3:input](Input(#1))))
+      rhs-graph: align[n8:input](Add(align[n7:lhs](Input(#0)), align[n7:rhs](Input(#1))))
+      declared-conditions:
+        m0
+      additional-guard: unresolved
+      reason: core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+      let m0 = &&(==(attr_left.attrs.dimensions, attr_right.attrs.dimensions), ==(attr_left.attrs.new_extents, attr_right.attrs.new_extents))
+error: cannot verify rule 'broadcast_add': core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

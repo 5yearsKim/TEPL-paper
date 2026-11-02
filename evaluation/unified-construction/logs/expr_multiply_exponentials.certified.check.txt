@@ -1,0 +1,11 @@
+SemanticRule expr_multiply_exponentials
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: Product(align[n4:lhs](exp(align[n1:input](Input(#0)))), align[n4:rhs](exp(align[n3:input](Input(#1)))))
+      rhs-graph: exp(align[n8:input](Add(align[n7:lhs](Input(#0)), align[n7:rhs](Input(#1)))))
+      declared-conditions: true
+      additional-guard: unresolved
+      reason: core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+error: cannot verify rule 'expr_multiply_exponentials': core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

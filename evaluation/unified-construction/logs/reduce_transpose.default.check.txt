@@ -1,0 +1,27 @@
+SemanticRule reduce_transpose
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: Reduce(n2.K, align[n2:input](align[n1:input](Input(#0))))
+      rhs-graph: Reduce(n4.K, align[n4:input](Input(#0)))
+      law: ordered-axis-split
+      law: paired-axis-selection
+      law: axis-map-restriction
+      verified: capture access + reduction domains + ordered axes + shape + dtype + legality
+      law: ordered-requirements-construction
+      lhs-normalized: Reduce(gather(gather(input0, [1]), [0]), Read(#0, access@0))
+      rhs-normalized: Reduce(gather(gather(gather(input0, [1]), [0]), [0]), Read(#0, access@3))
+      constructor auto#2:
+        dimensions = gather(attr_p.attrs.permutation, m0)
+      declared-conditions:
+        ==(len(shape(Input(#0))), 2)
+        &&(==(attr_p.attrs.permutation, [1, 0]), ==(attr_r.attrs.dimensions, [0]))
+      additional-guard: true
+      reason: valid for all legal LHS metadata satisfying the declared conditions under the selected arithmetic policy
+      let m0 = gather(attr_r.attrs.dimensions, order_positions(gather(attr_p.attrs.permutation, attr_r.attrs.dimensions)))
+      coordinate frame (fresh identities; domain lengths remain symbolic):
+        input0 = group(extents=shape(Input(#0)))
+        input0 = group(extents=shape(Input(#0)))
+        access@0 = input0
+        access@3 = input0
+        lhs-output = gather(gather(input0, [0]), [0])
+        rhs-output = gather(gather(gather(input0, [0]), [0]), [0])
+

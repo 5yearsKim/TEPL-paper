@@ -1,0 +1,15 @@
+SemanticRule catalog_indexing_slice_singleton_stride
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: Read(input, IndexOffset(attrs.starts, IndexScale(attrs.strides, Coords(O)))) over Input(#0)
+      rhs-graph: Read(input, IndexOffset(attrs.starts, IndexScale(attrs.strides, Coords(O)))) over Input(#0)
+      law: index-scale-normalization
+      law: index-offset-normalization
+      law: index-add-normalization
+      law: index-substitution
+      declared-conditions: true
+      additional-guard: unresolved
+      reason: metadata definedness: comprehension is outside the pointwise metadata fragment: sequence_map(range(len(@#0.sizes)), sequence_variable(0), if(<=(index(@#0.sizes, sequence_variable(0)), 1), 1, index(@#0.strides, sequence_variable(0))))
+error: cannot verify rule 'catalog_indexing_slice_singleton_stride': metadata definedness: comprehension is outside the pointwise metadata fragment: sequence_map(range(len(@#0.sizes)), sequence_variable(0), if(<=(index(@#0.sizes, sequence_variable(0)), 1), 1, index(@#0.strides, sequence_variable(0))))
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

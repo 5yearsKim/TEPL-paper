@@ -1,0 +1,1290 @@
+[
+  {
+    "line": 800,
+    "api": "MarkAsChanged"
+  },
+  {
+    "line": 844,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 865,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 885,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 899,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 910,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 921,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 926,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 934,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 959,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 977,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 991,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 1034,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 1070,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 1220,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 1230,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 1236,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 1242,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 1281,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 1296,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 1308,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 1335,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 1370,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 1399,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 1405,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 1413,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 1420,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 1471,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 1485,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 1496,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 1763,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 1779,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 1791,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 1809,
+    "api": "ReplaceWithBitcast"
+  },
+  {
+    "line": 1832,
+    "api": "ReplaceWithBitcast"
+  },
+  {
+    "line": 1838,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 1843,
+    "api": "SwapCopyBitcastCopy"
+  },
+  {
+    "line": 1850,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 1852,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 1858,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 1872,
+    "api": "ReplaceWithBitcast"
+  },
+  {
+    "line": 1881,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 1975,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 1989,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 2012,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 2037,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 2108,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 2144,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 2158,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 2190,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 2268,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 2293,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 2311,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 2317,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 2326,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 2342,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 2347,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 2363,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 2374,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 2386,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 2401,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 2478,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 2494,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 2505,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 2517,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 2535,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 2544,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 2553,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 2590,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 2614,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 2629,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 2638,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 2647,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 2663,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 2742,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 2744,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 2824,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 2886,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 2955,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 3785,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 4131,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 4134,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 4201,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 4235,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 4281,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 4306,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 4314,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 4325,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 4473,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 4487,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 4522,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 4597,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 4689,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 4764,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 4778,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 4782,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 4789,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 4793,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 4801,
+    "api": "MarkAsChanged"
+  },
+  {
+    "line": 4819,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 4833,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 4860,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 4875,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 4889,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 4893,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 4900,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 4904,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 4912,
+    "api": "MarkAsChanged"
+  },
+  {
+    "line": 4930,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 4947,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 4967,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 5016,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 5025,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 5030,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 5038,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 5045,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 5056,
+    "api": "MarkAsChanged"
+  },
+  {
+    "line": 5067,
+    "api": "MarkAsChanged"
+  },
+  {
+    "line": 5083,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 5107,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 5132,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 5165,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 5192,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 5204,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 5218,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 5230,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 5243,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 5254,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 5270,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 5276,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 5283,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 5289,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 5313,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 5318,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 5324,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 5336,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 5356,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 5365,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 5373,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 5389,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 5444,
+    "api": "MarkAsChanged"
+  },
+  {
+    "line": 5605,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 5615,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 5645,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 5681,
+    "api": "MarkAsChanged"
+  },
+  {
+    "line": 5690,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 5704,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 5723,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 5740,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 5745,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 5750,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 5755,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 5761,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 5764,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 5767,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 5770,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 5778,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 5782,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 5790,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 5794,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 5799,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 5803,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 5839,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 5853,
+    "api": "MarkAsChanged"
+  },
+  {
+    "line": 5857,
+    "api": "MarkAsChanged"
+  },
+  {
+    "line": 5863,
+    "api": "MarkAsChanged"
+  },
+  {
+    "line": 5867,
+    "api": "MarkAsChanged"
+  },
+  {
+    "line": 5884,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 5899,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 5915,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 5938,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 5943,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 5945,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 5958,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 5969,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 5978,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 5982,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 5991,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 5995,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 6007,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 6014,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 6032,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 6062,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 6139,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 6213,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 6224,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 6228,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 6238,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 6245,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 6255,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 6262,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 6270,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 6435,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 6450,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 6471,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 6504,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 6643,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 6653,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 6661,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 6714,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 6736,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 6744,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 6750,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 6759,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 6885,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 6898,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 6945,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 6995,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 7004,
+    "api": "ReplaceWithBitcast"
+  },
+  {
+    "line": 7034,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 7053,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 7056,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 7079,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 7086,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 7121,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 7194,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 7202,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 7244,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 7250,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 7371,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 7413,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 7456,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 7465,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 7511,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 7514,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 7522,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 7575,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 7585,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 7601,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 7621,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 7668,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 7755,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 7789,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 7813,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 7896,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 7934,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 7942,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 7958,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 7963,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 7983,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 8021,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 8047,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 8065,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 8105,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 8179,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 8217,
+    "api": "MarkAsChanged"
+  },
+  {
+    "line": 8326,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 8333,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 8422,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 8446,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 8457,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 8491,
+    "api": "MarkAsChanged"
+  },
+  {
+    "line": 8634,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 8638,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 8657,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 8661,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 8770,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 8801,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 8840,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 8870,
+    "api": "MarkAsChanged"
+  },
+  {
+    "line": 8897,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 8946,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 8959,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 9009,
+    "api": "MarkAsChanged"
+  },
+  {
+    "line": 9023,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 9050,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 9086,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 9134,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 9140,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 9157,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 9177,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 9198,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 9253,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 9306,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 9326,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 9345,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 9348,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 9406,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 9528,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 9577,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 9620,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 9791,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 9818,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 9830,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 9835,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 9840,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 9848,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 9857,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 9861,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 9876,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 9882,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 9887,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 9890,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 9935,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 9948,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 9955,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 9970,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 9973,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 9998,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 10001,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 10099,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 10114,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 10118,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 10187,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 10256,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 10267,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 10274,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 10278,
+    "api": "ReplaceWithBitcast"
+  },
+  {
+    "line": 10431,
+    "api": "MarkAsChanged"
+  },
+  {
+    "line": 10505,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 10576,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 10590,
+    "api": "MarkAsChanged"
+  },
+  {
+    "line": 10668,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 10790,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 10901,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 10914,
+    "api": "ReplaceInstruction"
+  },
+  {
+    "line": 10964,
+    "api": "ReplaceInstructionIfCompatible"
+  },
+  {
+    "line": 10974,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 10976,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 10994,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 11038,
+    "api": "ReplaceWithNewInstruction"
+  },
+  {
+    "line": 6358,
+    "api": "ReplaceAllUsesWith"
+  }
+]

@@ -1,0 +1,13 @@
+family,rule_variants,applications
+boolean,1,1
+broadcast,5,37
+compare,2,2
+constant,1,1
+divide,3,21
+dot,3,4
+multiply,4,20
+reduce,3,28
+reshape,4,63
+select,1,2
+transpose,4,10
+tuple,1,12

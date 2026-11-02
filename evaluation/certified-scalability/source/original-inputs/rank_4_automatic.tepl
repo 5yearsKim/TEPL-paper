@@ -1,0 +1,5 @@
+from "../../../../examples/semantic/dialects/tensor.tepl" import TensorLang as t;
+use t::{dot,transpose};
+rule rank_4_automatic { A:f32[D0,D1,D2,D3]
+ (p3: transpose (p2: transpose (p1: transpose A))) => (transpose A)
+}

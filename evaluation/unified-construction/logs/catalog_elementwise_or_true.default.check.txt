@@ -1,0 +1,19 @@
+SemanticRule catalog_elementwise_or_true
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: or(align[n2:lhs](Input(#0)), align[n2:rhs](Literal(1)))
+      rhs-graph: Literal(1)
+      law: scalar-boolean-absorbing
+      verified: capture access + reduction domains + ordered axes + shape + dtype + legality
+      lhs-normalized: Const(1)
+      rhs-normalized: Const(1)
+      declared-conditions:
+        ==(len(shape(Input(#0))), 0)
+        ==(dtype(Input(#0)), dtype_bool())
+      additional-guard: true
+      reason: valid for all legal LHS metadata satisfying the declared conditions under the selected arithmetic policy
+      coordinate frame (fresh identities; domain lengths remain symbolic):
+        input0 = group(extents=shape(Input(#0)))
+        n2.S = group(extents=shape(Input(#0)))
+        lhs-output = n2.S
+        rhs-output = empty_axes()
+

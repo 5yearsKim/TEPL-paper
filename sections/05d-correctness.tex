@@ -1,53 +1,95 @@
-\subsection{Verifying Completed Rewrites}
-\label{sec:correctness}
-\label{sec:broader-operators}
-Let $C(p)$ be the rule's \code{where} condition and $f$ its attribute program,
-so that $\beta=f(p)$. Note that $f$ differs from \code{build} in
-Section~\ref{sec:find}: $f$ may be user-written or inferred, whereas
-\code{build} is the constructor defined by the mathematical algorithm.
-Both are checked under the contract in Equation~\eqref{eq:contract}.
+\subsection{Validation Contract and Scope}
+\label{sec:validation-boundary}
+The validator receives a rewrite $L\Rightarrow R$, its written guard
+$C$, and a completed attribute program $f$. The program reads source
+metadata and supplies the RHS attributes. Supplied fields must be
+preserved, and no attribute holes may remain.
 
-The verifier substitutes the attribute programs and reconstructs the completed
-rewrite in a fresh context. It derives coordinate relationships and values
-from those programs, rather than assuming conclusions used during synthesis.
-Table~\ref{tab:verification-checks} lists the requirements. Only source
-legality and the declared guard may be assumed; any additional conditions
-needed by construction must follow from them.
+Validation establishes three properties:
+\begin{enumerate}
+\item \emph{Defined attributes.}
+Every attribute expression evaluates successfully, including its
+index accesses and integer calculations.
+\item \emph{Legal replacement.}
+The resulting attributes satisfy each RHS operation's requirements,
+including valid axis selectors, matching paired extents, and dtype
+constraints.
+\item \emph{Equivalent result.}
+The replacement preserves tensor values, ordered output shape, and
+result dtype.
+\end{enumerate}
 
-The verifier rechecks the completed rewrite without assuming conclusions
-from synthesis. This prevents circular reasoning but does not prove that
-the shared reasoning rules are correct.
+The formal validation core covers contraction, permutation, unary
+summation, and elementwise addition without broadcasting, using exact
+real arithmetic and the metadata rules in
+Appendix~\ref{app:validation-proofs}. Its soundness allows arbitrary
+finite ranks and zero or singleton extents. Calculated reads,
+nonlinear scalar functions, and other implementation extensions
+require separate arguments.
 
-\begin{table}[!htbp]
-\caption{Checks required for a completed semantic rewrite.}
-\label{tab:verification-checks}
-\begin{tabularx}{\linewidth}{@{}lY@{}}\toprule
-Check & Required property\\\midrule
-Attribute computation & Every constructor uses only source metadata, has no
-holes, and is evaluable whenever the rule applies.\\
-RHS legality & Constructed attributes satisfy operation contracts, including
-valid positions, paired extents, reduction domains, and access bounds.\\
-Value equivalence & Fully lowered expressions agree in indexed reads,
-coefficients, and reduction domains under the selected arithmetic policy.\\
-Output agreement & Results have identical ordered output shapes and
-compatible fixed dtype.\\\bottomrule
-\end{tabularx}
-\end{table}
+\subsection{Checking a Completed Candidate}
+\label{sec:validation-algorithm}
+The proof context contains only source legality and successful
+evaluation of the written guard. Relationships proposed during
+construction are obligations to prove, never assumptions.
 
-Here $C(p)$ means that evaluating \code{where} successfully returns
-\code{true}. Whenever it holds, the attribute program must evaluate without
-errors, respecting the language's evaluation order and short-circuiting
-rules. Undefined attribute computation cannot satisfy the contract.
+First, TEPL checks the original attribute expressions for types,
+bounds, and definedness, and proves the RHS legality conditions.
+These checks precede simplification: an expression such as
+$0\cdot q[i]$ still requires a valid access to $q[i]$ under strict
+evaluation.
 
-Under the theorem's assumptions, using its constructor reduces the
-verification obligation to
+Next, TEPL expresses each graph's output using indexed input reads,
+addition, multiplication, and finite sums. Coordinate mappings are
+derived from source information and operation declarations. The
+validator then compares the two computations in a common coordinate
+frame.
+
+Value comparison uses checked algebraic laws, including
+distributivity and finite-sum reindexing. Moving a factor across a
+sum requires a proof that it is independent of the summed coordinate.
+Comparison preserves repeated reads and checks the reduction domains.
+Separate output checks establish axis order, shape, and dtype
+agreement.
+
+TEPL returns \code{Proved} only when all required obligations have
+derivations. Unresolved goals or exhausted proof budgets return
+\code{Unknown}. Such a result does not establish that the rewrite is
+incorrect or that no valid attribute assignment exists.
+
+\subsection{Soundness}
+\label{sec:acceptance-soundness}
+\begin{theorem}[Candidate validation soundness]
+\label{thm:validator-soundness}
+For the operations and metadata calculus of
+Section~\ref{sec:validation-boundary}, if
+$\operatorname{Validate}(L,R,C,f,\mathcal G)=\mathrm{Proved}$, then
 \begin{equation}
- \forall p,\quad
- \operatorname{Legal}_L(p)\land C(p)\Rightarrow\operatorname{check}(p).
- \label{eq:guard-feasibility}
+ \forall p.\quad \operatorname{Legal}_L(p)\land C(p)
+ \Longrightarrow\exists\beta.\quad f\Downarrow_p\beta
+ \land\operatorname{Valid}(p,\beta).
+ \label{eq:acceptance-soundness}
 \end{equation}
-Whenever the source is legal and the declared condition holds,
-the feasibility check must succeed.
-Thus, verification must establish that the declared condition implies
-the feasibility check. The theorem then guarantees correctness of
-the constructed replacement for every legal match satisfying that condition.
+Here $\mathcal G$ contains the candidate obligations, and $C(p)$
+means successful evaluation to true. The notation $f\Downarrow_p\beta$
+means that $f$ evaluates to attributes $\beta$ on metadata $p$.
+Evaluation abstracts from resource exhaustion; it includes bounds,
+types, and integer representability.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+The metadata rules establish defined attribute expressions and a
+legal replacement; lowering and normalization justify the value
+comparison. Ordered-shape and dtype checks complete validity;
+Appendix~\ref{app:validation-proofs} gives the full proof.
+\end{proof}
+
+For batched reassociation, these checks establish that the generated
+attributes are defined, contraction partners have matching extents,
+and both sides produce the same ordered output and values.
+Appendix~\ref{app:batched-reassociation-program} gives the complete
+program and its proof.
+
+If validation remains unresolved, TEPL may suggest a stronger guard
+(Appendix~\ref{app:condition-suggestions}). The revised rule must pass
+validation again; condition discovery has no completeness guarantee.

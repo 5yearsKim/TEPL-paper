@@ -1,0 +1,33 @@
+SemanticRule factor_common_product
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: Add(align[n6:lhs](Product(align[n2:lhs](Input(#0)), align[n2:rhs](Input(#1)))), align[n6:rhs](Product(align[n5:lhs](Input(#2)), align[n5:rhs](Input(#1)))))
+      rhs-graph: Product(align[n11:lhs](Add(align[n9:lhs](Input(#0)), align[n9:rhs](Input(#2)))), align[n11:rhs](Input(#1)))
+      law: ordered-axis-split
+      law: paired-axis-selection
+      law: ordered-partition-traversal
+      law: product-distributivity
+      law: axis-map-restriction
+      verified: capture access + reduction domains + ordered axes + shape + dtype + legality
+      lhs-normalized: Product(Read(#0, access@0), Read(#1, access@1)) + Product(Read(#2, access@3), Read(#1, access@4))
+      rhs-normalized: Product(Read(#0, access@7), Read(#1, access@10)) + Product(Read(#2, access@8), Read(#1, access@10))
+      declared-conditions: true
+      additional-guard: true
+      reason: valid for all legal LHS metadata satisfying the declared conditions under the selected arithmetic policy
+      coordinate frame (fresh identities; domain lengths remain symbolic):
+        input0 = group(extents=shape(Input(#0)))
+        input1 = group(extents=shape(Input(#1)))
+        n2.S = group(extents=shape(Input(#0)))
+        input3 = group(extents=shape(Input(#2)))
+        input4 = group(extents=shape(Input(#1)))
+        n5.S = group(extents=shape(Input(#2)))
+        n6.S = group(extents=shape(Input(#0)))
+        access@0 = n6.S
+        access@1 = gather(gather(n6.S, range(len(shape(Input(#2))))), range(len(shape(Input(#0)))))
+        access@3 = gather(n6.S, range(len(shape(Input(#2)))))
+        access@4 = n6.S
+        access@7 = n6.S
+        access@8 = gather(n6.S, range(len(shape(Input(#2)))))
+        access@10 = gather(gather(n6.S, range(len(shape(Input(#2))))), range(len(shape(Input(#0)))))
+        lhs-output = n6.S
+        rhs-output = n6.S
+

@@ -1,0 +1,11 @@
+SemanticRule subtract_constant
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: Add(align[n2:lhs](Input(#0)), Product(Const(-1), align[n2:rhs](Input(#1))))
+      rhs-graph: Add(align[n6:lhs](Input(#0)), align[n6:rhs](Product(Const(-1), align[n5:input](Input(#1)))))
+      declared-conditions: true
+      additional-guard: unresolved
+      reason: core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+error: cannot verify rule 'subtract_constant': core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

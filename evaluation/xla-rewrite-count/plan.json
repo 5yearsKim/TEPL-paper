@@ -1,0 +1,15 @@
+{
+  "created_utc": "2026-11-01T21:21:45.792949+00:00",
+  "workload": "DLRM FP32 training step, original XLA CPU benchmark",
+  "batch": 6272,
+  "input_sha256": "bcd909a69b73d178c2b864ffdf533b08834502f24a15a90881f709feeece9820",
+  "xla_revision": "39c348196c834a7ee45a57f5b44688d53ae99a64",
+  "scope": "All AlgebraicSimplifier invocations in one normal XLA CPU compilation; other optimizer passes are outside this count.",
+  "rule_identity": "Outermost successful transformation source branch; function and line in archived original algebraic_simplifier.cc. Equivalent source branches are distinct variants, not a canonical semantic-rule count.",
+  "application": "One successful transformation commit (or explicitly marked in-place rewrite); false compatibility checks and nested helper commits are excluded. Sink-broadcast rewrites count each affected user.",
+  "model_compilations": 1,
+  "numerical_executions": 0,
+  "timing_rounds": 0,
+  "selected_before_results": true,
+  "tepl_support_classification": "Not measured by this counter"
+}

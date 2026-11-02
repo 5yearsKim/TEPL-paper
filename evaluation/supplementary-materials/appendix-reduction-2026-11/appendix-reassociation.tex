@@ -1,0 +1,59 @@
+\subsection{Recorded Reassociation Program}
+\label{app:reassociation-record}
+This case connects the mathematical validation in
+Proposition~\ref{prop:reassociation-program} to an emitted attribute program.
+The exact rule and generated JSON are retained in
+\nolinkurl{evaluation/reassociation/}. It omits all eight RHS axis fields
+and uses the batch-preservation and integer-bound guard in
+Appendix~\ref{app:batched-reassociation-program}, with the generalized dot contract
+of Listing~\ref{lst:dot-declaration}.
+
+\paragraph{Generated expressions.}
+The compiler prints the outer replacement as \code{auto#2} and the inner
+replacement as \code{auto#3}. Table~\ref{tab:reassociation-temporaries}
+relates its temporaries to Equation~\eqref{eq:batched-program-locals}.
+\code{match_positions} is a presentation of paired overlap selection;
+its left/right fields are $u_G,v_G$. For the queries below, inclusion
+proved in Proposition~\ref{prop:reassociation-program} makes
+\code{matched_positions(query, domain)} equal to
+$\pos(\mathit{domain},\mathit{query})$.
+
+\begin{table}[!htbp]
+\caption{Correspondence with the recorded compiler output.}
+\label{tab:reassociation-temporaries}
+\small
+\begin{tabularx}{\linewidth}{@{}lY@{}}\toprule
+Printed temporary & Paper expression\\\midrule
+\code{m0}, \code{m2} & $i_X$, $j_Y$\\
+\code{p0}, \code{p1} & $(u_I,v_I)$, $(u_J,v_J)$\\
+\code{m4} & $b_Z\Vert z_J$\\
+\code{m5} & $f_Y$\\
+\code{m6} & $b+|f_Y|+\operatorname{range}(|f_Z|)$\\
+\code{m7} & $\pos(f_Z,z_I)$\\
+\code{m8} & $\gath(b+\operatorname{range}(|f_Y|),\pos(f_Y,k_Y))=s_K$\\\bottomrule
+\end{tabularx}
+\end{table}
+
+In particular, the emitted outer right-contraction list is
+\code{concat(gather(m6, m7), m8)}. The entrywise identity
+\begin{equation}
+ \gath(c+\operatorname{range}(n),q)=c+q
+ \qquad\text{for an in-range selector }q
+ \label{eq:shifted-range-selection}
+\end{equation}
+reduces it to $s_I\Vert s_K$, exactly the expression in
+Table~\ref{tab:reassociation-program}. Both sides have entry $c+q_j$;
+the guard bounds these integers. The remaining six direct source/selection
+fields and the inner right-contraction field $z_J$ are as displayed in
+that table. No inferred RHS field is treated as an input to another
+attribute program.
+
+\paragraph{Recorded execution.}
+Semantic checking returned \code{Proved} without an additional guard;
+compilation and portable validation succeeded. Exact sources, commands,
+logs, hashes, and compiler provenance are in
+\nolinkurl{evaluation/reassociation/}. The proof in
+Appendix~\ref{app:reassociation-proof} justifies the coordinate bijection
+and ordered output; the recorded trace supplies implementation evidence
+and is not an independently checked proof certificate. This case study
+is separate from the corpus totals.

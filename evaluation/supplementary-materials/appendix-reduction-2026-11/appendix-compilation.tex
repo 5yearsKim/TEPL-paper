@@ -1,0 +1,44 @@
+\section{Symbolic Compilation Details}
+\label{app:compilation}
+This appendix expands the symbolic compilation procedure in
+Section~\ref{sec:method} and the operation declaration adapters used by
+the implementation in Section~\ref{sec:implementation-scope}.
+
+\input{sections/appendix-language}
+\FloatBarrier
+\input{sections/appendix-extended}
+\FloatBarrier
+\input{sections/appendix-declaration-adapters}
+\FloatBarrier
+\input{sections/appendix-validation}
+\FloatBarrier
+\input{sections/appendix-reassociation-program}
+\FloatBarrier
+\input{sections/appendix-reassociation}
+\FloatBarrier
+\input{sections/appendix-reassociation-proof}
+\FloatBarrier
+
+\input{sections/appendix-core-emission}
+\FloatBarrier
+\input{sections/appendix-accepted-core}
+\FloatBarrier
+
+\subsection{Validation Implementation Checks}
+\label{app:implementation-modules}
+\begin{table}[!htbp]
+\caption{Validation obligations and implementation checks.}
+\label{tab:implementation-validation}
+\small
+\begin{tabularx}{\linewidth}{@{}p{0.28\linewidth}Y@{}}\toprule
+Formal responsibility & Implementation check\\\midrule
+Source scope and premises & Validate references; unmet goals stop verification\\
+Definedness and types & Check original expressions, bounds, and selector obligations\\
+Sequence and set reasoning & Construct mappings, partitions, and canonical forms; use bounded entailment\\
+Value comparison & Lower the completed RHS and compare normalized reads and reductions\\
+Materialization & Reject unresolved semantic plans and preserve checked expression structure\\\bottomrule
+\end{tabularx}
+\end{table}
+
+\FloatBarrier
+\input{sections/appendix-operation-coverage}

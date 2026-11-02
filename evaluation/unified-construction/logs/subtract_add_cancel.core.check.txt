@@ -1,0 +1,11 @@
+SemanticRule subtract_add_cancel
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: Add(align[n4:lhs](Input(#0)), Product(Const(-1), align[n4:rhs](Add(align[n3:lhs](Input(#0)), align[n3:rhs](Input(#1))))))
+      rhs-graph: Product(Const(-1), align[n6:input](Input(#1)))
+      declared-conditions: true
+      additional-guard: unresolved
+      reason: core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+error: cannot verify rule 'subtract_add_cancel': core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

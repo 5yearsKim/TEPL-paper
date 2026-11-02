@@ -1,0 +1,27 @@
+{
+  "offline_tests": 6,
+  "all_pass": true,
+  "dlrm_replay": {
+    "distinct_rule_variants": 32,
+    "total_applications": 201,
+    "semantic_variants": {
+      "direct": 14,
+      "unit_view_candidate": 6,
+      "conditional": 6,
+      "outside": 6,
+      "unreviewed": 0
+    }
+  },
+  "unseen_variant_test": "Counted and queued as unreviewed; not marked supported",
+  "source_mismatch": "Blocked before interpretation",
+  "profile_mismatch": "Support reviews invalidated; counts retained",
+  "frozen_registry_replay": true,
+  "new_model_compilations": 0,
+  "new_model_executions": 0,
+  "combined_semantic_model_coverage": {
+    "rule_variants": 20,
+    "total_rule_variants": 32,
+    "definition": "direct + unit_view_candidate; not verification or delegation"
+  },
+  "unknown_variant_does_not_increase_combined_count": true
+}

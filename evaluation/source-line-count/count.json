@@ -1,0 +1,10 @@
+{
+  "function": "AssociativeReorderNestedDot",
+  "start_line": 3829,
+  "end_line": 4180,
+  "nonblank_including_comments": 315,
+  "nonblank_excluding_comments": 269,
+  "sha256": "cee113d1c8070e890242cba50b912f196b5359be3c0c7ef43bef3c1c7bebd265",
+  "url": "https://raw.githubusercontent.com/openxla/xla/9cb4e2005f963acc873dc95facd3b7d134dbf108/xla/hlo/transforms/simplifiers/algebraic_simplifier.cc",
+  "procedure": "Count physical lines containing at least one non-comment C++ token; includes signature and braces."
+}

@@ -9,8 +9,8 @@ enumerate possible attribute assignments.
 \subsection{Canonical Intermediate Axes}
 \label{sec:canonical-axes}
 This stage determines which axes remain in each intermediate RHS result.
-Its output is a set $P_v$ for each node $v$. We first identify the axes that
-must survive, then construct $P_v$ using the operation's rules. Axis ordering
+Its output is a set $S_v$ for each node $v$. We first identify the axes that
+must survive, then construct $S_v$ using the operation's rules. Axis ordering
 and attribute construction are handled in the following stages.
 
 We first identify the axes that must be kept, called the \emph{mandatory
@@ -29,18 +29,17 @@ An operation may also have to keep an axis that is no longer needed.
 For example, a contraction cannot sum out an axis present in only one
 operand; it must keep that axis as a free axis.
 
-Let $P_v$ be the axes that our algorithm keeps in the output of node
-$v$.\footnote{$P_v$ is a set of logical axes; $P$ in
-Section~\ref{sec:axis-model} is the set of input ports.}
-This set includes every mandatory axis, so $M_v\subseteq P_v$.
-Here $M_v$ specifies what must be preserved, while $P_v$ is the constructed
-result. The inclusion alone does not determine $P_v$.
+Let $S_v$ be the axes that our algorithm keeps in the output of node
+$v$.
+This set includes every mandatory axis, so $M_v\subseteq S_v$.
+Here $M_v$ specifies what must be preserved, while $S_v$ is the constructed
+result. The inclusion alone does not determine $S_v$.
 We call it the \emph{canonical live set} because the algorithm follows one
 fixed rule: remove each unneeded axis at the first operation that can
 legally remove it.
 
-We construct $P_v$ from the inputs toward the root using the operation-specific
-rules in Appendix~\ref{app:canonical-axis-rules}.
+We construct $S_v$ from the inputs toward the root using the operation-specific
+rules in Appendix~\ref{app:operation-construction-rules}.
 
 For example, consider the intermediate node $v=\operatorname{dot}(A,B)$ in
 $\operatorname{dot}(\operatorname{dot}(A,B),C)$, with the LHS axis connections
@@ -55,22 +54,22 @@ output, and $\vec J$ to connect with $C$.
 The axes in $\vec K$ are needed only inside this subtree
 and can be summed out. Thus, in this example,
 \begin{equation}
- M_v=P_v=\operatorname{set}(\vec B)\cup\operatorname{set}(\vec I)
+ M_v=S_v=\operatorname{set}(\vec B)\cup\operatorname{set}(\vec I)
  \cup\operatorname{set}(\vec J).
 \end{equation}
-Other operations may retain additional axes, giving $M_v\subsetneq P_v$.
+Other operations may retain additional axes, giving $M_v\subsetneq S_v$.
 
 Applying these rules from the inputs upward keeps every mandatory axis,
 and every retained axis comes from an input in the subtree. At the root,
 the remaining axes must be exactly those required by the LHS output:
 \begin{equation}
- P_{\mathrm{root}}=\operatorname{set}(F).
+ S_{\mathrm{root}}=\operatorname{set}(F).
  \label{eq:root-live}
 \end{equation}
 Extra axes may survive intermediate nodes, but none may remain in the final
 output. Appendix~\ref{app:canonical-axes-example} provides a concrete example
 of how these axis sets are computed for batched matrix multiplication
-followed by a row sum, including a case where $M_v\subsetneq P_v$.
+followed by a row sum, including a case where $M_v\subsetneq S_v$.
 
 \subsection{Why the Canonical Choice Does Not Lose Solutions}
 \label{sec:canonicalization}
@@ -86,17 +85,17 @@ intermediate axes can be named using LHS classes.
 
 \begin{lemma}[Canonicalization preserves feasibility]
 \label{lem:canonicalization}
-Under Section~\ref{sec:formal-scope}'s assumptions, with every input axis
+Under Section~\ref{sec:formal-scope}'s assumptions, with every input dimension
 having extent at least two, if a valid assignment $\beta$ exists, a valid
 assignment $\beta'$ exists with
 \begin{equation}
  \forall v,\qquad
- \operatorname{Ord}_v(\beta')=\operatorname{Ord}_v(\beta)|_{P_v}.
+ \operatorname{Ord}_v(\beta')=\operatorname{Ord}_v(\beta)|_{S_v}.
  \label{eq:canonicalization}
 \end{equation}
 \end{lemma}
 The lemma guarantees that whenever a valid assignment exists, one also
-exists that keeps exactly $P_v$ at each node while preserving the relative
+exists that keeps exactly $S_v$ at each node while preserving the relative
 order of retained axes.
 
 For example, let $A,B$ have shape $[2]$ and consider the RHS
@@ -132,13 +131,13 @@ not adjacency: $(i_1,x,i_2)$ satisfies the requirement $(i_1,i_2)$.
 Following D3, each node computes a Boolean ordering check $C_v$ and passes
 ordering requirements to its children. At an input, the check is
 $C_v=[Req_v\preceq I_v]$, since its axis order is fixed.
-Appendix~\ref{app:ordering-rules} gives the operation-specific checks and
+Appendix~\ref{app:operation-construction-rules} gives the operation-specific checks and
 propagation rules.
 
 Combining the local checks with the root live-set check gives
 \begin{equation}
  \operatorname{check}(p)
- =[P_{\mathrm{root}}=\operatorname{set}(F)]
+ =[S_{\mathrm{root}}=\operatorname{set}(F)]
  \land\bigwedge_{v\in V_R}C_v.
 \label{eq:feasibility}
 \end{equation}
@@ -150,8 +149,9 @@ classes, input orders, and target output order.
 
 In TEPL, the rule's \code{where} condition (Section~\ref{sec:where}) must
 imply $\operatorname{check}(p)$ for every legal LHS match within this
-fragment. Section~\ref{sec:condition-suggestions} explains how TEPL verifies
-this requirement and suggests additional conditions.
+fragment. Sections~\ref{sec:compilation-scope} and~\ref{sec:candidate-validation}
+describe the acceptance paths; Appendix~\ref{app:condition-suggestions}
+gives the condition-suggestion procedure.
 
 \subsection{Constructing Attributes}
 \label{sec:formal-construction}
@@ -162,15 +162,15 @@ in three steps.
 
 \noindent\textbf{Construct an output order.}
 At each node $v$, we construct an output order $\operatorname{Ord}_v$
-that contains exactly the axes in $P_v$ and satisfies the required
+that contains exactly the axes in $S_v$ and satisfies the required
 relative order $Req_v$:
 \begin{equation}
- \operatorname{set}(\operatorname{Ord}_v)=P_v,
+ \operatorname{set}(\operatorname{Ord}_v)=S_v,
  \qquad Req_v\preceq\operatorname{Ord}_v.
  \label{eq:order-invariant}
 \end{equation}
 The construction follows the child output orders and the operation's
-rules under D2--D3. Appendix~\ref{app:attribute-construction-rules}
+rules under D2--D3. Appendix~\ref{app:operation-construction-rules}
 gives the operation-specific constructions.
 
 \noindent\textbf{Convert axes to positions.}

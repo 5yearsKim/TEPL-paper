@@ -1,0 +1,11 @@
+SemanticRule expr_minimum_nested_right
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: min(align[n4:lhs](Input(#0)), align[n4:rhs](min(align[n3:lhs](Input(#0)), align[n3:rhs](Input(#1)))))
+      rhs-graph: min(align[n7:lhs](Input(#0)), align[n7:rhs](Input(#1)))
+      declared-conditions: true
+      additional-guard: unresolved
+      reason: core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+error: cannot verify rule 'expr_minimum_nested_right': core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

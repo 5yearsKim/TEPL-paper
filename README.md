@@ -40,6 +40,9 @@ them with `\cite{key}`. The build runs BibTeX once citations are present.
 Use `make -B` to force a rebuild, `make clean` to remove auxiliary files,
 or `make clean-all` to also remove the generated paper PDF.
 
+`make` also builds `supplement.pdf`, cited by the paper. It contains declaration
+sketches, a worked token-counting procedure, and the complete 15-row certified scalability table.
+
 ## Code and figure layout
 
 Write code directly in `lstlisting`; do not wrap it in a float or minipage.
@@ -88,7 +91,8 @@ of `draft/complete_attribute_synthesis_proof_kr.md`.
 - `sections/04b-mathematical-synthesis.tex`: canonical axes, ordering, construction.
 - `sections/04c-formal-correctness.tex`: full correctness and completeness proofs.
 - `sections/05-method.tex`: symbolic mapping and metadata programs.
-- `sections/05e-tepl-integration.tex`: adapters, symbolic correspondence, conditions, and broader operations.
+- `sections/05e-tepl-integration.tex`: core semantic validation and condition suggestions.
+- `sections/05d-correctness.tex`: metadata logic, definedness, validation algorithm, and core soundness theorem.
 - `draft/proof_integration_map.json`: content-preservation and notation checklist.
 
 The appendices follow the main paper's progression and use the same notation:
@@ -98,10 +102,47 @@ The appendices follow the main paper's progression and use the same notation:
   retained axes example, canonicalization, and correctness and completeness.
 - **B. Symbolic Compilation Details**
   (`sections/appendix-compilation.tex`): Axes IR, mapping and synthesis
-  derivations and algorithms, and operation declaration adapters.
-- **C. Scalability Evaluation** (`sections/appendix-scalability.tex`):
-  experimental setup, results, and measurement limits.
+  derivations and algorithms, operation declaration adapters, and the core
+  validation calculus and supporting proofs (`sections/appendix-validation.tex`).
+- **C. Current Evaluation Protocol and Evidence**
+  (`sections/appendix-current-evaluation.tex`): coverage, specification-size
+  accounting and implementation checks.
 
-The 20-page reduction is deferred; this version is the content-complete draft.
+The active draft consolidates repeated guarantee explanations and reassociation derivations; detailed protocols and module correspondence remain in the appendix. The historical selected-results appendix is retained on disk and in the artifact but omitted from the PDF.
 `draft/paper_outline.md` records the older shortened structure and is not the
 outline of the expanded draft.
+
+## Current evaluation artifacts
+
+`evaluation/README.md` maps the retained evidence to the active paper and
+supplement. Experiments omitted from the current paper have been removed,
+including superseded coverage runs, the explicit/automatic outcome study,
+external TASO tests, target screening, the old transpose-folding integration,
+and historical default-backend scalability and native metadata timing.
+
+- `evaluation/unified-construction/`: Section 9.1 and Appendix C coverage and validation.
+- `evaluation/xla-rewrite-count/` and `evaluation/xla-rewrite-count-models/`:
+  the four workload counts in Table 5 and their semantic review.
+- `evaluation/current/specification_size/`: Section 9.3 and Table 6 token accounting.
+- `evaluation/certified-scalability/`: Figure 7, Section 9.4 and Supplement S3.
+- `evaluation/reassociation/`: Appendix B's recorded implementation example.
+- `evaluation/source-line-count/`: the introduction's 269-line XLA example.
+- `evaluation/supplementary-materials/`: explanatory source snapshots cited by the appendix.
+
+`evaluation/recorded-results.json` retains the frozen 123-case input inventory
+needed by the coverage runner. Shared scalability rule inputs and the dialect
+are retained with the certified experiment. The workload-count package retains
+its ResNet baseline and original workflow provenance without the unused workflow
+experiment.
+
+Regenerate Figure 7 from saved measurements without rerunning compilation:
+
+```sh
+python3 tools/plot_current_scalability.py
+```
+
+Reproduction commands and measurement limits accompany each retained experiment.
+The four-workload counting artifacts record native XLA application counts and
+semantic classifications; they do not establish TEPL delegation or numerical
+output agreement. The current prose's 28-test integration and output-agreement
+claims require separate evidence beyond these count-only artifacts.

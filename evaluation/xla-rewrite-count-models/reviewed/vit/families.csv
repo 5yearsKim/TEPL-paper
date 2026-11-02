@@ -1,0 +1,10 @@
+family,rule_variants,applications
+add,1,1
+broadcast,5,741
+constant,1,1
+divide,2,87
+dot,1,1
+reduce,2,13
+reshape,3,837
+select,1,25
+transpose,1,144

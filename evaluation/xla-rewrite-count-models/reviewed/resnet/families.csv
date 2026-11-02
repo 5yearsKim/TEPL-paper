@@ -1,0 +1,6 @@
+family,rule_variants,applications
+broadcast,4,487
+convolution,1,1
+divide,2,2
+dot,1,1
+reshape,2,536

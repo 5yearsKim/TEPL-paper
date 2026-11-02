@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="tests/cpp_codegen_test" tests="1" failures="0" errors="0">
+    <testcase name="tests/cpp_codegen_test" status="run" duration="824" time="824"></testcase>
+      <system-out>
+Generated test.log (if the file is not UTF-8, then this may be unreadable):
+<![CDATA[exec ${PAGER:-/usr/bin/less} "$0" || exit 1
+Executing tests from //tests:cpp_codegen_test
+-----------------------------------------------------------------------------
+Checking C++ generation with g++ -O0
+Checking C++ generation with g++ -O2
+C++ code generation passed with g++
+Checking C++ generation with clang++ -O0
+Checking C++ generation with clang++ -O2
+C++ code generation passed with clang++
+generated output differs: program.h]]>
+      </system-out>
+    </testsuite>
+</testsuites>

@@ -1,0 +1,572 @@
+[
+  {
+    "case_id": "chain_automatic_1",
+    "phase": "check",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "check",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/inputs/chain_automatic_1.tepl",
+      "--certified",
+      "--semantic-policy",
+      "algebraic"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "chain_automatic_1",
+    "phase": "compile",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "compile",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/inputs/chain_automatic_1.tepl",
+      "--certified",
+      "--semantic-policy",
+      "algebraic",
+      "-o",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/programs/chain_automatic_1.cli.json"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "chain_automatic_1",
+    "phase": "validate",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "validate",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/programs/chain_automatic_1.cli.json"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "chain_automatic_2",
+    "phase": "check",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "check",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/inputs/chain_automatic_2.tepl",
+      "--certified",
+      "--semantic-policy",
+      "algebraic"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "chain_automatic_2",
+    "phase": "compile",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "compile",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/inputs/chain_automatic_2.tepl",
+      "--certified",
+      "--semantic-policy",
+      "algebraic",
+      "-o",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/programs/chain_automatic_2.cli.json"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "chain_automatic_2",
+    "phase": "validate",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "validate",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/programs/chain_automatic_2.cli.json"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "chain_automatic_3",
+    "phase": "check",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "check",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/inputs/chain_automatic_3.tepl",
+      "--certified",
+      "--semantic-policy",
+      "algebraic"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "chain_automatic_3",
+    "phase": "compile",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "compile",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/inputs/chain_automatic_3.tepl",
+      "--certified",
+      "--semantic-policy",
+      "algebraic",
+      "-o",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/programs/chain_automatic_3.cli.json"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "chain_automatic_3",
+    "phase": "validate",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "validate",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/programs/chain_automatic_3.cli.json"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "chain_automatic_4",
+    "phase": "check",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "check",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/inputs/chain_automatic_4.tepl",
+      "--certified",
+      "--semantic-policy",
+      "algebraic"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "chain_automatic_4",
+    "phase": "compile",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "compile",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/inputs/chain_automatic_4.tepl",
+      "--certified",
+      "--semantic-policy",
+      "algebraic",
+      "-o",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/programs/chain_automatic_4.cli.json"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "chain_automatic_4",
+    "phase": "validate",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "validate",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/programs/chain_automatic_4.cli.json"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "chain_automatic_5",
+    "phase": "check",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "check",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/inputs/chain_automatic_5.tepl",
+      "--certified",
+      "--semantic-policy",
+      "algebraic"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "chain_automatic_5",
+    "phase": "compile",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "compile",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/inputs/chain_automatic_5.tepl",
+      "--certified",
+      "--semantic-policy",
+      "algebraic",
+      "-o",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/programs/chain_automatic_5.cli.json"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "chain_automatic_5",
+    "phase": "validate",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "validate",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/programs/chain_automatic_5.cli.json"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "chain_automatic_6",
+    "phase": "check",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "check",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/inputs/chain_automatic_6.tepl",
+      "--certified",
+      "--semantic-policy",
+      "algebraic"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "chain_automatic_6",
+    "phase": "compile",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "compile",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/inputs/chain_automatic_6.tepl",
+      "--certified",
+      "--semantic-policy",
+      "algebraic",
+      "-o",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/programs/chain_automatic_6.cli.json"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "chain_automatic_6",
+    "phase": "validate",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "validate",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/programs/chain_automatic_6.cli.json"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "chain_automatic_7",
+    "phase": "check",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "check",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/inputs/chain_automatic_7.tepl",
+      "--certified",
+      "--semantic-policy",
+      "algebraic"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "chain_automatic_7",
+    "phase": "compile",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "compile",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/inputs/chain_automatic_7.tepl",
+      "--certified",
+      "--semantic-policy",
+      "algebraic",
+      "-o",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/programs/chain_automatic_7.cli.json"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "chain_automatic_7",
+    "phase": "validate",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "validate",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/programs/chain_automatic_7.cli.json"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "chain_automatic_8",
+    "phase": "check",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "check",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/inputs/chain_automatic_8.tepl",
+      "--certified",
+      "--semantic-policy",
+      "algebraic"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "chain_automatic_8",
+    "phase": "compile",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "compile",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/inputs/chain_automatic_8.tepl",
+      "--certified",
+      "--semantic-policy",
+      "algebraic",
+      "-o",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/programs/chain_automatic_8.cli.json"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "chain_automatic_8",
+    "phase": "validate",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "validate",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/programs/chain_automatic_8.cli.json"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "chain_automatic_9",
+    "phase": "check",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "check",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/inputs/chain_automatic_9.tepl",
+      "--certified",
+      "--semantic-policy",
+      "algebraic"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "chain_automatic_9",
+    "phase": "compile",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "compile",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/inputs/chain_automatic_9.tepl",
+      "--certified",
+      "--semantic-policy",
+      "algebraic",
+      "-o",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/programs/chain_automatic_9.cli.json"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "chain_automatic_9",
+    "phase": "validate",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "validate",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/programs/chain_automatic_9.cli.json"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "chain_automatic_10",
+    "phase": "check",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "check",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/inputs/chain_automatic_10.tepl",
+      "--certified",
+      "--semantic-policy",
+      "algebraic"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "chain_automatic_10",
+    "phase": "compile",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "compile",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/inputs/chain_automatic_10.tepl",
+      "--certified",
+      "--semantic-policy",
+      "algebraic",
+      "-o",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/programs/chain_automatic_10.cli.json"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "chain_automatic_10",
+    "phase": "validate",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "validate",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/programs/chain_automatic_10.cli.json"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "rank_2_automatic",
+    "phase": "check",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "check",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/inputs/rank_2_automatic.tepl",
+      "--certified",
+      "--semantic-policy",
+      "algebraic"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "rank_2_automatic",
+    "phase": "compile",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "compile",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/inputs/rank_2_automatic.tepl",
+      "--certified",
+      "--semantic-policy",
+      "algebraic",
+      "-o",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/programs/rank_2_automatic.cli.json"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "rank_2_automatic",
+    "phase": "validate",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "validate",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/programs/rank_2_automatic.cli.json"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "rank_4_automatic",
+    "phase": "check",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "check",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/inputs/rank_4_automatic.tepl",
+      "--certified",
+      "--semantic-policy",
+      "algebraic"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "rank_4_automatic",
+    "phase": "compile",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "compile",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/inputs/rank_4_automatic.tepl",
+      "--certified",
+      "--semantic-policy",
+      "algebraic",
+      "-o",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/programs/rank_4_automatic.cli.json"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "rank_4_automatic",
+    "phase": "validate",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "validate",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/programs/rank_4_automatic.cli.json"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "rank_8_automatic",
+    "phase": "check",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "check",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/inputs/rank_8_automatic.tepl",
+      "--certified",
+      "--semantic-policy",
+      "algebraic"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "rank_8_automatic",
+    "phase": "compile",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "compile",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/inputs/rank_8_automatic.tepl",
+      "--certified",
+      "--semantic-policy",
+      "algebraic",
+      "-o",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/programs/rank_8_automatic.cli.json"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "rank_8_automatic",
+    "phase": "validate",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "validate",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/programs/rank_8_automatic.cli.json"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "rank_16_automatic",
+    "phase": "check",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "check",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/inputs/rank_16_automatic.tepl",
+      "--certified",
+      "--semantic-policy",
+      "algebraic"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "rank_16_automatic",
+    "phase": "compile",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "compile",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/inputs/rank_16_automatic.tepl",
+      "--certified",
+      "--semantic-policy",
+      "algebraic",
+      "-o",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/programs/rank_16_automatic.cli.json"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "rank_16_automatic",
+    "phase": "validate",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "validate",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/programs/rank_16_automatic.cli.json"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "rank_32_automatic",
+    "phase": "check",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "check",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/inputs/rank_32_automatic.tepl",
+      "--certified",
+      "--semantic-policy",
+      "algebraic"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "rank_32_automatic",
+    "phase": "compile",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "compile",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/inputs/rank_32_automatic.tepl",
+      "--certified",
+      "--semantic-policy",
+      "algebraic",
+      "-o",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/programs/rank_32_automatic.cli.json"
+    ],
+    "returncode": 0
+  },
+  {
+    "case_id": "rank_32_automatic",
+    "phase": "validate",
+    "argv": [
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/bin/tepl",
+      "validate",
+      "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/programs/rank_32_automatic.cli.json"
+    ],
+    "returncode": 0
+  }
+]

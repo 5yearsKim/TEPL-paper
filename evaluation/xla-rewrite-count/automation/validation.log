@@ -1,0 +1,9 @@
+......
+----------------------------------------------------------------------
+Ran 6 tests in 0.005s
+
+OK
+test: 33 distinct variants; 204 applications
+Semantic model coverage (direct + unit-view candidates): 20/33 variants
+Semantic variants: direct=14, unit_view_candidate=6, conditional=6, outside=6, unreviewed=1
+Review queue: 1 unseen/stale variants. These are not auto-classified as supported.

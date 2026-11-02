@@ -1,0 +1,12 @@
+\begin{table}[!htbp]
+\caption{Full XLA CPU compilation with the selected transpose/dot rules. Counts are folded operands in \code{TransposeFolding}. HLO compares both the pass output and final optimized graph; values compare three input sets. Compilation change is the median [min,max] of ten paired rounds, including fresh TEPL program loading.}
+\label{tab:xla-workflow}
+\small
+\begin{tabularx}{\linewidth}{@{}Yrrrrr@{}}\toprule
+Workload & Batch & TEPL / baseline & HLO & Values & Compile change (\%)\\\midrule
+TransformerLM & 1 & 0 / 0 & = & 3/3 & \shortstack[r]{21.6\\[-2pt]{\scriptsize[8.9,35.5]}}\\
+TransformerLM & 4 & 1 / 1 & = & 3/3 & \shortstack[r]{9.4\\[-2pt]{\scriptsize[3.1,28.0]}}\\
+DLRM training & 6,272 & 4 / 4 & = & 3/3 & \shortstack[r]{6.5\\[-2pt]{\scriptsize[-2.7,18.1]}}\\
+ResNet-50 & 1 & 0 / 0 & = & 3/3 & \shortstack[r]{7.6\\[-2pt]{\scriptsize[-1.8,22.7]}}\\
+\bottomrule\end{tabularx}
+\end{table}

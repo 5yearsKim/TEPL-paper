@@ -1,0 +1,13 @@
+SemanticRule expr_slice_reverse_general
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: Read(input, IndexOffset(attrs.starts, IndexScale(attrs.strides, Coords(O)))) over Read(input, IndexReverse(Coords(S), attrs.dimensions)) over Input(#0)
+      rhs-graph: Read(input, IndexReverse(Coords(S), attrs.dimensions)) over Read(input, IndexOffset(attrs.starts, IndexScale(attrs.strides, Coords(O)))) over Input(#0)
+      declared-conditions:
+        >=(len(shape(Input(#0))), 0)
+        all(sequence_map(attr_s.attrs.sizes, sequence_variable(0), >(sequence_variable(0), 0)))
+      additional-guard: unresolved
+      reason: core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+error: cannot verify rule 'expr_slice_reverse_general': core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

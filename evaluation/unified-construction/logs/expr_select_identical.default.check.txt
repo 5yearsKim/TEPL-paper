@@ -1,0 +1,21 @@
+SemanticRule expr_select_identical
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: select(align[n3:pred](Input(#0)), align[n3:lhs](Input(#1)), align[n3:rhs](Input(#1)))
+      rhs-graph: Input(#1)
+      law: scalar-select-identical
+      verified: capture access + reduction domains + ordered axes + shape + dtype + legality
+      lhs-normalized: Read(#1, access@1)
+      rhs-normalized: Read(#1, access@4)
+      declared-conditions: true
+      additional-guard: true
+      reason: valid for all legal LHS metadata satisfying the declared conditions under the selected arithmetic policy
+      coordinate frame (fresh identities; domain lengths remain symbolic):
+        input0 = group(extents=shape(Input(#0)))
+        input1 = group(extents=shape(Input(#1)))
+        input2 = group(extents=shape(Input(#1)))
+        n3.S = group(extents=shape(Input(#0)))
+        access@1 = gather(n3.S, range(len(shape(Input(#1)))))
+        access@4 = gather(n3.S, range(len(shape(Input(#1)))))
+        lhs-output = n3.S
+        rhs-output = gather(n3.S, range(len(shape(Input(#1)))))
+

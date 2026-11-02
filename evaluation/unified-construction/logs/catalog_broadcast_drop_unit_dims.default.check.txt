@@ -1,0 +1,26 @@
+SemanticRule catalog_broadcast_drop_unit_dims
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: align[n1:input](Input(#0))
+      rhs-graph: align[n4:input](Reduce(n3.U, align[n3:input](Input(#0))))
+      law: axis-insertion
+      law: singleton-reduction
+      verified: capture access + reduction domains + ordered axes + shape + dtype + legality
+      lhs-normalized: Read(#0, access@0)
+      rhs-normalized: Read(#0, access@2)
+      constructor auto#2:
+        dimensions = [1]
+        new_extents = concat([1], attr_b.attrs.new_extents)
+      declared-conditions:
+        ==(len(shape(Input(#0))), 2)
+        &&(==(index(shape(Input(#0)), 0), 1), ==(attr_b.attrs.dimensions, [0, 1]))
+      additional-guard: true
+      reason: valid for all legal LHS metadata satisfying the declared conditions under the selected arithmetic policy
+      coordinate frame (fresh identities; domain lengths remain symbolic):
+        input0 = group(extents=shape(Input(#0)))
+        n1.S = group(extents=shape(Input(#0)))
+        n1.N = group(extents=attr_b.attrs.new_extents)
+        access@0 = n1.S
+        access@2 = n1.S
+        lhs-output = concat(n1.S, n1.N)
+        rhs-output = place_axes(gather(n1.S, [1]), [1], concat(gather(n1.S, [0]), n1.N))
+

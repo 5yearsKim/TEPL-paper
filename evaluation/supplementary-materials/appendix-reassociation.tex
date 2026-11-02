@@ -1,0 +1,71 @@
+\subsection{Recorded Reassociation Program}
+\label{app:reassociation-record}
+This case connects the mathematical validation in
+Proposition~\ref{prop:reassociation-program} to an emitted attribute program.
+The source below has symbolic shape lists and omits all eight RHS axis
+fields. The first condition preserves the ordered source batch group;
+the second is the explicit representability bound used in the proposition.
+The operation declaration is the generalized dot contract of
+Listing~\ref{lst:dot-declaration}.
+
+\lstinputlisting[language=TEPL,firstline=51,
+caption={The exact rule used for the reassociation case study.},
+label={lst:reassociation-case}]{evaluation/reassociation/reassociate.tepl}
+
+\paragraph{Generated expressions.}
+The compiler prints the outer replacement as \code{auto#2} and the inner
+replacement as \code{auto#3}. Table~\ref{tab:reassociation-temporaries}
+relates its temporaries to Equation~\eqref{eq:batched-program-locals}.
+\code{match_positions} is a presentation of paired overlap selection;
+its left/right fields are $u_G,v_G$. For the queries below, inclusion
+proved in Proposition~\ref{prop:reassociation-program} makes
+\code{matched_positions(query, domain)} equal to
+$\pos(\mathit{domain},\mathit{query})$.
+
+\begin{table}[!htbp]
+\caption{Correspondence with the recorded compiler output.}
+\label{tab:reassociation-temporaries}
+\small
+\begin{tabularx}{\linewidth}{@{}lY@{}}\toprule
+Printed temporary & Paper expression\\\midrule
+\code{m0}, \code{m2} & $i_X$, $j_Y$\\
+\code{p0}, \code{p1} & $(u_I,v_I)$, $(u_J,v_J)$\\
+\code{m4} & $b_Z\Vert z_J$\\
+\code{m5} & $f_Y$\\
+\code{m6} & $b+|f_Y|+\operatorname{range}(|f_Z|)$\\
+\code{m7} & $\pos(f_Z,z_I)$\\
+\code{m8} & $\gath(b+\operatorname{range}(|f_Y|),\pos(f_Y,k_Y))=s_K$\\\bottomrule
+\end{tabularx}
+\end{table}
+
+In particular, the emitted outer right-contraction list is
+\code{concat(gather(m6, m7), m8)}. The entrywise identity
+\begin{equation}
+ \gath(c+\operatorname{range}(n),q)=c+q
+ \qquad\text{for an in-range selector }q
+ \label{eq:shifted-range-selection}
+\end{equation}
+reduces it to $s_I\Vert s_K$, exactly the expression in
+Table~\ref{tab:reassociation-program}. Both sides have entry $c+q_j$;
+the guard bounds these integers. The remaining six direct source/selection
+fields and the inner right-contraction field $z_J$ are as displayed in
+that table. No inferred RHS field is treated as an input to another
+attribute program.
+
+\paragraph{Recorded execution.}
+The run on 2026-10-31 used compiler SHA-256 prefix
+\code{7ca6db6c4895}. Semantic checking with the algebraic policy returned
+\code{Proved} and \code{additional-guard: true}; executable compilation
+and serialized-program validation both exited successfully. The source,
+complete compiler output, compiled JSON, command outcomes, full hashes,
+checkout revision, and tracked implementation changes are retained in
+\code{evaluation/reassociation/}. This is a separate case study, not an
+additional success in the historical XLA totals.
+
+The recorded normalized forms contain the same three input reads and
+reduce $\vec D\Vert \vec K$ on the LHS versus $\Isel\Vert \vec K\Vert\Jsel$ on the RHS.
+The proof in Appendix~\ref{app:reassociation-proof} supplies the
+extent-preserving coordinate bijection and the ordered-output argument.
+The emitted-program correspondence and this explicit derivation justify
+the case study; the diagnostic trace is not an independently checked
+certificate for all implementation reasoning.

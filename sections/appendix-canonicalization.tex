@@ -1,28 +1,28 @@
 \subsection{Canonicalization Preserves Feasibility}
 \label{app:canonicalization-proof}
 We prove Lemma~\ref{lem:canonicalization} under the assumptions of
-Section~\ref{sec:formal-scope}, with every input axis having extent at least
+Section~\ref{sec:formal-scope}, with every input dimension having extent at least
 two, as required by Lemma~\ref{lem:axis-exactness}. We use the retained-axis
-and contraction-role rules in Appendix~\ref{app:canonical-axis-rules}.
+and contraction-role rules in Appendix~\ref{app:operation-construction-rules}.
 Start with a valid attribute assignment
 $\beta$. By Lemma~\ref{lem:axis-exactness}, its axes can be identified
 with the LHS logical axes.
 
 \subsubsection{Proof Plan}
 We construct $\beta'$ from the inputs toward the root. At each node $v$,
-we show that $P_v$ is a subset of the original output axes and that legal
+we show that $S_v$ is a subset of the original output axes and that legal
 attributes can produce exactly
 \begin{equation}
- \operatorname{Ord}_v(\beta')=\operatorname{Ord}_v(\beta)|_{P_v}.
+ \operatorname{Ord}_v(\beta')=\operatorname{Ord}_v(\beta)|_{S_v}.
 \end{equation}
-In words, we delete axes outside $P_v$ without changing the order of those
+In words, we delete axes outside $S_v$ without changing the order of those
 that remain. Every mandatory axis must also survive under $\beta$:
 once removed, it cannot connect to another input or reach the final output.
 
 \subsubsection{Constructing Attributes at Each Node}
 \paragraph{Inputs and unary operations.}
 Inputs stay unchanged. A permutation can arrange its retained axes in
-the required order. A unary summation keeps $P_v=P_u\cap M_v$ and sums
+the required order. A unary summation keeps $S_v=S_u\cap M_v$ and sums
 out the others. These mandatory axes also survive under $\beta$, and
 summation preserves their order.
 
@@ -31,7 +31,7 @@ Assume the construction holds for both children $\ell,r$.
 There are three points to check:
 \begin{enumerate}
 \item \emph{Shared axes must connect here.}
-An axis in $P_\ell\cap P_r$ occurs in both original children.
+An axis in $S_\ell\cap S_r$ occurs in both original children.
 Under $\beta$, these occurrences must be paired at this contraction;
 otherwise they become separate axes in one subtree and cannot be joined
 later.
@@ -43,17 +43,17 @@ it as batch and sums it out later.
 D2 permits this change of axis roles and the corresponding changes to
 position lists.
 \item \emph{Free axes remain free.}
-Suppose a left-free axis $a\in P_\ell\setminus P_r$ appeared in the
+Suppose a left-free axis $a\in S_\ell\setminus S_r$ appeared in the
 original right child. Since it connects inputs in both children,
-it would be mandatory in the right child and hence belong to $P_r$,
+it would be mandatory in the right child and hence belong to $S_r$,
 a contradiction. Thus it was left-free under $\beta$ too.
 The right-free case is identical.
 \end{enumerate}
-Therefore every axis in $P_v=B_v\cup LF_v\cup RF_v$ survives in the
+Therefore every axis in $S_v=B_v\cup LF_v\cup RF_v$ survives in the
 original output with the same role. Keep the original relative order
 of batch axes, pair contraction axes in the same order on both sides,
 and inherit the retained free-axis orders from the children.
-This produces exactly the original output order restricted to $P_v$.
+This produces exactly the original output order restricted to $S_v$.
 The attributes are legal: positions are distinct, batch and contraction
 axes are disjoint, and paired axes have equal extents.
 
@@ -66,7 +66,7 @@ are unchanged.
 At the root, the mandatory axes and the original output axes are both
 $\operatorname{set}(F)$. The subset property above gives
 \begin{equation}
- \operatorname{set}(F)\subseteq P_{\mathrm{root}}
+ \operatorname{set}(F)\subseteq S_{\mathrm{root}}
  \subseteq\operatorname{set}(F).
 \end{equation}
 Hence the root keeps exactly those axes, in the original order $F$.

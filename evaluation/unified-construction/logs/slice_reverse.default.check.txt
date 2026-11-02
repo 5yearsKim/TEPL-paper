@@ -1,0 +1,18 @@
+SemanticRule slice_reverse
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: Read(input, IndexOffset(attrs.starts, IndexScale(attrs.strides, Coords(O)))) over Read(input, IndexReverse(Coords(S), attrs.dimensions)) over Input(#0)
+      rhs-graph: Read(input, IndexReverse(Coords(S), attrs.dimensions)) over Read(input, IndexOffset(attrs.starts, IndexScale(attrs.strides, Coords(O)))) over Input(#0)
+      law: index-reverse-normalization
+      law: index-add-normalization
+      law: index-substitution
+      law: index-scale-normalization
+      law: index-offset-normalization
+      declared-conditions:
+        ==(len(shape(Input(#0))), 1)
+        &&(==(attr_r.attrs.dimensions, [0]), ==(attr_s.attrs.strides, [1]))
+      additional-guard: unresolved
+      reason: metadata definedness: derived metadata is not established within its attribute type
+error: cannot verify rule 'slice_reverse': metadata definedness: derived metadata is not established within its attribute type
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

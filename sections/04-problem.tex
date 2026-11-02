@@ -26,6 +26,8 @@ constructs the unknown RHS axis fields. We use the following notation throughout
 \label{eq:metadata}
 \end{equation}
 Metadata $p$ is concrete at a match and makes every LHS operation legal.
+Scalar types are fixed in the exact-real fragment; for typed validation,
+$p$ also carries captured dtypes.
 Writing $X=(X_1,\ldots,X_n)$ for the input values, the two computations are
 $L_p(X)$ and $R_{p,\beta}(X)$. An attribute program reads $p$, never the
 entries of $X$.
@@ -47,17 +49,21 @@ over all tensor values with the input shapes specified by $p$. We define
 \label{eq:valid}
 \end{equation}
 Thus, valid attributes make the RHS legal and preserve both the ordered
-output shape and the values for every compatible input.
+output shape and the values for every compatible input. In typed validation,
+$\operatorname{Legal}_R$ also requires the declared dtype contracts and
+agreement with the source result dtype.
 
-Synthesis chooses only the unknown axis fields using metadata $p$ and
-preserves the supplied fields. Supplied expressions must be defined.
+Synthesis fills unknown axis fields from metadata $p$ and preserves supplied
+fields. This language contract does not imply mixed-mode completeness.
+Supplied expressions must be defined.
 The resulting $\beta$ must be correct for every compatible input value,
 so the quantifier order is $\exists\beta\,\forall X$.
 
 \subsection{What Must Synthesis Produce?}
 \label{sec:find}
-Our goal is to synthesize two reusable programs, \code{check} and
-\code{build}, from a symbolic rewrite. Given source metadata $p$,
+For fully automatic axis fields in Section~\ref{sec:formal-scope}'s fragment,
+we synthesize reusable programs \code{check} and \code{build}.
+Given source metadata $p$,
 \code{check} decides whether a valid RHS completion exists, and \code{build}
 constructs one whenever \code{check} succeeds. The programs
 must satisfy:
@@ -113,7 +119,7 @@ permutation cannot satisfy both.\\\bottomrule
 \end{table}
 
 \noindent\textbf{Operation declarations.}
-Each operation declares which input axes are connected, which are summed,
+Each operation declares which input dimensions are connected, which are summed,
 and the output order. For example, contraction pairs axes of equal extent
 from two inputs and multiplies entries at matching coordinates. Paired axes
 retained in the output are \emph{batch} axes; those summed out are
@@ -124,7 +130,7 @@ each operand, and the left and right lists pair axes in list order.
 
 \noindent\textbf{Input and rewrite assumptions.}
 \begin{itemize}
-\item Inputs have finite ranks, and every input axis has extent at least
+\item Inputs have finite ranks, and every input dimension has extent at least
 two; scalars are allowed.
 \item Input entries are independent real numbers, and all calculations are
 exact. Every LHS operation is legal.
@@ -139,10 +145,12 @@ different terms have different input sets, which may overlap.
 Captured LHS attributes retain their values when expressions are expanded;
 a shared RHS unknown must not be split into independent choices.
 
-The completeness theorem applies only to this fragment.
-The minimum-extent restriction limits the completeness guarantee, not
-the general validity definition or the TEPL contract.
-Section~\ref{sec:limitations} discusses cases outside its scope.
+Mixed explicit/inferred RHS axis fields are outside this completeness
+theorem. Within the validation calculus, Theorem~\ref{thm:validator-soundness}
+instead establishes soundness of accepted completed programs, including
+supplied fields. Zero and singleton extents are permitted by soundness
+(Theorems~\ref{thm:accepted-core} and~\ref{thm:validator-soundness}), but excluded
+from completeness. Section~\ref{sec:scope-limitations} details broader operation support.
 
 \subsection{The Contract Exposed by TEPL}
 \label{sec:contract}

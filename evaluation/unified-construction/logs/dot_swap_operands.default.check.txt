@@ -1,0 +1,44 @@
+SemanticRule dot_swap_operands
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: Reduce(n2.K, Product(align[n2:lhs](Input(#0)), align[n2:rhs](Input(#1))))
+      rhs-graph: align[n6:input](Reduce(n5.K, Product(align[n5:lhs](Input(#1)), align[n5:rhs](Input(#0)))))
+      law: commutative-matching
+      law: axis-map-restriction
+      verified: capture access + reduction domains + ordered axes + shape + dtype + legality
+      law: ordered-requirements-construction
+      lhs-normalized: Reduce(n2.K, Product(Read(#0, access@0), Read(#1, access@1)))
+      rhs-normalized: Reduce(n2.K, Product(Read(#1, access@3), Read(#0, access@4)))
+      constructor auto#1:
+        lhs_contracting_dimensions = attr_d.attrs.rhs_contracting_dimensions
+        rhs_contracting_dimensions = attr_d.attrs.lhs_contracting_dimensions
+        lhs_batching_dimensions = m0
+        rhs_batching_dimensions = m1
+      constructor auto#2:
+        permutation = m4
+      declared-conditions:
+        ==(len(shape(Input(#0))), 2)
+        ==(len(shape(Input(#1))), 2)
+        ==(index(shape(Input(#0)), 1), index(shape(Input(#1)), 0))
+        m6
+      additional-guard: true
+      reason: valid for all legal LHS metadata satisfying the declared conditions under the selected arithmetic policy
+      let m0 = gather(attr_d.attrs.rhs_batching_dimensions, order_positions(attr_d.attrs.rhs_batching_dimensions))
+      let m1 = gather(attr_d.attrs.lhs_batching_dimensions, order_positions(attr_d.attrs.rhs_batching_dimensions))
+      let m2 = ordered_complement(range(len(shape(Input(#0)))), concat(attr_d.attrs.lhs_batching_dimensions, attr_d.attrs.lhs_contracting_dimensions))
+      let m3 = ordered_complement(range(len(shape(Input(#1)))), concat(attr_d.attrs.rhs_batching_dimensions, attr_d.attrs.rhs_contracting_dimensions))
+      let m4 = concat(inverse(order_positions(attr_d.attrs.rhs_batching_dimensions)), offset_positions(range(len(m2)), +(len(attr_d.attrs.lhs_batching_dimensions), len(m3))), offset_positions(range(len(m3)), len(attr_d.attrs.lhs_batching_dimensions)))
+      let m5 = &&(==(attr_d.attrs.lhs_batching_dimensions, []), ==(attr_d.attrs.rhs_batching_dimensions, []))
+      let m6 = &&(&&(m5, ==(attr_d.attrs.lhs_contracting_dimensions, [1])), ==(attr_d.attrs.rhs_contracting_dimensions, [0]))
+      coordinate frame (fresh identities; domain lengths remain symbolic):
+        input0 = group(extents=shape(Input(#0)))
+        input1 = group(extents=shape(Input(#1)))
+        n2.K = group(extents=gather(shape(Input(#0)), [1]))
+        n2.I = group(extents=gather(shape(Input(#0)), [0]))
+        n2.J = group(extents=gather(shape(Input(#1)), [1]))
+        access@0 = gather(concat(n2.K, n2.I), [1, 0])
+        access@1 = gather(concat(n2.K, n2.J), [0, 1])
+        access@3 = gather(concat(n2.K, n2.J), [0, 1])
+        access@4 = gather(concat(n2.K, n2.I), [1, 0])
+        lhs-output = concat(n2.I, n2.J)
+        rhs-output = gather(concat(n2.J, gather(n2.I, [0])), [1, 0])
+

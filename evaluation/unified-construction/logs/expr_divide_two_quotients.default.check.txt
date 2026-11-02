@@ -1,0 +1,16 @@
+SemanticRule expr_divide_two_quotients
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: div(align[n6:lhs](div(align[n2:lhs](Input(#0)), align[n2:rhs](Input(#1)))), align[n6:rhs](div(align[n5:lhs](Input(#2)), align[n5:rhs](Input(#3)))))
+      rhs-graph: div(align[n13:lhs](Product(align[n9:lhs](Input(#0)), align[n9:rhs](Input(#3)))), align[n13:rhs](Product(align[n12:lhs](Input(#1)), align[n12:rhs](Input(#2)))))
+      law: ordered-axis-split
+      law: paired-axis-selection
+      law: ordered-partition-traversal
+      law: commutative-matching
+      law: axis-map-restriction
+      declared-conditions: true
+      additional-guard: unresolved
+      reason: normalized coefficients, tensor accesses, or reduction domains differ
+error: cannot verify rule 'expr_divide_two_quotients': normalized coefficients, tensor accesses, or reduction domains differ
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

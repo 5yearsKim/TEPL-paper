@@ -1,0 +1,12 @@
+SemanticRule reverse_cancel
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: Read(input, IndexReverse(Coords(S), attrs.dimensions)) over Read(input, IndexReverse(Coords(S), attrs.dimensions)) over Input(#0)
+      rhs-graph: Input(#0)
+      declared-conditions:
+        ==(attr_outer.attrs.dimensions, attr_inner.attrs.dimensions)
+      additional-guard: unresolved
+      reason: core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+error: cannot verify rule 'reverse_cancel': core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

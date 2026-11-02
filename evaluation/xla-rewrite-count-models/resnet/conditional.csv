@@ -1,0 +1,3 @@
+rule_id,family,description,function,original_line,applications,semantic_status,evidence,reason
+AS-5681,broadcast,permutation/subset of scalar broadcast -> broadcast,HandleBroadcast,5681,6,conditional,scalar_broadcast_transpose;scalar_broadcast_reverse,One source branch covers several indexing/permutation operations. Only modeled cases are supported; the event log does not identify the affected operation per application.
+AS-2590,divide,division by constant -> multiplication by reciprocal,operator(),2590,1,conditional,HLO.divide;HLO.multiply,"Arithmetic expressions are representable, but the source branch evaluates and materializes a reciprocal constant payload; general literal-value lowering is missing."

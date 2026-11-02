@@ -1,0 +1,9 @@
+SemanticRule double_negate
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: Product(Const(-1), align[n2:input](Product(Const(-1), align[n1:input](Input(#0)))))
+      rhs-graph: Input(#0)
+      verified: source-layout guard certificate and core emission theorem
+      declared-conditions: true
+      additional-guard: true
+      reason: core schema guard and supplied metadata certified; sound for all legal extents
+

@@ -1,0 +1,46 @@
+\subsubsection{Suggesting Applicability Conditions}
+\label{app:condition-suggestions}
+If TEPL cannot verify a rule under its declared condition, the compiler
+can suggest an additional condition $G(p)$, rerun synthesis, and verify
+the resulting program under the strengthened guard:
+\begin{equation}
+ \forall p,\quad \operatorname{Legal}_L(p)\land C(p)\land G(p)
+ \Rightarrow p\in\operatorname{dom}(f)\land\operatorname{Valid}(p,f(p)).
+ \label{eq:suggested-condition}
+\end{equation}
+TEPL checks that the suggested condition permits at least one legal
+match and guarantees correctness. The search may fail to find a
+condition or may find one stricter than necessary. The user must add
+the suggestion to \code{where} and check the rule again.
+
+The implemented search generates equalities between captured axis lists
+and producer batch or free-group positions, together with identity
+permutation restrictions. It tries single predicates and pairs from a
+bounded candidate set. Each trial reruns construction and validation in
+a fresh context under $C\land G$. A separate bounded concrete search
+must find legal source metadata satisfying that condition. The witness
+establishes nonvacuity; it is not evidence for universal correctness.
+Failed witness search yields no suggestion. Deleting a redundant predicate
+also requires fresh validation and a witness. The procedure claims neither
+a weakest condition nor completeness of condition discovery.
+
+For example, consider reassociation with omitted RHS attributes and no
+\code{where} block. Imports are omitted:
+\begin{lstlisting}[language=TEPL]
+rule reassociate { (source: dot (inner: dot A B) C) => (dot A (dot B C)) }
+\end{lstlisting}
+Algebraic associativity alone is insufficient for generalized dots:
+axis routing and output order also matter. Under an arithmetic policy
+permitting reassociation, a sufficient restriction for this example is
+\begin{lstlisting}[language=TEPL]
+where {
+  source.attrs.lhs_batching_dimensions == inner.axes.B.positions
+}
+\end{lstlisting}
+The condition requires the outer dot's left batch positions to match
+the positions of the inner dot's batch axes in its output, in the same
+order. Here \code{inner.axes.B} denotes the inner operation's batch
+group, not input tensor \code{B}. Appendix~\ref{extended:sec:partitioning} gives the batch-axis mappings.
+
+After the user adds this sufficient condition, TEPL reconstructs and
+validates the rule. Other valid matches may remain excluded.

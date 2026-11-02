@@ -26,10 +26,10 @@ one; if it fails, no valid assignment exists within the defined fragment.
 Thus the algorithm both finds a solution whenever possible and guarantees
 that the constructed replacement is legal and equivalent to the LHS.
 
-For TEPL, this provides a mathematical basis for delegating attribute
-construction to the compiler. When a rule's \code{where} condition ensures
-that \code{check} succeeds, the construction supplies valid RHS attributes
-for every legal match within the fragment.
-The theorem concerns the stated mathematical algorithm and contracts.
+When a rule's \code{where} condition implies \code{check}, the constructor
+supplies valid attributes for every legal match in this fragment.
+Theorem~\ref{thm:symbolic-compilation} realizes this constructor in the shared metadata program;
+Table~\ref{tab:guarantee-map} summarizes its relationship to guard certification,
+candidate validation, and broader implementation support.
 Appendix~\ref{app:completeness-proof}
 gives the necessity and sufficiency proofs and the extension to addition.

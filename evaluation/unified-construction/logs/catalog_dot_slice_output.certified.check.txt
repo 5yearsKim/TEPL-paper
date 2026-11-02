@@ -1,0 +1,17 @@
+SemanticRule catalog_dot_slice_output
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: Read(input, IndexOffset(attrs.starts, IndexScale(attrs.strides, Coords(O)))) over Reduce(n2.K, Product(align[n2:lhs](Input(#0)), align[n2:rhs](Input(#1))))
+      rhs-graph: Reduce(n8.K, Product(align[n8:lhs](Read(input, IndexOffset(attrs.starts, IndexScale(attrs.strides, Coords(O)))) over Input(#0)), align[n8:rhs](Read(input, IndexOffset(attrs.starts, IndexScale(attrs.strides, Coords(O)))) over Input(#1))))
+      declared-conditions:
+        ==(len(shape(Input(#0))), 2)
+        ==(len(shape(Input(#1))), 2)
+        ==(index(shape(Input(#0)), 1), index(shape(Input(#1)), 0))
+        m1
+      additional-guard: unresolved
+      reason: core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+      let m0 = &&(==(attr_d.attrs.lhs_batching_dimensions, []), ==(attr_d.attrs.rhs_batching_dimensions, []))
+      let m1 = &&(&&(m0, ==(attr_d.attrs.lhs_contracting_dimensions, [1])), ==(attr_d.attrs.rhs_contracting_dimensions, [0]))
+error: cannot verify rule 'catalog_dot_slice_output': core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

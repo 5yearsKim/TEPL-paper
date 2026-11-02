@@ -1,0 +1,103 @@
+\subsection{Symbolic Program Construction and Correspondence}
+\label{app:symbolic-compilation-proof}
+We prove Theorem~\ref{thm:symbolic-compilation} for admitted plans in
+Section~\ref{sec:formal-scope}. Admission checks the operation templates,
+read-once components, matching input sets, captured source fields, and
+independent unrestricted RHS fields. The proof starts after frontend
+preparation; it does not decide whether arbitrary operation declarations
+have equivalent meanings.
+
+\paragraph{Meaning of the program.}
+The program keeps axis membership separate from axis order. Sets are used
+only in set operations, membership tests, and as the membership argument
+of an ordered filter. Their enumeration order therefore cannot change an
+attribute. Filters preserve their input order; concatenation joins ordered
+lists. Position lookup requires a distinct operand axis list and distinct
+queried axes, all present in that operand. Each expression refers only to
+earlier expressions, whose values can be reused. All component checks are
+evaluated before any attribute builder; the checks use no partial position
+lookup.
+
+\begin{proof}[Proof of Theorem~\ref{thm:symbolic-compilation}]
+We establish three invariants by following the compiler's passes.
+
+\noindent\textbf{1. Source expressions represent the same axes and orders.}
+Replay follows Section~\ref{sec:axis-model}. Inputs introduce distinct
+ports. A permutation reorders them; a sum removes selected output axes
+without changing their identities. A contraction joins only the declared
+batch and contraction partners, checks paired extents, and records the
+batch/left-free/right-free output order. Thus induction over source
+operations gives the same logical axes and ordered interfaces as the
+mathematical model. Equal extents alone never identify axes. Additive
+components keep separate axis identities; source addition checks their
+ordered shapes.
+
+Mappings and partitions preserve this information. Gather composition
+selects the same entry $Q[q[h[j]]]$ on both sides of
+Equation~\eqref{eq:gather-composition}. In paired matching,
+$\gath(d_\ell,u_G)=\gath(q_G,v_G)$ selects the same axes, and applying
+$u_G$ to $d_r$ keeps their contraction partners. Selected positions and
+their ordered complement cover the group without overlap. Their orders
+are recorded explicitly; concatenating them need not restore the original
+order. These facts hold for every finite group length.
+
+\noindent\textbf{2. Generated checks equal the mathematical checks.}
+The inputs inside each RHS subtree are known at compile time, so
+Equation~\eqref{eq:emitted-mandatory} computes exactly $M_v$. Induction over
+the forward pass gives the same retained sets $S_v$: inputs keep their
+axes, permutations keep the child's set, sums intersect it with $M_v$,
+and contractions use Equation~\eqref{eq:canonical-roles}.
+
+The reverse pass starts with $F$ and computes the same $Req_v$ as
+Section~\ref{sec:ordering-feasibility}. Distinctness and inclusion check
+that requirements contain distinct available axes. At inputs, filtering
+the physical axis order by the required set and comparing with $Req_v$
+implements the subsequence check. At contractions, the check compares
+$Req_v$ with its batch/left-free/right-free parts in that order. The root
+check compares $S_{\mathrm{root}}$ with $\operatorname{set}(F)$.
+These total tests use only source information and the retained sets,
+never attribute builders. Their conjunction is
+$\operatorname{check}(p)$, proving Equation~\eqref{eq:emitted-check} even
+when construction is infeasible.
+
+\noindent\textbf{3. Successful checks give the same attributes.}
+Assume the checks pass. Induct over the RHS operations using
+Section~\ref{sec:formal-construction}'s construction. Inputs use their
+source orders. A permutation places $Req_v$ first and appends the other
+axes in child order. A sum selects the removed axes and preserves the
+survivors' order. A contraction extends the required batch order and
+chooses remaining batch and contraction axes in left-operand order,
+using the same contraction order in both operands. This is the tie rule
+$\tau$.
+
+The role sets and checks ensure that every queried axis has a unique
+position in its operand; source legality supplies paired extent equality.
+Thus the position lookups are defined and produce the same attributes as
+$\operatorname{build}_{\tau}(p)$. Each output contains exactly $S_v$ and
+satisfies $Req_v$; the root therefore has order $F$. Independent additive
+components combine as in Appendix~\ref{sec:addition-proof}. This proves
+Equation~\eqref{eq:emitted-build} without reproving Section~\ref{sec:formal-correctness}'s
+correctness of the mathematical construction.
+
+Finally, each pass appends finitely many expressions for a finite plan,
+including its finite component expansion. Emission needs neither concrete
+metadata, the written guard, nor successful simplification. Compilation
+therefore terminates with a finite program, subject to the theorem's
+resource and representation assumptions.
+\end{proof}
+
+\paragraph{Checked symbolic lowering.}
+Lowering rewrites this same program into source-attribute expressions.
+The mapping identities above and the meaning of each set and list
+operation preserve its feasibility checks and positional results.
+Membership sets may be reordered because their enumeration order is unused.
+Lowering may also reorder a contraction group in both operands by the same
+permutation. This changes the integer lists but only reindexes the finite
+sum, preserving paired reads, extents, values, and output order.
+The independent validator checks the completed candidate and original
+metadata expressions under the written guard
+(Theorem~\ref{thm:validator-soundness}); unproved construction goals are
+never assumptions. Failed lowering gives no expression-based acceptance
+and leaves the original program intact. Neither lowering nor guard proof
+search is claimed complete. Section~\ref{sec:implementation-scope} describes
+the implementation and its trusted components.

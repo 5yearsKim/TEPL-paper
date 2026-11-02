@@ -1,0 +1,11 @@
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+W0000 00:00:1793570714.126870  333103 hlo_module.cc:894] Invalid stack_frame_id 10
+W0000 00:00:1793570714.126921  333103 hlo_module.cc:894] Invalid stack_frame_id 20
+W0000 00:00:1793570714.126923  333103 hlo_module.cc:894] Invalid stack_frame_id 24
+W0000 00:00:1793570714.126924  333103 hlo_module.cc:894] Invalid stack_frame_id 24
+W0000 00:00:1793570714.126926  333103 hlo_module.cc:894] Invalid stack_frame_id 34
+W0000 00:00:1793570714.126927  333103 hlo_module.cc:894] Invalid stack_frame_id 38
+W0000 00:00:1793570714.126928  333103 hlo_module.cc:894] Invalid stack_frame_id 41
+W0000 00:00:1793570714.126930  333103 hlo_module.cc:894] Invalid stack_frame_id 45
+W0000 00:00:1793570714.126931  333103 hlo_module.cc:894] Invalid stack_frame_id 45
+W0000 00:00:1793570714.126932  333103 hlo_module.cc:894] Invalid stack_frame_id 45

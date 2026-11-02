@@ -1,0 +1,81 @@
+{
+  "distinct_rule_sites": 14,
+  "input": "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/xla-rewrite-count-models/gpt2/input.hlo",
+  "model_compilations": 1,
+  "pass_invocations": 7,
+  "rule_identity": "Outermost successful transformation branch, identified by function and original source line; equivalent branches remain separate variants",
+  "rules": [
+    {
+      "applications": 220,
+      "function": "HandleBroadcast",
+      "original_line": 5605
+    },
+    {
+      "applications": 110,
+      "function": "HandleBroadcast",
+      "original_line": 5645
+    },
+    {
+      "applications": 41,
+      "function": "HandleBroadcast",
+      "original_line": 5681
+    },
+    {
+      "applications": 24,
+      "function": "HandleBroadcast",
+      "original_line": 5690
+    },
+    {
+      "applications": 234,
+      "function": "HandleBroadcast",
+      "original_line": 5723
+    },
+    {
+      "applications": 12,
+      "function": "HandleDivide",
+      "original_line": 2614
+    },
+    {
+      "applications": 121,
+      "function": "HandleReshape",
+      "original_line": 6744
+    },
+    {
+      "applications": 620,
+      "function": "HandleReshape",
+      "original_line": 6750
+    },
+    {
+      "applications": 65,
+      "function": "HandleReshape",
+      "original_line": 6898
+    },
+    {
+      "applications": 72,
+      "function": "HandleReshape",
+      "original_line": 6945
+    },
+    {
+      "applications": 98,
+      "function": "HandleTranspose",
+      "original_line": 10114
+    },
+    {
+      "applications": 2,
+      "function": "ReplaceReduceWithReshape",
+      "original_line": 8661
+    },
+    {
+      "applications": 12,
+      "function": "TryToSinkBroadcastAfterElementwiseOps",
+      "original_line": 6358
+    },
+    {
+      "applications": 62,
+      "function": "operator()",
+      "original_line": 2590
+    }
+  ],
+  "scope": "All AlgebraicSimplifier invocations in one normal XLA CPU compilation",
+  "total_applications": 1693
+}

@@ -1,0 +1,13 @@
+SemanticRule catalog_elementwise_log_power
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: log(align[n3:input](pow(align[n2:lhs](Input(#0)), align[n2:rhs](Input(#1)))))
+      rhs-graph: select(align[n13:pred](compare(align[n6:lhs](Input(#1)), align[n6:rhs](Literal(0)), attrs.direction)), align[n13:lhs](Literal(0)), align[n13:rhs](Product(align[n12:lhs](Input(#1)), align[n12:rhs](log(align[n11:input](abs(align[n10:input](Input(#0)))))))))
+      declared-conditions:
+        ==(len(shape(Input(#0))), 0)
+        ==(len(shape(Input(#1))), 0)
+      additional-guard: unresolved
+      reason: core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+error: cannot verify rule 'catalog_elementwise_log_power': core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

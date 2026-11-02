@@ -1,0 +1,28 @@
+SemanticRule reverse_compose_disjoint
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: Read(input, IndexReverse(Coords(S), attrs.dimensions)) over Read(input, IndexReverse(Coords(S), attrs.dimensions)) over Input(#0)
+      rhs-graph: Read(input, IndexReverse(Coords(S), attrs.dimensions)) over Input(#0)
+      law: index-reverse-normalization
+      law: index-add-normalization
+      law: index-substitution
+      law: index-reflection-parity
+      verified: capture access + reduction domains + ordered axes + shape + dtype + legality
+      law: axis-selector-matching
+      lhs-normalized: Read(#0, access@0, index_reverse(coords(n2.S), shape(Input(#0)), dimensions=[0, 1]))
+      rhs-normalized: Read(#0, access@3, index_reverse(coords(n2.S), shape(Input(#0)), dimensions=[0, 1]))
+      constructor auto#2:
+        dimensions = [0, 1]
+      declared-conditions:
+        ==(len(shape(Input(#0))), 2)
+        &&(==(attr_inner.attrs.dimensions, [0]), ==(attr_outer.attrs.dimensions, [1]))
+      additional-guard: true
+      reason: valid for all legal LHS metadata satisfying the declared conditions under the selected arithmetic policy
+      coordinate frame (fresh identities; domain lengths remain symbolic):
+        input0 = group(extents=shape(Input(#0)))
+        n1.S = group(extents=shape(Input(#0)))
+        n2.S = group(extents=shape(Input(#0)))
+        access@0 = n2.S
+        access@3 = n2.S
+        lhs-output = n2.S
+        rhs-output = n2.S
+

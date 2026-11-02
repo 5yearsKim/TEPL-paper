@@ -1,0 +1,23 @@
+{
+  "main_text_pages": 22,
+  "main_total_pages": 53,
+  "supplement_pages": 3,
+  "main_sha256": "4f950d5e676954419cd4673cdac7985ac90137b8e7af5b6aa129db8ef06ac3a2",
+  "supplement_sha256": "67cc6a6260a1b13e1b87cbe9e5798d5e6ba794ee59b46da55e8f96ed27664ea5",
+  "overfull_or_unresolved_references": false,
+  "main_visual_review_pages": [
+    1,
+    18,
+    19,
+    20,
+    51,
+    52,
+    53
+  ],
+  "supplement_visual_review_pages": [
+    2
+  ],
+  "revision": "Restored the original 25-case XLA TransposeFolding integration in Section 9.2 and shortened it to 146 whitespace-delimited words. The section explains the generated-attribute handoff, eight TEPL cases/nine operand folds, all 25 matching upstream graphs and change flags, and the numerical-test boundary. Removed the exploratory model study from the PDF and aligned the abstract, implementation description, and original appendix. Clean LaTeX build and visual review; no XLA experiment rerun.",
+  "compiler_sha256": "f6437fc7366aa5a45272305466a5172b2fc548ef55956459da26932315ae5055",
+  "xla_integration_section_words": 146
+}

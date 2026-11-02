@@ -1,0 +1,43 @@
+{
+  "description": "A separate current-compiler case study; not merged into the historical XLA totals.",
+  "recorded_at_utc": "2026-10-31T04:28:54.652507+00:00",
+  "compiler_sha256": "7ca6db6c4895565da530407113c383f0c42162805bc07a75c8ec175e2bb1a969",
+  "checkout_revision": "494f2dac8273981ad03b650056ebff4bec661f97",
+  "tracked_changes_patch_sha256": "581894844014873a12f7482180b8a444f73496813eb50174bee4f0482a1bc2df",
+  "source_sha256": "929b1919e7d6c67c89c32927d95f0b366125e349e53de85e7cd083bfb508f09b",
+  "compiled_program_sha256": "62d5a6664e8406d19bc460e0045d3efa9bb27ed74e7a06db17a3dc0316e2a968",
+  "commands": [
+    {
+      "command": [
+        "/home/onion/Projects/tepl/bazel-bin/tepl",
+        "check",
+        "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/reassociation/reassociate.tepl",
+        "--semantic-policy",
+        "algebraic",
+        "--rule",
+        "reassociate_preserve_batch"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/home/onion/Projects/tepl/bazel-bin/tepl",
+        "compile",
+        "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/reassociation/reassociate.tepl",
+        "--semantic-policy",
+        "algebraic",
+        "-o",
+        "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/reassociation/program.json"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/home/onion/Projects/tepl/bazel-bin/tepl",
+        "validate",
+        "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/reassociation/program.json"
+      ],
+      "returncode": 0
+    }
+  ]
+}

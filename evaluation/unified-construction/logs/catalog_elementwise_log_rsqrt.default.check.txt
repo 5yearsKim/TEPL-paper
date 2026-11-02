@@ -1,0 +1,12 @@
+SemanticRule catalog_elementwise_log_rsqrt
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: log(align[n2:input](rsqrt(align[n1:input](Input(#0)))))
+      rhs-graph: Product(align[n6:lhs](Literal(-0.5)), align[n6:rhs](log(align[n5:input](Input(#0)))))
+      declared-conditions:
+        ==(len(shape(Input(#0))), 0)
+      additional-guard: unresolved
+      reason: normalized coefficients, tensor accesses, or reduction domains differ
+error: cannot verify rule 'catalog_elementwise_log_rsqrt': normalized coefficients, tensor accesses, or reduction domains differ
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

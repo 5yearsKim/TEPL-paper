@@ -1,0 +1,58 @@
+dialect CaseStudy {
+op dot_general(lhs: tensor, rhs: tensor) -> tensor {
+        
+        alias: dot;
+        dtype(a, b) {
+            assert a == b;
+            assert is_numeric(a);
+            yield a;
+        }
+        attrs {
+            
+            lhs_contracting_dimensions: axis[];
+            rhs_contracting_dimensions: axis[];
+            lhs_batching_dimensions: axis[];
+            rhs_batching_dimensions: axis[];
+        }
+        axes {
+            let lb = attrs.lhs_batching_dimensions;
+            let rb = attrs.rhs_batching_dimensions;
+            let lc = attrs.lhs_contracting_dimensions;
+            let rc = attrs.rhs_contracting_dimensions;
+
+            let lf = ordered_complement(all_axes(lhs), lb ++ lc);
+            let rf = ordered_complement(all_axes(rhs), rb ++ rc);
+
+            bind B { lhs: lb, rhs: rb };
+            bind K { lhs: lc, rhs: rc };
+            bind I { lhs: lf };
+            bind J { rhs: rf };
+
+            
+            
+            yield B ++ I ++ J;
+        }
+        semantics {
+            yield Reduce(K, Product(lhs, rhs));
+        }
+
+        
+        
+        
+        
+        
+        
+        
+    }
+
+}
+use CaseStudy::{dot};
+
+rule reassociate_preserve_batch {
+  X: [SX...] Y: [SY...] Z: [SZ...]
+  (outer: dot (inner: dot X Y) Z) => (dot X (dot Y Z))
+  where {
+    outer.attrs.lhs_batching_dimensions == inner.axes.B.positions
+    && len(SX) + len(SY) + len(SZ) <= 9223372036854775807
+  }
+}

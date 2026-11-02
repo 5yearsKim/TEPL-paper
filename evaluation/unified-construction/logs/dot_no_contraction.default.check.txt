@@ -1,0 +1,35 @@
+SemanticRule dot_no_contraction
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: Reduce(n2.K, Product(align[n2:lhs](Input(#0)), align[n2:rhs](Input(#1))))
+      rhs-graph: Product(align[n7:lhs](align[n4:input](Input(#0))), align[n7:rhs](align[n6:input](Input(#1))))
+      law: axis-map-restriction
+      law: axis-insertion
+      verified: capture access + reduction domains + ordered axes + shape + dtype + legality
+      lhs-normalized: Product(Read(#0, access@0), Read(#1, access@1))
+      rhs-normalized: Product(Read(#0, access@3), Read(#1, access@5))
+      constructor auto#1:
+        dimensions = [0]
+        new_extents = [index(shape(Input(#1)), 0)]
+      constructor auto#2:
+        dimensions = [1]
+        new_extents = [index(shape(Input(#0)), 0)]
+      declared-conditions:
+        ==(len(shape(Input(#0))), 1)
+        ==(len(shape(Input(#1))), 1)
+        m1
+      additional-guard: true
+      reason: valid for all legal LHS metadata satisfying the declared conditions under the selected arithmetic policy
+      let m0 = &&(==(attr_d.attrs.lhs_batching_dimensions, []), ==(attr_d.attrs.rhs_batching_dimensions, []))
+      let m1 = &&(&&(m0, ==(attr_d.attrs.lhs_contracting_dimensions, [])), ==(attr_d.attrs.rhs_contracting_dimensions, []))
+      coordinate frame (fresh identities; domain lengths remain symbolic):
+        input0 = group(extents=shape(Input(#0)))
+        input1 = group(extents=shape(Input(#1)))
+        n2.I = group(extents=gather(shape(Input(#0)), [0]))
+        n2.J = group(extents=gather(shape(Input(#1)), [0]))
+        access@0 = gather(n2.I, [0])
+        access@1 = gather(n2.J, [0])
+        access@3 = gather(n2.I, [0])
+        access@5 = gather(n2.J, [0])
+        lhs-output = concat(n2.I, n2.J)
+        rhs-output = concat(n2.I, n2.J)
+

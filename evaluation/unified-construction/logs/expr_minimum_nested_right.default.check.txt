@@ -1,0 +1,24 @@
+SemanticRule expr_minimum_nested_right
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: min(align[n4:lhs](Input(#0)), align[n4:rhs](min(align[n3:lhs](Input(#0)), align[n3:rhs](Input(#1)))))
+      rhs-graph: min(align[n7:lhs](Input(#0)), align[n7:rhs](Input(#1)))
+      law: scalar-associative-commutative
+      verified: capture access + reduction domains + ordered axes + shape + dtype + legality
+      lhs-normalized: min(Read(#0, access@0), Read(#1, access@2))
+      rhs-normalized: min(Read(#0, access@5), Read(#1, access@6))
+      declared-conditions: true
+      additional-guard: true
+      reason: valid for all legal LHS metadata satisfying the declared conditions under the selected arithmetic policy
+      coordinate frame (fresh identities; domain lengths remain symbolic):
+        input0 = group(extents=shape(Input(#0)))
+        input1 = group(extents=shape(Input(#0)))
+        input2 = group(extents=shape(Input(#1)))
+        n3.S = group(extents=shape(Input(#0)))
+        n4.S = group(extents=shape(Input(#0)))
+        access@0 = n4.S
+        access@2 = n4.S
+        access@5 = n4.S
+        access@6 = n4.S
+        lhs-output = n4.S
+        rhs-output = n4.S
+

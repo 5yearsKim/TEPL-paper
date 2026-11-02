@@ -1,0 +1,12 @@
+SemanticRule catalog_broadcast_multiply_constant_into_broadcast
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: Product(align[n6:lhs](Product(align[n3:lhs](Input(#0)), align[n3:rhs](align[n2:input](Input(#1))))), align[n6:rhs](align[n5:input](Input(#2))))
+      rhs-graph: Product(align[n13:lhs](Input(#0)), align[n13:rhs](align[n12:input](Product(align[n11:lhs](Input(#2)), align[n11:rhs](align[n10:input](Input(#1)))))))
+      verified: source-layout guard certificate and core emission theorem
+      declared-conditions:
+        >=(len(shape(Input(#2))), 0)
+        ==(len(shape(Input(#1))), 0)
+        ==(attr_out.attrs.dimensions, [])
+      additional-guard: true
+      reason: core schema guard and supplied metadata certified; sound for all legal extents
+

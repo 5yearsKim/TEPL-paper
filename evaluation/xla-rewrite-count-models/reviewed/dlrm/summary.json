@@ -1,0 +1,102 @@
+{
+  "semantic_model_coverage": {
+    "rule_variants": 20,
+    "total_rule_variants": 32,
+    "associated_native_applications": 103,
+    "total_native_applications": 201,
+    "unit_view_candidates": 6,
+    "definition": "Direct semantic representations plus restricted unit-axis normalization candidates; not measured TEPL acceptance or delegation"
+  },
+  "scope": "All AlgebraicSimplifier invocations in one normal XLA CPU compilation",
+  "rule_identity": "Outermost successful transformation branch, identified by function and original source line; equivalent branches remain separate variants",
+  "model_compilations": 1,
+  "pass_invocations": 8,
+  "distinct_rule_variants": 32,
+  "total_applications": 201,
+  "semantic_categories": {
+    "direct": {
+      "rule_variants": 14,
+      "applications": 55
+    },
+    "unit_view_candidate": {
+      "rule_variants": 6,
+      "applications": 48
+    },
+    "conditional": {
+      "rule_variants": 6,
+      "applications": 31
+    },
+    "outside": {
+      "rule_variants": 6,
+      "applications": 67
+    },
+    "unreviewed": {
+      "rule_variants": 0,
+      "applications": 0
+    }
+  },
+  "families": {
+    "reshape": {
+      "rule_variants": 4,
+      "applications": 63
+    },
+    "broadcast": {
+      "rule_variants": 5,
+      "applications": 37
+    },
+    "reduce": {
+      "rule_variants": 3,
+      "applications": 28
+    },
+    "multiply": {
+      "rule_variants": 4,
+      "applications": 20
+    },
+    "divide": {
+      "rule_variants": 3,
+      "applications": 21
+    },
+    "tuple": {
+      "rule_variants": 1,
+      "applications": 12
+    },
+    "transpose": {
+      "rule_variants": 4,
+      "applications": 10
+    },
+    "dot": {
+      "rule_variants": 3,
+      "applications": 4
+    },
+    "select": {
+      "rule_variants": 1,
+      "applications": 2
+    },
+    "boolean": {
+      "rule_variants": 1,
+      "applications": 1
+    },
+    "constant": {
+      "rule_variants": 1,
+      "applications": 1
+    },
+    "compare": {
+      "rule_variants": 2,
+      "applications": 2
+    }
+  },
+  "normalization": [
+    {
+      "line": 9009,
+      "notifications": 5,
+      "reason": "State-only MarkAsChanged before the same reduce/reshape replacement"
+    }
+  ],
+  "semantic_assessment": "Static semantic representation with retained XLA applicability checks; not successful TEPL verification or delegation.",
+  "semantic_weight_meaning": "Application counts are native activity associated with reviewed source variants, not verified supported TEPL applications",
+  "tepl_verification_measured": false,
+  "tepl_delegation_measured": false,
+  "actual_application_eligibility_measured": false,
+  "workload": "DLRM FP32 training step",
+  "semantic_profile_mismatches": []
+}

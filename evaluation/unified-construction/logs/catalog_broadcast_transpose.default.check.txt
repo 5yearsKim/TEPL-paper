@@ -1,0 +1,22 @@
+SemanticRule catalog_broadcast_transpose
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: align[n1:input](Input(#0))
+      rhs-graph: align[n3:input](Input(#0))
+      law: axis-map-restriction
+      verified: capture access + reduction domains + ordered axes + shape + dtype + legality
+      lhs-normalized: Read(#0, access@0)
+      rhs-normalized: Read(#0, access@2)
+      constructor auto#1:
+        permutation = positions(n1.S, place_axes(n1.S, attr_b.attrs.dimensions, empty_axes()))
+      declared-conditions:
+        ==(attr_b.attrs.new_extents, [])
+      additional-guard: true
+      reason: valid for all legal LHS metadata satisfying the declared conditions under the selected arithmetic policy
+      coordinate frame (fresh identities; domain lengths remain symbolic):
+        input0 = group(extents=shape(Input(#0)))
+        n1.S = group(extents=shape(Input(#0)))
+        access@0 = n1.S
+        access@2 = n1.S
+        lhs-output = place_axes(n1.S, attr_b.attrs.dimensions, empty_axes())
+        rhs-output = place_axes(n1.S, attr_b.attrs.dimensions, empty_axes())
+

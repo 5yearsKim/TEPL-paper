@@ -1,0 +1,35 @@
+SemanticRule multiply_constant_pairs
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: Product(align[n6:lhs](Product(align[n2:lhs](Input(#0)), align[n2:rhs](Input(#1)))), align[n6:rhs](Product(align[n5:lhs](Input(#2)), align[n5:rhs](Input(#3)))))
+      rhs-graph: Product(align[n13:lhs](Product(align[n9:lhs](Input(#0)), align[n9:rhs](Input(#2)))), align[n13:rhs](Product(align[n12:lhs](Input(#1)), align[n12:rhs](Input(#3)))))
+      law: ordered-axis-split
+      law: paired-axis-selection
+      law: ordered-partition-traversal
+      law: product-associativity
+      law: commutative-matching
+      law: axis-map-restriction
+      verified: capture access + reduction domains + ordered axes + shape + dtype + legality
+      lhs-normalized: Product(Read(#0, access@0), Read(#1, access@1), Read(#2, access@3), Read(#3, access@4))
+      rhs-normalized: Product(Read(#0, access@7), Read(#2, access@8), Read(#1, access@10), Read(#3, access@11))
+      declared-conditions: true
+      additional-guard: true
+      reason: valid for all legal LHS metadata satisfying the declared conditions under the selected arithmetic policy
+      coordinate frame (fresh identities; domain lengths remain symbolic):
+        input0 = group(extents=shape(Input(#0)))
+        input1 = group(extents=shape(Input(#1)))
+        n2.S = group(extents=shape(Input(#0)))
+        input3 = group(extents=shape(Input(#2)))
+        input4 = group(extents=shape(Input(#3)))
+        n5.S = group(extents=shape(Input(#2)))
+        n6.S = group(extents=shape(Input(#0)))
+        access@0 = n6.S
+        access@1 = n6.S
+        access@3 = gather(n6.S, range(len(shape(Input(#2)))))
+        access@4 = gather(gather(n6.S, range(len(shape(Input(#2))))), range(len(shape(Input(#0)))))
+        access@7 = n6.S
+        access@8 = gather(n6.S, range(len(shape(Input(#2)))))
+        access@10 = n6.S
+        access@11 = gather(gather(n6.S, range(len(shape(Input(#2))))), range(len(shape(Input(#0)))))
+        lhs-output = n6.S
+        rhs-output = n6.S
+

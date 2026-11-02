@@ -1,0 +1,23 @@
+SemanticRule catalog_elementwise_sqrt_square
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: sqrt(align[n3:input](Product(align[n2:lhs](Input(#0)), align[n2:rhs](Input(#0)))))
+      rhs-graph: abs(align[n5:input](Input(#0)))
+      law: scalar-sqrt-square
+      verified: capture access + reduction domains + ordered axes + shape + dtype + legality
+      lhs-normalized: abs(Read(#0, access@0))
+      rhs-normalized: abs(Read(#0, access@4))
+      declared-conditions:
+        >=(len(shape(Input(#0))), 0)
+        ==(dtype(Input(#0)), dtype_f32())
+      additional-guard: true
+      reason: valid for all legal LHS metadata satisfying the declared conditions under the selected arithmetic policy
+      coordinate frame (fresh identities; domain lengths remain symbolic):
+        input0 = group(extents=shape(Input(#0)))
+        input1 = group(extents=shape(Input(#0)))
+        n2.S = group(extents=shape(Input(#0)))
+        n3.S = group(extents=shape(Input(#0)))
+        access@0 = n3.S
+        access@4 = n3.S
+        lhs-output = n3.S
+        rhs-output = n3.S
+

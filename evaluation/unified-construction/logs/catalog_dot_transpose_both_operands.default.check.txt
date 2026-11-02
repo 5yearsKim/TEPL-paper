@@ -1,0 +1,48 @@
+SemanticRule catalog_dot_transpose_both_operands
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: Reduce(n4.K, Product(align[n4:lhs](align[n1:input](Input(#0))), align[n4:rhs](align[n3:input](Input(#1)))))
+      rhs-graph: align[n8:input](Reduce(n7.K, Product(align[n7:lhs](Input(#1)), align[n7:rhs](Input(#0)))))
+      law: ordered-axis-split
+      law: paired-axis-selection
+      law: commutative-matching
+      law: axis-map-restriction
+      verified: capture access + reduction domains + ordered axes + shape + dtype + legality
+      law: ordered-requirements-construction
+      lhs-normalized: Reduce(gather(gather(input0, [0]), [0]), Product(Read(#0, access@0), Read(#1, access@2)))
+      rhs-normalized: Reduce(filter_axes(gather(concat(gather(gather(input0, [0]), [0]), gather(input2, [0])), [1, 0]), gather(gather(input0, [0]), [0])), Product(Read(#1, access@5), Read(#0, access@6)))
+      constructor auto#3:
+        lhs_contracting_dimensions = gather(attr_q.attrs.permutation, attr_d.attrs.rhs_contracting_dimensions)
+        rhs_contracting_dimensions = gather(attr_p.attrs.permutation, attr_d.attrs.lhs_contracting_dimensions)
+        lhs_batching_dimensions = gather(attr_q.attrs.permutation, m0)
+        rhs_batching_dimensions = gather(attr_p.attrs.permutation, m1)
+      constructor auto#4:
+        permutation = concat(m2, m5, m6)
+      declared-conditions:
+        ==(len(shape(Input(#0))), 2)
+        ==(len(shape(Input(#1))), 2)
+        ==(index(shape(Input(#0)), 0), index(shape(Input(#1)), 1))
+        &&(m8, ==(attr_d.attrs.rhs_contracting_dimensions, [0]))
+      additional-guard: true
+      reason: valid for all legal LHS metadata satisfying the declared conditions under the selected arithmetic policy
+      let m0 = gather(attr_d.attrs.rhs_batching_dimensions, order_positions(gather(attr_q.attrs.permutation, attr_d.attrs.rhs_batching_dimensions)))
+      let m1 = gather(attr_d.attrs.lhs_batching_dimensions, order_positions(gather(attr_q.attrs.permutation, attr_d.attrs.rhs_batching_dimensions)))
+      let m2 = inverse(order_positions(gather(attr_q.attrs.permutation, attr_d.attrs.rhs_batching_dimensions)))
+      let m3 = ordered_complement(range(len(shape(Input(#0)))), concat(attr_d.attrs.lhs_batching_dimensions, attr_d.attrs.lhs_contracting_dimensions))
+      let m4 = ordered_complement(range(len(shape(Input(#1)))), concat(attr_d.attrs.rhs_batching_dimensions, attr_d.attrs.rhs_contracting_dimensions))
+      let m5 = offset_positions(inverse(order_positions(gather(attr_p.attrs.permutation, m3))), +(len(attr_d.attrs.lhs_batching_dimensions), len(m4)))
+      let m6 = offset_positions(inverse(order_positions(gather(attr_q.attrs.permutation, m4))), len(attr_d.attrs.lhs_batching_dimensions))
+      let m7 = &&(&&(==(attr_p.attrs.permutation, [1, 0]), ==(attr_q.attrs.permutation, [1, 0])), ==(attr_d.attrs.lhs_batching_dimensions, []))
+      let m8 = &&(&&(m7, ==(attr_d.attrs.rhs_batching_dimensions, [])), ==(attr_d.attrs.lhs_contracting_dimensions, [1]))
+      let m9 = gather(concat(gather(gather(input2, [0]), [0]), gather(gather(gather(input0, [1]), [0]), [0])), [1, 0])
+      coordinate frame (fresh identities; domain lengths remain symbolic):
+        input0 = group(extents=shape(Input(#0)))
+        input0 = group(extents=shape(Input(#0)))
+        input2 = group(extents=shape(Input(#1)))
+        input2 = group(extents=shape(Input(#1)))
+        access@0 = input0
+        access@2 = gather(concat(gather(gather(input0, [0]), [0]), gather(input2, [0])), [1, 0])
+        access@5 = gather(concat(gather(gather(input0, [0]), [0]), gather(input2, [0])), [1, 0])
+        access@6 = input0
+        lhs-output = concat(gather(gather(input0, [1]), [0]), gather(input2, [0]))
+        rhs-output = m9
+

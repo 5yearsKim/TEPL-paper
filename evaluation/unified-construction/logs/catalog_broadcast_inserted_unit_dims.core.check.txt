@@ -1,0 +1,14 @@
+SemanticRule catalog_broadcast_inserted_unit_dims
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: align[n2:input](align[n1:input](Input(#0)))
+      rhs-graph: align[n4:input](Input(#0))
+      declared-conditions:
+        ==(len(shape(Input(#0))), 1)
+        &&(&&(m0, ==(axis_eval_0.attrs.dimensions, [1])), ==(axis_eval_0.attrs.new_extents, [1]))
+      additional-guard: unresolved
+      reason: core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+      let m0 = &&(==([1, index(shape(Input(#0)), 0)], [1, index(shape(Input(#0)), 0)]), ==(attr_b.attrs.dimensions, [0, 1]))
+error: cannot verify rule 'catalog_broadcast_inserted_unit_dims': core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

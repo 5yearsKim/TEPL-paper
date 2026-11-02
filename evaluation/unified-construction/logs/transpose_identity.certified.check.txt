@@ -1,0 +1,12 @@
+SemanticRule transpose_identity
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: align[n1:input](Input(#0))
+      rhs-graph: Input(#0)
+      declared-conditions:
+        ==(attr_p.attrs.permutation, range(len(attr_p.attrs.permutation)))
+      additional-guard: unresolved
+      reason: core guard proof unresolved; no runtime feasibility guard was added
+error: cannot verify rule 'transpose_identity': core guard proof unresolved; no runtime feasibility guard was added
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

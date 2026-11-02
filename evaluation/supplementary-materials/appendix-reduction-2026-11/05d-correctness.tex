@@ -1,0 +1,95 @@
+\subsection{Validation Contract and Scope}
+\label{sec:validation-boundary}
+The validator receives a rewrite $L\Rightarrow R$, its written guard
+$C$, and a completed attribute program $f$. The program reads source
+metadata and supplies the RHS attributes. Supplied fields must be
+preserved, and no attribute holes may remain.
+
+Validation establishes three properties:
+\begin{enumerate}
+\item \emph{Defined attributes.}
+Every attribute expression evaluates successfully, including its
+index accesses and integer calculations.
+\item \emph{Legal replacement.}
+The resulting attributes satisfy each RHS operation's requirements,
+including valid axis selectors, matching paired extents, and dtype
+constraints.
+\item \emph{Equivalent result.}
+The replacement preserves tensor values, ordered output shape, and
+result dtype.
+\end{enumerate}
+
+The formal validation core covers contraction, permutation, unary
+summation, and elementwise addition without broadcasting, using exact
+real arithmetic and the metadata rules in
+Appendix~\ref{app:validation-proofs}. Its soundness allows arbitrary
+finite ranks and zero or singleton extents. Calculated reads,
+nonlinear scalar functions, and other implementation extensions
+require separate arguments.
+
+\subsection{Checking a Completed Candidate}
+\label{sec:validation-algorithm}
+The proof context contains only source legality and successful
+evaluation of the written guard. Relationships proposed during
+construction are obligations to prove, never assumptions.
+
+First, TEPL checks the original attribute expressions for types,
+bounds, and definedness, and proves the RHS legality conditions.
+These checks precede simplification: an expression such as
+$0\cdot q[i]$ still requires a valid access to $q[i]$ under strict
+evaluation.
+
+Next, TEPL expresses each graph's output using indexed input reads,
+addition, multiplication, and finite sums. Coordinate mappings are
+derived from source information and operation declarations. The
+validator then compares the two computations in a common coordinate
+frame.
+
+Value comparison uses checked algebraic laws, including
+distributivity and finite-sum reindexing. Moving a factor across a
+sum requires a proof that it is independent of the summed coordinate.
+Comparison preserves repeated reads and checks the reduction domains.
+Separate output checks establish axis order, shape, and dtype
+agreement.
+
+TEPL returns \code{Proved} only when all required obligations have
+derivations. Unresolved goals or exhausted proof budgets return
+\code{Unknown}. Such a result does not establish that the rewrite is
+incorrect or that no valid attribute assignment exists.
+
+\subsection{Soundness}
+\label{sec:acceptance-soundness}
+\begin{theorem}[Candidate validation soundness]
+\label{thm:validator-soundness}
+For the operations and metadata calculus of
+Section~\ref{sec:validation-boundary}, if
+$\operatorname{Validate}(L,R,C,f,\mathcal G)=\mathrm{Proved}$, then
+\begin{equation}
+ \forall p.\quad \operatorname{Legal}_L(p)\land C(p)
+ \Longrightarrow\exists\beta.\quad f\Downarrow_p\beta
+ \land\operatorname{Valid}(p,\beta).
+ \label{eq:acceptance-soundness}
+\end{equation}
+Here $\mathcal G$ contains the candidate obligations, and $C(p)$
+means successful evaluation to true. The notation $f\Downarrow_p\beta$
+means that $f$ evaluates to attributes $\beta$ on metadata $p$.
+Evaluation abstracts from resource exhaustion; it includes bounds,
+types, and integer representability.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+The metadata rules establish defined attribute expressions and a
+legal replacement; lowering and normalization justify the value
+comparison. Ordered-shape and dtype checks complete validity;
+Appendix~\ref{app:validation-proofs} gives the full proof.
+\end{proof}
+
+For batched reassociation, these checks establish that the generated
+attributes are defined, contraction partners have matching extents,
+and both sides produce the same ordered output and values.
+Appendices~\ref{app:transpose-validation}
+and~\ref{app:reassociation-validation} give worked examples.
+
+If validation remains unresolved, TEPL may suggest a stronger guard
+(Appendix~\ref{app:condition-suggestions}). The revised rule must pass
+validation again; condition discovery has no completeness guarantee.

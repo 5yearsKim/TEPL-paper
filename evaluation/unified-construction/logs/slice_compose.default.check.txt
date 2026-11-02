@@ -1,0 +1,22 @@
+SemanticRule slice_compose
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: Read(input, IndexOffset(attrs.starts, IndexScale(attrs.strides, Coords(O)))) over Read(input, IndexOffset(attrs.starts, IndexScale(attrs.strides, Coords(O)))) over Input(#0)
+      rhs-graph: Read(input, IndexOffset(attrs.starts, IndexScale(attrs.strides, Coords(O)))) over Input(#0)
+      law: index-scale-normalization
+      law: index-offset-normalization
+      law: index-add-normalization
+      law: index-substitution
+      declared-conditions:
+        ==(len(shape(Input(#0))), 1)
+        &&(==(attr_inner.attrs.strides, [1]), ==(attr_outer.attrs.strides, [1]))
+      additional-guard: unresolved
+        m1
+      guard-origins (unresolved obligations):
+        [legality obligation] m1
+      reason: metadata definedness: declared conditions and LHS legality do not establish legality obligation: extent_le(extent_add(@#0.starts, @#1.starts), offset_extents(extent_sub(extent_add(@#0.starts, @#1.starts), extent_add(@#0.starts, @#1.starts)), 9223372036854775807))
+      let m0 = extent_sub(extent_add(attr_outer.attrs.starts, attr_inner.attrs.starts), extent_add(attr_outer.attrs.starts, attr_inner.attrs.starts))
+      let m1 = extent_le(extent_add(attr_outer.attrs.starts, attr_inner.attrs.starts), offset_extents(m0, 9223372036854775807))
+error: cannot verify rule 'slice_compose': metadata definedness: declared conditions and LHS legality do not establish legality obligation: extent_le(extent_add(@#0.starts, @#1.starts), offset_extents(extent_sub(extent_add(@#0.starts, @#1.starts), extent_add(@#0.starts, @#1.starts)), 9223372036854775807))
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

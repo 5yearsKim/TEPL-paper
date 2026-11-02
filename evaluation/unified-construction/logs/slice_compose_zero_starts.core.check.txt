@@ -1,0 +1,13 @@
+SemanticRule slice_compose_zero_starts
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: Read(input, IndexOffset(attrs.starts, IndexScale(attrs.strides, Coords(O)))) over Read(input, IndexOffset(attrs.starts, IndexScale(attrs.strides, Coords(O)))) over Input(#0)
+      rhs-graph: Read(input, IndexOffset(attrs.starts, IndexScale(attrs.strides, Coords(O)))) over Input(#0)
+      declared-conditions:
+        &&(m0, ==(attr_outer.attrs.strides, [1]))
+      additional-guard: unresolved
+      reason: core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+      let m0 = &&(&&(==(attr_inner.attrs.starts, [0]), ==(attr_outer.attrs.starts, [0])), ==(attr_inner.attrs.strides, [1]))
+error: cannot verify rule 'slice_compose_zero_starts': core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

@@ -1,0 +1,34 @@
+SemanticRule reverse_add_scalar
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: Read(input, IndexReverse(Coords(S), attrs.dimensions)) over Add(align[n3:lhs](Input(#0)), align[n3:rhs](align[n2:input](Input(#1))))
+      rhs-graph: Add(align[n9:lhs](Read(input, IndexReverse(Coords(S), attrs.dimensions)) over Input(#0)), align[n9:rhs](align[n8:input](Input(#1))))
+      law: index-reverse-normalization
+      law: index-add-normalization
+      law: index-substitution
+      verified: capture access + reduction domains + ordered axes + shape + dtype + legality
+      law: axis-selector-matching
+      lhs-normalized: Read(#0, access@0, index_reverse(coords(n4.S), shape(Input(#0)), dimensions=@#0.dimensions)) + Read(#1, access@1, coords(empty_axes()))
+      rhs-normalized: Read(#0, access@5, index_reverse(coords(n4.S), shape(Input(#0)), dimensions=@#0.dimensions)) + Read(#1, access@7)
+      constructor auto#2:
+        dimensions = attr_r.attrs.dimensions
+      constructor auto#3:
+        dimensions = []
+        new_extents = attr_b.attrs.new_extents
+      declared-conditions:
+        ==(attr_b.attrs.dimensions, [])
+      additional-guard: true
+      reason: valid for all legal LHS metadata satisfying the declared conditions under the selected arithmetic policy
+      coordinate frame (fresh identities; domain lengths remain symbolic):
+        input0 = group(extents=shape(Input(#0)))
+        input1 = group(extents=shape(Input(#1)))
+        n2.S = group(extents=shape(Input(#1)))
+        n2.N = group(extents=shape(Input(#0)))
+        n3.S = group(extents=shape(Input(#0)))
+        n4.S = group(extents=shape(Input(#0)))
+        access@0 = n4.S
+        access@1 = n2.S
+        access@5 = n4.S
+        access@7 = empty_axes()
+        lhs-output = n4.S
+        rhs-output = n4.S
+

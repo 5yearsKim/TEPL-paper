@@ -1,0 +1,13 @@
+SemanticRule expr_power_reciprocal
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: pow(align[n2:lhs](Input(#0)), align[n2:rhs](Literal(-1)))
+      rhs-graph: div(align[n5:lhs](Literal(1)), align[n5:rhs](Input(#0)))
+      law: axis-map-restriction
+      declared-conditions:
+        ==(len(shape(Input(#0))), 0)
+      additional-guard: unresolved
+      reason: normalized coefficients, tensor accesses, or reduction domains differ
+error: cannot verify rule 'expr_power_reciprocal': normalized coefficients, tensor accesses, or reduction domains differ
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

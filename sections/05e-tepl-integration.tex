@@ -1,48 +1,16 @@
-\section{Verification and Condition Suggestions}
-\label{sec:tepl-integration}
-\label{sec:condition-suggestions}
-After constructing attributes for a candidate rewrite, TEPL checks whether
-the completed rewrite satisfies the rule's correctness contract under its
-declared conditions. If verification cannot establish correctness, TEPL
-searches for an additional sufficient condition to recommend.
+\section{Candidate Validation}
+\label{sec:candidate-validation}
+Sections~\ref{sec:mathematical-synthesis}--\ref{sec:method}
+justify the canonical construction within its stated fragment.
+Together with guard certification, that construction provides a
+direct route to accepting a rewrite. TEPL also handles attribute
+programs supplied by users, produced by other construction strategies,
+or obtained through symbolic lowering. This section explains how TEPL
+checks such completed candidates independently of their origin.
+
+Validation is performed at compile time. It proves correctness for
+every legal source match satisfying the written guard. At matching
+time, TEPL evaluates the guard and attribute expressions; it does
+not repeat the symbolic equivalence proof.
 
 \input{sections/05d-correctness}
-
-\subsection{Suggesting Applicability Conditions}
-\label{sec:suggested-reassociation}
-If TEPL cannot verify a rule under its declared condition, the compiler
-can suggest an additional condition $G(p)$, rerun synthesis, and verify
-the resulting program under the strengthened guard:
-\begin{equation}
- \forall p,\quad \operatorname{Legal}_L(p)\land C(p)\land G(p)
- \Rightarrow p\in\operatorname{dom}(f)\land\operatorname{Valid}(p,f(p)).
- \label{eq:suggested-condition}
-\end{equation}
-TEPL checks that the suggested condition permits at least one legal
-match and guarantees correctness. The search may fail to find a
-condition or may find one stricter than necessary. The user must add
-the suggestion to \code{where} and check the rule again.
-
-For example, consider reassociation with omitted RHS attributes and no
-\code{where} block. Imports are omitted:
-\begin{lstlisting}[language=TEPL]
-rule reassociate { (source: dot (inner: dot A B) C) => (dot A (dot B C)) }
-\end{lstlisting}
-Algebraic associativity alone is insufficient for generalized dots:
-axis routing and output order also matter. Under an arithmetic policy
-permitting reassociation, a sufficient restriction for this example is
-\begin{lstlisting}[language=TEPL]
-where {
-  source.attrs.lhs_batching_dimensions == inner.axes.B.positions
-}
-\end{lstlisting}
-The condition requires the outer dot's left batch positions to match
-the positions of the inner dot's batch axes in its output, in the same
-order. Here \code{inner.axes.B} denotes the inner operation's batch
-group, not input tensor \code{B}. This is the routing restriction used
-in Section~\ref{sec:partitioning}.
-
-The rule initially has no \code{where} condition. After the user adds
-the suggested condition, synthesis constructs the two replacement dots'
-attributes and verification checks the completed rule. This condition
-is sufficient for correctness, but may exclude other valid matches.

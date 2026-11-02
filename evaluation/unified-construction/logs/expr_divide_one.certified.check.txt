@@ -1,0 +1,12 @@
+SemanticRule expr_divide_one
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: div(align[n2:lhs](Input(#0)), align[n2:rhs](Literal(1)))
+      rhs-graph: Input(#0)
+      declared-conditions:
+        ==(len(shape(Input(#0))), 0)
+      additional-guard: unresolved
+      reason: core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+error: cannot verify rule 'expr_divide_one': core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

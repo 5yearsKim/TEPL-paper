@@ -1,0 +1,96 @@
+{
+  "distinct_rule_sites": 17,
+  "input": "/home/onion/Projects/tepl_related/TEPL-paper/evaluation/xla-rewrite-count-models/vit/input.hlo",
+  "model_compilations": 1,
+  "pass_invocations": 8,
+  "rule_identity": "Outermost successful transformation branch, identified by function and original source line; equivalent branches remain separate variants",
+  "rules": [
+    {
+      "applications": 1,
+      "function": "HandleAdd",
+      "original_line": 934
+    },
+    {
+      "applications": 246,
+      "function": "HandleBroadcast",
+      "original_line": 5605
+    },
+    {
+      "applications": 12,
+      "function": "HandleBroadcast",
+      "original_line": 5645
+    },
+    {
+      "applications": 90,
+      "function": "HandleBroadcast",
+      "original_line": 5681
+    },
+    {
+      "applications": 296,
+      "function": "HandleBroadcast",
+      "original_line": 5723
+    },
+    {
+      "applications": 1,
+      "function": "HandleConstant",
+      "original_line": 2311
+    },
+    {
+      "applications": 12,
+      "function": "HandleDivide",
+      "original_line": 2614
+    },
+    {
+      "applications": 12,
+      "function": "HandleReduce",
+      "original_line": 9050
+    },
+    {
+      "applications": 72,
+      "function": "HandleReshape",
+      "original_line": 6744
+    },
+    {
+      "applications": 629,
+      "function": "HandleReshape",
+      "original_line": 6750
+    },
+    {
+      "applications": 136,
+      "function": "HandleReshape",
+      "original_line": 6898
+    },
+    {
+      "applications": 25,
+      "function": "HandleSelect",
+      "original_line": 9835
+    },
+    {
+      "applications": 144,
+      "function": "HandleTranspose",
+      "original_line": 10114
+    },
+    {
+      "applications": 1,
+      "function": "RemoveDegenerateDimensionFromDot",
+      "original_line": 2744
+    },
+    {
+      "applications": 1,
+      "function": "ReplaceReduceWithReshape",
+      "original_line": 8661
+    },
+    {
+      "applications": 97,
+      "function": "TryToSinkBroadcastAfterElementwiseOps",
+      "original_line": 6358
+    },
+    {
+      "applications": 75,
+      "function": "operator()",
+      "original_line": 2590
+    }
+  ],
+  "scope": "All AlgebraicSimplifier invocations in one normal XLA CPU compilation",
+  "total_applications": 1850
+}

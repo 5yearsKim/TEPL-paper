@@ -1,0 +1,10 @@
+exec ${PAGER:-/usr/bin/less} "$0" || exit 1
+Executing tests from //tests:cpp_codegen_test
+-----------------------------------------------------------------------------
+Checking C++ generation with g++ -O0
+Checking C++ generation with g++ -O2
+C++ code generation passed with g++
+Checking C++ generation with clang++ -O0
+Checking C++ generation with clang++ -O2
+C++ code generation passed with clang++
+generated output differs: program.h

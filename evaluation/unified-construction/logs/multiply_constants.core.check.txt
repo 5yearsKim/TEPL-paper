@@ -1,0 +1,11 @@
+SemanticRule multiply_constants
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: Product(align[n4:lhs](Product(align[n2:lhs](Input(#0)), align[n2:rhs](Input(#1)))), align[n4:rhs](Input(#2)))
+      rhs-graph: Product(align[n9:lhs](Input(#0)), align[n9:rhs](Product(align[n8:lhs](Input(#1)), align[n8:rhs](Input(#2)))))
+      declared-conditions: true
+      additional-guard: unresolved
+      reason: core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+error: cannot verify rule 'multiply_constants': core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

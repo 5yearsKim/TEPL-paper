@@ -1,0 +1,11 @@
+SemanticRule double_negate
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: Product(Const(-1), align[n2:input](Product(Const(-1), align[n1:input](Input(#0)))))
+      rhs-graph: Input(#0)
+      declared-conditions: true
+      additional-guard: unresolved
+      reason: core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+error: cannot verify rule 'double_negate': core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

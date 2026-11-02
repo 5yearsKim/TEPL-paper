@@ -1,0 +1,16 @@
+{
+  "checked_utc": "2026-11-01T21:26:10.747272+00:00",
+  "positive_and_negative_controls_pass": true,
+  "nested_helper_double_counting_control_pass": true,
+  "raw_notifications": 206,
+  "excluded_redundant_state_notifications": 5,
+  "remaining_applications": 201,
+  "distinct_source_branches": 32,
+  "per_rule_sum_matches_total": true,
+  "final_hlo_matches_uninstrumented_baseline": true,
+  "final_hlo_sha256": "05be939415efe1547557d926b5bb5c827cdb411ae3decc74a4b601cbabda2710",
+  "baseline_hlo": "evaluation/xla-workflow/hlo/dlrm/baseline.final.hlo",
+  "baseline_hlo_sha256": "05be939415efe1547557d926b5bb5c827cdb411ae3decc74a4b601cbabda2710",
+  "model_compilations": 1,
+  "numerical_executions": 0
+}

@@ -1,0 +1,26 @@
+SemanticRule expr_select_not
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: select(align[n4:pred](not(align[n1:input](Input(#0)))), align[n4:lhs](Input(#1)), align[n4:rhs](Input(#2)))
+      rhs-graph: select(align[n8:pred](Input(#0)), align[n8:lhs](Input(#2)), align[n8:rhs](Input(#1)))
+      law: scalar-select-not
+      verified: capture access + reduction domains + ordered axes + shape + dtype + legality
+      lhs-normalized: select(Read(#0, access@0), Read(#2, access@3), Read(#1, access@2))
+      rhs-normalized: select(Read(#0, access@5), Read(#2, access@6), Read(#1, access@7))
+      declared-conditions: true
+      additional-guard: true
+      reason: valid for all legal LHS metadata satisfying the declared conditions under the selected arithmetic policy
+      coordinate frame (fresh identities; domain lengths remain symbolic):
+        input0 = group(extents=shape(Input(#0)))
+        n1.S = group(extents=shape(Input(#0)))
+        input2 = group(extents=shape(Input(#1)))
+        input3 = group(extents=shape(Input(#2)))
+        n4.S = group(extents=shape(Input(#0)))
+        access@0 = n4.S
+        access@2 = gather(n4.S, range(len(shape(Input(#1)))))
+        access@3 = gather(n4.S, range(len(shape(Input(#2)))))
+        access@5 = n4.S
+        access@6 = gather(n4.S, range(len(shape(Input(#2)))))
+        access@7 = gather(n4.S, range(len(shape(Input(#1)))))
+        lhs-output = n4.S
+        rhs-output = n4.S
+

@@ -1,0 +1,280 @@
+CheckedProgram
+  operation #0 TensorLang.add(lhs: Tensor, rhs: Tensor) -> Tensor
+    dtype
+      parameter #0 a: DType operand=0
+      parameter #1 b: DType operand=1
+      assert Binary(==, Symbol(#0):DType, Symbol(#1):DType):Bool
+      assert Builtin(is_numeric, Symbol(#0):DType):Bool
+      yield Symbol(#0):DType
+    bind S { lhs: all_axes(lhs), rhs: all_axes(rhs) }
+    output-axes: S
+    semantics [index]: Add(lhs, rhs)
+  operation #1 TensorLang.multiply(lhs: Tensor, rhs: Tensor) -> Tensor
+    dtype
+      parameter #0 a: DType operand=0
+      parameter #1 b: DType operand=1
+      assert Binary(==, Symbol(#0):DType, Symbol(#1):DType):Bool
+      assert Builtin(is_numeric, Symbol(#0):DType):Bool
+      yield Symbol(#0):DType
+    bind S { lhs: all_axes(lhs), rhs: all_axes(rhs) }
+    output-axes: S
+    semantics [index]: Product(lhs, rhs)
+  operation #2 TensorLang.negate(input: Tensor) -> Tensor
+    dtype
+      parameter #0 t: DType operand=0
+      assert Builtin(is_numeric, Symbol(#0):DType):Bool
+      yield Symbol(#0):DType
+    bind S { input: all_axes(input) }
+    output-axes: S
+    semantics [index]: Product(Const(-1), input)
+  operation #3 TensorLang.subtract(lhs: Tensor, rhs: Tensor) -> Tensor
+    dtype
+      parameter #0 a: DType operand=0
+      parameter #1 b: DType operand=1
+      assert Binary(==, Symbol(#0):DType, Symbol(#1):DType):Bool
+      assert Builtin(is_numeric, Symbol(#0):DType):Bool
+      yield Symbol(#0):DType
+    bind S { lhs: all_axes(lhs), rhs: all_axes(rhs) }
+    output-axes: S
+    semantics [index]: Add(lhs, Product(Const(-1), rhs))
+  operation #4 TensorLang.zero_like(input: Tensor) -> Tensor
+    dtype
+      parameter #0 t: DType operand=0
+      assert Builtin(is_numeric, Symbol(#0):DType):Bool
+      yield Symbol(#0):DType
+    bind S { input: all_axes(input) }
+    output-axes: S
+    semantics [index]: Const(0)
+  operation #5 TensorLang.dot_general(lhs: Tensor, rhs: Tensor) -> Tensor attrs=#0
+    dtype
+      parameter #0 a: DType operand=0
+      parameter #1 b: DType operand=1
+      assert Binary(==, Symbol(#0):DType, Symbol(#1):DType):Bool
+      assert Builtin(is_numeric, Symbol(#0):DType):Bool
+      yield Symbol(#0):DType
+    bind B { lhs: attrs.lhs_batching_dimensions, rhs: attrs.rhs_batching_dimensions }
+    bind K { lhs: attrs.lhs_contracting_dimensions, rhs: attrs.rhs_contracting_dimensions }
+    bind I { lhs: ordered_complement(all_axes(lhs), concat(attrs.lhs_batching_dimensions, attrs.lhs_contracting_dimensions)) }
+    bind J { rhs: ordered_complement(all_axes(rhs), concat(attrs.rhs_batching_dimensions, attrs.rhs_contracting_dimensions)) }
+    output-axes: concat(concat(B, I), J)
+    semantics [index]: Reduce(K, Product(lhs, rhs))
+  operation #6 TensorLang.convolution(input: Tensor, kernel: Tensor) -> Tensor attrs=#1
+    dtype
+      parameter #0 a: DType operand=0
+      parameter #1 b: DType operand=1
+      assert Binary(==, Symbol(#0):DType, Symbol(#1):DType):Bool
+      assert Builtin(is_numeric, Symbol(#0):DType):Bool
+      yield Symbol(#0):DType
+    bind N { input: [0] }
+    bind C { input: [-(rank(input), 1)], kernel: [-(rank(kernel), 2)] }
+    bind F { kernel: [-(rank(kernel), 1)] }
+    bind Window { kernel: range(-(rank(kernel), 2)) }
+    bind O = group(offset_extents(extent_floor_div(extent_sub(gather(shape(input), ordered_complement(all_axes(input), [0,-(rank(input), 1)])), offset_extents(extent_mul(attrs.dilations, offset_extents(gather(shape(kernel), range(-(rank(kernel), 2))), -(0, 1))), 1)), attrs.strides), 1))
+    assert >=(rank(input), 3)
+    assert ==(rank(kernel), rank(input))
+    assert is_positive_extents(gather(shape(kernel), range(-(rank(kernel), 2))))
+    assert ==(len(attrs.strides), len(ordered_complement(all_axes(input), [0,-(rank(input), 1)])))
+    assert ==(len(attrs.dilations), len(ordered_complement(all_axes(input), [0,-(rank(input), 1)])))
+    assert is_positive_extents(attrs.strides)
+    assert is_positive_extents(attrs.dilations)
+    assert extent_le(offset_extents(extent_mul(attrs.dilations, offset_extents(gather(shape(kernel), range(-(rank(kernel), 2))), -(0, 1))), 1), gather(shape(input), ordered_complement(all_axes(input), [0,-(rank(input), 1)])))
+    output-axes: concat(concat(N, O), F)
+    semantics [index]: Reduce(Window, Reduce(C, Product(Read(input, Concat(Coords(N), IndexAdd(IndexScale(attrs.strides, Coords(O)), IndexScale(attrs.dilations, Coords(Window))), Coords(C))), kernel)))
+  operation #7 TensorLang.slice(input: Tensor) -> Tensor attrs=#2
+    dtype
+      parameter #0 t: DType operand=0
+      yield Symbol(#0):DType
+    bind O = group(attrs.sizes)
+    assert ==(len(attrs.starts), rank(input))
+    assert ==(len(attrs.sizes), rank(input))
+    assert ==(len(attrs.strides), rank(input))
+    assert is_valid_extents(attrs.starts)
+    assert is_positive_extents(attrs.sizes)
+    assert is_positive_extents(attrs.strides)
+    assert extent_le(extent_add(attrs.starts, extent_mul(attrs.strides, offset_extents(attrs.sizes, -(0, 1)))), offset_extents(shape(input), -(0, 1)))
+    output-axes: O
+    semantics [index]: Read(input, IndexOffset(attrs.starts, IndexScale(attrs.strides, Coords(O))))
+  operation #8 TensorLang.broadcast_in_dim(input: Tensor) -> Tensor attrs=#3
+    dtype
+      parameter #0 t: DType operand=0
+      yield Symbol(#0):DType
+    bind S { input: all_axes(input) }
+    bind N = group(attrs.new_extents)
+    output-axes: place(S, attrs.dimensions, N)
+    semantics [index]: input
+  operation #9 TensorLang.transpose(input: Tensor) -> Tensor attrs=#4
+    dtype
+      parameter #0 t: DType operand=0
+      yield Symbol(#0):DType
+    bind S { input: all_axes(input) }
+    assert is_valid_axis_list(attrs.permutation, rank(input))
+    assert ==(len(attrs.permutation), rank(input))
+    output-axes: permute(S, attrs.permutation)
+    semantics [index]: input
+  operation #10 TensorLang.reverse(input: Tensor) -> Tensor attrs=#5
+    dtype
+      parameter #0 t: DType operand=0
+      yield Symbol(#0):DType
+    bind S { input: all_axes(input) }
+    assert is_valid_axis_list(attrs.dimensions, rank(input))
+    output-axes: S
+    semantics [index]: Read(input, IndexReverse(Coords(S), attrs.dimensions))
+  operation #11 TensorLang.reduce_sum(input: Tensor) -> Tensor attrs=#6
+    dtype
+      parameter #0 t: DType operand=0
+      assert Builtin(is_numeric, Symbol(#0):DType):Bool
+      yield Symbol(#0):DType
+    bind K { input: attrs.dimensions }
+    bind F { input: ordered_complement(all_axes(input), attrs.dimensions) }
+    output-axes: F
+    semantics [index]: Reduce(K, input)
+  attr_schema #0 TensorLang.dot_general::attrs { lhs_contracting_dimensions: u64[]; rhs_contracting_dimensions: u64[]; lhs_batching_dimensions: u64[]; rhs_batching_dimensions: u64[]; }
+  attr_schema #1 TensorLang.convolution::attrs { strides: i64[]; dilations: i64[]; }
+  attr_schema #2 TensorLang.slice::attrs { starts: i64[]; sizes: u64[]; strides: i64[]; }
+  attr_schema #3 TensorLang.broadcast_in_dim::attrs { dimensions: u64[]; new_extents: u64[]; }
+  attr_schema #4 TensorLang.transpose::attrs { permutation: u64[]; }
+  attr_schema #5 TensorLang.reverse::attrs { dimensions: u64[]; }
+  attr_schema #6 TensorLang.reduce_sum::attrs { dimensions: u64[]; }
+  rule #0 chain_automatic_10 [/home/onion/Projects/tepl_related/TEPL-paper/evaluation/certified-scalability/inputs/chain_automatic_10.tepl:326:1]
+    capture #0 A1: Tensor
+    capture #1 A2: Tensor
+    capture #2 A3: Tensor
+    capture #3 A4: Tensor
+    capture #4 A5: Tensor
+    capture #5 A6: Tensor
+    capture #6 A7: Tensor
+    capture #7 A8: Tensor
+    capture #8 A9: Tensor
+    capture #9 A10: Tensor
+    capture #10 A11: Tensor
+    dimension #0 B: U64
+    dimension #1 D0: U64
+    dimension #2 D1: U64
+    dimension #3 D2: U64
+    dimension #4 D3: U64
+    dimension #5 D4: U64
+    dimension #6 D5: U64
+    dimension #7 D6: U64
+    dimension #8 D7: U64
+    dimension #9 D8: U64
+    dimension #10 D9: U64
+    dimension #11 D10: U64
+    dimension #12 D11: U64
+    descriptor @#0 l10: Descriptor(#0) captured
+    descriptor @#1 l9: Descriptor(#0) captured
+    descriptor @#2 l8: Descriptor(#0) captured
+    descriptor @#3 l7: Descriptor(#0) captured
+    descriptor @#4 l6: Descriptor(#0) captured
+    descriptor @#5 l5: Descriptor(#0) captured
+    descriptor @#6 l4: Descriptor(#0) captured
+    descriptor @#7 l3: Descriptor(#0) captured
+    descriptor @#8 l2: Descriptor(#0) captured
+    descriptor @#9 l1: Descriptor(#0) captured
+    descriptor @#10 inferred#10: Descriptor(#0) inferred
+    descriptor @#11 inferred#11: Descriptor(#0) inferred
+    descriptor @#12 inferred#12: Descriptor(#0) inferred
+    descriptor @#13 inferred#13: Descriptor(#0) inferred
+    descriptor @#14 inferred#14: Descriptor(#0) inferred
+    descriptor @#15 inferred#15: Descriptor(#0) inferred
+    descriptor @#16 inferred#16: Descriptor(#0) inferred
+    descriptor @#17 inferred#17: Descriptor(#0) inferred
+    descriptor @#18 inferred#18: Descriptor(#0) inferred
+    descriptor @#19 inferred#19: Descriptor(#0) inferred
+    constraint #0 dtype=f32 shape=[#0, #1, #2]
+    constraint #1 dtype=f32 shape=[#0, #2, #3]
+    constraint #2 dtype=f32 shape=[#0, #3, #4]
+    constraint #3 dtype=f32 shape=[#0, #4, #5]
+    constraint #4 dtype=f32 shape=[#0, #5, #6]
+    constraint #5 dtype=f32 shape=[#0, #6, #7]
+    constraint #6 dtype=f32 shape=[#0, #7, #8]
+    constraint #7 dtype=f32 shape=[#0, #8, #9]
+    constraint #8 dtype=f32 shape=[#0, #9, #10]
+    constraint #9 dtype=f32 shape=[#0, #10, #11]
+    constraint #10 dtype=f32 shape=[#0, #11, #12]
+    match: MatchOp(TensorLang.dot_general #5 @#0, MatchOp(TensorLang.dot_general #5 @#1, MatchOp(TensorLang.dot_general #5 @#2, MatchOp(TensorLang.dot_general #5 @#3, MatchOp(TensorLang.dot_general #5 @#4, MatchOp(TensorLang.dot_general #5 @#5, MatchOp(TensorLang.dot_general #5 @#6, MatchOp(TensorLang.dot_general #5 @#7, MatchOp(TensorLang.dot_general #5 @#8, MatchOp(TensorLang.dot_general #5 @#9, Capture(#0), Capture(#1)), Capture(#2)), Capture(#3)), Capture(#4)), Capture(#5)), Capture(#6)), Capture(#7)), Capture(#8)), Capture(#9)), Capture(#10))
+    where: (((((((((((((((((((((((((((((((((((((((((((((((((((((DimensionRef(#0):U64 > 0:U64):Bool && (DimensionRef(#1):U64 > 0:U64):Bool):Bool && (DimensionRef(#2):U64 > 0:U64):Bool):Bool && (DimensionRef(#3):U64 > 0:U64):Bool):Bool && (DimensionRef(#4):U64 > 0:U64):Bool):Bool && (DimensionRef(#5):U64 > 0:U64):Bool):Bool && (DimensionRef(#6):U64 > 0:U64):Bool):Bool && (DimensionRef(#7):U64 > 0:U64):Bool):Bool && (DimensionRef(#8):U64 > 0:U64):Bool):Bool && (DimensionRef(#9):U64 > 0:U64):Bool):Bool && (DimensionRef(#10):U64 > 0:U64):Bool):Bool && (DimensionRef(#11):U64 > 0:U64):Bool):Bool && (DimensionRef(#12):U64 > 0:U64):Bool):Bool && (DescriptorField(@#9.0):U64[] == [2:U64,]:U64[]):Bool):Bool && (DescriptorField(@#9.1):U64[] == [1:U64,]:U64[]):Bool):Bool && (DescriptorField(@#9.2):U64[] == [0:U64,]:U64[]):Bool):Bool && (DescriptorField(@#9.3):U64[] == [0:U64,]:U64[]):Bool):Bool && (DescriptorField(@#8.0):U64[] == [2:U64,]:U64[]):Bool):Bool && (DescriptorField(@#8.1):U64[] == [1:U64,]:U64[]):Bool):Bool && (DescriptorField(@#8.2):U64[] == [0:U64,]:U64[]):Bool):Bool && (DescriptorField(@#8.3):U64[] == [0:U64,]:U64[]):Bool):Bool && (DescriptorField(@#7.0):U64[] == [2:U64,]:U64[]):Bool):Bool && (DescriptorField(@#7.1):U64[] == [1:U64,]:U64[]):Bool):Bool && (DescriptorField(@#7.2):U64[] == [0:U64,]:U64[]):Bool):Bool && (DescriptorField(@#7.3):U64[] == [0:U64,]:U64[]):Bool):Bool && (DescriptorField(@#6.0):U64[] == [2:U64,]:U64[]):Bool):Bool && (DescriptorField(@#6.1):U64[] == [1:U64,]:U64[]):Bool):Bool && (DescriptorField(@#6.2):U64[] == [0:U64,]:U64[]):Bool):Bool && (DescriptorField(@#6.3):U64[] == [0:U64,]:U64[]):Bool):Bool && (DescriptorField(@#5.0):U64[] == [2:U64,]:U64[]):Bool):Bool && (DescriptorField(@#5.1):U64[] == [1:U64,]:U64[]):Bool):Bool && (DescriptorField(@#5.2):U64[] == [0:U64,]:U64[]):Bool):Bool && (DescriptorField(@#5.3):U64[] == [0:U64,]:U64[]):Bool):Bool && (DescriptorField(@#4.0):U64[] == [2:U64,]:U64[]):Bool):Bool && (DescriptorField(@#4.1):U64[] == [1:U64,]:U64[]):Bool):Bool && (DescriptorField(@#4.2):U64[] == [0:U64,]:U64[]):Bool):Bool && (DescriptorField(@#4.3):U64[] == [0:U64,]:U64[]):Bool):Bool && (DescriptorField(@#3.0):U64[] == [2:U64,]:U64[]):Bool):Bool && (DescriptorField(@#3.1):U64[] == [1:U64,]:U64[]):Bool):Bool && (DescriptorField(@#3.2):U64[] == [0:U64,]:U64[]):Bool):Bool && (DescriptorField(@#3.3):U64[] == [0:U64,]:U64[]):Bool):Bool && (DescriptorField(@#2.0):U64[] == [2:U64,]:U64[]):Bool):Bool && (DescriptorField(@#2.1):U64[] == [1:U64,]:U64[]):Bool):Bool && (DescriptorField(@#2.2):U64[] == [0:U64,]:U64[]):Bool):Bool && (DescriptorField(@#2.3):U64[] == [0:U64,]:U64[]):Bool):Bool && (DescriptorField(@#1.0):U64[] == [2:U64,]:U64[]):Bool):Bool && (DescriptorField(@#1.1):U64[] == [1:U64,]:U64[]):Bool):Bool && (DescriptorField(@#1.2):U64[] == [0:U64,]:U64[]):Bool):Bool && (DescriptorField(@#1.3):U64[] == [0:U64,]:U64[]):Bool):Bool && (DescriptorField(@#0.0):U64[] == [2:U64,]:U64[]):Bool):Bool && (DescriptorField(@#0.1):U64[] == [1:U64,]:U64[]):Bool):Bool && (DescriptorField(@#0.2):U64[] == [0:U64,]:U64[]):Bool):Bool && (DescriptorField(@#0.3):U64[] == [0:U64,]:U64[]):Bool):Bool
+    derive @#10 = Descriptor(#0){auto:U64[],auto:U64[],auto:U64[],auto:U64[],}:Descriptor(#0)
+    derive @#11 = Descriptor(#0){auto:U64[],auto:U64[],auto:U64[],auto:U64[],}:Descriptor(#0)
+    derive @#12 = Descriptor(#0){auto:U64[],auto:U64[],auto:U64[],auto:U64[],}:Descriptor(#0)
+    derive @#13 = Descriptor(#0){auto:U64[],auto:U64[],auto:U64[],auto:U64[],}:Descriptor(#0)
+    derive @#14 = Descriptor(#0){auto:U64[],auto:U64[],auto:U64[],auto:U64[],}:Descriptor(#0)
+    derive @#15 = Descriptor(#0){auto:U64[],auto:U64[],auto:U64[],auto:U64[],}:Descriptor(#0)
+    derive @#16 = Descriptor(#0){auto:U64[],auto:U64[],auto:U64[],auto:U64[],}:Descriptor(#0)
+    derive @#17 = Descriptor(#0){auto:U64[],auto:U64[],auto:U64[],auto:U64[],}:Descriptor(#0)
+    derive @#18 = Descriptor(#0){auto:U64[],auto:U64[],auto:U64[],auto:U64[],}:Descriptor(#0)
+    derive @#19 = Descriptor(#0){auto:U64[],auto:U64[],auto:U64[],auto:U64[],}:Descriptor(#0)
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: Reduce(n20.K, Product(align[n20:lhs](Reduce(n18.K, Product(align[n18:lhs](Reduce(n16.K, Product(align[n16:lhs](Reduce(n14.K, Product(align[n14:lhs](Reduce(n12.K, Product(align[n12:lhs](Reduce(n10.K, Product(align[n10:lhs](Reduce(n8.K, Product(align[n8:lhs](Reduce(n6.K, Product(align[n6:lhs](Reduce(n4.K, Product(align[n4:lhs](Reduce(n2.K, Product(align[n2:lhs](Input(#0)), align[n2:rhs](Input(#1))))), align[n4:rhs](Input(#2))))), align[n6:rhs](Input(#3))))), align[n8:rhs](Input(#4))))), align[n10:rhs](Input(#5))))), align[n12:rhs](Input(#6))))), align[n14:rhs](Input(#7))))), align[n16:rhs](Input(#8))))), align[n18:rhs](Input(#9))))), align[n20:rhs](Input(#10))))
+      rhs-graph: Reduce(n41.K, Product(align[n41:lhs](Input(#0)), align[n41:rhs](Reduce(n40.K, Product(align[n40:lhs](Input(#1)), align[n40:rhs](Reduce(n39.K, Product(align[n39:lhs](Input(#2)), align[n39:rhs](Reduce(n38.K, Product(align[n38:lhs](Input(#3)), align[n38:rhs](Reduce(n37.K, Product(align[n37:lhs](Input(#4)), align[n37:rhs](Reduce(n36.K, Product(align[n36:lhs](Input(#5)), align[n36:rhs](Reduce(n35.K, Product(align[n35:lhs](Input(#6)), align[n35:rhs](Reduce(n34.K, Product(align[n34:lhs](Input(#7)), align[n34:rhs](Reduce(n33.K, Product(align[n33:lhs](Input(#8)), align[n33:rhs](Reduce(n32.K, Product(align[n32:lhs](Input(#9)), align[n32:rhs](Input(#10)))))))))))))))))))))))))))))))
+      verified: source-layout guard certificate and core emission theorem
+      declared-conditions:
+        ==(len(shape(Input(#0))), 3)
+        ==(dtype(Input(#0)), dtype_f32())
+        ==(len(shape(Input(#1))), 3)
+        ==(index(shape(Input(#0)), 0), index(shape(Input(#1)), 0))
+        ==(index(shape(Input(#0)), 2), index(shape(Input(#1)), 1))
+        ==(dtype(Input(#1)), dtype_f32())
+        ==(len(shape(Input(#2))), 3)
+        ==(index(shape(Input(#0)), 0), index(shape(Input(#2)), 0))
+        ==(index(shape(Input(#1)), 2), index(shape(Input(#2)), 1))
+        ==(dtype(Input(#2)), dtype_f32())
+        ==(len(shape(Input(#3))), 3)
+        ==(index(shape(Input(#0)), 0), index(shape(Input(#3)), 0))
+        ==(index(shape(Input(#2)), 2), index(shape(Input(#3)), 1))
+        ==(dtype(Input(#3)), dtype_f32())
+        ==(len(shape(Input(#4))), 3)
+        ==(index(shape(Input(#0)), 0), index(shape(Input(#4)), 0))
+        ==(index(shape(Input(#3)), 2), index(shape(Input(#4)), 1))
+        ==(dtype(Input(#4)), dtype_f32())
+        ==(len(shape(Input(#5))), 3)
+        ==(index(shape(Input(#0)), 0), index(shape(Input(#5)), 0))
+        ==(index(shape(Input(#4)), 2), index(shape(Input(#5)), 1))
+        ==(dtype(Input(#5)), dtype_f32())
+        ==(len(shape(Input(#6))), 3)
+        ==(index(shape(Input(#0)), 0), index(shape(Input(#6)), 0))
+        ==(index(shape(Input(#5)), 2), index(shape(Input(#6)), 1))
+        ==(dtype(Input(#6)), dtype_f32())
+        ==(len(shape(Input(#7))), 3)
+        ==(index(shape(Input(#0)), 0), index(shape(Input(#7)), 0))
+        ==(index(shape(Input(#6)), 2), index(shape(Input(#7)), 1))
+        ==(dtype(Input(#7)), dtype_f32())
+        ==(len(shape(Input(#8))), 3)
+        ==(index(shape(Input(#0)), 0), index(shape(Input(#8)), 0))
+        ==(index(shape(Input(#7)), 2), index(shape(Input(#8)), 1))
+        ==(dtype(Input(#8)), dtype_f32())
+        ==(len(shape(Input(#9))), 3)
+        ==(index(shape(Input(#0)), 0), index(shape(Input(#9)), 0))
+        ==(index(shape(Input(#8)), 2), index(shape(Input(#9)), 1))
+        ==(dtype(Input(#9)), dtype_f32())
+        ==(len(shape(Input(#10))), 3)
+        ==(index(shape(Input(#0)), 0), index(shape(Input(#10)), 0))
+        ==(index(shape(Input(#9)), 2), index(shape(Input(#10)), 1))
+        ==(dtype(Input(#10)), dtype_f32())
+        &&(m23, ==(l10.attrs.rhs_batching_dimensions, [0]))
+      additional-guard: true
+      reason: core guard implies canonical feasibility; DAG builder is sound for all legal extents
+      let m0 = &&(&&(>(index(shape(Input(#0)), 0), 0), >(index(shape(Input(#0)), 1), 0)), >(index(shape(Input(#0)), 2), 0))
+      let m1 = &&(&&(&&(m0, >(index(shape(Input(#1)), 2), 0)), >(index(shape(Input(#2)), 2), 0)), >(index(shape(Input(#3)), 2), 0))
+      let m2 = &&(&&(&&(m1, >(index(shape(Input(#4)), 2), 0)), >(index(shape(Input(#5)), 2), 0)), >(index(shape(Input(#6)), 2), 0))
+      let m3 = &&(&&(&&(m2, >(index(shape(Input(#7)), 2), 0)), >(index(shape(Input(#8)), 2), 0)), >(index(shape(Input(#9)), 2), 0))
+      let m4 = &&(&&(m3, >(index(shape(Input(#10)), 2), 0)), ==(l1.attrs.lhs_contracting_dimensions, [2]))
+      let m5 = &&(&&(m4, ==(l1.attrs.rhs_contracting_dimensions, [1])), ==(l1.attrs.lhs_batching_dimensions, [0]))
+      let m6 = &&(&&(m5, ==(l1.attrs.rhs_batching_dimensions, [0])), ==(l2.attrs.lhs_contracting_dimensions, [2]))
+      let m7 = &&(&&(m6, ==(l2.attrs.rhs_contracting_dimensions, [1])), ==(l2.attrs.lhs_batching_dimensions, [0]))
+      let m8 = &&(&&(m7, ==(l2.attrs.rhs_batching_dimensions, [0])), ==(l3.attrs.lhs_contracting_dimensions, [2]))
+      let m9 = &&(&&(m8, ==(l3.attrs.rhs_contracting_dimensions, [1])), ==(l3.attrs.lhs_batching_dimensions, [0]))
+      let m10 = &&(&&(m9, ==(l3.attrs.rhs_batching_dimensions, [0])), ==(l4.attrs.lhs_contracting_dimensions, [2]))
+      let m11 = &&(&&(m10, ==(l4.attrs.rhs_contracting_dimensions, [1])), ==(l4.attrs.lhs_batching_dimensions, [0]))
+      let m12 = &&(&&(m11, ==(l4.attrs.rhs_batching_dimensions, [0])), ==(l5.attrs.lhs_contracting_dimensions, [2]))
+      let m13 = &&(&&(m12, ==(l5.attrs.rhs_contracting_dimensions, [1])), ==(l5.attrs.lhs_batching_dimensions, [0]))
+      let m14 = &&(&&(m13, ==(l5.attrs.rhs_batching_dimensions, [0])), ==(l6.attrs.lhs_contracting_dimensions, [2]))
+      let m15 = &&(&&(m14, ==(l6.attrs.rhs_contracting_dimensions, [1])), ==(l6.attrs.lhs_batching_dimensions, [0]))
+      let m16 = &&(&&(m15, ==(l6.attrs.rhs_batching_dimensions, [0])), ==(l7.attrs.lhs_contracting_dimensions, [2]))
+      let m17 = &&(&&(m16, ==(l7.attrs.rhs_contracting_dimensions, [1])), ==(l7.attrs.lhs_batching_dimensions, [0]))
+      let m18 = &&(&&(m17, ==(l7.attrs.rhs_batching_dimensions, [0])), ==(l8.attrs.lhs_contracting_dimensions, [2]))
+      let m19 = &&(&&(m18, ==(l8.attrs.rhs_contracting_dimensions, [1])), ==(l8.attrs.lhs_batching_dimensions, [0]))
+      let m20 = &&(&&(m19, ==(l8.attrs.rhs_batching_dimensions, [0])), ==(l9.attrs.lhs_contracting_dimensions, [2]))
+      let m21 = &&(&&(m20, ==(l9.attrs.rhs_contracting_dimensions, [1])), ==(l9.attrs.lhs_batching_dimensions, [0]))
+      let m22 = &&(&&(m21, ==(l9.attrs.rhs_batching_dimensions, [0])), ==(l10.attrs.lhs_contracting_dimensions, [2]))
+      let m23 = &&(&&(m22, ==(l10.attrs.rhs_contracting_dimensions, [1])), ==(l10.attrs.lhs_batching_dimensions, [0]))
+    replacement: BuildOp(TensorLang.dot_general #5 @#10, CaptureRef(#0), BuildOp(TensorLang.dot_general #5 @#11, CaptureRef(#1), BuildOp(TensorLang.dot_general #5 @#12, CaptureRef(#2), BuildOp(TensorLang.dot_general #5 @#13, CaptureRef(#3), BuildOp(TensorLang.dot_general #5 @#14, CaptureRef(#4), BuildOp(TensorLang.dot_general #5 @#15, CaptureRef(#5), BuildOp(TensorLang.dot_general #5 @#16, CaptureRef(#6), BuildOp(TensorLang.dot_general #5 @#17, CaptureRef(#7), BuildOp(TensorLang.dot_general #5 @#18, CaptureRef(#8), BuildOp(TensorLang.dot_general #5 @#19, CaptureRef(#9), CaptureRef(#10)))))))))))

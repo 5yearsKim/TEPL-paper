@@ -1,0 +1,11 @@
+SemanticRule expr_select_not
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: select(align[n4:pred](not(align[n1:input](Input(#0)))), align[n4:lhs](Input(#1)), align[n4:rhs](Input(#2)))
+      rhs-graph: select(align[n8:pred](Input(#0)), align[n8:lhs](Input(#2)), align[n8:rhs](Input(#1)))
+      declared-conditions: true
+      additional-guard: unresolved
+      reason: core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+error: cannot verify rule 'expr_select_not': core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

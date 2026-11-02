@@ -1,0 +1,33 @@
+SemanticRule catalog_indexing_reverse_inserted_unit_dims
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: Read(input, IndexReverse(Coords(S), attrs.dimensions)) over align[n1:input](Input(#0))
+      rhs-graph: align[n5:input](Read(input, IndexReverse(Coords(S), attrs.dimensions)) over Input(#0))
+      law: ordered-axis-split
+      law: paired-axis-selection
+      law: index-reverse-normalization
+      law: index-add-normalization
+      law: index-substitution
+      law: axis-map-restriction
+      law: axis-insertion
+      verified: capture access + reduction domains + ordered axes + shape + dtype + legality
+      law: axis-selector-matching
+      lhs-normalized: Read(#0, access@0, index_reverse(coords(gather(place_axes(n1.S, [1], n1.N), [1])), shape(Input(#0)), dimensions=membership_positions([1], @#0.dimensions)))
+      rhs-normalized: Read(#0, access@3, index_reverse(coords(gather(place_axes(n1.S, [1], n1.N), [1])), shape(Input(#0)), dimensions=membership_positions([1], @#0.dimensions)))
+      constructor auto#2:
+        dimensions = membership_positions([1], attr_r.attrs.dimensions)
+      declared-conditions:
+        ==(len(shape(Input(#0))), 1)
+        &&(m0, ==(axis_eval_0.attrs.new_extents, [1]))
+      additional-guard: true
+      reason: valid for all legal LHS metadata satisfying the declared conditions under the selected arithmetic policy
+      let m0 = &&(==([1, index(shape(Input(#0)), 0)], [1, index(shape(Input(#0)), 0)]), ==(axis_eval_0.attrs.dimensions, [1]))
+      let m1 = place_axes(gather(place_axes(n1.S, [1], n1.N), [1]), [1], gather(place_axes(n1.S, [1], n1.N), [0]))
+      coordinate frame (fresh identities; domain lengths remain symbolic):
+        input0 = group(extents=shape(Input(#0)))
+        n1.S = group(extents=shape(Input(#0)))
+        n1.N = group(extents=[1])
+        access@0 = n1.S
+        access@3 = n1.S
+        lhs-output = place_axes(n1.S, [1], n1.N)
+        rhs-output = m1
+

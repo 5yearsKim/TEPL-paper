@@ -1,13 +1,15 @@
 \section{Axis-Based Representation}
 \label{sec:axis-model}
 Within the defined scope (Section~\ref{sec:formal-scope}), each computation
-component is determined by its input axis connections and output axis order.
+component is determined by its input dimension connections and output axis order.
 
 \subsection{Logical Axes}
 \label{sec:logical-axes}
-A \emph{logical axis} groups input axes that use the same coordinate. For example, in
-\code{einsum('ik,kj->ij', A, B)}~\cite{numpy-einsum}, the two axes named
-\code{k} share a coordinate: the second axis of $A$ and the first axis of
+A \emph{dimension} is a physical tensor dimension, selected by a zero-based
+position in an \code{axis} attribute. A \emph{logical axis} is an equivalence
+class of input dimensions that use the same coordinate. For example, in
+\code{einsum('ik,kj->ij', A, B)}~\cite{numpy-einsum}, the dimensions marked
+\code{k} share a coordinate: the second dimension of $A$ and the first dimension of
 $B$. Since \code{k} is absent from the output \code{ij}, it is summed out.
 We record this relation using input \emph{ports}. Port $(X,d)$ is dimension
 $d$ of input $X$, with positions starting at zero. For a component with input
@@ -26,10 +28,13 @@ axes removed by summation: they still record how input coordinates connect.
 
 \noindent\textbf{Symbolic axis groups.}
 An ordered list of logical axes is a \emph{symbolic axis group}, written
-$\vec I$, $\vec J$, or $\vec K$. For example, $\vec K=(k_1,k_2)$ contains
-two distinct logical axes. When two inputs share this group, axes in the
-same list position are paired. Allowing groups of varying length lets TEPL
-describe tensors of arbitrary rank with one rule.
+$\vec I$, $\vec J$, or $\vec K$; for example, $\vec K=(k_1,k_2)$ contains
+two distinct axes. Shared groups pair axes in corresponding positions;
+variable-length groups describe arbitrary ranks. Arrows mark named groups,
+and $\operatorname{set}(\vec G)$ forgets order. We write
+$\operatorname{Ord}_t$ for tensor $t$'s full logical-axis list in dimension
+order, represented symbolically during compilation;
+$\operatorname{Ord}_v(\beta)$ makes the attribute assignment explicit.
 
 \subsection{Axis Representation}
 \label{sec:axis-representation}
@@ -69,14 +74,14 @@ singleton and zero extents.
 \begin{lemma}[Axis exactness]
 \label{lem:axis-exactness}
 For two legal components $L,R$ over the same inputs at fixed source metadata,
-with every input axis having extent at least two,
+with every input dimension having extent at least two,
 \begin{equation}
  \forall X,\quad L(X)=R(X)\quad\iff\quad N(L)=N(R).
  \label{eq:axis-exactness}
 \end{equation}
 \end{lemma}
 That is, within the defined scope, two computations produce the same output
-shape and values for every input exactly when their input-axis connections
+shape and values for every input exactly when their input-dimension connections
 and output-axis order agree. The names assigned to logical axes do not matter.
 
 For TEPL, this gives attribute synthesis a concrete target: choose legal RHS

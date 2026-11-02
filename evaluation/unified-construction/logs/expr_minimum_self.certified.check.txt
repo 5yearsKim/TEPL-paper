@@ -1,0 +1,11 @@
+SemanticRule expr_minimum_self
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: min(align[n2:lhs](Input(#0)), align[n2:rhs](Input(#0)))
+      rhs-graph: Input(#0)
+      declared-conditions: true
+      additional-guard: unresolved
+      reason: core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+error: cannot verify rule 'expr_minimum_self': core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

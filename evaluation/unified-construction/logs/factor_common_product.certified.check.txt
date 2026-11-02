@@ -1,0 +1,11 @@
+SemanticRule factor_common_product
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: Add(align[n6:lhs](Product(align[n2:lhs](Input(#0)), align[n2:rhs](Input(#1)))), align[n6:rhs](Product(align[n5:lhs](Input(#2)), align[n5:rhs](Input(#1)))))
+      rhs-graph: Product(align[n11:lhs](Add(align[n9:lhs](Input(#0)), align[n9:rhs](Input(#2)))), align[n11:rhs](Input(#1)))
+      declared-conditions: true
+      additional-guard: unresolved
+      reason: core backend requires admitted automatic fields without derive helpers: schemas require read-once captures
+error: cannot verify rule 'factor_common_product': core backend requires admitted automatic fields without derive helpers: schemas require read-once captures
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

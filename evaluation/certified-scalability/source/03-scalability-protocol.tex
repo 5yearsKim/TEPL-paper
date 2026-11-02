@@ -1,0 +1,30 @@
+Each timed call follows the public certified compilation API, starting from
+loaded syntax without reusing a proof or compiled program. Preparation
+includes resolution and type checking. Certification/construction includes
+semantic-plan preparation, admission, guard certification, and metadata
+materialization. Lowering/validation includes executable lowering, metadata
+emission, and final executable validation. Other cost covers dispatch and
+intermediate-object cleanup. These are API boundaries; guard checking and
+metadata construction can occur in more than one phase. Parsing, import
+loading, serialization, portable loading, graph rewriting, and numerical
+reference execution are outside timing.
+
+The optimized compiler uses algebraic semantics and unchanged work budgets.
+One warmup and ten measured rounds run serially, shuffling case order with
+seed 20261026, on an Intel Core Ultra 7 155H. All original automatic rule
+bodies, guards, and dialect bytes are preserved; imports are embedded.
+The rank-three dot chains retain fixed source axis lists, enabling the
+fixed-layout certificate; transpose permutations remain symbolic and use
+the unary-chain certificate. Before timing, 60 independent dense-integer
+workload checks and all 45 public check/compile/validate commands pass.
+The driver also checks equality with public compilation and a portable
+roundtrip for each of the 15 configurations.
+
+Curves use medians with minimum--maximum whiskers; stacked phase bars use
+means so their segments sum to mean total latency. One machine and ten
+rounds characterize the tested workloads rather than an asymptotic bound
+or production throughput. All 165 samples, exact sources, compiler hashes,
+and validation logs remain in
+\nolinkurl{evaluation/certified-scalability/}. The earlier default-backend
+results remain in \nolinkurl{evaluation/current/scalability/}; their proof
+path and timing boundary differ, so they are not a paired speedup baseline.

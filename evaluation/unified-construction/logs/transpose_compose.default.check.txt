@@ -1,0 +1,25 @@
+SemanticRule transpose_compose
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: align[n2:input](align[n1:input](Input(#0)))
+      rhs-graph: align[n4:input](Input(#0))
+      law: ordered-axis-split
+      law: paired-axis-selection
+      law: ordered-partition-traversal
+      law: axis-map-restriction
+      verified: capture access + reduction domains + ordered axes + shape + dtype + legality
+      law: ordered-requirements-construction
+      lhs-normalized: Read(#0, access@0)
+      rhs-normalized: Read(#0, access@3)
+      constructor auto#2:
+        permutation = gather(attr_inner.attrs.permutation, attr_outer.attrs.permutation)
+      declared-conditions: true
+      additional-guard: true
+      reason: valid for all legal LHS metadata satisfying the declared conditions under the selected arithmetic policy
+      coordinate frame (fresh identities; domain lengths remain symbolic):
+        input0 = group(extents=shape(Input(#0)))
+        input0 = group(extents=shape(Input(#0)))
+        access@0 = input0
+        access@3 = input0
+        lhs-output = gather(input0, gather(attr_inner.attrs.permutation, attr_outer.attrs.permutation))
+        rhs-output = gather(input0, gather(attr_inner.attrs.permutation, attr_outer.attrs.permutation))
+

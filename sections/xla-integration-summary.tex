@@ -1,0 +1,17 @@
+\begin{table}[!htbp]
+\caption{Complete 25-case upstream pass inventory. The hybrid retains
+handwritten unsupported paths; equality with XLA is not full TEPL coverage.}
+\label{tab:xla-integration-coverage}
+\small
+\begin{tabularx}{\linewidth}{@{}Yrr@{}}\toprule
+Path exercised & Cases & TEPL operand folds\\\midrule
+Default dot folding via TEPL & 8 & 9\\
+Convolution; handwritten path retained & 9 & 0\\
+Custom policy; handwritten dot retained & 1 & 0\\
+Default guard/no-op controls & 7 & 0\\
+\bottomrule\end{tabularx}
+\end{table}
+\FloatBarrier
+All 25 outputs pass XLA verification and exactly match the upstream pass's HLO text and changed/no-change result. Numerical outputs agree on 21 cases; 4 sparse/additional-operand convolution cases are excluded from the numerical harness, while retaining HLO comparison and verification.
+For one pass over each of the 25 modules, summed batch-mean latency has medians of 30.7 microseconds upstream, 367.9 microseconds with a forced cold TEPL cache (11.97$\times$), and 32.2 microseconds with identical metadata prewarmed (1.05$\times$). The warm additional cost is 1.5 microseconds. Cold timing includes cache clearing before each module. These are pass costs on the test modules, not whole-compiler overhead; production cache hit rates are unmeasured.
+For the 8 admitted default-dot cases alone, the corresponding upstream/cold/warm sums are 13.0/349.3/14.6 microseconds; the warm ratio is 1.12$\times$.

@@ -1,0 +1,416 @@
+{
+  "schema_version": 2,
+  "seed": 20261026,
+  "chain_sizes": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "ranks": [
+    2,
+    4,
+    8,
+    16,
+    32
+  ],
+  "cases": [
+    {
+      "case_id": "chain_explicit_1",
+      "family": "chain",
+      "size": 1,
+      "mode": "explicit",
+      "rank": 3,
+      "expected_constructors": 0,
+      "file": "labs/reasoning_scalability/output/inputs/chain_explicit_1.tepl",
+      "input_hash": "3c54fb0074833683c7b82d900b333357848dc1e11b479c72df57e8621ddfcf7c"
+    },
+    {
+      "case_id": "chain_automatic_1",
+      "family": "chain",
+      "size": 1,
+      "mode": "automatic",
+      "rank": 3,
+      "expected_constructors": 1,
+      "file": "labs/reasoning_scalability/output/inputs/chain_automatic_1.tepl",
+      "input_hash": "7aeaec288a0b7c763b85d5541f7c189e5f33f020f0db45042702e56b1ddcd267"
+    },
+    {
+      "case_id": "chain_explicit_2",
+      "family": "chain",
+      "size": 2,
+      "mode": "explicit",
+      "rank": 3,
+      "expected_constructors": 0,
+      "file": "labs/reasoning_scalability/output/inputs/chain_explicit_2.tepl",
+      "input_hash": "0ebedf775e48aea8fee30021687b7b0735b48a5b4b3f811665fd06102e7bb1d4"
+    },
+    {
+      "case_id": "chain_partial_2",
+      "family": "chain",
+      "size": 2,
+      "mode": "partial",
+      "rank": 3,
+      "expected_constructors": 1,
+      "file": "labs/reasoning_scalability/output/inputs/chain_partial_2.tepl",
+      "input_hash": "ce78ff4791795f6cfff0ca6f72459cd8cd8045dfdec963a00e18130a980b275e"
+    },
+    {
+      "case_id": "chain_automatic_2",
+      "family": "chain",
+      "size": 2,
+      "mode": "automatic",
+      "rank": 3,
+      "expected_constructors": 2,
+      "file": "labs/reasoning_scalability/output/inputs/chain_automatic_2.tepl",
+      "input_hash": "95daac2ab75bf2412baa2e1520792b0382b67291a78cab3f74ffd2ffea995049"
+    },
+    {
+      "case_id": "chain_explicit_3",
+      "family": "chain",
+      "size": 3,
+      "mode": "explicit",
+      "rank": 3,
+      "expected_constructors": 0,
+      "file": "labs/reasoning_scalability/output/inputs/chain_explicit_3.tepl",
+      "input_hash": "423b5a0e831dd2516c69a06d979afa1db34a406544bf1cb0bdfc90e5689e4d15"
+    },
+    {
+      "case_id": "chain_partial_3",
+      "family": "chain",
+      "size": 3,
+      "mode": "partial",
+      "rank": 3,
+      "expected_constructors": 2,
+      "file": "labs/reasoning_scalability/output/inputs/chain_partial_3.tepl",
+      "input_hash": "93b266965df30df6113362e6f7fec1522d1cc97f341b69d7e747795a8a245223"
+    },
+    {
+      "case_id": "chain_automatic_3",
+      "family": "chain",
+      "size": 3,
+      "mode": "automatic",
+      "rank": 3,
+      "expected_constructors": 3,
+      "file": "labs/reasoning_scalability/output/inputs/chain_automatic_3.tepl",
+      "input_hash": "8f8a7338514562da3df55180d52232b3a73c19c2d0c7e86aee2e65b0082fe443"
+    },
+    {
+      "case_id": "chain_explicit_4",
+      "family": "chain",
+      "size": 4,
+      "mode": "explicit",
+      "rank": 3,
+      "expected_constructors": 0,
+      "file": "labs/reasoning_scalability/output/inputs/chain_explicit_4.tepl",
+      "input_hash": "f37adab82a5ca750d496bcf3d53056a344906e3a98424873a7af019b73c06adf"
+    },
+    {
+      "case_id": "chain_partial_4",
+      "family": "chain",
+      "size": 4,
+      "mode": "partial",
+      "rank": 3,
+      "expected_constructors": 2,
+      "file": "labs/reasoning_scalability/output/inputs/chain_partial_4.tepl",
+      "input_hash": "ac02c116b76f12ace3a411a5da35c99e6f1ecf9f21e912dcd5f584eec14be9f4"
+    },
+    {
+      "case_id": "chain_automatic_4",
+      "family": "chain",
+      "size": 4,
+      "mode": "automatic",
+      "rank": 3,
+      "expected_constructors": 4,
+      "file": "labs/reasoning_scalability/output/inputs/chain_automatic_4.tepl",
+      "input_hash": "4bbb149dad0954e63487050d8963cc4c4b383a1aa230b858719e56e4d26b4d5f"
+    },
+    {
+      "case_id": "chain_explicit_5",
+      "family": "chain",
+      "size": 5,
+      "mode": "explicit",
+      "rank": 3,
+      "expected_constructors": 0,
+      "file": "labs/reasoning_scalability/output/inputs/chain_explicit_5.tepl",
+      "input_hash": "a22ed06fdc7b666645d1cda4e6c5683303ffb8ab7ac2d78a5f0150f0b6bf3e5c"
+    },
+    {
+      "case_id": "chain_partial_5",
+      "family": "chain",
+      "size": 5,
+      "mode": "partial",
+      "rank": 3,
+      "expected_constructors": 3,
+      "file": "labs/reasoning_scalability/output/inputs/chain_partial_5.tepl",
+      "input_hash": "8fafca8b358e039bab5f956aae21bbd3820a2655f257811192a2609492c33fe4"
+    },
+    {
+      "case_id": "chain_automatic_5",
+      "family": "chain",
+      "size": 5,
+      "mode": "automatic",
+      "rank": 3,
+      "expected_constructors": 5,
+      "file": "labs/reasoning_scalability/output/inputs/chain_automatic_5.tepl",
+      "input_hash": "62f5e9dc50fddf67ee569795fc0ac7204bfb659b213615e631529cedccd4417b"
+    },
+    {
+      "case_id": "chain_explicit_6",
+      "family": "chain",
+      "size": 6,
+      "mode": "explicit",
+      "rank": 3,
+      "expected_constructors": 0,
+      "file": "labs/reasoning_scalability/output/inputs/chain_explicit_6.tepl",
+      "input_hash": "6003753abbd7189e87b1228f6fe6843f634fb97211dd3bcd0aee1a49424f664d"
+    },
+    {
+      "case_id": "chain_partial_6",
+      "family": "chain",
+      "size": 6,
+      "mode": "partial",
+      "rank": 3,
+      "expected_constructors": 3,
+      "file": "labs/reasoning_scalability/output/inputs/chain_partial_6.tepl",
+      "input_hash": "88bb205d707aa6e6a3c899eed06168173ab12819b5e78442d62cfc35f04cc92e"
+    },
+    {
+      "case_id": "chain_automatic_6",
+      "family": "chain",
+      "size": 6,
+      "mode": "automatic",
+      "rank": 3,
+      "expected_constructors": 6,
+      "file": "labs/reasoning_scalability/output/inputs/chain_automatic_6.tepl",
+      "input_hash": "82b52ccbf4b256820055aa434ef3eddab07d5373f6bf4d771ae0d4c368a6f4a2"
+    },
+    {
+      "case_id": "chain_explicit_7",
+      "family": "chain",
+      "size": 7,
+      "mode": "explicit",
+      "rank": 3,
+      "expected_constructors": 0,
+      "file": "labs/reasoning_scalability/output/inputs/chain_explicit_7.tepl",
+      "input_hash": "dfe77ca1159e0cb956b1fc3bbea8c468aa39c1caf601cd3264008b7844af3c62"
+    },
+    {
+      "case_id": "chain_partial_7",
+      "family": "chain",
+      "size": 7,
+      "mode": "partial",
+      "rank": 3,
+      "expected_constructors": 4,
+      "file": "labs/reasoning_scalability/output/inputs/chain_partial_7.tepl",
+      "input_hash": "2e76542a0dc826eab48042c4a40e1240fe24c6cdb27501e4597aa528360cf5e1"
+    },
+    {
+      "case_id": "chain_automatic_7",
+      "family": "chain",
+      "size": 7,
+      "mode": "automatic",
+      "rank": 3,
+      "expected_constructors": 7,
+      "file": "labs/reasoning_scalability/output/inputs/chain_automatic_7.tepl",
+      "input_hash": "8075196edbb604c41cd35e54077e7a58543f395b5cb970806e8e379263d97606"
+    },
+    {
+      "case_id": "chain_explicit_8",
+      "family": "chain",
+      "size": 8,
+      "mode": "explicit",
+      "rank": 3,
+      "expected_constructors": 0,
+      "file": "labs/reasoning_scalability/output/inputs/chain_explicit_8.tepl",
+      "input_hash": "fd18270e03d5c7c09888be711ff9908fcf322a241a178616c89bb5f85ba9198f"
+    },
+    {
+      "case_id": "chain_partial_8",
+      "family": "chain",
+      "size": 8,
+      "mode": "partial",
+      "rank": 3,
+      "expected_constructors": 4,
+      "file": "labs/reasoning_scalability/output/inputs/chain_partial_8.tepl",
+      "input_hash": "94b45ef25a58fd2bca7975be89dbb037fa8651bb66e6e5f731147d303a9d67bc"
+    },
+    {
+      "case_id": "chain_automatic_8",
+      "family": "chain",
+      "size": 8,
+      "mode": "automatic",
+      "rank": 3,
+      "expected_constructors": 8,
+      "file": "labs/reasoning_scalability/output/inputs/chain_automatic_8.tepl",
+      "input_hash": "a45562dba11ded9b1f5158fff4c4a338a9bda3ac7260c43920684d42283aaa14"
+    },
+    {
+      "case_id": "chain_explicit_9",
+      "family": "chain",
+      "size": 9,
+      "mode": "explicit",
+      "rank": 3,
+      "expected_constructors": 0,
+      "file": "labs/reasoning_scalability/output/inputs/chain_explicit_9.tepl",
+      "input_hash": "76add7d2927b37efc50a0eff514d0928de0419a06ea528da15c0701cf3c237fd"
+    },
+    {
+      "case_id": "chain_partial_9",
+      "family": "chain",
+      "size": 9,
+      "mode": "partial",
+      "rank": 3,
+      "expected_constructors": 5,
+      "file": "labs/reasoning_scalability/output/inputs/chain_partial_9.tepl",
+      "input_hash": "1dacbf1f97e867fdccfc003c5f49718db6d0f072dc60adbc38666347d6a0a7b3"
+    },
+    {
+      "case_id": "chain_automatic_9",
+      "family": "chain",
+      "size": 9,
+      "mode": "automatic",
+      "rank": 3,
+      "expected_constructors": 9,
+      "file": "labs/reasoning_scalability/output/inputs/chain_automatic_9.tepl",
+      "input_hash": "57d99b8a7ea5d4be22e312ae9ee7555cc1c189fb39c21e4b21fcec159001ea24"
+    },
+    {
+      "case_id": "chain_explicit_10",
+      "family": "chain",
+      "size": 10,
+      "mode": "explicit",
+      "rank": 3,
+      "expected_constructors": 0,
+      "file": "labs/reasoning_scalability/output/inputs/chain_explicit_10.tepl",
+      "input_hash": "fe7e5ed8880910662a04105ba380d20068061fc181e40c91c9bc1ccd78ee9855"
+    },
+    {
+      "case_id": "chain_partial_10",
+      "family": "chain",
+      "size": 10,
+      "mode": "partial",
+      "rank": 3,
+      "expected_constructors": 5,
+      "file": "labs/reasoning_scalability/output/inputs/chain_partial_10.tepl",
+      "input_hash": "fee6de90c86d8129f4e71f31f23aa27685a53c2d4f678fb6876bca00158caa24"
+    },
+    {
+      "case_id": "chain_automatic_10",
+      "family": "chain",
+      "size": 10,
+      "mode": "automatic",
+      "rank": 3,
+      "expected_constructors": 10,
+      "file": "labs/reasoning_scalability/output/inputs/chain_automatic_10.tepl",
+      "input_hash": "7c1e671a20558376e0609931996915fb7f1d44288a15796c91c7bb42c5d54bee"
+    },
+    {
+      "case_id": "rank_2_explicit",
+      "family": "rank",
+      "size": 2,
+      "mode": "explicit",
+      "rank": 2,
+      "expected_constructors": 0,
+      "file": "labs/reasoning_scalability/output/inputs/rank_2_explicit.tepl",
+      "input_hash": "e97819fed07f145b00eb7cad17b43513316c3a1b500e3aeb260a36297283dd94"
+    },
+    {
+      "case_id": "rank_2_automatic",
+      "family": "rank",
+      "size": 2,
+      "mode": "automatic",
+      "rank": 2,
+      "expected_constructors": 1,
+      "file": "labs/reasoning_scalability/output/inputs/rank_2_automatic.tepl",
+      "input_hash": "f6e13a7e1437adadabe0f0df06c5963ae62d9d81267ecfa16b06a3f614e9bd16"
+    },
+    {
+      "case_id": "rank_4_explicit",
+      "family": "rank",
+      "size": 4,
+      "mode": "explicit",
+      "rank": 4,
+      "expected_constructors": 0,
+      "file": "labs/reasoning_scalability/output/inputs/rank_4_explicit.tepl",
+      "input_hash": "508479c923bb6b87f24639c2cd84e39b47bf0891486c406cf720ac62bb602846"
+    },
+    {
+      "case_id": "rank_4_automatic",
+      "family": "rank",
+      "size": 4,
+      "mode": "automatic",
+      "rank": 4,
+      "expected_constructors": 1,
+      "file": "labs/reasoning_scalability/output/inputs/rank_4_automatic.tepl",
+      "input_hash": "9fb8646dba8a35b9034ad31b0e8430ada7178e0900a24c708bcdbf8b921a3399"
+    },
+    {
+      "case_id": "rank_8_explicit",
+      "family": "rank",
+      "size": 8,
+      "mode": "explicit",
+      "rank": 8,
+      "expected_constructors": 0,
+      "file": "labs/reasoning_scalability/output/inputs/rank_8_explicit.tepl",
+      "input_hash": "61621c46e89ae88efe320e5f1af7aef92d4360a37c944316aead68a9452737c9"
+    },
+    {
+      "case_id": "rank_8_automatic",
+      "family": "rank",
+      "size": 8,
+      "mode": "automatic",
+      "rank": 8,
+      "expected_constructors": 1,
+      "file": "labs/reasoning_scalability/output/inputs/rank_8_automatic.tepl",
+      "input_hash": "68f5a7b8f35523af502cfc99558bec5734184977a3e45d0b0402799fd784f6b5"
+    },
+    {
+      "case_id": "rank_16_explicit",
+      "family": "rank",
+      "size": 16,
+      "mode": "explicit",
+      "rank": 16,
+      "expected_constructors": 0,
+      "file": "labs/reasoning_scalability/output/inputs/rank_16_explicit.tepl",
+      "input_hash": "5bf96999fd23d2258874716f90beb6c14054f986329188afc89e5394885f8fd1"
+    },
+    {
+      "case_id": "rank_16_automatic",
+      "family": "rank",
+      "size": 16,
+      "mode": "automatic",
+      "rank": 16,
+      "expected_constructors": 1,
+      "file": "labs/reasoning_scalability/output/inputs/rank_16_automatic.tepl",
+      "input_hash": "3d5d97bccc3fac2577e7eb0710dc1516bd3b42133155f9ecd2d9d0369822b0ad"
+    },
+    {
+      "case_id": "rank_32_explicit",
+      "family": "rank",
+      "size": 32,
+      "mode": "explicit",
+      "rank": 32,
+      "expected_constructors": 0,
+      "file": "labs/reasoning_scalability/output/inputs/rank_32_explicit.tepl",
+      "input_hash": "9b075482f1de1fa8dcdf0e953928c9b8416aa8c9fd3c3b961d8e569c6e3b7b34"
+    },
+    {
+      "case_id": "rank_32_automatic",
+      "family": "rank",
+      "size": 32,
+      "mode": "automatic",
+      "rank": 32,
+      "expected_constructors": 1,
+      "file": "labs/reasoning_scalability/output/inputs/rank_32_automatic.tepl",
+      "input_hash": "e760d12684924a6d881f939980e167ee19d3f6a7006d009afc686e57a50c5e95"
+    }
+  ],
+  "dense_reference_checks": 60
+}

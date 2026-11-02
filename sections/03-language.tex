@@ -5,8 +5,7 @@
 A \emph{dialect} groups reusable operation definitions. Each \emph{operation}
 declares its operands, result, attributes, and semantics. Attributes configure
 an operation independently of tensor values.
-Section~\ref{sec:attribute-roles} introduces their roles and shows an example
-declaration.
+Section~\ref{sec:attribute-roles} distinguishes the attribute roles.
 
 A \emph{rewrite rule} imports operations from a dialect and describes a
 replacement using \code{LHS => RHS}. Each side is a tensor expression written
@@ -25,114 +24,76 @@ express conditions, and construct replacement attributes.
 \subsection{Axis, Extent, and Coordinate Attributes}
 \label{sec:attribute-roles}
 
-TEPL distinguishes three roles for integer attributes. An \code{axis}
-identifies a dimension by its zero-based position; an \code{extent}
-specifies a dimension's size; and a \code{coordinate} specifies a position,
-offset, or stride within a dimension. Figure~\ref{fig:attribute-roles} visualizes the distinction between axes,
-extents, and coordinates.
+TEPL requires a type when declaring an operation attribute and distinguishes
+three roles for integer attributes: axes, extents, and coordinates
+(Figure~\ref{fig:attribute-roles}). These roles describe different properties
+even when their integer values coincide. This distinction allows TEPL to
+target only eligible axis fields for synthesis, while extent and coordinate
+attributes remain supplied.
+Appendix~\ref{app:language-declarations} gives declaration examples.
 
+\begin{table}[!htbp]
+\caption{Integer-attribute roles in TEPL.}
+\label{tab:attribute-roles}
+\small
+\begin{tabularx}{\linewidth}{@{}llY@{}}\toprule
+Role & Meaning & Example field\\\midrule
+\code{axis} & Zero-based dimension position & Transpose \code{permutation: axis[]}\\
+\code{extent} & Dimension size & Reshape \code{shape: extent[]}\\
+\code{coordinate} & Position, offset, or stride & Slice \code{starts: coordinate[]}\\\bottomrule
+\end{tabularx}
+\end{table}
 
-TEPL makes these roles explicit in attribute declarations, allowing
-synthesis to target axis fields while preserving supplied extents and
-coordinate parameters. Transpose and contiguous slice operations can be
-defined as follows:
-
-\begin{lstlisting}[language=TEPL]
-dialect TensorLang {
-    op transpose(input: tensor) -> tensor {
-        attrs {
-            permutation: axis[];
-        }
-        // Other blocks, such as axes and semantics, can follow.
-        ...
-    }
-
-    op slice(input: tensor) -> tensor {
-        attrs {
-            starts: coordinate[];
-            sizes: extent[];
-        }
-        ...
-    }
-}
-\end{lstlisting}
-For the slice, \code{starts} specifies where to begin and \code{sizes}
-specifies how many elements to take along each dimension; stride is fixed
-to one.
-
-\subsection{Attribute Binding and Transformation}
-\label{sec:binding}
-\sidefigure{figures/Attribute Binding and Derivation.pdf}{Captured operation attributes can be read in \code{where} and \code{derive} blocks. The \code{derive} block explicitly defines RHS attribute transformation logic using these captured attributes.}{fig:attribute-binding}{An input graph with transpose and dot is replaced by a dot. Colored descriptor
+\sidefigure[0.5]{figures/Attribute Binding and Derivation.pdf}{Captured operation attributes can be read in \code{where} and \code{derive} blocks. The \code{derive} block explicitly defines RHS attribute transformation logic using these captured attributes.}{fig:attribute-binding}{An input graph with transpose and dot is replaced by a dot. Colored descriptor
 bindings connect the rule to a table with two captured rows and one derived row.}
+
+\subsection{Attribute Binding and Explicit Derivation}
+\label{sec:binding}
+
 LHS operation attributes are captured automatically at match time. Naming an operation
 makes its descriptor accessible as \code{node.attrs}. For example,
 \code{tr.attrs.permutation} selects the permutation of a named transpose
 node \code{tr}.
 
+
 Users can compute RHS attributes in a \code{derive} block by assigning a
 descriptor to a named RHS node's \code{attrs} property, such as
 \code{out.attrs}. Bracket notation provides syntactic sugar for directly
-assigning an existing descriptor: \code{(dot[d.attrs] A B)} reuses
+assigning an existing descriptor:
+
+\mbox{\code{(dot[d.attrs] A B)}} reuses
 \code{d.attrs} for the RHS dot. Descriptor compatibility is checked
 separately from rewrite correctness.
 
-Figure~\ref{fig:attribute-binding} illustrates how LHS attributes are captured
-at match time and RHS attributes are derived from them using user-written
-transformation logic.
-
-
-Although our mathematical synthesis algorithm is complete for the defined
-fragment, TEPL may still be unable to verify a rewrite with explicit
-attribute derivations. Failure to verify a rewrite does not necessarily
-mean that it is incorrect.
-
-
-\subsection{Conditions with \texorpdfstring{\code{where}}{where}}
-\label{sec:where}
-Some rewrite rules are applicable only under specific conditions. A
-\code{where} block expresses these conditions as predicates combined with
-\code{&&} and \code{||}.
-
-For operations with declared semantics, TEPL accepts a rule only when it can
-establish that the RHS attributes are computable and produce a legal,
-equivalent replacement under the \code{where} condition. For the mathematical
-fragment, the LHS and RHS determine a feasibility predicate
-$\operatorname{check}(p)$ (Section~\ref{sec:find}). The \code{where} condition
-must imply this predicate for every legal LHS match.
-
-For example, the following dot reassociation rule preserves the inner dot's
-batch axes, assuming arithmetic that permits reassociation:
-\begin{lstlisting}[language=TEPL]
-rule reassociate {
-  (source: dot (inner: dot A B) C) => (dot A (dot B C))
-  where {
-    source.attrs.lhs_batching_dimensions == inner.axes.B.positions
-  }
-}
-\end{lstlisting}
-The condition requires the outer dot's left batch dimensions to match the
-inner dot's batch output positions in the same order.
-
-When verification fails, TEPL can suggest an additional sufficient condition
-to add to \code{where}. The user adds the condition and checks the rule again
-(Section~\ref{sec:condition-suggestions}).
-
-\subsection{Explicit Attribute Derivation with \texorpdfstring{\code{derive}}{derive}}
-A \code{derive} block defines RHS attribute transformation logic using
-captured LHS attributes. The following rule composes two transposes by
-using \code{gather} to compose their permutations:
+For example, \code{gather} composes two captured transpose permutations:
 \begin{lstlisting}[language=TEPL]
 rule compose_transposes_explicit {
-  (outer: transpose (inner: transpose X)) => (combined: transpose X)
+  (t2: transpose (t1: transpose X)) => (t3: transpose X)
   derive {
-    combined.attrs = {
-      permutation: gather(inner.attrs.permutation, outer.attrs.permutation)
+    t3.attrs = {
+      permutation: gather(t1.attrs.permutation, t2.attrs.permutation)
     };
   }
 }
 \end{lstlisting}
-When applying the rule, this derivation computes the attributes of the
-replacement transpose from the two captured permutations.
+
+\subsection{Conditions with \texorpdfstring{\code{where}}{where}}
+\label{sec:where}
+
+
+Some rewrite rules are applicable only under specific conditions. A
+\code{where} block expresses these conditions as predicates combined with
+\code{&&} and \code{||}.
+
+For operations with declared semantics, acceptance establishes that the
+attribute program is defined and produces a legal, equivalent replacement
+whenever the condition holds (Section~\ref{sec:contract}). A condition can, for example, restrict a captured transpose permutation
+to the identity. Appendix~\ref{app:condition-suggestions} gives the
+batch-routing condition for generalized dot reassociation.
+
+When verification fails, TEPL can suggest an additional sufficient condition
+to add to \code{where}. The user adds the condition and checks the rule again
+(Appendix~\ref{app:condition-suggestions}).
 
 \subsection{Automatic Attribute Inference}
 \label{sec:auto}
@@ -144,20 +105,11 @@ rule compose_transposes_auto {
   (transpose (transpose X)) => (transpose X)
 }
 \end{lstlisting}
-\sidefigure{figures/Automatic Attribute Inference.pdf}{Omitted RHS axis fields trigger inference of a reusable attribute function at compile time. Runtime evaluates this function on the metadata captured for each match.}{fig:introducing-auto}{A vertical flow separates the user rule and operation semantics, compiler
+\sidefigure[0.5]{figures/Automatic Attribute Inference.pdf}{Omitted RHS axis fields trigger inference of a reusable attribute function at compile time. Runtime evaluates this function on the metadata captured for each match.}{fig:introducing-auto}{A vertical flow separates the user rule and operation semantics, compiler
 synthesis and verification, and runtime application of the generated function.}
-For transpose composition, the compiler infers the same permutation
-transformation as the explicit derivation above. It constructs a reusable
-function of source metadata rather than attributes for one fixed shape.
-Runtime evaluates this function for each match. Unsupported inference
-produces a diagnostic.
-
-Figure~\ref{fig:introducing-auto} illustrates this compilation and runtime
-process with transpose absorption.
-
-
-Automatic inference must construct attribute transformation logic that works
-across input ranks and shapes. The resulting attributes must make the RHS
-legal and preserve the computation under the rule's declared conditions.
-The next section formalizes this synthesis problem.
-
+The compiler infers the explicit permutation transformation above once;
+runtime evaluates it on each match's captured metadata
+(Figure~\ref{fig:introducing-auto}). Unsupported inference produces a
+diagnostic. Section~\ref{sec:problem} formalizes the contract across ranks
+and shapes.
+\FloatBarrier

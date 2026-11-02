@@ -1,0 +1,12 @@
+\begin{table}[!htbp]
+\caption{CPU compilation costs in milliseconds: median [min,max] over ten measured rounds per variant. TEPL program loading is included in integrated compilation.}
+\label{tab:xla-workflow-timings}
+\small
+\begin{tabularx}{\linewidth}{@{}Yrrr@{}}\toprule
+Workload & Baseline & Integrated & Program load\\\midrule
+TransformerLM (1) & \shortstack[r]{86.9\\[-2pt]{\scriptsize[77.6,95.6]}} & \shortstack[r]{104.0\\[-2pt]{\scriptsize[96.4,115.2]}} & \shortstack[r]{15.1\\[-2pt]{\scriptsize[14.1,16.5]}}\\
+TransformerLM (4) & \shortstack[r]{115.7\\[-2pt]{\scriptsize[106.8,131.9]}} & \shortstack[r]{132.1\\[-2pt]{\scriptsize[118.3,139.7]}} & \shortstack[r]{16.9\\[-2pt]{\scriptsize[15.5,19.4]}}\\
+DLRM training (6,272) & \shortstack[r]{288.1\\[-2pt]{\scriptsize[258.7,327.3]}} & \shortstack[r]{305.9\\[-2pt]{\scriptsize[266.4,345.2]}} & \shortstack[r]{18.5\\[-2pt]{\scriptsize[16.1,23.6]}}\\
+ResNet-50 (1) & \shortstack[r]{247.2\\[-2pt]{\scriptsize[235.4,263.4]}} & \shortstack[r]{264.4\\[-2pt]{\scriptsize[246.4,303.2]}} & \shortstack[r]{19.3\\[-2pt]{\scriptsize[18.1,25.3]}}\\
+\bottomrule\end{tabularx}
+\end{table}

@@ -1,0 +1,37 @@
+{
+  "all_passed": true,
+  "test_targets": [
+    "tests/ordered_synthesis_test",
+    "tests/attribute_reasoning_test",
+    "tests/axis_auto_test",
+    "tests/codegen_test",
+    "tests/rewrite_test",
+    "tests/reverse_test",
+    "labs/accepted_core/acceptance_test",
+    "labs/accepted_core/extensions_test"
+  ],
+  "emission_reference_checks": 1980,
+  "exhaustive_decisions": 1584,
+  "exhaustive_sum_decisions": 387,
+  "dense_graph_checks": 685,
+  "negative_checks": 142,
+  "new_shared_ir_checks": [
+    "symbolic and native compilation return identical metadata IR",
+    "zero proof budget preserves residual IR after specialization fails",
+    "symbolic and native predicates agree outside written guard",
+    "joint contraction permutation preserves port classes and ordered outputs on anisotropic dimensions"
+  ],
+  "compiler_sha256": "f6437fc7366aa5a45272305466a5172b2fc548ef55956459da26932315ae5055",
+  "export_test_targets": [
+    "tests/codegen_cpp_test",
+    "tests/cpp_codegen_test",
+    "tests/rust_codegen_test"
+  ],
+  "all_11_targets_passed": true,
+  "cpp_compilers": [
+    "g++ -O0",
+    "g++ -O2",
+    "clang++ -O0",
+    "clang++ -O2"
+  ]
+}

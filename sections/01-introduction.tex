@@ -16,17 +16,17 @@ rearrange the computation, but general tensor dot operations also need
 attributes specifying their batch and contraction dimensions. The rewrite
 must compute how these attributes are transformed from the left-hand side (LHS)
 to the right-hand side (RHS). For example, in XLA, this single transformation is implemented by the
-\code{AssociativeReorderNestedDot} routine in approximately 320 nonblank lines
-of C++~\cite{xla-simplifier}, including logic for attribute transformation and
+\code{AssociativeReorderNestedDot} routine in 269 nonblank lines of C++ code
+(excluding comments)~\cite{xla-simplifier}, including logic for attribute transformation and
 checking applicability. This illustrates the substantial implementation complexity
 hidden behind a seemingly simple algebraic rewrite rule.
 
 A key difficulty is that matching the LHS does not determine the
 attributes needed on the RHS. Users must therefore write
 additional expressions or custom code to compute them. This requires
-tracking how axis positions, operand pairings,
-and output order change across composed operations. Two axes with the same
-size can still represent different coordinates, so sizes alone are not enough
+tracking how dimension positions, operand pairings,
+and output order change across composed operations. Two dimensions with the same
+extent can still represent different coordinates, so extents alone are not enough
 to determine their correspondence. The transformation must also work for
 tensors of arbitrary rank; checking a few fixed-rank examples does not
 establish that it works in general.
@@ -51,14 +51,6 @@ TEPL infers their transformation logic from reusable
 operation semantics and source metadata.}{fig:why-tepl}{Four panels compare an algebraic pattern, custom implementation logic,
 explicit TEPL attribute expressions, and inferred TEPL axis attributes for the
 same nested-dot replacement graph.}
-\subsection{Central Thesis}
-We introduce TEPL, a DSL for practical tensor rewriting that provides
-syntactic features for expressing algebraic patterns, applicability
-conditions, and attribute transformations together. Our central research
-question is how complex, manually written attribute transformation logic
-can be delegated to the compiler, and under what conditions the resulting
-rewrites can be guaranteed correct.
-
 \subsection{Contributions}
 \begin{enumerate}
 \item \textbf{A practical language design for tensor rewriting.}
@@ -67,20 +59,23 @@ rewrite rules concisely and intuitively.
 \item \textbf{Automatic attribute inference.}
 For supported rewrites, the compiler constructs reusable functions that
 compute missing RHS axis fields from source metadata while preserving
-supplied extent and coordinate attributes.
+supplied extent and coordinate attributes. Mixed explicit/inferred axis
+fields use validation or certified schemas, with no completeness guarantee.
 \item \textbf{Symbolic axis mapping for composed operations.}
 We propose an algorithm that maps symbolic axis groups across composed
 operations using operation semantics, enabling attribute matching for
 input tensors of arbitrary rank.
 \item \textbf{Correctness and completeness guarantees for a defined fragment.}
-For read-once contraction, permutation, and unary summation, with a restricted
-additive extension, we prove that our mathematical synthesis algorithm
-constructs valid assignments to RHS axis fields whenever they exist.
-These assignments ensure that the replacement is legal and equivalent to the
-original computation under the stated assumptions.
+We prove constructive completeness for independent, fully unknown RHS axis
+fields in read-once contraction, permutation, and unary summation, with a
+restricted additive extension, exact arithmetic, and input extents at least
+two. A shared symbolic metadata program realizes this constructor; a sufficient guard
+checker establishes the end-to-end acceptance guarantee in
+Theorem~\ref{thm:accepted-core}. Sound view/reindexing schemas add
+broadcast and reverse; core validation also covers supplied fields.
+Table~\ref{tab:guarantee-map} collects the guarantees and their scope.
+These are paper proofs, not mechanized verification. We trust
+operation declarations, frontend lowering, the C++ implementation of
+checking/loading and primitive reasoning/evaluation, and backend agreement
+with declared algebraic semantics.
 \end{enumerate}
-Together, these contributions support concise tensor rewrite rules,
-automatic attribute synthesis, and formal guarantees for a defined
-mathematical fragment. Section~\ref{sec:evaluation} evaluates TEPL on
-XLA-derived rewrite cases, examining semantic coverage and the
-effectiveness of automatic attribute inference.

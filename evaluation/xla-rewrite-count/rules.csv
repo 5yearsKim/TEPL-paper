@@ -1,0 +1,33 @@
+rule_id,family,description,function,original_line,applications
+AS-6750,reshape,compose consecutive reshapes,HandleReshape,6750,44
+AS-5605,broadcast,element-count-preserving broadcast -> reshape,HandleBroadcast,5605,24
+AS-8661,reduce,element-count-preserving reduction -> reshape,ReplaceReduceWithReshape,8661,22
+AS-5165,multiply,move scalar constant into broadcasted multiply,HandleMultiply,5165,17
+AS-2614,divide,divide by broadcast -> multiply by broadcast reciprocal,HandleDivide,2614,16
+AS-6744,reshape,remove shape-preserving reshape,HandleReshape,6744,14
+AS-5389,tuple,"get_tuple_element(tuple(...), i) -> operand i",HandleGetTupleElement,5389,12
+AS-10187,transpose,"transpose(dot(x, y)) -> dot(y, x)",operator(),10187,6
+AS-5645,broadcast,remove unit-inserting reshape before broadcast,HandleBroadcast,5645,5
+AS-5681,broadcast,permutation/subset of scalar broadcast -> broadcast,HandleBroadcast,5681,5
+AS-9023,reduce,move reshape through reduction,HandleReduce,9023,5
+AS-2478,divide,x / 1 -> x,HandleDivide,2478,4
+AS-6898,reshape,reshape(broadcast(x)) -> broadcast(x),HandleReshape,6898,4
+AS-2744,dot,remove unit dimensions from dot; reshape output,RemoveDegenerateDimensionFromDot,2744,2
+AS-2824,transpose,transpose(broadcast(x)) -> broadcast(x),SimplifyTransposeOfBroadcast,2824,2
+AS-5723,broadcast,remove unit dimensions from broadcast operand,HandleBroadcast,5723,2
+AS-9840,select,"select(false, x, y) -> y",HandleSelect,9840,2
+AS-1405,boolean,true && x -> x,HandleAnd,1405,1
+AS-2317,constant,iota-valued literal -> iota,HandleConstant,2317,1
+AS-2590,divide,division by constant -> multiplication by reciprocal,operator(),2590,1
+AS-2742,dot,remove unit dimensions from dot; unchanged output shape,RemoveDegenerateDimensionFromDot,2742,1
+AS-3785,dot,dot without contracting dimensions -> broadcast multiply,RewriteAsMultiplyDotWithZeroLhsContractingDim,3785,1
+AS-5025,multiply,x * 1 -> x,HandleMultiply,5025,1
+AS-5056,multiply,(-x) * (-y) -> x * y,HandleMultiply,5056,1
+AS-5132,multiply,reassociate multiplication of constants,HandleMultiply,5132,1
+AS-5761,compare,known nonnegative x < 0 -> false,HandleCompare,5761,1
+AS-5767,compare,known nonnegative x >= 0 -> true,HandleCompare,5767,1
+AS-6358,broadcast,sink elementwise operation through broadcasts; per user,TryToSinkBroadcastAfterElementwiseOps,6358,1
+AS-6945,reshape,reshape(iota) -> coordinate arithmetic,HandleReshape,6945,1
+AS-8870,reduce,move negate through sum reduction,HandleReduce,8870,1
+AS-10114,transpose,remove identity transpose,HandleTranspose,10114,1
+AS-10118,transpose,compose consecutive transposes,HandleTranspose,10118,1

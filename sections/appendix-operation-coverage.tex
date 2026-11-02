@@ -1,0 +1,48 @@
+\subsection{Operation Coverage and Guarantee Scope}
+\label{app:operation-coverage}
+The following table distinguishes complete synthesis, sound certified schemas,
+and empirical implementation support. Semantic support alone does
+not guarantee automatic inference or validation.
+
+\begin{table}[!htbp]
+\caption{Supported operations and scope of axis inference guarantees.}
+\label{tab:semantic-coverage}
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1}
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.19\linewidth}Y>{\centering\arraybackslash}p{0.12\linewidth}Y@{}}\toprule
+Operation family & Representative examples & Semantic support & Theorem scope and reason\\[2pt]\midrule
+\textbf{Core axis operations}
+& Contraction, sum reduction, transpose, separated addition
+& \textcolor{green!45!black}{\ding{51}}
+& \textcolor{green!45!black}{\ding{51}} Under D1--D4 and domain assumptions\\
+\addlinespace
+\textbf{Extended axis operations}
+& Reverse, broadcast, product, negation, unit-axis views; scalar-factor movement
+& \textcolor{green!45!black}{\ding{51}}
+& Sound schemas only (Lemma~\ref{lem:certified-extensions}); outside complete
+synthesis. Other extension support is empirical.\\
+\addlinespace
+\textbf{General scalar expressions}
+& Exp/log, min/max, compare, select, general division
+& \textcolor{green!45!black}{\ding{51}}
+& \textcolor{red!75!black}{\ding{55}} Outside the multilinear value contract\\
+\addlinespace
+\textbf{Calculated coordinate maps}
+& Static slice, strided slice, restricted convolution
+& \textcolor{green!45!black}{\ding{51}}\textsuperscript{a}
+& \textcolor{red!75!black}{\ding{55}} Outside D1: within-axis coordinate calculations\\
+\addlinespace
+\textbf{Additional semantic requirements}
+& General reshape, padding, concatenation, gather/scatter, custom reduce, conversions
+& \textcolor{red!75!black}{\ding{55}}
+& \textcolor{red!75!black}{\ding{55}} Requires richer indexing, reduction, or value semantics\\\bottomrule
+\end{tabularx}
+\par\smallskip
+\begin{minipage}{\linewidth}
+\footnotesize
+\textsuperscript{a} Support is limited to the modeled contracts.
+No completeness of the implemented solver is claimed for extensions.
+\end{minipage}
+\end{table}

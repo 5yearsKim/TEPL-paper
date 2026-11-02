@@ -1,0 +1,17 @@
+SemanticRule catalog_dot_move_broadcast
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: Reduce(n3.K, Product(align[n3:lhs](align[n1:input](Input(#0))), align[n3:rhs](Input(#1))))
+      rhs-graph: Reduce(n7.K, Product(align[n7:lhs](Input(#0)), align[n7:rhs](Reduce(n6.K, align[n6:input](Input(#1))))))
+      declared-conditions:
+        ==(len(shape(Input(#0))), 1)
+        ==(len(shape(Input(#1))), 2)
+        m2
+      additional-guard: unresolved
+      reason: core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+      let m0 = &&(==(attr_b.attrs.dimensions, [0]), ==(attr_b.attrs.new_extents, [index(shape(Input(#1)), 0)]))
+      let m1 = &&(&&(m0, ==(attr_d.attrs.lhs_batching_dimensions, [])), ==(attr_d.attrs.rhs_batching_dimensions, []))
+      let m2 = &&(&&(m1, ==(attr_d.attrs.lhs_contracting_dimensions, [1])), ==(attr_d.attrs.rhs_contracting_dimensions, [0]))
+error: cannot verify rule 'catalog_dot_move_broadcast': core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

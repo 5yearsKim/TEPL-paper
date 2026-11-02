@@ -1,0 +1,24 @@
+SemanticRule catalog_broadcast_slice_broadcast
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: Read(input, IndexOffset(attrs.starts, IndexScale(attrs.strides, Coords(O)))) over align[n1:input](Input(#0))
+      rhs-graph: align[n5:input](Read(input, IndexOffset(attrs.starts, IndexScale(attrs.strides, Coords(O)))) over Input(#0))
+      law: ordered-axis-split
+      law: paired-axis-selection
+      law: index-scale-normalization
+      law: index-offset-normalization
+      law: index-add-normalization
+      law: index-substitution
+      law: axis-map-restriction
+      declared-conditions:
+        >=(len(shape(Input(#0))), 0)
+      additional-guard: unresolved
+        m1
+      guard-origins (unresolved obligations):
+        [legality obligation] m1
+      reason: attribute construction: declared conditions and LHS legality do not establish legality obligation: extent_le(extent_add(gather(@#0.starts, @#1.dimensions), extent_mul(gather(@#0.strides, @#1.dimensions), offset_extents(gather(@#0.sizes, @#1.dimensions), -1))), offset_extents(shape(Input(#0)), -1))
+      let m0 = extent_mul(gather(attr_s.attrs.strides, attr_b.attrs.dimensions), offset_extents(gather(attr_s.attrs.sizes, attr_b.attrs.dimensions), -1))
+      let m1 = extent_le(extent_add(gather(attr_s.attrs.starts, attr_b.attrs.dimensions), m0), offset_extents(shape(Input(#0)), -1))
+error: cannot verify rule 'catalog_broadcast_slice_broadcast': attribute construction: declared conditions and LHS legality do not establish legality obligation: extent_le(extent_add(gather(@#0.starts, @#1.dimensions), extent_mul(gather(@#0.strides, @#1.dimensions), offset_extents(gather(@#0.sizes, @#1.dimensions), -1))), offset_extents(shape(Input(#0)), -1))
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

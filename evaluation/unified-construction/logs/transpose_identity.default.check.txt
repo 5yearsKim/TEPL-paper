@@ -1,0 +1,20 @@
+SemanticRule transpose_identity
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: align[n1:input](Input(#0))
+      rhs-graph: Input(#0)
+      verified: capture access + reduction domains + ordered axes + shape + dtype + legality
+      law: ordered-requirements-construction
+      lhs-normalized: Read(#0, access@0)
+      rhs-normalized: Read(#0, access@2)
+      declared-conditions:
+        ==(attr_p.attrs.permutation, range(len(attr_p.attrs.permutation)))
+      additional-guard: true
+      reason: valid for all legal LHS metadata satisfying the declared conditions under the selected arithmetic policy
+      coordinate frame (fresh identities; domain lengths remain symbolic):
+        input0 = group(extents=shape(Input(#0)))
+        input0 = group(extents=shape(Input(#0)))
+        access@0 = input0
+        access@2 = input0
+        lhs-output = input0
+        rhs-output = input0
+

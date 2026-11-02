@@ -1,0 +1,76 @@
+\label{app:reassociation-proof}
+\begin{proof}[Proof of Proposition~\ref{prop:reassociation-program}]
+\emph{Recover the source pairings.}
+Source legality makes $b_X,k_X,i_X$ a partition of the positions of $X$,
+and similarly for $Y$. The guard aligns the same ordered batch group $\vec B$
+in all three inputs. Since the outer contraction is disjoint from that
+batch prefix, every entry of $d_\ell$ lies in exactly one of $q_I,q_J$.
+Thus $u_I,u_J$ partition the slots of $d_\ell$. Selecting the same slots
+in its injective partner list $d_r$ gives disjoint $z_I,z_J$ covering
+$d_r$. Matching and gather composition establish the actual coordinate
+pairings $\Isel,\Jsel$; equal extents alone are never used to identify axes.
+
+\emph{Prove definedness and legality.}
+The critical lookups are $\pos(f_Z,z_I)$ and $\pos(f_Y,k_Y)$.
+Every entry of $z_I$ is disjoint from $b_Z$ by source legality and from
+$z_J$ by the partition above, so it survives in $f_Z$.
+Likewise, $k_Y$ is disjoint from $b_Y$ and from the selected free positions
+$\gath(j_Y,v_J)$, so it survives in $f_Y$. Distinctness and inclusion
+prove both lookups defined. The shifts place $s_I$ in the right-free block
+of $U$ and $s_K$ in its left-free block. These blocks are disjoint from
+each other and from the batch prefix. The left contraction list also
+joins disjoint selections from $i_X$ and $k_X$. Consequently all four
+contraction lists are injective, in range, and disjoint from their batch
+lists. Both operands select $\Jsel$ in the inner replacement and
+$\Isel\Vert \vec K$ in the outer replacement, with matching extents inherited
+from the source pairings. Batch extents agree for the same reason.
+All list lengths and shifted positions are bounded by $n_X+n_Y+n_Z$,
+so the written integer bound establishes representability as well.
+Both replacement dots are therefore legal.
+
+\emph{Check ordered outputs and reads.}
+Removing $\vec K$ from the left-free block of $U$ leaves $\Jrem$ in $Y$'s
+order; removing $\Isel$ from its right-free block leaves the source
+outer-free group $\vec H$ in $Z$'s order. The final left-free block is $\Irem$
+in $X$'s order. Selection/complement transport therefore gives
+\begin{equation}
+ \operatorname{Ord}_{O'}=\vec B\Vert\Irem\Vert\Jrem\Vert \vec H=\operatorname{Ord}_O.
+ \label{eq:reassociation-output-proof}
+\end{equation}
+The established pairings transport both sides' reads into a common
+coordinate frame. Let $t,i,j,h$ be coordinates of
+$\vec B,\Irem,\Jrem,\vec H$, and let $a,c,k$ range over
+$\Isel,\Jsel,\vec K$. Write $\widehat X,\widehat Y,\widehat Z$ for input
+reads reconstructed in their original physical orders using the source
+position maps; this notation does not assume contiguous operand groups.
+Compositional lowering gives
+\begin{equation}
+\begin{aligned}
+ L[t,i,j,h]
+ &=\sum_{a,c}\left(\sum_k
+       \widehat X(t,i,a,k)\widehat Y(t,j,c,k)\right)
+       \widehat Z(t,h,a,c),\\
+ R[t,i,j,h]
+ &=\sum_{a,k}\widehat X(t,i,a,k)
+       \left(\sum_c\widehat Y(t,j,c,k)\widehat Z(t,h,a,c)\right).
+\end{aligned}
+\label{eq:reassociation-lowered}
+\end{equation}
+The map from $\vec D$ coordinates to $(a,c)$ selects slots $u_I,u_J$;
+the partition makes it a bijection with inverse placing those coordinates
+back in their original slots. It preserves extents and all three reads.
+Moreover, $Z$ is independent of $k$ and $X$ is independent of $c$.
+The core's checked reduction-extraction and reordering laws thus normalize
+both expressions to
+\begin{equation}
+ \sum_{a,c,k}\widehat X(t,i,a,k)
+                 \widehat Y(t,j,c,k)\widehat Z(t,h,a,c).
+ \label{eq:reassociation-common-normal-form}
+\end{equation}
+This is equality of read factors and reduction domains, including empty
+ones, not only a formal use of associativity. Ordered-axis equality gives
+ordered-shape equality; source dtype agreement is inherited by both new
+dots. Together with definedness and legality, these establish
+$\operatorname{Valid}(p,f(p))$. Lemma~\ref{lem:metadata-emission} transfers
+the result to the displayed executable metadata expressions.
+\end{proof}

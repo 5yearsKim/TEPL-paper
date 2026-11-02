@@ -1,97 +1,20 @@
-\section{Limitations}
-\label{sec:limitations}
-\label{sec:guarantee}
-\subsection{Coverage}
-\label{sec:coverage}
+\subsection{Scope and Limitations}
+\label{sec:scope-limitations}
+Mixed explicit/inferred axis fields have no completeness guarantee;
+validation and the certified schemas provide soundness only within their
+stated domains. Extent and
+coordinate parameters remain supplied or defaulted. Slice, padding, reshape,
+and convolution are outside the direct synthesis and validation theorems;
+their implementation support is limited. Tensor-valued indexing and richer
+reshape, padding, and reduction semantics remain unsupported.
+Appendix~\ref{app:operation-coverage}
+distinguishes operation support from theorem scope. The 86 catalog cases
+without an established model remain unvalidated; structural extensibility
+alone supplies no semantic guarantee.
 
-\paragraph{Can TEPL cover all tensor operations?}
-In principle, yes. Users can declare operations in a dialect and manually
-specify attribute transformations and applicability conditions using
-\code{derive} and \code{where}.
-Operations need not have Axes IR semantics, but users must ensure
-correctness when those semantics are absent.
-
-\paragraph{Can TEPL infer all attributes?}
-No. TEPL synthesizes only eligible RHS \code{axis} fields.
-Extent and coordinate fields must be supplied explicitly or through
-schema defaults. Supporting an operation's semantics does not imply
-that TEPL can infer all of its attributes: for example, static slice
-semantics are supported, but slice offsets, strides, and target
-extents are not inferred.
-
-Axis synthesis also requires operation semantics supported by Axes IR,
-and this support alone does not guarantee successful inference.
-Axes IR supports axis relationships and limited explicit coordinate
-calculations, but cannot currently represent accesses through
-tensor-valued indices, such as dynamic slice's runtime start indices.
-Table~\ref{tab:semantic-coverage} distinguishes semantic support
-from theorem scope.
-
-\begin{table}[!htbp]
-\caption{Supported operations and scope of axis inference guarantees.}
-\label{tab:semantic-coverage}
-\centering
-\small
-\setlength{\tabcolsep}{4pt}
-\renewcommand{\arraystretch}{1}
-\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.19\linewidth}Y>{\centering\arraybackslash}p{0.12\linewidth}Y@{}}\toprule
-Operation family & Representative examples & Semantic support & Theorem scope and reason\\[2pt]\midrule
-\textbf{Core axis operations}
-& Contraction, sum reduction, transpose, separated addition
-& \textcolor{green!45!black}{\ding{51}}
-& \textcolor{green!45!black}{\ding{51}} Under D1--D4 and domain assumptions\\
-\addlinespace
-\textbf{Extended axis operations}
-& Reverse, broadcast, negation, fixed nonzero rational scaling
-& \textcolor{green!45!black}{\ding{51}}
-& \textcolor{green!45!black}{\ding{51}}\textsuperscript{a} Finite axis search
-(Theorem~\ref{thm:extended-axis-synthesis})\\
-\addlinespace
-\textbf{General scalar expressions}
-& Exp/log, min/max, compare, select, general division
-& \textcolor{green!45!black}{\ding{51}}
-& \textcolor{red!75!black}{\ding{55}} Outside the multilinear value contract\\
-\addlinespace
-\textbf{Calculated coordinate maps}
-& Static slice, strided slice, restricted convolution
-& \textcolor{green!45!black}{\ding{51}}\textsuperscript{b}
-& \textcolor{red!75!black}{\ding{55}} Outside D1: within-axis coordinate calculations\\
-\addlinespace
-\textbf{Additional semantic requirements}
-& General reshape, padding, concatenation, gather/scatter, custom reduce, conversions
-& \textcolor{red!75!black}{\ding{55}}
-& \textcolor{red!75!black}{\ding{55}} Requires richer indexing, reduction, or value semantics\\\bottomrule
-\end{tabularx}
-\par\smallskip
-\begin{minipage}{\linewidth}
-\footnotesize
-\textsuperscript{a} Appendix~\ref{app:axis-extensions} proves completeness
-of finite axis search for these extensions, with input and introduced
-extents at least two and supplied broadcast extents. Only fixed unary
-scaling and negation are also proved here to preserve the direct constructor.
-\par\smallskip
-\textsuperscript{b} Support is limited to the modeled contracts; fixed
-rational scaling is expressible. Theorem coverage does not assert
-completeness of the implemented solver.
-\end{minipage}
-\end{table}
-
-\paragraph{Is axis inference complete for every supported operation?}
-No. Theorem~\ref{thm:complete-synthesis} guarantees complete axis
-inference under the restrictions in Section~\ref{sec:formal-scope}.
-TEPL also supports operations outside this scope, where inference
-and verification may fail.
-Accepted rewrites must produce legal, equivalent replacements
-under the written conditions and arithmetic policy.
-Outside the guaranteed scope, TEPL may verify a rewrite with
-user-provided attributes even when it cannot infer those attributes
-automatically.
-
-\FloatBarrier
-\subsection{Scalability}
-We assess scalability along two dimensions: the number of operations in a
-rewrite chain and tensor rank. Longer chains require reasoning across more
-operations, while higher ranks increase the number of axes involved.
-We measure how attribute construction and verification time changes along
-each dimension. Appendix~\ref{app:scalability} presents the experiments,
-results, and measurement limits.
+The core certificates are sufficient checks for specified templates, and
+general guard reasoning remains incomplete. The independent validator can
+also accept supplied attributes when inference fails. The XLA integration
+covers default dense-f32 dot metadata, retaining convolution and a custom
+policy by hand. Production opportunity frequency, cache hit rates, and
+developer productivity remain unassessed.

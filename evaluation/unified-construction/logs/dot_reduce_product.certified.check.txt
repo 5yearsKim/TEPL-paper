@@ -1,0 +1,15 @@
+SemanticRule dot_reduce_product
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: Reduce(n2.K, Product(align[n2:lhs](Input(#0)), align[n2:rhs](Input(#1))))
+      rhs-graph: Reduce(n6.K, align[n6:input](Product(align[n5:lhs](Input(#0)), align[n5:rhs](Input(#1)))))
+      verified: source-layout guard certificate and core emission theorem
+      declared-conditions:
+        ==(len(shape(Input(#0))), 1)
+        ==(len(shape(Input(#1))), 1)
+        ==(index(shape(Input(#0)), 0), index(shape(Input(#1)), 0))
+        m1
+      additional-guard: true
+      reason: core schema guard and supplied metadata certified; sound for all legal extents
+      let m0 = &&(==(attr_d.attrs.lhs_batching_dimensions, []), ==(attr_d.attrs.rhs_batching_dimensions, []))
+      let m1 = &&(&&(m0, ==(attr_d.attrs.lhs_contracting_dimensions, [0])), ==(attr_d.attrs.rhs_contracting_dimensions, [0]))
+

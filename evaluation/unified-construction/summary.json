@@ -1,0 +1,1387 @@
+{
+  "populations": {
+    "axis": {
+      "tasks": 38,
+      "default": {
+        "accepted": 31,
+        "outcomes": {
+          "accepted": 31,
+          "proof_unresolved": 7
+        }
+      },
+      "core": {
+        "accepted": 10,
+        "outcomes": {
+          "accepted": 10,
+          "outside_templates": 28
+        }
+      },
+      "certified": {
+        "accepted": 31,
+        "outcomes": {
+          "accepted": 31,
+          "outside_templates": 7
+        }
+      }
+    },
+    "verification": {
+      "tasks": 85,
+      "default": {
+        "accepted": 67,
+        "outcomes": {
+          "accepted": 67,
+          "proof_unresolved": 18
+        }
+      },
+      "core": {
+        "accepted": 2,
+        "outcomes": {
+          "outside_templates": 82,
+          "accepted": 2,
+          "guard_unresolved": 1
+        }
+      },
+      "certified": {
+        "accepted": 4,
+        "outcomes": {
+          "outside_templates": 74,
+          "accepted": 4,
+          "structural_admission": 1,
+          "outside_schemas": 4,
+          "guard_unresolved": 2
+        }
+      }
+    },
+    "all": {
+      "tasks": 123,
+      "default": {
+        "accepted": 98,
+        "outcomes": {
+          "accepted": 98,
+          "proof_unresolved": 25
+        }
+      },
+      "core": {
+        "accepted": 12,
+        "outcomes": {
+          "outside_templates": 110,
+          "accepted": 12,
+          "guard_unresolved": 1
+        }
+      },
+      "certified": {
+        "accepted": 35,
+        "outcomes": {
+          "outside_templates": 81,
+          "accepted": 35,
+          "structural_admission": 1,
+          "outside_schemas": 4,
+          "guard_unresolved": 2
+        }
+      }
+    }
+  },
+  "families": {
+    "abs": {
+      "all": {
+        "tasks": 4,
+        "default": {
+          "accepted": 3,
+          "outcomes": {
+            "accepted": 3,
+            "proof_unresolved": 1
+          }
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 4
+          }
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 4
+          }
+        }
+      },
+      "axis": {
+        "tasks": 0,
+        "default": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {}
+        }
+      }
+    },
+    "add": {
+      "all": {
+        "tasks": 13,
+        "default": {
+          "accepted": 12,
+          "outcomes": {
+            "accepted": 12,
+            "proof_unresolved": 1
+          }
+        },
+        "core": {
+          "accepted": 2,
+          "outcomes": {
+            "outside_templates": 11,
+            "accepted": 2
+          }
+        },
+        "certified": {
+          "accepted": 4,
+          "outcomes": {
+            "outside_templates": 8,
+            "accepted": 4,
+            "structural_admission": 1
+          }
+        }
+      },
+      "axis": {
+        "tasks": 3,
+        "default": {
+          "accepted": 2,
+          "outcomes": {
+            "accepted": 2,
+            "proof_unresolved": 1
+          }
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 3
+          }
+        },
+        "certified": {
+          "accepted": 2,
+          "outcomes": {
+            "accepted": 2,
+            "outside_templates": 1
+          }
+        }
+      }
+    },
+    "broadcast_in_dim": {
+      "all": {
+        "tasks": 19,
+        "default": {
+          "accepted": 15,
+          "outcomes": {
+            "accepted": 15,
+            "proof_unresolved": 4
+          }
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 19
+          }
+        },
+        "certified": {
+          "accepted": 15,
+          "outcomes": {
+            "accepted": 15,
+            "outside_templates": 4
+          }
+        }
+      },
+      "axis": {
+        "tasks": 19,
+        "default": {
+          "accepted": 15,
+          "outcomes": {
+            "accepted": 15,
+            "proof_unresolved": 4
+          }
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 19
+          }
+        },
+        "certified": {
+          "accepted": 15,
+          "outcomes": {
+            "accepted": 15,
+            "outside_templates": 4
+          }
+        }
+      }
+    },
+    "clamp": {
+      "all": {
+        "tasks": 2,
+        "default": {
+          "accepted": 1,
+          "outcomes": {
+            "proof_unresolved": 1,
+            "accepted": 1
+          }
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 2
+          }
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 2
+          }
+        }
+      },
+      "axis": {
+        "tasks": 0,
+        "default": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {}
+        }
+      }
+    },
+    "compare": {
+      "all": {
+        "tasks": 11,
+        "default": {
+          "accepted": 8,
+          "outcomes": {
+            "proof_unresolved": 3,
+            "accepted": 8
+          }
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 11
+          }
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 11
+          }
+        }
+      },
+      "axis": {
+        "tasks": 0,
+        "default": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {}
+        }
+      }
+    },
+    "convolution": {
+      "all": {
+        "tasks": 1,
+        "default": {
+          "accepted": 0,
+          "outcomes": {
+            "proof_unresolved": 1
+          }
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 1
+          }
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 1
+          }
+        }
+      },
+      "axis": {
+        "tasks": 1,
+        "default": {
+          "accepted": 0,
+          "outcomes": {
+            "proof_unresolved": 1
+          }
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 1
+          }
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 1
+          }
+        }
+      }
+    },
+    "divide": {
+      "all": {
+        "tasks": 11,
+        "default": {
+          "accepted": 3,
+          "outcomes": {
+            "accepted": 3,
+            "proof_unresolved": 8
+          }
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 11
+          }
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 11
+          }
+        }
+      },
+      "axis": {
+        "tasks": 1,
+        "default": {
+          "accepted": 0,
+          "outcomes": {
+            "proof_unresolved": 1
+          }
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 1
+          }
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 1
+          }
+        }
+      }
+    },
+    "dot_general": {
+      "all": {
+        "tasks": 12,
+        "default": {
+          "accepted": 11,
+          "outcomes": {
+            "accepted": 11,
+            "proof_unresolved": 1
+          }
+        },
+        "core": {
+          "accepted": 6,
+          "outcomes": {
+            "accepted": 6,
+            "outside_templates": 6
+          }
+        },
+        "certified": {
+          "accepted": 11,
+          "outcomes": {
+            "accepted": 11,
+            "outside_templates": 1
+          }
+        }
+      },
+      "axis": {
+        "tasks": 12,
+        "default": {
+          "accepted": 11,
+          "outcomes": {
+            "accepted": 11,
+            "proof_unresolved": 1
+          }
+        },
+        "core": {
+          "accepted": 6,
+          "outcomes": {
+            "accepted": 6,
+            "outside_templates": 6
+          }
+        },
+        "certified": {
+          "accepted": 11,
+          "outcomes": {
+            "accepted": 11,
+            "outside_templates": 1
+          }
+        }
+      }
+    },
+    "exp": {
+      "all": {
+        "tasks": 5,
+        "default": {
+          "accepted": 5,
+          "outcomes": {
+            "accepted": 5
+          }
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 5
+          }
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 5
+          }
+        }
+      },
+      "axis": {
+        "tasks": 0,
+        "default": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {}
+        }
+      }
+    },
+    "log": {
+      "all": {
+        "tasks": 4,
+        "default": {
+          "accepted": 1,
+          "outcomes": {
+            "accepted": 1,
+            "proof_unresolved": 3
+          }
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 4
+          }
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 4
+          }
+        }
+      },
+      "axis": {
+        "tasks": 0,
+        "default": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {}
+        }
+      }
+    },
+    "logical_and": {
+      "all": {
+        "tasks": 3,
+        "default": {
+          "accepted": 2,
+          "outcomes": {
+            "accepted": 2,
+            "proof_unresolved": 1
+          }
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 3
+          }
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 3
+          }
+        }
+      },
+      "axis": {
+        "tasks": 0,
+        "default": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {}
+        }
+      }
+    },
+    "logical_not": {
+      "all": {
+        "tasks": 3,
+        "default": {
+          "accepted": 3,
+          "outcomes": {
+            "accepted": 3
+          }
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 3
+          }
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 3
+          }
+        }
+      },
+      "axis": {
+        "tasks": 0,
+        "default": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {}
+        }
+      }
+    },
+    "logical_or": {
+      "all": {
+        "tasks": 3,
+        "default": {
+          "accepted": 2,
+          "outcomes": {
+            "accepted": 2,
+            "proof_unresolved": 1
+          }
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 3
+          }
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 3
+          }
+        }
+      },
+      "axis": {
+        "tasks": 0,
+        "default": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {}
+        }
+      }
+    },
+    "logical_xor": {
+      "all": {
+        "tasks": 2,
+        "default": {
+          "accepted": 2,
+          "outcomes": {
+            "accepted": 2
+          }
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 2
+          }
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 2
+          }
+        }
+      },
+      "axis": {
+        "tasks": 0,
+        "default": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {}
+        }
+      }
+    },
+    "maximum": {
+      "all": {
+        "tasks": 8,
+        "default": {
+          "accepted": 7,
+          "outcomes": {
+            "accepted": 7,
+            "proof_unresolved": 1
+          }
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 8
+          }
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 8
+          }
+        }
+      },
+      "axis": {
+        "tasks": 0,
+        "default": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {}
+        }
+      }
+    },
+    "minimum": {
+      "all": {
+        "tasks": 6,
+        "default": {
+          "accepted": 6,
+          "outcomes": {
+            "accepted": 6
+          }
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 6
+          }
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 6
+          }
+        }
+      },
+      "axis": {
+        "tasks": 0,
+        "default": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {}
+        }
+      }
+    },
+    "multiply": {
+      "all": {
+        "tasks": 29,
+        "default": {
+          "accepted": 18,
+          "outcomes": {
+            "accepted": 18,
+            "proof_unresolved": 11
+          }
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 29
+          }
+        },
+        "certified": {
+          "accepted": 5,
+          "outcomes": {
+            "structural_admission": 1,
+            "outside_templates": 20,
+            "outside_schemas": 3,
+            "accepted": 5
+          }
+        }
+      },
+      "axis": {
+        "tasks": 7,
+        "default": {
+          "accepted": 5,
+          "outcomes": {
+            "accepted": 5,
+            "proof_unresolved": 2
+          }
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 7
+          }
+        },
+        "certified": {
+          "accepted": 5,
+          "outcomes": {
+            "accepted": 5,
+            "outside_templates": 2
+          }
+        }
+      }
+    },
+    "negate": {
+      "all": {
+        "tasks": 7,
+        "default": {
+          "accepted": 6,
+          "outcomes": {
+            "accepted": 6,
+            "proof_unresolved": 1
+          }
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 7
+          }
+        },
+        "certified": {
+          "accepted": 2,
+          "outcomes": {
+            "outside_templates": 4,
+            "outside_schemas": 1,
+            "accepted": 2
+          }
+        }
+      },
+      "axis": {
+        "tasks": 1,
+        "default": {
+          "accepted": 1,
+          "outcomes": {
+            "accepted": 1
+          }
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 1
+          }
+        },
+        "certified": {
+          "accepted": 1,
+          "outcomes": {
+            "accepted": 1
+          }
+        }
+      }
+    },
+    "power": {
+      "all": {
+        "tasks": 8,
+        "default": {
+          "accepted": 5,
+          "outcomes": {
+            "accepted": 5,
+            "proof_unresolved": 3
+          }
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 8
+          }
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 8
+          }
+        }
+      },
+      "axis": {
+        "tasks": 0,
+        "default": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {}
+        }
+      }
+    },
+    "reduce_sum": {
+      "all": {
+        "tasks": 9,
+        "default": {
+          "accepted": 9,
+          "outcomes": {
+            "accepted": 9
+          }
+        },
+        "core": {
+          "accepted": 5,
+          "outcomes": {
+            "outside_templates": 4,
+            "accepted": 5
+          }
+        },
+        "certified": {
+          "accepted": 9,
+          "outcomes": {
+            "accepted": 9
+          }
+        }
+      },
+      "axis": {
+        "tasks": 9,
+        "default": {
+          "accepted": 9,
+          "outcomes": {
+            "accepted": 9
+          }
+        },
+        "core": {
+          "accepted": 5,
+          "outcomes": {
+            "outside_templates": 4,
+            "accepted": 5
+          }
+        },
+        "certified": {
+          "accepted": 9,
+          "outcomes": {
+            "accepted": 9
+          }
+        }
+      }
+    },
+    "remainder": {
+      "all": {
+        "tasks": 1,
+        "default": {
+          "accepted": 0,
+          "outcomes": {
+            "proof_unresolved": 1
+          }
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 1
+          }
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 1
+          }
+        }
+      },
+      "axis": {
+        "tasks": 0,
+        "default": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {}
+        }
+      }
+    },
+    "reshape": {
+      "all": {
+        "tasks": 4,
+        "default": {
+          "accepted": 4,
+          "outcomes": {
+            "accepted": 4
+          }
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 4
+          }
+        },
+        "certified": {
+          "accepted": 3,
+          "outcomes": {
+            "accepted": 3,
+            "outside_schemas": 1
+          }
+        }
+      },
+      "axis": {
+        "tasks": 3,
+        "default": {
+          "accepted": 3,
+          "outcomes": {
+            "accepted": 3
+          }
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 3
+          }
+        },
+        "certified": {
+          "accepted": 3,
+          "outcomes": {
+            "accepted": 3
+          }
+        }
+      }
+    },
+    "reverse": {
+      "all": {
+        "tasks": 10,
+        "default": {
+          "accepted": 7,
+          "outcomes": {
+            "accepted": 7,
+            "proof_unresolved": 3
+          }
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 10
+          }
+        },
+        "certified": {
+          "accepted": 7,
+          "outcomes": {
+            "accepted": 7,
+            "guard_unresolved": 1,
+            "outside_templates": 2
+          }
+        }
+      },
+      "axis": {
+        "tasks": 8,
+        "default": {
+          "accepted": 6,
+          "outcomes": {
+            "accepted": 6,
+            "proof_unresolved": 2
+          }
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 8
+          }
+        },
+        "certified": {
+          "accepted": 6,
+          "outcomes": {
+            "accepted": 6,
+            "outside_templates": 2
+          }
+        }
+      }
+    },
+    "rsqrt": {
+      "all": {
+        "tasks": 3,
+        "default": {
+          "accepted": 0,
+          "outcomes": {
+            "proof_unresolved": 3
+          }
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 3
+          }
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 3
+          }
+        }
+      },
+      "axis": {
+        "tasks": 0,
+        "default": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {}
+        }
+      }
+    },
+    "select": {
+      "all": {
+        "tasks": 10,
+        "default": {
+          "accepted": 7,
+          "outcomes": {
+            "accepted": 7,
+            "proof_unresolved": 3
+          }
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 10
+          }
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 10
+          }
+        }
+      },
+      "axis": {
+        "tasks": 0,
+        "default": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {}
+        }
+      }
+    },
+    "slice": {
+      "all": {
+        "tasks": 10,
+        "default": {
+          "accepted": 2,
+          "outcomes": {
+            "accepted": 2,
+            "proof_unresolved": 8
+          }
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 10
+          }
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 10
+          }
+        }
+      },
+      "axis": {
+        "tasks": 5,
+        "default": {
+          "accepted": 0,
+          "outcomes": {
+            "proof_unresolved": 5
+          }
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 5
+          }
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 5
+          }
+        }
+      }
+    },
+    "sqrt": {
+      "all": {
+        "tasks": 4,
+        "default": {
+          "accepted": 1,
+          "outcomes": {
+            "proof_unresolved": 3,
+            "accepted": 1
+          }
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 4
+          }
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 4
+          }
+        }
+      },
+      "axis": {
+        "tasks": 0,
+        "default": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {}
+        }
+      }
+    },
+    "subtract": {
+      "all": {
+        "tasks": 9,
+        "default": {
+          "accepted": 9,
+          "outcomes": {
+            "accepted": 9
+          }
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 9
+          }
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 9
+          }
+        }
+      },
+      "axis": {
+        "tasks": 0,
+        "default": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {}
+        }
+      }
+    },
+    "tanh": {
+      "all": {
+        "tasks": 1,
+        "default": {
+          "accepted": 1,
+          "outcomes": {
+            "accepted": 1
+          }
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 1
+          }
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 1
+          }
+        }
+      },
+      "axis": {
+        "tasks": 0,
+        "default": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {}
+        }
+      }
+    },
+    "transpose": {
+      "all": {
+        "tasks": 10,
+        "default": {
+          "accepted": 10,
+          "outcomes": {
+            "accepted": 10
+          }
+        },
+        "core": {
+          "accepted": 5,
+          "outcomes": {
+            "guard_unresolved": 1,
+            "accepted": 5,
+            "outside_templates": 4
+          }
+        },
+        "certified": {
+          "accepted": 8,
+          "outcomes": {
+            "guard_unresolved": 1,
+            "accepted": 8,
+            "outside_schemas": 1
+          }
+        }
+      },
+      "axis": {
+        "tasks": 8,
+        "default": {
+          "accepted": 8,
+          "outcomes": {
+            "accepted": 8
+          }
+        },
+        "core": {
+          "accepted": 5,
+          "outcomes": {
+            "accepted": 5,
+            "outside_templates": 3
+          }
+        },
+        "certified": {
+          "accepted": 8,
+          "outcomes": {
+            "accepted": 8
+          }
+        }
+      }
+    },
+    "zero_like": {
+      "all": {
+        "tasks": 4,
+        "default": {
+          "accepted": 4,
+          "outcomes": {
+            "accepted": 4
+          }
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 4
+          }
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {
+            "outside_templates": 4
+          }
+        }
+      },
+      "axis": {
+        "tasks": 0,
+        "default": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "core": {
+          "accepted": 0,
+          "outcomes": {}
+        },
+        "certified": {
+          "accepted": 0,
+          "outcomes": {}
+        }
+      }
+    }
+  },
+  "default_changed": []
+}

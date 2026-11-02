@@ -1,0 +1,167 @@
+\subsection{Axes IR Declaration and Primitive Reference}
+\label{app:axes-ir-declarations-primitives}
+An Axes IR declaration binds ordered groups to operand positions and
+specifies both output order and scalar semantics. The generalized dot below
+pairs batch and contraction positions in list order; free axes preserve
+operand order. Paired groups require matching extents, distinct in-range
+selectors, and disjoint roles, including when groups are empty.
+
+\begin{lstlisting}[language=TEPL,
+  caption={Axes IR representation of generalized dot, with explicit attributes, axis bindings, and value semantics.},
+  label={lst:dot-declaration}]
+op dot(lhs: tensor, rhs: tensor) -> tensor {
+  attrs {
+    lb, lc, rb, rc: axis[];
+  }
+  axes {
+    let lf = ordered_complement(all_axes(lhs), attrs.lb ++ attrs.lc);
+    let rf = ordered_complement(all_axes(rhs), attrs.rb ++ attrs.rc);
+    bind B { lhs: attrs.lb, rhs: attrs.rb };
+    bind K { lhs: attrs.lc, rhs: attrs.rc };
+    bind I { lhs: lf };
+    bind J { rhs: rf };
+    yield B ++ I ++ J;
+  }
+  semantics {
+    yield Reduce(K, Product(lhs, rhs));
+  }
+}
+\end{lstlisting}
+
+\paragraph{Value and index expressions.}
+\label{app:value-index-expressions}
+The value primitives below compose operation semantics. Nonbroadcasting
+addition binds corresponding operand axes and preserves their shared
+order. Calculated reads use coordinate sequences, with one entry per
+accessed axis. For example, a static slice reads at
+\code{starts + strides * output_indices}. These coordinate calculations
+are supported only for the modeled contracts and are outside the direct
+whole-axis completeness theorem.
+\begin{table}[!htbp]
+\caption{Axes IR value and index primitives.}
+\label{tab:axes-ir-value-index-primitives}
+\small
+\begin{tabularx}{\linewidth}{@{}lY@{}}\toprule
+Primitive & Interpretation\\\midrule
+\code{input}, \code{Read(input, indices)} & Operand read through axis bindings or explicit coordinates.\\
+\code{Const(c)} & Signed integer scalar constant.\\
+\code{Add(a,b)}, \code{Product(a,b)} & Scalar addition and multiplication.\\
+\code{Reduce(G,e)} & Finite summation over group \code{G}; other reductions are not implied.\\
+\code{Coords(G)} & Current coordinates in group order.\\
+\code{IndexAdd(a,b)}, \code{Concat(a,b)} & Elementwise index addition and sequence concatenation.\\
+\code{IndexScale(s,i)}, \code{IndexOffset(o,i)} & Entrywise scaling and offset of index sequence \code{i}.\\\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Symbolic Mapping: Algorithm and Reassociation Example}
+\label{app:symbolic-mapping-reassociation}
+The mapping state is $\Sigma=(V,\mathcal M,\Pi)$, where
+$V[t]=(\operatorname{Ord}_t,e_t)$ stores an ordered interface and a value expression.
+A mapping $(\operatorname{Ord}_t,\vec G,q)\in\mathcal M$ satisfies
+\begin{equation}
+ \gath(\operatorname{Ord}_t,q)=\vec G.
+ \label{extended:eq:mapping-invariant}
+\end{equation}
+Each partition in $\Pi$ lists pairs $(\vec G_i,q_i)$ that cover an
+interface exactly once: the concatenated position lists are a permutation
+of its positions. Different partitions may group the same interface
+differently without changing the tensor. Algorithm~\ref{alg:mapping}
+visits producers before consumers and maintains these two invariants.
+
+\begin{paperalgorithm}[H]
+\caption{Build interfaces, value expressions, and axis mappings.}
+\label{alg:mapping}
+\begin{lstlisting}[language=Python]
+def build_symbolic_axis_mapping(graph):
+    V = initialize_inputs(graph)
+    mappings, partitions = set(), {}
+    for op in producer_first(graph):
+        inputs = [V[t] for t in op.inputs]
+        groups, bindings = resolve_bindings(op, inputs)
+        aligned = []
+        for (axes, value), binding in zip(inputs, bindings):
+            aligned_axes = build_interface(axes, binding)
+            register_mappings(aligned_axes, binding, mappings)
+            refine_and_register(aligned_axes, binding, mappings, partitions)
+            value = transport(value, axes, aligned_axes, mappings, partitions)
+            aligned.append((aligned_axes, value))
+        out_axes = evaluate(op.output_axes, groups)
+        binding = output_positions(op, groups)
+        register_mappings(out_axes, binding, mappings)
+        refine_and_register(out_axes, binding, mappings, partitions)
+        V[op] = (out_axes, compose(op.value, aligned, groups))
+    return V, mappings, partitions
+\end{lstlisting}
+\end{paperalgorithm}
+
+\paragraph{Reconstruction and composition.}
+For a complete binding, concatenate its groups and their position lists.
+If $q=q_1\Vert\cdots\Vert q_m$ is a permutation, then
+\begin{equation}
+ Q=\gath(\vec G_1\Vert\cdots\Vert\vec G_m,\operatorname{inverse}(q))
+ \label{extended:eq:rebuilt-interfaces}
+\end{equation}
+restores tensor dimension order, including interleaved groups.
+\code{register_mappings} records the resulting selections;
+\code{refine_and_register} compares partitions through paired overlap
+matching. \code{transport} expresses reads in the aligned interface, and
+\code{compose} applies the declared value semantics. Missing mappings are
+queried by composing existing selectors with
+Equation~\eqref{eq:gather-composition}. These operations preserve the
+mapping invariant; acceptance still requires checking the completed rule.
+
+\paragraph{Partitioning a contraction.}
+\label{extended:sec:partitioning}
+Use the guarded reassociation and notation of
+Appendix~\ref{app:batched-reassociation-program}. Its source intermediate has
+interface $\vec B\Vert\vec I\Vert\vec J$, and the guard preserves
+$\vec B$ as the outer batch prefix. The outer contraction group
+$\vec D=\gath(\operatorname{Ord}_T,d_\ell)$ therefore selects from $\vec I,\vec J$.
+For either producer group $\vec G$ at positions $q_G$, compute
+\begin{equation}
+\begin{aligned}
+ (u_G,v_G)&=\mpo(d_\ell,q_G),&
+ z_G&=\gath(d_r,u_G),\\
+ \vec G_{\mathrm{sel}}&=\gath(\vec G,v_G),&
+ \vec G_{\mathrm{rem}}&=\gath(\vec G,\ocomp(\operatorname{range}(|\vec G|),v_G)).
+\end{aligned}
+ \label{extended:eq:z-partners}
+\end{equation}
+Here $u_G$ indexes contraction-list slots, while $v_G$ indexes axes
+within the producer group. Only $u_G$ selects the corresponding partners
+in $d_r$. For example, let $\operatorname{Ord}_T=[i_0,i_1,j_0,j_1]$,
+$d_\ell=[3,0]$, and $d_r=[2,0]$. The partitions give
+$(u_I,v_I,z_I)=([1],[0],[0])$ and
+$(u_J,v_J,z_J)=([0],[1],[2])$: $i_0$ pairs with position zero in $Z$,
+and $j_1$ with position two. Selected groups follow contraction order;
+remaining groups preserve producer order. Their concatenation need not
+reproduce the original group, so mappings retain both selectors.
+
+\paragraph{From mappings to attribute programs.}
+\label{app:mappings-to-attribute-programs}
+For admitted plans, the symbolic adapter consumes the shared metadata IR
+of Theorem~\ref{thm:symbolic-compilation}. Symbolic lowering first matches source reads to
+the RHS arithmetic skeleton; unresolved reduction information is not an
+assertion that no reduction occurs. Read correspondence supplies logical
+axes for construction, and interprets the already emitted retained-set, ordering, and position
+expressions through these mappings; it does not reconstruct their recurrences.
+Restricted addition treats matched components independently.
+
+In reassociation, $U=\operatorname{dot}(Y,Z)$ contracts $\Jsel$ but keeps
+$\vec K$ and $\Isel$ for the final dot. Its actual interface, rather than
+an assumed contiguous grouping, locates both retained groups.
+Substituting that interface into the final position queries yields the
+source-only expressions in Table~\ref{tab:reassociation-program}.
+Supplied extent and coordinate expressions are preserved. Unresolved
+queries or ambiguous read assignments leave symbolic lowering unsuccessful;
+the shared residual program remains available for native interpretation.
+The separate validation calculus checks definedness, legality, ordered
+outputs, and complete values; its normalization laws are specified and
+proved in Appendix~\ref{app:validation-proofs}. The full reassociation
+derivation is in Appendix~\ref{app:reassociation-proof}.
+
+Detailed alternative examples, expanded mapping tables, and tutorial
+figures are retained in \nolinkurl{evaluation/supplementary-materials/}.
+The shared construction correspondence and guard arguments below do not
+require this optional symbolic lowering to simplify every query. Broader
+nonadmitted candidates use the general constructor and independent validation.

@@ -1,29 +1,52 @@
-\section{Implementation}
-\label{sec:implementation}
-\label{sec:symbolic-bridge}
-\paragraph{Compiler architecture.}
-The TEPL compiler processes rewrite rules and dialect declarations through
-ANTLR~\cite{antlr} parsing, import and name resolution, and type checking. For rules
-with declared semantics, it then lowers operation semantics, synthesizes
-missing attributes, and verifies the completed rewrite. The compiler lowers
-the resulting rules to an executable representation. The rewrite engine
-uses this representation to match input graphs at runtime. Attribute holes have already been replaced by executable
-computations over source metadata, so applying a rule evaluates these
-computations without repeating attribute inference.
+\section{Implementation and Scope}
+\label{sec:implementation-scope}
+\paragraph{Compiler and verifier.}
+The compiler uses ANTLR~\cite{antlr}, resolves imports and names, and checks
+types. Its identity, ordered, and general construction strategies submit
+candidates to fresh verifier contexts. The verifier checks original
+metadata expressions, constructor obligations, and completed replacements;
+\code{require} records an unmet goal as \code{Unknown}. Work, recursion,
+term-count, and time limits bound proof attempts.
+Appendix~\ref{app:validation-proofs} specifies the formal validation calculus.
+
+\paragraph{Shared program construction and execution.}
+For admitted plans, \code{inference::emit} constructs the shared metadata
+IR before proof search or simplification. Both \code{ordered::compile}
+and ordinary ordered synthesis use this constructor. Symbolic lowering
+uses source axis mappings and partitions; paired contraction lists may
+be reordered together. A fresh verifier checks the candidate. Failed
+lowering leaves the original program intact. The portable runtime
+interprets that program, reuses shared intermediate values, and checks
+feasibility before computing positional attributes. Additive components
+keep separate axis identities.
+
+Portable loading rechecks guards and schedules
+(Section~\ref{sec:compilation-scope}). Rust/C++ export requires
+successful symbolic lowering. The runtime uses checked integers and lazy
+conditionals and Boolean operators, without proof search per match.
+Invalid metadata, inputs outside the domain, and resource exhaustion are
+reported separately from a false feasibility check. Completeness requires
+extents $\ge2$; sound execution also allows zero and singleton extents,
+where a false feasibility predicate does not establish impossibility.
+Broader identity and general construction
+strategies remain outside the completeness theorem.
+
+\paragraph{Trusted components.}
+Table~\ref{tab:guarantee-map} states the formal guarantees. The C++ checker
+also supports reversal, broadcast, calculated indices, scalar functions,
+and metadata comprehensions beyond the validation calculus. Declarations,
+frontend lowering, the C++ realization of admission, certification, loading,
+and primitive reasoning/evaluation, and backend agreement with declared
+algebraic semantics remain trusted. The results are paper proofs with
+handwritten implementation correspondence, not mechanized verification
+of the compiler or runtime. Diagnostic histories are not independently
+checkable certificates.
 
 \paragraph{Runtime integration.}
-TEPL provides a greedy graph-rewriting engine. Users construct an input
-graph using operations from declared dialects and supply compiled rewrite
-rules. The engine repeatedly matches and applies applicable rules, returning
-the rewritten graph when no further rewrite applies or an execution limit
-is reached.
-
-The compiled representation also supports integration with other rewrite
-engines. As a concrete example, TEPL provides an integration with
-\emph{egg}~\cite{egg}, generating Rust code from compiled rules to enable
-equality saturation~\cite{equality-saturation} of tensor expressions. The integration supports
-conditional rewrites using tensor shape and dtype information maintained
-by e-class analysis. Matching also binds attributes from matched operation
-nodes, making them available to rule conditions and replacement attribute
-computations. This integration demonstrates TEPL's potential applicability to other
-tensor compiler stacks.
+A greedy engine applies compiled rules until no rule applies or an
+execution limit is reached. TEPL also generates Rust for
+\emph{egg}~\cite{egg}, using e-class shape and dtype analysis for equality
+saturation~\cite{equality-saturation}.
+The XLA prototype (Section~\ref{sec:evaluation-xla-integration}) invokes
+generated attribute programs through a C ABI. XLA retains candidate discovery,
+backend eligibility checks, and graph updates.

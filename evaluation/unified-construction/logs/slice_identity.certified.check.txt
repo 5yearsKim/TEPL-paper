@@ -1,0 +1,14 @@
+SemanticRule slice_identity
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: Read(input, IndexOffset(attrs.starts, IndexScale(attrs.strides, Coords(O)))) over Input(#0)
+      rhs-graph: Input(#0)
+      declared-conditions:
+        >=(len(shape(Input(#0))), 0)
+        m0
+      additional-guard: unresolved
+      reason: core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+      let m0 = &&(&&(==(attr_s.attrs.starts, [0]), ==(attr_s.attrs.sizes, shape(Input(#0)))), ==(attr_s.attrs.strides, [1]))
+error: cannot verify rule 'slice_identity': core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

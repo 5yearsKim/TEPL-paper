@@ -1,0 +1,15 @@
+SemanticRule dot_reduce_batch
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: Reduce(n3.K, align[n3:input](Reduce(n2.K, Product(align[n2:lhs](Input(#0)), align[n2:rhs](Input(#1))))))
+      rhs-graph: Reduce(n6.K, Product(align[n6:lhs](Input(#0)), align[n6:rhs](Input(#1))))
+      verified: source-layout guard certificate and core emission theorem
+      declared-conditions:
+        ==(len(shape(Input(#0))), 1)
+        ==(len(shape(Input(#1))), 1)
+        ==(index(shape(Input(#0)), 0), index(shape(Input(#1)), 0))
+        &&(m1, ==(attr_r.attrs.dimensions, [0]))
+      additional-guard: true
+      reason: core guard implies canonical feasibility; DAG builder is sound for all legal extents
+      let m0 = &&(==(attr_d.attrs.lhs_batching_dimensions, [0]), ==(attr_d.attrs.rhs_batching_dimensions, [0]))
+      let m1 = &&(&&(m0, ==(attr_d.attrs.lhs_contracting_dimensions, [])), ==(attr_d.attrs.rhs_contracting_dimensions, []))
+

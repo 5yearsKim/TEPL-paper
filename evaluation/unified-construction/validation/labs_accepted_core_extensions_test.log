@@ -1,0 +1,26 @@
+exec ${PAGER:-/usr/bin/less} "$0" || exit 1
+Executing tests from //labs/accepted_core:extensions_test
+-----------------------------------------------------------------------------
+testing rule compose {(a:reverse (b:reverse X)) => (c:reverse X) derive {c.att
+testing rule cancel {(a:reverse (b:reverse X))=>X where {a.attrs.dimensions==b
+testing rule distribute {(add (a:broadcast X) (b:broadcast Y)) => (c:broadcast
+testing rule distribute {(multiply (a:broadcast X) (b:broadcast Y)) => (c:broa
+testing rule compose {X:[D...] (a:broadcast(b:broadcast X))=>(c:broadcast X) w
+testing rule push {(a:reverse(b:broadcast X))=>(c:broadcast(d:reverse X)) deri
+testing rule scalar {(a:reverse(b:broadcast X))=>(c:broadcast X) where {b.attr
+testing rule scalar {(a:transpose(b:broadcast X))=>(c:broadcast X) where {b.at
+testing rule perm {(a:broadcast X)=>(b:transpose X) where {a.attrs.new_extents
+testing rule reduce {(a:reduce_sum(b:broadcast X))=>(c:broadcast(d:reduce_sum 
+testing rule negate {(a:reduce_sum(negate X))=>(negate(b:reduce_sum X)) derive
+testing rule move {(d:dot(r:reverse X)Y)=>(e:dot X(t:reverse Y)) where {r.attr
+testing rule full {X:[D...] Y:[D...] (d:dot X Y)=>(s:reduce_sum(multiply X Y))
+testing rule outer {X:[A...] Y:[B...] (d:dot X Y)=>(multiply(l:broadcast X)(r:
+testing rule compose {(a:reverse (b:reverse X)) => (c:reverse X) derive {c.att
+testing rule parity {(negate(negate X))=>X} graph g {input X:f32[2,3];yield(ne
+testing rule nested {Y:[D...] C:[] (multiply (multiply X(c:broadcast C))(y:bro
+testing rule move {X:[B,M,K] Y:[B,J,K,N] (d:dot(b:broadcast X)Y)=>(e:dot X(s:r
+testing rule factor {X:[B,M,K] Y:[B,K,N] C:[] (d:dot(multiply(b:broadcast C)X)
+testing rule unit {X:[A,N] (b:broadcast X)=>(out:broadcast(u:remove_unit_axes 
+testing 
+rule permute {X:[D...] (p:transpose(b:broadcast X))=>(out:broadcast X
+schema tests: 685 dense/graph checks, 142 rejection checks

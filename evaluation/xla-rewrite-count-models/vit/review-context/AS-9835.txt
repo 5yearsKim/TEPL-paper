@@ -1,0 +1,32 @@
+9820:                          /*shape=*/reduce_window->shape(),
+9821:                          /*operand=*/new_reduce_window_operand,
+9822:                          /*init_value=*/reduce_window->mutable_operand(1),
+9823:                          /*window=*/new_window,
+9824:                          /*reduce_computation=*/function));
+9825: }
+9826: 
+9827: absl::Status AlgebraicSimplifierVisitor::HandleSelect(HloInstruction* select) {
+9828:   // select(x, y, y) -> y.
+9829:   if (select->operand(1) == select->operand(2) &&
+9830:       ReplaceInstructionIfCompatible(select, select->mutable_operand(1))) {
+9831:     return absl::OkStatus();
+9832:   }
+9833:   // select(true, x, y) -> x.
+9834:   if (IsAll(select->operand(0), true) &&
+9835:       ReplaceInstructionIfCompatible(select, select->mutable_operand(1))) {
+9836:     return absl::OkStatus();
+9837:   }
+9838:   // select(false, x, y) -> y.
+9839:   if (IsAll(select->operand(0), false) &&
+9840:       ReplaceInstructionIfCompatible(select, select->mutable_operand(2))) {
+9841:     return absl::OkStatus();
+9842:   }
+9843:   // select(not(pred), a, b) -> select(pred, b, a)
+9844:   if (HloOpcode::kNot == select->operand(0)->opcode()) {
+9845:     auto pred_operand = select->mutable_operand(0)->mutable_operand(0);
+9846:     auto on_true = select->mutable_operand(1);
+9847:     auto on_false = select->mutable_operand(2);
+9848:     return ReplaceWithNewInstruction(
+9849:         select,
+9850:         HloInstruction::CreateTernary(select->shape(), HloOpcode::kSelect,
+9851:                                       pred_operand, on_false, on_true));

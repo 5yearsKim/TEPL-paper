@@ -1,0 +1,16 @@
+{
+  "configurations": 15,
+  "samples": 165,
+  "successful_cli_commands": 45,
+  "dense_reference_checks": 60,
+  "pipeline_equality_checks": 15,
+  "portable_roundtrip_checks": 15,
+  "rejected_corrupt_measurements": [
+    "phase total",
+    "backend",
+    "missing sample"
+  ],
+  "phase_accounting": "exact within 1e-9 ms",
+  "input_source_and_binary_hashes": "all match",
+  "tex_tables_and_figures": "match generated evidence"
+}

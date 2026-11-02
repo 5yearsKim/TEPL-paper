@@ -1,0 +1,13 @@
+\subsubsection{Suggesting Applicability Conditions}
+\label{app:condition-suggestions}
+When validation under $C$ is unresolved, TEPL can propose a stronger guard
+$C\land G$. A bounded search tries individual predicates and pairs drawn
+from captured-axis equalities, producer batch/free positions, and identity
+permutation restrictions. Each trial reruns construction and validation in
+a fresh context, proving correctness for every legal match under $C\land G$;
+a separate concrete search must find a legal satisfying match to establish
+nonvacuity. Failed validation or witness search yields no suggestion, and
+removing a predicate requires both checks again. The user must add the
+suggestion to \code{where} and revalidate. Neither weakest conditions nor
+complete discovery are claimed. A worked reassociation suggestion is
+archived in \nolinkurl{evaluation/supplementary-materials/}.

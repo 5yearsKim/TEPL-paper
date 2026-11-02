@@ -1,0 +1,34 @@
+SemanticRule broadcast_add
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: Add(align[n4:lhs](align[n1:input](Input(#0))), align[n4:rhs](align[n3:input](Input(#1))))
+      rhs-graph: align[n8:input](Add(align[n7:lhs](Input(#0)), align[n7:rhs](Input(#1))))
+      law: ordered-axis-split
+      law: paired-axis-selection
+      law: axis-map-restriction
+      law: axis-insertion
+      verified: capture access + reduction domains + ordered axes + shape + dtype + legality
+      lhs-normalized: Read(#0, access@0) + Read(#1, access@2)
+      rhs-normalized: Read(#0, access@5) + Read(#1, access@6)
+      constructor auto#2:
+        dimensions = attr_left.attrs.dimensions
+        new_extents = attr_left.attrs.new_extents
+      declared-conditions:
+        m0
+      additional-guard: true
+      reason: valid for all legal LHS metadata satisfying the declared conditions under the selected arithmetic policy
+      let m0 = &&(==(attr_left.attrs.dimensions, attr_right.attrs.dimensions), ==(attr_left.attrs.new_extents, attr_right.attrs.new_extents))
+      let m1 = ordered_complement(range(+(len(shape(Input(#0))), len(attr_left.attrs.new_extents))), attr_left.attrs.dimensions)
+      coordinate frame (fresh identities; domain lengths remain symbolic):
+        input0 = group(extents=shape(Input(#0)))
+        n1.S = group(extents=shape(Input(#0)))
+        n1.N = group(extents=attr_left.attrs.new_extents)
+        input2 = group(extents=shape(Input(#1)))
+        n3.S = group(extents=shape(Input(#1)))
+        n3.N = group(extents=attr_left.attrs.new_extents)
+        access@0 = n1.S
+        access@2 = n1.S
+        access@5 = n1.S
+        access@6 = n1.S
+        lhs-output = place_axes(n1.S, attr_left.attrs.dimensions, n1.N)
+        rhs-output = place_axes(n1.S, attr_left.attrs.dimensions, gather(n1.N, range(len(m1))))
+

@@ -1,0 +1,14 @@
+SemanticRule catalog_elementwise_compare_selected_mask
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: compare(align[n7:lhs](select(align[n5:pred](compare(align[n2:lhs](Input(#0)), align[n2:rhs](Input(#1)), attrs.direction)), align[n5:lhs](Literal(1)), align[n5:rhs](Literal(0)))), align[n7:rhs](Literal(0)), attrs.direction)
+      rhs-graph: compare(align[n10:lhs](Input(#0)), align[n10:rhs](Input(#1)), attrs.direction)
+      declared-conditions:
+        ==(len(shape(Input(#0))), 0)
+        ==(len(shape(Input(#1))), 0)
+        &&(==(attr_ge.attrs.direction, 2), ==(attr_ne.attrs.direction, 1))
+      additional-guard: unresolved
+      reason: core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+error: cannot verify rule 'catalog_elementwise_compare_selected_mask': core backend requires admitted automatic fields without derive helpers: operation is outside ordered axis/value contracts
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

@@ -1,0 +1,5 @@
+rule_id,family,description,function,original_line,applications,semantic_status,evidence,reason
+AS-9835,unreviewed,Unreviewed transformation branch,HandleSelect,9835,25,unreviewed,,Previously unseen source site.
+AS-9050,unreviewed,Unreviewed transformation branch,HandleReduce,9050,12,unreviewed,,Previously unseen source site.
+AS-934,unreviewed,Unreviewed transformation branch,HandleAdd,934,1,unreviewed,,Previously unseen source site.
+AS-2311,unreviewed,Unreviewed transformation branch,HandleConstant,2311,1,unreviewed,,Previously unseen source site.

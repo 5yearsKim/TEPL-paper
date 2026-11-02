@@ -1,0 +1,17 @@
+SemanticRule catalog_indexing_reverse_trivial
+    semantic-inference: policy=algebraic status=unknown
+      lhs-graph: Read(input, IndexReverse(Coords(S), attrs.dimensions)) over Input(#0)
+      rhs-graph: Input(#0)
+      law: index-reverse-normalization
+      law: index-add-normalization
+      law: index-substitution
+      declared-conditions:
+        >=(len(shape(Input(#0))), 0)
+        all(m0)
+      additional-guard: unresolved
+      reason: normalized coefficients, tensor accesses, or reduction domains differ
+      let m0 = sequence_map(attr_r.attrs.dimensions, sequence_variable(0), ==(index(shape(Input(#0)), sequence_variable(0)), 1))
+error: cannot verify rule 'catalog_indexing_reverse_trivial': normalized coefficients, tensor accesses, or reduction domains differ
+Add an explicit where condition that establishes the unresolved requirement, or change the rewrite.
+Use --suggest-where to search for a verified sufficient restriction.
+

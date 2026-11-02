@@ -1,0 +1,10 @@
+SemanticRule scalar_broadcast_reverse
+    semantic-inference: policy=algebraic status=proved
+      lhs-graph: Read(input, IndexReverse(Coords(S), attrs.dimensions)) over align[n1:input](Input(#0))
+      rhs-graph: align[n4:input](Input(#0))
+      verified: source-layout guard certificate and core emission theorem
+      declared-conditions:
+        ==(attr_b.attrs.dimensions, [])
+      additional-guard: true
+      reason: core schema guard and supplied metadata certified; sound for all legal extents
+

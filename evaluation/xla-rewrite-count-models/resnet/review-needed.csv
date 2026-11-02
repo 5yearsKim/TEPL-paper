@@ -1,0 +1,2 @@
+rule_id,family,description,function,original_line,applications,semantic_status,evidence,reason
+AS-10505,unreviewed,Unreviewed transformation branch,FoldConvInputPad,10505,1,unreviewed,,Previously unseen source site.
