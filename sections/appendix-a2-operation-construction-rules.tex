@@ -8,25 +8,25 @@ $Req_{\mathrm{root}}=F$, and construct attributes from inputs to root after
 all checks succeed. A requirement must contain distinct axes from $S_v$;
 otherwise $C_v$ is false. All child requirements are checked recursively.
 
-\noindent\textbf{Input.}
+\paperparagraph{Input.}
 For input $X$, set $S_X=\operatorname{set}(I_X)$ and
 $C_X=[Req_X\preceq I_X]$. Its output order is
 $\operatorname{Ord}_X=I_X$; no attributes are needed.
 
-\noindent\textbf{Permutation.}
+\paperparagraph{Permutation.}
 Set $S_v=S_u$, pass $Req_u=[]$, and take $C_v=\mathrm{true}$.
 Construct $\operatorname{Ord}_v$ by placing $Req_v$ first and appending
 the remaining child axes in their current order. The permutation attribute
 lists their positions in the child.
 
-\noindent\textbf{Unary summation.}
+\paperparagraph{Unary summation.}
 Set $S_v=S_u\cap M_v$, pass $Req_u=Req_v$, and take
 $C_v=\mathrm{true}$. The output order is
 $\operatorname{Ord}_v=\operatorname{Ord}_u|_{S_v}$.
 The reduction attribute lists the positions of $S_u\setminus S_v$
 in the child.
 
-\noindent\textbf{Contraction.}
+\paperparagraph{Contraction.}
 For children $\ell,r$, define the batch, contraction, left-free, and
 right-free axis sets by
 \begin{equation}

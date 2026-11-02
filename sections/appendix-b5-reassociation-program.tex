@@ -18,7 +18,8 @@ $\mathsf{Max}=2^{63}-1$. This conservative bound ensures representable
 lengths and offsets; it is an explicit guard, not an inferred condition.
 
 Let $k_X,k_Y$ be the inner source dot's contraction lists and
-$d_\ell,d_r$ the outer source dot's lists in $T,Z$. The inner free groups
+$c_L,c_R$ the outer source dot's left and right contraction-position lists
+in $T,Z$, respectively. The inner free groups
 are $\vec I$ from $X$ and $\vec J$ from $Y$, with shared contracted group
 $\vec K$. Write $\lbrack\!\lbrack e\rbrack\!\rbrack_m$ for partial metadata
 evaluation. Using the paired matching of
@@ -28,9 +29,9 @@ use only source shapes and attributes:
 \begin{aligned}
  i_X&=\ocomp(\operatorname{range}(n_X),b_X\Vert k_X),\\
  j_Y&=\ocomp(\operatorname{range}(n_Y),b_Y\Vert k_Y),\\
- q_I&=b+\operatorname{range}(|i_X|),\\
- q_J&=b+|i_X|+\operatorname{range}(|j_Y|),\\
- (u_G,v_G)&=\mpo(d_\ell,q_G),\quad z_G=\gath(d_r,u_G)
+ p_I&=b+\operatorname{range}(|i_X|),\\
+ p_J&=b+|i_X|+\operatorname{range}(|j_Y|),\\
+ (u_G,v_G)&=\mpo(c_L,p_G),\quad z_G=\gath(c_R,u_G)
                  \quad(\vec G\in\{\vec I,\vec J\}),\\
  f_Y&=\ocomp(\operatorname{range}(n_Y),
                       b_Y\Vert\gath(j_Y,v_J)),\\
@@ -42,13 +43,13 @@ use only source shapes and attributes:
 \end{equation}
 Here $u_G$ indexes slots in the outer contraction list, while $v_G$
 indexes axes within the producer group; only $u_G$ selects the partners
-in $d_r$. The outer contraction group is
-$\vec D=\gath(\operatorname{Ord}_T,d_\ell)$.
+in $c_R$. The outer contraction group is
+$\vec D=\gath(\operatorname{Ord}_T,c_L)$.
 For $\vec G\in\{\vec I,\vec J\}$, define its selected subgroup as
 $\vec G_{\mathrm{sel}}=\gath(\vec G,v_G)$; the remaining subgroup
 $\vec G_{\mathrm{rem}}$ preserves the other axes in their original order.
 Here $\pos(a,b)$ returns the positions of entries of $b$ in $a$, in
-$b$'s order. The lists $q_I,q_J$ account for the batch prefix of the source interface
+$b$'s order. The lists $p_I,p_J$ account for the batch prefix of the source interface
 $\vec B\Vert \vec I\Vert \vec J$. The final two expressions locate the selected $\vec I$
 axes and $\vec K$ in the replacement interface
 \begin{equation}

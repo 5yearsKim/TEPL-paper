@@ -1,0 +1,9 @@
+% Shared paragraph headings for the paper and supplement.
+% Preserve acmart's run-in spacing and heading anchors, with no indentation.
+\makeatletter
+\newcommand\paperparagraph{\def\@toclevel{4}%
+  \@startsection{paragraph}{4}{\z@}%
+  {-.5\baselineskip \@plus -2\p@ \@minus -.2\p@}%
+  {-3.5\p@}%
+  {\ACM@NRadjust{\normalfont\normalsize\bfseries\itshape\@adddotafter}}}
+\makeatother

@@ -13,9 +13,10 @@ algebraic semantics and written conditions. Coverage remains limited,
 particularly for general indexing and richer reductions.
 
 In our XLA evaluation, TEPL models the operation semantics required by 123
-of 209 cases and synthesizes attributes for 31 of 38 eligible cases (81.6\%).
+of 209 cases and synthesizes attributes for 31 of 38 axis-inference cases (81.6\%).
 Integration into XLA's existing simplifier demonstrates practical
-application. Across 25 audited cases, inference and its permitted cleanup
-reduce TEPL token counts by 17.8\% compared with explicit RHS attributes.
+application. Across all 31 inference-successful rules, inferred specifications
+contain 15.1\% fewer tokens than the original explicit forms, including
+associated normalization and cleanup.
 These results show how declarative tensor rewrites can delegate attribute
 construction to the compiler.

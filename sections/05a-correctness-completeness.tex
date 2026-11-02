@@ -1,6 +1,6 @@
 \subsection{Correctness and Completeness}
 \label{sec:formal-correctness}
-We prove that the mathematical algorithm decides whether a valid assignment
+We show that the algorithm decides whether a valid assignment
 exists and constructs one whenever it does.
 
 \begin{theorem}[Complete constructive attribute synthesis]
@@ -17,13 +17,8 @@ axis have extent at least two,
  \label{eq:sound-theorem}
 \end{align}
 \end{theorem}
-Intuitively, \code{check} answers whether any valid RHS attribute assignment
-exists for the given match metadata. If it succeeds, \code{build} produces
-one; if it fails, no valid assignment exists within the defined fragment.
-Thus the algorithm both finds a solution whenever possible and guarantees
-that the constructed replacement is legal and equivalent to the LHS.
-
-When a rule's \code{where} condition implies \code{check}, the constructor
-supplies valid attributes for every legal match in this fragment.
-Appendix~\ref{app:completeness-proof}
-gives the necessity and sufficiency proofs and the extension to multiple terms.
+A failed \code{check} therefore means no valid assignment exists in the
+fragment, so \code{check} can serve as a rule's applicability condition
+(Section~\ref{sec:compilation-scope}).
+Appendix~\ref{app:completeness-proof} gives the proofs and the extension to
+multiple terms.

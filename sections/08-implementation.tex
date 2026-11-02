@@ -1,6 +1,6 @@
 \section{Implementation and Scope}
 \label{sec:implementation-scope}
-\paragraph{Compiler and verifier.}
+\paperparagraph{Compiler and verifier.}
 The compiler uses ANTLR~\cite{antlr}, resolves imports and names, and checks
 types. Its identity, ordered, and general construction strategies submit
 candidates to fresh verifier contexts. The verifier checks original
@@ -9,29 +9,25 @@ metadata expressions, constructor obligations, and completed replacements;
 term-count, and time limits bound proof attempts.
 Appendix~\ref{app:validation-proofs} specifies the formal validation calculus.
 
-\paragraph{Shared program construction and execution.}
+\paperparagraph{Shared program construction and execution.}
 For admitted plans, \code{inference::emit} constructs the shared metadata
 IR before proof search or simplification. Both \code{ordered::compile}
-and ordinary ordered synthesis use this constructor. Symbolic lowering
+and ordinary ordered synthesis use this constructor. Program construction
+does not require symbolic lowering to succeed. Symbolic lowering
 uses source axis mappings and partitions; paired contraction lists may
-be reordered together. A fresh verifier checks the candidate. Failed
+be reordered together. A fresh verifier checks the lowered expressions,
+their definedness, and the rewrite obligations under the written guard. Failed
 lowering leaves the original program intact. The portable runtime
 interprets that program, reuses shared intermediate values, and checks
 feasibility before computing positional attributes. Additive components
 keep separate axis identities.
 
-Portable loading rechecks guards and schedules
-(Section~\ref{sec:compilation-scope}). Rust/C++ export requires
-successful symbolic lowering. The runtime uses checked integers and lazy
-conditionals and Boolean operators, without proof search per match.
-Invalid metadata, inputs outside the domain, and resource exhaustion are
-reported separately from a false feasibility check. Completeness requires
-extents $\ge2$; sound execution also allows zero and singleton extents,
-where a false feasibility predicate does not establish impossibility.
-Broader identity and general construction
-strategies remain outside the completeness theorem.
+Rust/C++ export requires successful symbolic lowering.
+Appendix~\ref{app:accepted-core-proof} details portable loading and runtime
+checks. Sound execution also allows zero and singleton extents, where a
+false feasibility predicate does not establish impossibility.
 
-\paragraph{Trusted components.}
+\paperparagraph{Trusted components.}
 Table~\ref{tab:guarantee-map} states the formal guarantees. The C++ checker
 also supports reversal, broadcast, calculated indices, scalar functions,
 and metadata comprehensions beyond the validation calculus. Declarations,
@@ -42,7 +38,7 @@ handwritten implementation correspondence, not mechanized verification
 of the compiler or runtime. Diagnostic histories are not independently
 checkable certificates.
 
-\paragraph{Runtime integration.}
+\paperparagraph{Runtime integration.}
 A greedy engine applies compiled rules until no rule applies or an
 execution limit is reached. TEPL also generates Rust for
 \emph{egg}~\cite{egg}, using e-class shape and dtype analysis for equality

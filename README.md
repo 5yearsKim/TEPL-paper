@@ -63,6 +63,13 @@ below that prose; use `\paperfigure` for large or unsuitable artwork.
 
 This uses `wrapstuff`, included in the `texlive-latex-extra` dependency above.
 
+Use `\paperparagraph{Heading.}` for paragraph-level headings, including numbered
+steps. The shared `paper-style.tex` makes these headings bold italic,
+unindented and run-in in both documents. Avoid manual
+`\noindent\textbf{...}` or bare `\paragraph` headings so spacing and styling stay
+consistent. The shared command preserves the class's built-in `\paragraph`,
+which `acmart` prohibits redefining.
+
 ## Writing resources
 
 - `draft/paper_outline.md`: detailed paper outline.
@@ -118,7 +125,8 @@ and historical default-backend scalability and native metadata timing.
 - `evaluation/xla-rewrite-count/` and `evaluation/xla-rewrite-count-models/`:
   the four workload counts in Table 5 and their semantic review.
 - `evaluation/current/specification_size/`: Section 9.3 and Table 6 token accounting.
-- `evaluation/certified-scalability/`: Figure 7, Section 9.4 and Supplement S3.
+- `evaluation/certified-scalability/`: Section 9.4 summary, Figure 7 and details
+  in Appendix C, and Supplement S3.
 - `evaluation/reassociation/`: Appendix B's recorded implementation example.
 - `evaluation/source-line-count/`: the introduction's 269-line XLA example.
 - `evaluation/supplementary-materials/`: explanatory source snapshots cited by the appendix.
@@ -129,7 +137,7 @@ are retained with the certified experiment. The workload-count package retains
 its ResNet baseline and original workflow provenance without the unused workflow
 experiment.
 
-Regenerate Figure 7 from saved measurements without rerunning compilation:
+Regenerate Figure 7 in Appendix C from saved measurements without rerunning compilation:
 
 ```sh
 python3 tools/plot_current_scalability.py

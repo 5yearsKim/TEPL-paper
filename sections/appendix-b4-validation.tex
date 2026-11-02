@@ -53,7 +53,7 @@ the written guard. Source contracts supply selector validity, distinct
 input frames, paired lengths and extents, and output-layout equations.
 Candidate obligations and RHS legality are goals to derive, never premises. The judgments
 \begin{equation}
- \Gamma\vdash e\downarrow,\qquad \Gamma\vdash\phi
+ \Gamma\vdash e\downarrow,\qquad \Gamma\vdash\psi
  \label{eq:metadata-judgments}
 \end{equation}
 establish defined evaluation and truth for every valuation satisfying
@@ -205,7 +205,7 @@ addition; a proved bound on the total therefore bounds each such offset.
 \label{lem:metadata-soundness}
 For every valuation $m$ satisfying $\Gamma$, a derivation
 $\Gamma\vdash e\downarrow$ implies successful evaluation of $e$ at $m$.
-A derivation $\Gamma\vdash\phi$ implies successful evaluation of $\phi$
+A derivation $\Gamma\vdash\psi$ implies successful evaluation of $\psi$
 to true at $m$.
 \end{lemma}
 \begin{proof}
@@ -297,14 +297,14 @@ partition covers its interface exactly once.
 \begin{proof}
 For selection and composition, use Table~\ref{tab:core-sequence-laws}.
 For reconstruction, concatenate groups as $\vec G=\vec G_1\Vert\cdots\Vert \vec G_\ell$
-and their position lists as $q=q_1\Vert\cdots\Vert q_\ell$. Require $q$ to
-be a permutation and $|\vec G_i|=|q_i|$. With
-$Q=\gath(\vec G,\operatorname{inverse}(q))$, inverse composition gives
-$\gath(Q,q)=\vec G$, whose corresponding blocks give
-$\gath(Q,q_i)=\vec G_i$. Injectivity and completeness of $q$ give exact coverage.
-For overlap, if $\vec G=\gath(Q,q)$, $\vec H=\gath(Q,h)$, and
-$(u,v)=\mpo(q,h)$, then $q_{u_j}=h_{v_j}$; both transported selections
-therefore have entry $Q_{q_{u_j}}$. The paired selectors retain order and
+and their position lists as $p=p_1\Vert\cdots\Vert p_\ell$. Require $p$ to
+be a permutation and $|\vec G_i|=|p_i|$. With
+$Q=\gath(\vec G,\operatorname{inverse}(p))$, inverse composition gives
+$\gath(Q,p)=\vec G$, whose corresponding blocks give
+$\gath(Q,p_i)=\vec G_i$. Injectivity and completeness of $p$ give exact coverage.
+For overlap, if $\vec G=\gath(Q,p)$, $\vec H=\gath(Q,h)$, and
+$(u,v)=\mpo(p,h)$, then $p_{u_j}=h_{v_j}$; both transported selections
+therefore have entry $Q_{p_{u_j}}$. The paired selectors retain order and
 partner identity. Induction on a mapping derivation proves the claim.
 \end{proof}
 
@@ -346,8 +346,8 @@ its declared ordered shape and its value at every output coordinate.
 \end{lemma}
 \begin{proof}
 Induct on the expression. An input read uses its physical dimension order.
-For a permutation $q$, output coordinate $i$ supplies the coordinate of
-input dimension $q_i$; the permutation premise makes this a bijective
+For a permutation $\phi$, output coordinate $i$ supplies the coordinate of
+input dimension $\phi_i$; the permutation premise makes this a bijective
 reindexing. Unary summation binds precisely the selected dimensions and
 preserves the remaining dimension order. A contraction pairs its batch and
 contraction axes in attribute-list order. Equal paired extents provide a

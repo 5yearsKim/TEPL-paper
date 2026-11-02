@@ -1,16 +1,10 @@
 \section{Candidate Validation}
 \label{sec:candidate-validation}
-Sections~\ref{sec:mathematical-synthesis}--\ref{sec:method}
-justify the canonical construction within its stated fragment.
-Together with guard certification, that construction provides a
-direct route to accepting a rewrite. TEPL also handles attribute
-programs supplied by users, produced by other construction strategies,
-or obtained through symbolic lowering. This section explains how TEPL
-checks such completed candidates independently of their origin.
-
-Validation is performed at compile time. It proves correctness for
-every legal source match satisfying the written guard. At matching
-time, TEPL evaluates the guard and attribute expressions; it does
-not repeat the symbolic equivalence proof.
+A completed RHS attribute program may be supplied by a user or produced
+by a construction strategy outside the proved constructor. TEPL must
+establish that the program computes legal attributes and preserves the
+rewrite's result for every legal match satisfying the written guard.
+Candidate validation checks this at compile time, independently of how
+the attributes were generated.
 
 \input{sections/07a-validation-details}

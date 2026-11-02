@@ -28,7 +28,7 @@ TEPL requires a type when declaring an operation attribute and distinguishes
 three roles for integer attributes: axes, extents, and coordinates
 (Figure~\ref{fig:attribute-roles}). These roles describe different properties
 even when their integer values coincide. This distinction allows TEPL to
-target only eligible axis fields for synthesis, while extent and coordinate
+target axis fields for synthesis, while extent and coordinate
 attributes remain supplied.
 Appendix~\ref{app:language-declarations} gives declaration examples.
 
@@ -87,7 +87,7 @@ Some rewrite rules are applicable only under specific conditions. A
 
 For operations with declared semantics, acceptance establishes that the
 attribute program is defined and produces a legal, equivalent replacement
-whenever the condition holds (Section~\ref{sec:contract}). A condition can, for example, restrict a captured transpose permutation
+whenever the condition holds. A condition can, for example, restrict a captured transpose permutation
 to the identity. Appendix~\ref{app:condition-suggestions} gives the
 batch-routing condition for generalized dot reassociation.
 
@@ -97,7 +97,7 @@ to add to \code{where}. The user adds the condition and checks the rule again
 
 \subsection{Automatic Attribute Inference}
 \label{sec:auto}
-When eligible RHS axis fields are omitted and no derivation is provided, TEPL asks the
+When RHS axis fields are omitted and no derivation is provided, TEPL asks the
 compiler to infer their transformation logic. The same transpose rewrite
 can therefore be written without a \code{derive} block:
 \begin{lstlisting}[language=TEPL]

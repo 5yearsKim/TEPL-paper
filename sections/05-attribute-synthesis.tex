@@ -2,7 +2,9 @@
 \label{sec:mathematical-synthesis}
 We now synthesize RHS attributes from the LHS axis representation in three
 passes: determine surviving axes, check ordering feasibility, and construct
-attributes.
+attributes. We call this algorithm the \emph{complete constructor}: within
+Section~\ref{sec:formal-scope}'s domain, it finds valid RHS axis attributes
+whenever they exist.
 
 \subsection{Canonical Intermediate Axes}
 \label{sec:canonical-axes}
@@ -164,7 +166,7 @@ the selected axes and ordering requirements into RHS axis attributes.
 The $\operatorname{build}$ program processes the RHS from inputs to root
 in three steps.
 
-\noindent\textbf{Step 1: Construct an output order.}
+\paperparagraph{Step 1: Construct an output order.}
 At each node $v$, we construct an output order $\operatorname{Ord}_v$
 that contains exactly the axes in $S_v$ and satisfies the required
 relative order $Req_v$:
@@ -176,7 +178,7 @@ relative order $Req_v$:
 The construction follows the child output orders and the operation's
 rules under D2--D3. 
 
-\noindent\textbf{Step 2: Convert axes to positions.}
+\paperparagraph{Step 2: Convert axes to positions.}
 The notation $\operatorname{pos}(S,\vec G)$ lists the zero-based positions
 of the axes in $\vec G$ within $S$, preserving the group order.
 For example, if $\operatorname{Ord}_u=(i_1,k_1,i_2,k_2)$ and
@@ -184,7 +186,7 @@ $\vec K=(k_1,k_2)$, then
 $\operatorname{pos}(\operatorname{Ord}_u,\vec K)=[1,3]$.
 These positions form the axis-list attribute selecting $\vec K$.
 
-\noindent\textbf{Step 3: Combine node assignments.}
+\paperparagraph{Step 3: Combine node assignments.}
 By D4, the independently constructed node assignments can be combined
 into $\beta=\operatorname{build}(m)$. For a single component, this completes
 the construction. For multiple terms, we combine the component checks and

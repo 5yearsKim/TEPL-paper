@@ -20,13 +20,13 @@ that remain. Every mandatory axis must also survive under $\beta$:
 once removed, it cannot connect to another input or reach the final output.
 
 \subsubsection{Constructing Attributes at Each Node}
-\paragraph{Inputs and unary operations.}
+\paperparagraph{Inputs and unary operations.}
 Inputs stay unchanged. A permutation can arrange its retained axes in
 the required order. A unary summation keeps $S_v=S_u\cap M_v$ and sums
 out the others. These mandatory axes also survive under $\beta$, and
 summation preserves their order.
 
-\paragraph{Contraction.}
+\paperparagraph{Contraction.}
 Assume the construction holds for both children $\ell,r$.
 There are three points to check:
 \begin{enumerate}
@@ -60,7 +60,7 @@ axes are disjoint, and paired axes have equal extents.
 \subsubsection{Why the Result Is Valid}
 The construction connects only matching LHS logical axes. It removes an
 axis only after all its input connections are complete and only if the
-axis is absent from the final output. Thus the input-port connections
+axis is absent from the final output. Thus the connections between input dimensions
 are unchanged.
 
 At the root, the mandatory axes and the original output axes are both

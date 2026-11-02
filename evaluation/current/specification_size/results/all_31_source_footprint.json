@@ -1,0 +1,831 @@
+{
+  "protocol": "all_31_inference_successes_static_source_footprint_v1",
+  "scope": "All 31 default-backend inference successes in the retained coverage run; no selection by explicit-baseline acceptance or XLA audit availability.",
+  "measurement_kind": "Static source-token recount, not a new compiler validation experiment.",
+  "notes": [
+    "Five original explicit variants and one compact variant did not validate in the historical size run; no validation claim is added here.",
+    "Saved inferred forms include unit-axis normalization and unused-label/empty-block cleanup. Two normalized cases add 48 legality tokens relative to the original forms.",
+    "The historical XLA excerpt comparison is not used in the current 31-rule source-footprint evaluation."
+  ],
+  "dependencies": {
+    "evaluation/unified-construction/results.json": "b1e93829e4f25b75409dff3691ee282fedc644ce07f283e557517043ecb10241",
+    "evaluation/recorded-results.json": "654fc437124fec3fccd5fa850c559c7411742f838f356ff3fb7396c9007cd23c",
+    "evaluation/current/specification_size/results/measurement.json": "8452ee1ebd6554dbdc909fa9115d01e78349a45b4a8ff4ddd0703149cfa6bdc4",
+    "evaluation/current/specification_size/results/responsibility.json": "eb35403fe1eb39944fc80afaa301deebf7fdefea55c32e902ce3ab8d4771d2b4"
+  },
+  "counting_scripts": {
+    "labs/xla_rewrite/specification_size/scripts/measure.py": "2f54a2d61b9cc1133871c3287b3a30e685225dcb345cdce8b8cff1a74336000a",
+    "labs/xla_rewrite/specification_size/scripts/responsibility.py": "104217ccf28305808a8dcf1547327d7fd17403e675595a79e99da27d185c8f6a"
+  },
+  "totals": {
+    "cases": 31,
+    "explicit_parts": {
+      "management": 155,
+      "matching": 407,
+      "construction": 308,
+      "attributes": 985,
+      "legality": 1159
+    },
+    "inferred_parts": {
+      "management": 155,
+      "matching": 391,
+      "construction": 288,
+      "legality": 1207,
+      "attributes": 518
+    },
+    "explicit_tokens": 3014,
+    "inferred_tokens": 2559,
+    "saved_tokens": 455,
+    "reduction_percent": 15.096217650962176
+  },
+  "cases": [
+    {
+      "case": "broadcast_add",
+      "explicit_source": "from \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{add, mul, negate, subtract, zero_like, transpose, broadcast,\n        reduce_sum, reverse, slice, dot};\n\nrule broadcast_add {\n    (add (attr_left: broadcast X) (attr_right: broadcast Y))\n    => (broadcast[attr_left.attrs] (add X Y))\n    where { attr_left.attrs.dimensions == attr_right.attrs.dimensions\n         && attr_left.attrs.new_extents == attr_right.attrs.new_extents }\n}\n",
+      "inferred_source": "// Canonical axis-only evaluation task; no descriptor or non-axis inference.\nfrom \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{add, mul, negate, subtract, zero_like, transpose, broadcast,\n        reduce_sum, reverse, slice, dot};\n\nrule broadcast_add {\n    (add (attr_left: broadcast X) (attr_right: broadcast Y)) => (axis_eval_0: broadcast (add X Y))\n    where { attr_left.attrs.dimensions == attr_right.attrs.dimensions\n         && attr_left.attrs.new_extents == attr_right.attrs.new_extents }\nderive {\n axis_eval_0.attrs = {new_extents: attr_left.attrs.new_extents};\n}\n}\n",
+      "explicit_sha256": "71e4f867eb4ed33f21758faeb55c5dcf421ce1e11abfd1b52f2b77d4dd13534c",
+      "inferred_sha256": "676cd8e7e5bf06c2d2ad96215c3bb09463ca7afb736008179c35d434744742d3",
+      "explicit_parts": {
+        "management": 5,
+        "matching": 15,
+        "construction": 8,
+        "attributes": 5,
+        "legality": 26
+      },
+      "inferred_parts": {
+        "management": 5,
+        "matching": 15,
+        "construction": 10,
+        "legality": 26,
+        "attributes": 17
+      },
+      "historical_explicit_accepted": true,
+      "historical_compact_accepted": true,
+      "normalizations": []
+    },
+    {
+      "case": "broadcast_compose_append",
+      "explicit_source": "from \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{broadcast};\n\nrule broadcast_compose_append {\n    X: [Dims...]\n    (attr_outer: broadcast (attr_inner: broadcast X)) => (attr_out: broadcast X)\n    where { attr_inner.attrs.dimensions == range(len(Dims))\n         && attr_outer.attrs.dimensions == range(len(Dims) + len(attr_inner.attrs.new_extents)) }\n    derive { attr_out.attrs = { dimensions: attr_inner.attrs.dimensions,\n        new_extents: concat(attr_inner.attrs.new_extents, attr_outer.attrs.new_extents) }; }\n}\n",
+      "inferred_source": "// Canonical axis-only evaluation task; no descriptor or non-axis inference.\nfrom \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{broadcast};\n\nrule broadcast_compose_append {\n    X: [Dims...]\n    (attr_outer: broadcast (attr_inner: broadcast X)) => (attr_out: broadcast X)\n    where { attr_inner.attrs.dimensions == range(len(Dims))\n         && attr_outer.attrs.dimensions == range(len(Dims) + len(attr_inner.attrs.new_extents)) }\n    \nderive {\n attr_out.attrs = {new_extents: concat(attr_inner.attrs.new_extents, attr_outer.attrs.new_extents)};\n}\n}\n",
+      "explicit_sha256": "66b586ca6c61e08a3e29514cb9e9d74900c2bc8a44388f4bb417c722c7aec406",
+      "inferred_sha256": "eee138dc62f4379ba4e7316c99a30ab68ba0550501e3480b94216f7c22b57c7e",
+      "explicit_parts": {
+        "management": 5,
+        "legality": 45,
+        "matching": 11,
+        "construction": 6,
+        "attributes": 34
+      },
+      "inferred_parts": {
+        "management": 5,
+        "legality": 45,
+        "matching": 11,
+        "construction": 6,
+        "attributes": 26
+      },
+      "historical_explicit_accepted": true,
+      "historical_compact_accepted": true,
+      "normalizations": []
+    },
+    {
+      "case": "broadcast_multiply",
+      "explicit_source": "from \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{add, mul, negate, subtract, zero_like, transpose, broadcast,\n        reduce_sum, reverse, slice, dot};\n\nrule broadcast_multiply {\n    (mul (attr_left: broadcast X) (attr_right: broadcast Y))\n    => (broadcast[attr_left.attrs] (mul X Y))\n    where { attr_left.attrs.dimensions == attr_right.attrs.dimensions\n         && attr_left.attrs.new_extents == attr_right.attrs.new_extents }\n}\n",
+      "inferred_source": "// Canonical axis-only evaluation task; no descriptor or non-axis inference.\nfrom \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{add, mul, negate, subtract, zero_like, transpose, broadcast,\n        reduce_sum, reverse, slice, dot};\n\nrule broadcast_multiply {\n    (mul (attr_left: broadcast X) (attr_right: broadcast Y)) => (axis_eval_0: broadcast (mul X Y))\n    where { attr_left.attrs.dimensions == attr_right.attrs.dimensions\n         && attr_left.attrs.new_extents == attr_right.attrs.new_extents }\nderive {\n axis_eval_0.attrs = {new_extents: attr_left.attrs.new_extents};\n}\n}\n",
+      "explicit_sha256": "4a851cce42cb5d835b39bf3593eca6fe3ff1e9abbfb8307241c0b0c385c5a88d",
+      "inferred_sha256": "3c0f27a98b76fff9665d3982633d8a0035fe2878693f2bee220a8c284d3f4ffe",
+      "explicit_parts": {
+        "management": 5,
+        "matching": 15,
+        "construction": 8,
+        "attributes": 5,
+        "legality": 26
+      },
+      "inferred_parts": {
+        "management": 5,
+        "matching": 15,
+        "construction": 10,
+        "legality": 26,
+        "attributes": 17
+      },
+      "historical_explicit_accepted": true,
+      "historical_compact_accepted": true,
+      "normalizations": []
+    },
+    {
+      "case": "catalog_broadcast_drop_unit_dims",
+      "explicit_source": "from \"dialects/hlo.tepl\" import HLO as hlo;\n\n// Catalog: broadcast-drop-unit-dims\n// Scope: Rank-two operand with leading unit axis; broadcast appends axes.\n// Source arithmetic/applicability conditions are recorded in the manifest.\nrule catalog_broadcast_drop_unit_dims {\n    X: [A,N]\n     (attr_b: hlo.broadcast X) => (attr_out: hlo.broadcast (attr_r: hlo.reshape X))\n     where { A == 1 && attr_b.attrs.dimensions == [0,1] }\n     derive { attr_r.attrs = { shape: [N] }; attr_out.attrs = { dimensions: [1], new_extents: concat([1],attr_b.attrs.new_extents) }; }\n}\n",
+      "inferred_source": "// Canonical axis-only evaluation task; no descriptor or non-axis inference.\nfrom \"dialects/axis_views.tepl\" import AxisViews as axis_view;\nfrom \"dialects/hlo.tepl\" import HLO as hlo;\n\n// Catalog: broadcast-drop-unit-dims\n// Scope: Rank-two operand with leading unit axis; broadcast appends axes.\n// Source arithmetic/applicability conditions are recorded in the manifest.\nrule catalog_broadcast_drop_unit_dims {\n    X: [A,N]\n     (attr_b: hlo.broadcast X) => (attr_out: hlo.broadcast (axis_eval_0: axis_view.remove_unit_axes X))\n     where { A == 1 && attr_b.attrs.dimensions == [0,1] }\n     \nderive {\n axis_eval_0.attrs = {dimensions: [0]};\n attr_out.attrs = {new_extents: concat([1],attr_b.attrs.new_extents)};\n}\n}\n",
+      "explicit_sha256": "72266f337f530b6e04864efdd88eafe7f2c5cf415d42be3ad50bc6eaafc2355e",
+      "inferred_sha256": "ff72d6adb7530af001d19c6cdf98d0b6da6b5ed3b4751dd2718eb5306df14e85",
+      "explicit_parts": {
+        "management": 5,
+        "legality": 25,
+        "matching": 8,
+        "construction": 15,
+        "attributes": 42
+      },
+      "inferred_parts": {
+        "management": 5,
+        "legality": 25,
+        "matching": 8,
+        "construction": 15,
+        "attributes": 36
+      },
+      "historical_explicit_accepted": false,
+      "historical_compact_accepted": true,
+      "normalizations": [
+        {
+          "kind": "unit_only_reshape",
+          "side": "rhs",
+          "node": "attr_r",
+          "input_shape": [
+            "1",
+            "N"
+          ],
+          "target_shape": [
+            "N"
+          ],
+          "dropped_axes": [
+            0
+          ],
+          "inserted_axes": []
+        }
+      ]
+    },
+    {
+      "case": "catalog_broadcast_inserted_unit_dims",
+      "explicit_source": "from \"dialects/hlo.tepl\" import HLO as hlo;\n\n// Catalog: broadcast-inserted-unit-dims\n// Scope: Rank-one X; reshape inserts a leading unit axis; the outer broadcast appends axes.\n// Source arithmetic/applicability conditions are recorded in the manifest.\nrule catalog_broadcast_inserted_unit_dims {\n    X: [N]\n     (attr_b: hlo.broadcast (attr_r: hlo.reshape X)) => (attr_out: hlo.broadcast X)\n     where { attr_r.attrs.shape == [1,N] && attr_b.attrs.dimensions == [0,1] }\n     derive { attr_out.attrs = { dimensions: [1], new_extents: concat([1], attr_b.attrs.new_extents) }; }\n}\n",
+      "inferred_source": "// Canonical axis-only evaluation task; no descriptor or non-axis inference.\nfrom \"dialects/axis_views.tepl\" import AxisViews as axis_view;\nfrom \"dialects/hlo.tepl\" import HLO as hlo;\n\n// Catalog: broadcast-inserted-unit-dims\n// Scope: Rank-one X; reshape inserts a leading unit axis; the outer broadcast appends axes.\n// Source arithmetic/applicability conditions are recorded in the manifest.\nrule catalog_broadcast_inserted_unit_dims {\n    X: [N]\n     (attr_b: hlo.broadcast (axis_eval_0: hlo.broadcast X)) => (attr_out: hlo.broadcast X)\n     where { [1,N] == [1,N] && attr_b.attrs.dimensions == [0,1]  && (axis_eval_0.attrs.dimensions == [1]) && (axis_eval_0.attrs.new_extents == [1])}\n     \nderive {\n attr_out.attrs = {new_extents: concat([1], attr_b.attrs.new_extents)};\n}\n}\n",
+      "explicit_sha256": "772c098a0648536643ae6135b3703ad7d42d945f474928c3f33241bffce0eaf2",
+      "inferred_sha256": "bdee62d87118dbaaa84fb171bdaa372b2644dd30a002f4ebb7f515bfeed42403",
+      "explicit_parts": {
+        "management": 5,
+        "legality": 31,
+        "matching": 15,
+        "construction": 8,
+        "attributes": 30
+      },
+      "inferred_parts": {
+        "management": 5,
+        "legality": 55,
+        "matching": 15,
+        "construction": 8,
+        "attributes": 24
+      },
+      "historical_explicit_accepted": false,
+      "historical_compact_accepted": true,
+      "normalizations": [
+        {
+          "kind": "unit_only_reshape",
+          "side": "lhs",
+          "node": "attr_r",
+          "input_shape": [
+            "N"
+          ],
+          "target_shape": [
+            "1",
+            "N"
+          ],
+          "dropped_axes": [],
+          "inserted_axes": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "case": "catalog_broadcast_multiply_constant_into_broadcast",
+      "explicit_source": "from \"dialects/hlo.tepl\" import HLO as hlo;\n\n// Catalog: broadcast-multiply-constant-into-broadcast\n// Scope: Scalar factor C is a captured scalar; literal-only profitability does not affect the identity.\n// Source arithmetic/applicability conditions are recorded in the manifest.\nrule catalog_broadcast_multiply_constant_into_broadcast {\n    Y: [Dims...] C: []\n     (hlo.multiply (hlo.multiply X (attr_out: hlo.broadcast C)) (attr_b: hlo.broadcast Y))\n     => (hlo.multiply X (hlo.broadcast[attr_b.attrs] (hlo.multiply Y (attr_base: hlo.broadcast C))))\n     where { attr_out.attrs.dimensions == [] }\n     derive { attr_base.attrs = { dimensions: [], new_extents: Dims }; }\n}\n",
+      "inferred_source": "// Canonical axis-only evaluation task; no descriptor or non-axis inference.\nfrom \"dialects/hlo.tepl\" import HLO as hlo;\n\n// Catalog: broadcast-multiply-constant-into-broadcast\n// Scope: Scalar factor C is a captured scalar; literal-only profitability does not affect the identity.\n// Source arithmetic/applicability conditions are recorded in the manifest.\nrule catalog_broadcast_multiply_constant_into_broadcast {\n    Y: [Dims...] C: []\n     (hlo.multiply (hlo.multiply X (attr_out: hlo.broadcast C)) (attr_b: hlo.broadcast Y)) => (hlo.multiply X (axis_eval_0: hlo.broadcast (hlo.multiply Y (attr_base: hlo.broadcast C))))\n     where { attr_out.attrs.dimensions == [] }\n     \nderive {\n attr_base.attrs = {new_extents: Dims};\n axis_eval_0.attrs = {new_extents: attr_b.attrs.new_extents};\n}\n}\n",
+      "explicit_sha256": "1fbb04f836f40fe7ffd1257b873b06b0f39e2c6c1306ef44613048ec8089de9a",
+      "inferred_sha256": "4730dd6be1428161b7a23670338f67aac44d09a1a619a88a512e1637054c9e23",
+      "explicit_parts": {
+        "management": 5,
+        "legality": 21,
+        "matching": 27,
+        "construction": 25,
+        "attributes": 23
+      },
+      "inferred_parts": {
+        "management": 5,
+        "legality": 21,
+        "matching": 27,
+        "construction": 27,
+        "attributes": 27
+      },
+      "historical_explicit_accepted": true,
+      "historical_compact_accepted": true,
+      "normalizations": []
+    },
+    {
+      "case": "catalog_broadcast_transpose",
+      "explicit_source": "from \"dialects/hlo.tepl\" import HLO as hlo;\n\n// Catalog: broadcast-transpose\n// Scope: Arbitrary tensor shapes under the catalog arithmetic/applicability assumptions.\n// Source arithmetic/applicability conditions are recorded in the manifest.\nrule catalog_broadcast_transpose {\n    (attr_b: hlo.broadcast X) => (attr_p: hlo.transpose X)\n     where { attr_b.attrs.new_extents == [] }\n     derive { attr_p.attrs = { permutation: [sum([if attr_b.attrs.dimensions[j] == i then j else 0 for j in range(len(attr_b.attrs.dimensions))]) for i in range(len(attr_b.attrs.dimensions))] }; }\n}\n",
+      "inferred_source": "// Canonical axis-only evaluation task; no descriptor or non-axis inference.\nfrom \"dialects/hlo.tepl\" import HLO as hlo;\n\n// Catalog: broadcast-transpose\n// Scope: Arbitrary tensor shapes under the catalog arithmetic/applicability assumptions.\n// Source arithmetic/applicability conditions are recorded in the manifest.\nrule catalog_broadcast_transpose {\n    (attr_b: hlo.broadcast X) => ( hlo.transpose X)\n     where { attr_b.attrs.new_extents == [] }\n     \n\n}\n",
+      "explicit_sha256": "a23615a7d4748dec308f7bb442408d0c522404ae87c374cb28309f7c6cca76ee",
+      "inferred_sha256": "82b72c1dceff05654c375bd7789f7c53f816a3248924ec6d28bf697ee65787f8",
+      "explicit_parts": {
+        "management": 5,
+        "matching": 8,
+        "construction": 8,
+        "legality": 11,
+        "attributes": 62
+      },
+      "inferred_parts": {
+        "management": 5,
+        "matching": 8,
+        "construction": 6,
+        "legality": 11
+      },
+      "historical_explicit_accepted": false,
+      "historical_compact_accepted": true,
+      "normalizations": []
+    },
+    {
+      "case": "catalog_broadcast_transpose_broadcast",
+      "explicit_source": "from \"dialects/hlo.tepl\" import HLO as hlo;\n\n// Catalog: broadcast-transpose-broadcast\n// Scope: General insertion-only broadcast/permutation equation; source sorted-map/layout policy remains in the catalog.\n// Source arithmetic/applicability conditions are recorded in the manifest.\nrule catalog_broadcast_transpose_broadcast {\n    X: [Dims...]\n     (attr_p: hlo.transpose (attr_b: hlo.broadcast X)) => (attr_out: hlo.broadcast X)\n     derive {\n      let inv = [sum([if attr_p.attrs.permutation[j] == i then j else 0 for j in range(len(attr_p.attrs.permutation))]) for i in range(len(attr_p.attrs.permutation))];\n      let d = gather(inv,attr_b.attrs.dimensions);\n      let oldnew = exclude(range(len(attr_p.attrs.permutation)),attr_b.attrs.dimensions);\n      let newpos = exclude(range(len(attr_p.attrs.permutation)),d);\n      let oldshape = [if contains(attr_b.attrs.dimensions,i) then sum([if attr_b.attrs.dimensions[j]==i then Dims[j] else 0 for j in range(len(Dims))]) else attr_b.attrs.new_extents[sum([if k<i then 1 else 0 for k in oldnew])] for i in range(len(attr_p.attrs.permutation))];\n      attr_out.attrs = { dimensions: d, new_extents: gather(gather(oldshape,attr_p.attrs.permutation),newpos) };\n     }\n}\n",
+      "inferred_source": "// Canonical axis-only evaluation task; no descriptor or non-axis inference.\nfrom \"dialects/hlo.tepl\" import HLO as hlo;\n\n// Catalog: broadcast-transpose-broadcast\n// Scope: General insertion-only broadcast/permutation equation; source sorted-map/layout policy remains in the catalog.\n// Source arithmetic/applicability conditions are recorded in the manifest.\nrule catalog_broadcast_transpose_broadcast {\n    X: [Dims...]\n     (attr_p: hlo.transpose (attr_b: hlo.broadcast X)) => (attr_out: hlo.broadcast X)\n     \nderive {\n let inv = [sum([if attr_p.attrs.permutation[j] == i then j else 0 for j in range(len(attr_p.attrs.permutation))]) for i in range(len(attr_p.attrs.permutation))];\n let d = gather(inv,attr_b.attrs.dimensions);\n let oldnew = exclude(range(len(attr_p.attrs.permutation)),attr_b.attrs.dimensions);\n let newpos = exclude(range(len(attr_p.attrs.permutation)),d);\n let oldshape = [if contains(attr_b.attrs.dimensions,i) then sum([if attr_b.attrs.dimensions[j]==i then Dims[j] else 0 for j in range(len(Dims))]) else attr_b.attrs.new_extents[sum([if k<i then 1 else 0 for k in oldnew])] for i in range(len(attr_p.attrs.permutation))];\n attr_out.attrs = {new_extents: gather(gather(oldshape,attr_p.attrs.permutation),newpos)};\n}\n}\n",
+      "explicit_sha256": "4d87969e5c4027d0d281db99ddb0e95685e5479116fd3ea84f62ad593ff8b4f2",
+      "inferred_sha256": "5ab819dc52d76494cb6705f35768b9095718918889f273ac18f7c8d3d258ba5d",
+      "explicit_parts": {
+        "management": 5,
+        "legality": 6,
+        "matching": 15,
+        "construction": 8,
+        "attributes": 233
+      },
+      "inferred_parts": {
+        "management": 5,
+        "legality": 6,
+        "matching": 15,
+        "construction": 8,
+        "attributes": 229
+      },
+      "historical_explicit_accepted": false,
+      "historical_compact_accepted": false,
+      "normalizations": []
+    },
+    {
+      "case": "catalog_dot_move_broadcast",
+      "explicit_source": "from \"dialects/hlo.tepl\" import HLO as hlo;\n\n// Catalog: dot-move-broadcast\n// Scope: One broadcast-created contraction axis; replacement dot is an outer product.\n// Source arithmetic/applicability conditions are recorded in the manifest.\nrule catalog_dot_move_broadcast {\n    X: [K] Y: [J,N]\n     (attr_d: hlo.dot (attr_b: hlo.broadcast X) Y) => (attr_out: hlo.dot X (attr_sum: hlo.reduce_sum Y))\n     where { attr_b.attrs.dimensions==[0] && attr_b.attrs.new_extents==[J] && attr_d.attrs.lhs_batching_dimensions==[] && attr_d.attrs.rhs_batching_dimensions==[] && attr_d.attrs.lhs_contracting_dimensions==[1] && attr_d.attrs.rhs_contracting_dimensions==[0] }\n     derive { attr_sum.attrs={dimensions:[0]}; attr_out.attrs={lhs_batching_dimensions:[],rhs_batching_dimensions:[],lhs_contracting_dimensions:[],rhs_contracting_dimensions:[]}; }\n}\n",
+      "inferred_source": "// Canonical axis-only evaluation task; no descriptor or non-axis inference.\nfrom \"dialects/hlo.tepl\" import HLO as hlo;\n\n// Catalog: dot-move-broadcast\n// Scope: One broadcast-created contraction axis; replacement dot is an outer product.\n// Source arithmetic/applicability conditions are recorded in the manifest.\nrule catalog_dot_move_broadcast {\n    X: [K] Y: [J,N]\n     (attr_d: hlo.dot (attr_b: hlo.broadcast X) Y) => ( hlo.dot X ( hlo.reduce_sum Y))\n     where { attr_b.attrs.dimensions==[0] && attr_b.attrs.new_extents==[J] && attr_d.attrs.lhs_batching_dimensions==[] && attr_d.attrs.rhs_batching_dimensions==[] && attr_d.attrs.lhs_contracting_dimensions==[1] && attr_d.attrs.rhs_contracting_dimensions==[0] }\n     \n\n}\n",
+      "explicit_sha256": "9c7aff5547ee31f80443a21dedad95cd653c984eca40e56ac450e6b618178c9a",
+      "inferred_sha256": "9dc0db1308c6e0c911c08f26482a359c993ab898438d109559c52a81408acaa5",
+      "explicit_parts": {
+        "management": 5,
+        "legality": 72,
+        "matching": 16,
+        "construction": 16,
+        "attributes": 41
+      },
+      "inferred_parts": {
+        "management": 5,
+        "legality": 72,
+        "matching": 16,
+        "construction": 12
+      },
+      "historical_explicit_accepted": true,
+      "historical_compact_accepted": true,
+      "normalizations": []
+    },
+    {
+      "case": "catalog_dot_reduce_output_free",
+      "explicit_source": "from \"dialects/hlo.tepl\" import HLO as hlo;\n\n// Catalog: dot-reduce-output-free\n// Scope: Reduce the left free axis of a rank-two dot; implicit sum initializer zero.\n// Source arithmetic/applicability conditions are recorded in the manifest.\nrule catalog_dot_reduce_output_free {\n    X: [M,K] Y: [K,N]\n     (attr_r: hlo.reduce_sum (attr_d: hlo.dot X Y)) => (attr_out: hlo.dot (hlo.reduce_sum[attr_r.attrs] X) Y)\n     where { attr_r.attrs.dimensions==[0] && attr_d.attrs.lhs_batching_dimensions==[] && attr_d.attrs.rhs_batching_dimensions==[] && attr_d.attrs.lhs_contracting_dimensions==[1] && attr_d.attrs.rhs_contracting_dimensions==[0] }\n     derive { attr_out.attrs={lhs_batching_dimensions:[],rhs_batching_dimensions:[],lhs_contracting_dimensions:[0],rhs_contracting_dimensions:[0]}; }\n}\n",
+      "inferred_source": "// Canonical axis-only evaluation task; no descriptor or non-axis inference.\nfrom \"dialects/hlo.tepl\" import HLO as hlo;\n\n// Catalog: dot-reduce-output-free\n// Scope: Reduce the left free axis of a rank-two dot; implicit sum initializer zero.\n// Source arithmetic/applicability conditions are recorded in the manifest.\nrule catalog_dot_reduce_output_free {\n    X: [M,K] Y: [K,N]\n     (attr_r: hlo.reduce_sum (attr_d: hlo.dot X Y)) => ( hlo.dot ( hlo.reduce_sum X) Y)\n     where { attr_r.attrs.dimensions==[0] && attr_d.attrs.lhs_batching_dimensions==[] && attr_d.attrs.rhs_batching_dimensions==[] && attr_d.attrs.lhs_contracting_dimensions==[1] && attr_d.attrs.rhs_contracting_dimensions==[0] }\n     \n\n}\n",
+      "explicit_sha256": "6ef13497509f466595daee12138a5d8b7130c02d07eea2908217c88d9bde90d5",
+      "inferred_sha256": "d47bdb81895db78e55c2c77c8a98680eaaa41c2c2c10ce87288609a557404db1",
+      "explicit_parts": {
+        "management": 5,
+        "legality": 64,
+        "matching": 16,
+        "construction": 14,
+        "attributes": 36
+      },
+      "inferred_parts": {
+        "management": 5,
+        "legality": 64,
+        "matching": 16,
+        "construction": 12
+      },
+      "historical_explicit_accepted": true,
+      "historical_compact_accepted": true,
+      "normalizations": []
+    },
+    {
+      "case": "catalog_dot_scalar_multipliers",
+      "explicit_source": "from \"dialects/hlo.tepl\" import HLO as hlo;\n\n// Catalog: dot-scalar-multipliers\n// Scope: Scalar factor pulled from a rank-two f32 dot; source constant/profitability screening is outside the algebraic identity.\n// Source arithmetic/applicability conditions are recorded in the manifest.\nrule catalog_dot_scalar_multipliers {\n    X: f32[M,K] Y: f32[K,N] Scale: f32[]\n     (attr_d: hlo.dot (hlo.multiply (attr_b: hlo.broadcast Scale) X) Y) => (hlo.multiply (attr_out: hlo.broadcast Scale) (hlo.dot[attr_d.attrs] X Y))\n     where { attr_b.attrs.dimensions==[] && attr_b.attrs.new_extents==[M,K] && attr_d.attrs.lhs_batching_dimensions==[] && attr_d.attrs.rhs_batching_dimensions==[] && attr_d.attrs.lhs_contracting_dimensions==[1] && attr_d.attrs.rhs_contracting_dimensions==[0] }\n     derive { attr_out.attrs={dimensions:[],new_extents:[M,N]}; }\n}\n",
+      "inferred_source": "// Canonical axis-only evaluation task; no descriptor or non-axis inference.\nfrom \"dialects/hlo.tepl\" import HLO as hlo;\n\n// Catalog: dot-scalar-multipliers\n// Scope: Scalar factor pulled from a rank-two f32 dot; source constant/profitability screening is outside the algebraic identity.\n// Source arithmetic/applicability conditions are recorded in the manifest.\nrule catalog_dot_scalar_multipliers {\n    X: f32[M,K] Y: f32[K,N] Scale: f32[]\n     (attr_d: hlo.dot (hlo.multiply (attr_b: hlo.broadcast Scale) X) Y) => (hlo.multiply (attr_out: hlo.broadcast Scale) ( hlo.dot X Y))\n     where { attr_b.attrs.dimensions==[] && attr_b.attrs.new_extents==[M,K] && attr_d.attrs.lhs_batching_dimensions==[] && attr_d.attrs.rhs_batching_dimensions==[] && attr_d.attrs.lhs_contracting_dimensions==[1] && attr_d.attrs.rhs_contracting_dimensions==[0] }\n     \nderive {\n attr_out.attrs = {new_extents: [M,N]};\n \n}\n}\n",
+      "explicit_sha256": "d3151678eea346a7e464a58c1ead949d170f26422d51e5409d87125e97906dd0",
+      "inferred_sha256": "10f0fb71f440520c1d53acacf29df3a4c90a1d9a14d762860c7543eb7433e245",
+      "explicit_parts": {
+        "management": 5,
+        "legality": 82,
+        "matching": 22,
+        "construction": 20,
+        "attributes": 27
+      },
+      "inferred_parts": {
+        "management": 5,
+        "legality": 82,
+        "matching": 22,
+        "construction": 20,
+        "attributes": 17
+      },
+      "historical_explicit_accepted": true,
+      "historical_compact_accepted": true,
+      "normalizations": []
+    },
+    {
+      "case": "catalog_dot_transpose_both_operands",
+      "explicit_source": "from \"dialects/hlo.tepl\" import HLO as hlo;\n\n// Catalog: dot-transpose-both-operands\n// Scope: Rank-two matrix transposes, no batches.\n// Source arithmetic/applicability conditions are recorded in the manifest.\nrule catalog_dot_transpose_both_operands {\n    X: [K,M] Y: [N,K]\n     (attr_d: hlo.dot (attr_p: hlo.transpose X) (attr_q: hlo.transpose Y)) => (hlo.transpose[attr_p.attrs] (hlo.dot[attr_d.attrs] Y X))\n     where { attr_p.attrs.permutation==[1,0] && attr_q.attrs.permutation==[1,0] && attr_d.attrs.lhs_batching_dimensions==[] && attr_d.attrs.rhs_batching_dimensions==[] && attr_d.attrs.lhs_contracting_dimensions==[1] && attr_d.attrs.rhs_contracting_dimensions==[0] }\n}\n",
+      "inferred_source": "// Canonical axis-only evaluation task; no descriptor or non-axis inference.\nfrom \"dialects/hlo.tepl\" import HLO as hlo;\n\n// Catalog: dot-transpose-both-operands\n// Scope: Rank-two matrix transposes, no batches.\n// Source arithmetic/applicability conditions are recorded in the manifest.\nrule catalog_dot_transpose_both_operands {\n    X: [K,M] Y: [N,K]\n     (attr_d: hlo.dot (attr_p: hlo.transpose X) (attr_q: hlo.transpose Y)) => ( hlo.transpose ( hlo.dot Y X))\n     where { attr_p.attrs.permutation==[1,0] && attr_q.attrs.permutation==[1,0] && attr_d.attrs.lhs_batching_dimensions==[] && attr_d.attrs.rhs_batching_dimensions==[] && attr_d.attrs.lhs_contracting_dimensions==[1] && attr_d.attrs.rhs_contracting_dimensions==[0] }\n\n}\n",
+      "explicit_sha256": "8a7f6a428e7dd25780aba5ebeae8b283f552441fef20135ce12aec7a2e285cae",
+      "inferred_sha256": "b3ca145badd86fa0e59318b2df80494e9199e3a57652dd9e132b6a135209374a",
+      "explicit_parts": {
+        "management": 5,
+        "legality": 78,
+        "matching": 23,
+        "construction": 12,
+        "attributes": 10
+      },
+      "inferred_parts": {
+        "management": 5,
+        "legality": 78,
+        "matching": 23,
+        "construction": 12
+      },
+      "historical_explicit_accepted": true,
+      "historical_compact_accepted": true,
+      "normalizations": []
+    },
+    {
+      "case": "catalog_indexing_reverse_inserted_unit_dims",
+      "explicit_source": "from \"dialects/hlo.tepl\" import HLO as hlo;\n\n// Catalog: indexing-reverse-inserted-unit-dims\n// Scope: Insert one leading unit axis into rank-one input.\n// Source arithmetic/applicability conditions are recorded in the manifest.\nrule catalog_indexing_reverse_inserted_unit_dims {\n    X: [N]\n     (attr_r: hlo.reverse (attr_shape: hlo.reshape X)) => (hlo.reshape[attr_shape.attrs] (attr_out: hlo.reverse X))\n     where { attr_shape.attrs.shape==[1,N] }\n     derive { attr_out.attrs={dimensions:[d-1 for d in exclude(attr_r.attrs.dimensions,[0])]}; }\n}\n",
+      "inferred_source": "// Canonical axis-only evaluation task; no descriptor or non-axis inference.\nfrom \"dialects/axis_views.tepl\" import AxisViews as axis_view;\nfrom \"dialects/hlo.tepl\" import HLO as hlo;\n\n// Catalog: indexing-reverse-inserted-unit-dims\n// Scope: Insert one leading unit axis into rank-one input.\n// Source arithmetic/applicability conditions are recorded in the manifest.\nrule catalog_indexing_reverse_inserted_unit_dims {\n    X: [N]\n     ( hlo.reverse (axis_eval_0: hlo.broadcast X)) => (axis_eval_1: hlo.broadcast ( hlo.reverse X))\n     where { [1,N]==[1,N]  && (axis_eval_0.attrs.dimensions == [1]) && (axis_eval_0.attrs.new_extents == [1])}\n     \nderive {\n \n axis_eval_1.attrs = {dimensions: [1], new_extents: [1]};\n}\n}\n",
+      "explicit_sha256": "2968de58136cb8896c3f7573825016547d93ee8de22f890d55477c3a85bea50c",
+      "inferred_sha256": "6469d0c0d9e412bbf856d0f916a4326f8d2ba3720ae21973a09a453b5a3b5d40",
+      "explicit_parts": {
+        "management": 5,
+        "legality": 19,
+        "matching": 15,
+        "construction": 13,
+        "attributes": 37
+      },
+      "inferred_parts": {
+        "management": 5,
+        "legality": 43,
+        "matching": 13,
+        "construction": 13,
+        "attributes": 21
+      },
+      "historical_explicit_accepted": false,
+      "historical_compact_accepted": true,
+      "normalizations": [
+        {
+          "kind": "unit_only_reshape",
+          "side": "lhs",
+          "node": "attr_shape",
+          "input_shape": [
+            "N"
+          ],
+          "target_shape": [
+            "1",
+            "N"
+          ],
+          "dropped_axes": [],
+          "inserted_axes": [
+            0
+          ]
+        },
+        {
+          "kind": "unit_only_reshape",
+          "side": "rhs",
+          "node": "",
+          "input_shape": [
+            "N"
+          ],
+          "target_shape": [
+            "1",
+            "N"
+          ],
+          "dropped_axes": [],
+          "inserted_axes": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "case": "catalog_reduction_broadcast_original_axes",
+      "explicit_source": "from \"dialects/hlo.tepl\" import HLO as hlo;\n\n// Catalog: reduction-broadcast-original-axes\n// Scope: Sum specialization; rank-one base and one broadcast-created axis.\n// Source arithmetic/applicability conditions are recorded in the manifest.\nrule catalog_reduction_broadcast_original_axes {\n    X: [N]\n     (attr_r: hlo.reduce_sum (attr_b: hlo.broadcast X)) => (attr_out: hlo.broadcast (hlo.reduce_sum[attr_r.attrs] X))\n     where { attr_b.attrs.dimensions==[0] && len(attr_b.attrs.new_extents)==1 && attr_r.attrs.dimensions==[0] }\n     derive { attr_out.attrs={dimensions:[],new_extents:attr_b.attrs.new_extents}; }\n}\n",
+      "inferred_source": "// Canonical axis-only evaluation task; no descriptor or non-axis inference.\nfrom \"dialects/hlo.tepl\" import HLO as hlo;\n\n// Catalog: reduction-broadcast-original-axes\n// Scope: Sum specialization; rank-one base and one broadcast-created axis.\n// Source arithmetic/applicability conditions are recorded in the manifest.\nrule catalog_reduction_broadcast_original_axes {\n    X: [N]\n     (attr_r: hlo.reduce_sum (attr_b: hlo.broadcast X)) => (attr_out: hlo.broadcast ( hlo.reduce_sum X))\n     where { attr_b.attrs.dimensions==[0] && len(attr_b.attrs.new_extents)==1 && attr_r.attrs.dimensions==[0] }\n     \nderive {\n \n attr_out.attrs = {new_extents: attr_b.attrs.new_extents};\n}\n}\n",
+      "explicit_sha256": "d278e7dd4c3fc7ea4988969a937079fd49b59aae446164cb5d00d689e7c3e0e8",
+      "inferred_sha256": "1636dde18f3f904db553736681554babdedd4e77be41cb637aa6977de94a0bdc",
+      "explicit_parts": {
+        "management": 5,
+        "legality": 38,
+        "matching": 15,
+        "construction": 13,
+        "attributes": 27
+      },
+      "inferred_parts": {
+        "management": 5,
+        "legality": 38,
+        "matching": 15,
+        "construction": 13,
+        "attributes": 17
+      },
+      "historical_explicit_accepted": true,
+      "historical_compact_accepted": true,
+      "normalizations": []
+    },
+    {
+      "case": "dot_associate",
+      "explicit_source": "from \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{add, mul, negate, subtract, zero_like, transpose, broadcast,\n        reduce_sum, reverse, slice, dot};\n\nrule dot_associate {\n    X: [M, K]\n    Y: [K, N]\n    Z: [N, P]\n    (attr_outer: dot (attr_inner: dot X Y) Z) => (dot[attr_inner.attrs] X (dot[attr_outer.attrs] Y Z))\n    where { attr_inner.attrs.lhs_batching_dimensions == []\n         && attr_inner.attrs.rhs_batching_dimensions == []\n         && attr_inner.attrs.lhs_contracting_dimensions == [1]\n         && attr_inner.attrs.rhs_contracting_dimensions == [0]\n         && attr_outer.attrs.lhs_batching_dimensions == []\n         && attr_outer.attrs.rhs_batching_dimensions == []\n         && attr_outer.attrs.lhs_contracting_dimensions == [1]\n         && attr_outer.attrs.rhs_contracting_dimensions == [0] }\n}\n",
+      "inferred_source": "// Canonical axis-only evaluation task; no descriptor or non-axis inference.\nfrom \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{add, mul, negate, subtract, zero_like, transpose, broadcast,\n        reduce_sum, reverse, slice, dot};\n\nrule dot_associate {\n    X: [M, K]\n    Y: [K, N]\n    Z: [N, P]\n    (attr_outer: dot (attr_inner: dot X Y) Z) => ( dot X ( dot Y Z))\n    where { attr_inner.attrs.lhs_batching_dimensions == []\n         && attr_inner.attrs.rhs_batching_dimensions == []\n         && attr_inner.attrs.lhs_contracting_dimensions == [1]\n         && attr_inner.attrs.rhs_contracting_dimensions == [0]\n         && attr_outer.attrs.lhs_batching_dimensions == []\n         && attr_outer.attrs.rhs_batching_dimensions == []\n         && attr_outer.attrs.lhs_contracting_dimensions == [1]\n         && attr_outer.attrs.rhs_contracting_dimensions == [0] }\n\n}\n",
+      "explicit_sha256": "853c4e1d69405bd2985c85686695c35551bbed0a53417588c1e707b248a54a2d",
+      "inferred_sha256": "b36b55638ebfe85e1b92eb760539a82e75d0b3dd7334f1b2c13d6d375f40bea6",
+      "explicit_parts": {
+        "management": 5,
+        "legality": 99,
+        "matching": 13,
+        "construction": 9,
+        "attributes": 10
+      },
+      "inferred_parts": {
+        "management": 5,
+        "legality": 99,
+        "matching": 13,
+        "construction": 9
+      },
+      "historical_explicit_accepted": true,
+      "historical_compact_accepted": true,
+      "normalizations": []
+    },
+    {
+      "case": "dot_move_reverse",
+      "explicit_source": "from \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{add, mul, negate, subtract, zero_like, transpose, broadcast,\n        reduce_sum, reverse, slice, dot};\n\nrule dot_move_reverse {\n    X: [K]\n    Y: [K]\n    (attr_d: dot (attr_r: reverse X) Y) => (dot[attr_d.attrs] X (reverse[attr_r.attrs] Y))\n    where { attr_r.attrs.dimensions == [0]\n         && attr_d.attrs.lhs_batching_dimensions == [] && attr_d.attrs.rhs_batching_dimensions == []\n         && attr_d.attrs.lhs_contracting_dimensions == [0]\n         && attr_d.attrs.rhs_contracting_dimensions == [0] }\n}\n",
+      "inferred_source": "// Canonical axis-only evaluation task; no descriptor or non-axis inference.\nfrom \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{add, mul, negate, subtract, zero_like, transpose, broadcast,\n        reduce_sum, reverse, slice, dot};\n\nrule dot_move_reverse {\n    X: [K]\n    Y: [K]\n    (attr_d: dot (attr_r: reverse X) Y) => ( dot X ( reverse Y))\n    where { attr_r.attrs.dimensions == [0]\n         && attr_d.attrs.lhs_batching_dimensions == [] && attr_d.attrs.rhs_batching_dimensions == []\n         && attr_d.attrs.lhs_contracting_dimensions == [0]\n         && attr_d.attrs.rhs_contracting_dimensions == [0] }\n\n}\n",
+      "explicit_sha256": "7f3fad77b00b71fe8a6eb9c49054df0d224cfa65189ca2937c5423890d2e1be0",
+      "inferred_sha256": "83fcb060b41496791b27a1cd3c52a80c84a5d7ea32b60db30b83962795b950c6",
+      "explicit_parts": {
+        "management": 5,
+        "legality": 60,
+        "matching": 12,
+        "construction": 8,
+        "attributes": 10
+      },
+      "inferred_parts": {
+        "management": 5,
+        "legality": 60,
+        "matching": 12,
+        "construction": 8
+      },
+      "historical_explicit_accepted": true,
+      "historical_compact_accepted": true,
+      "normalizations": []
+    },
+    {
+      "case": "dot_no_contraction",
+      "explicit_source": "from \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{dot, broadcast, mul};\n\nrule dot_no_contraction {\n    X: [M]\n    Y: [N]\n    (attr_d: dot X Y) => (mul (attr_left: broadcast X) (attr_right: broadcast Y))\n    where { attr_d.attrs.lhs_batching_dimensions == [] && attr_d.attrs.rhs_batching_dimensions == []\n         && attr_d.attrs.lhs_contracting_dimensions == []\n         && attr_d.attrs.rhs_contracting_dimensions == [] }\n    derive {\n        attr_left.attrs = { dimensions: [0], new_extents: [N] };\n        attr_right.attrs = { dimensions: [1], new_extents: [M] };\n    }\n}\n",
+      "inferred_source": "// Canonical axis-only evaluation task; no descriptor or non-axis inference.\nfrom \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{dot, broadcast, mul};\n\nrule dot_no_contraction {\n    X: [M]\n    Y: [N]\n    (attr_d: dot X Y) => (mul (attr_left: broadcast X) (attr_right: broadcast Y))\n    where { attr_d.attrs.lhs_batching_dimensions == [] && attr_d.attrs.rhs_batching_dimensions == []\n         && attr_d.attrs.lhs_contracting_dimensions == []\n         && attr_d.attrs.rhs_contracting_dimensions == [] }\n    \nderive {\n attr_left.attrs = {new_extents: [N]};\n attr_right.attrs = {new_extents: [M]};\n}\n}\n",
+      "explicit_sha256": "7beba6edbde2afd362ebf6234537d4a65525449a5f8b1c24dd5d9c76fed0570b",
+      "inferred_sha256": "8411db2e60d0aaf871ed6ec80ed4c871444df0d9d52633d22719fde437cc25c8",
+      "explicit_parts": {
+        "management": 5,
+        "legality": 48,
+        "matching": 7,
+        "construction": 15,
+        "attributes": 39
+      },
+      "inferred_parts": {
+        "management": 5,
+        "legality": 48,
+        "matching": 7,
+        "construction": 15,
+        "attributes": 27
+      },
+      "historical_explicit_accepted": true,
+      "historical_compact_accepted": true,
+      "normalizations": []
+    },
+    {
+      "case": "dot_reduce_batch",
+      "explicit_source": "from \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{dot, reduce_sum};\n\nrule dot_reduce_batch {\n    X: [K]\n    Y: [K]\n    (attr_r: reduce_sum (attr_d: dot X Y)) => (attr_out: dot X Y)\n    where { attr_d.attrs.lhs_batching_dimensions == [0] && attr_d.attrs.rhs_batching_dimensions == [0]\n         && attr_d.attrs.lhs_contracting_dimensions == []\n         && attr_d.attrs.rhs_contracting_dimensions == [] && attr_r.attrs.dimensions == [0] }\n    derive { attr_out.attrs = { lhs_batching_dimensions: [], rhs_batching_dimensions: [],\n        lhs_contracting_dimensions: [0], rhs_contracting_dimensions: [0] }; }\n}\n",
+      "inferred_source": "// Canonical axis-only evaluation task; no descriptor or non-axis inference.\nfrom \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{dot, reduce_sum};\n\nrule dot_reduce_batch {\n    X: [K]\n    Y: [K]\n    (attr_r: reduce_sum (attr_d: dot X Y)) => ( dot X Y)\n    where { attr_d.attrs.lhs_batching_dimensions == [0] && attr_d.attrs.rhs_batching_dimensions == [0]\n         && attr_d.attrs.lhs_contracting_dimensions == []\n         && attr_d.attrs.rhs_contracting_dimensions == [] && attr_r.attrs.dimensions == [0] }\n    \n\n}\n",
+      "explicit_sha256": "3a2c2bf3296bf0de54886fedea00533eca22c9ade72a23b995d88e2ee321f00b",
+      "inferred_sha256": "02ea32549ce9879cd2baaac6f70efef84a6a335783ae4b8047224f108d25bc37",
+      "explicit_parts": {
+        "management": 5,
+        "legality": 60,
+        "matching": 12,
+        "construction": 7,
+        "attributes": 31
+      },
+      "inferred_parts": {
+        "management": 5,
+        "legality": 60,
+        "matching": 12,
+        "construction": 5
+      },
+      "historical_explicit_accepted": true,
+      "historical_compact_accepted": true,
+      "normalizations": []
+    },
+    {
+      "case": "dot_reduce_product",
+      "explicit_source": "from \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{dot, mul, reduce_sum};\n\nrule dot_reduce_product {\n    X: [K]\n    Y: [K]\n    (attr_d: dot X Y) => (attr_r: reduce_sum (mul X Y))\n    where { attr_d.attrs.lhs_batching_dimensions == [] && attr_d.attrs.rhs_batching_dimensions == []\n         && attr_d.attrs.lhs_contracting_dimensions == [0]\n         && attr_d.attrs.rhs_contracting_dimensions == [0] }\n    derive { attr_r.attrs = { dimensions: [0] }; }\n}\n",
+      "inferred_source": "// Canonical axis-only evaluation task; no descriptor or non-axis inference.\nfrom \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{dot, mul, reduce_sum};\n\nrule dot_reduce_product {\n    X: [K]\n    Y: [K]\n    (attr_d: dot X Y) => ( reduce_sum (mul X Y))\n    where { attr_d.attrs.lhs_batching_dimensions == [] && attr_d.attrs.rhs_batching_dimensions == []\n         && attr_d.attrs.lhs_contracting_dimensions == [0]\n         && attr_d.attrs.rhs_contracting_dimensions == [0] }\n    \n\n}\n",
+      "explicit_sha256": "51b08f6b1b8beeea0b7e27086e8b461890db060d0e05da55d75f77a01ed59a42",
+      "inferred_sha256": "a3ccd47d0e914a816843b054962156add3900c32c90d3790471d0d0005e2b93d",
+      "explicit_parts": {
+        "management": 5,
+        "legality": 50,
+        "matching": 7,
+        "construction": 10,
+        "attributes": 15
+      },
+      "inferred_parts": {
+        "management": 5,
+        "legality": 50,
+        "matching": 7,
+        "construction": 8
+      },
+      "historical_explicit_accepted": true,
+      "historical_compact_accepted": true,
+      "normalizations": []
+    },
+    {
+      "case": "dot_swap_operands",
+      "explicit_source": "from \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{dot, transpose};\n\nrule dot_swap_operands {\n    X: [M, K]\n    Y: [K, N]\n    (attr_d: dot X Y) => (attr_p: transpose (attr_out: dot Y X))\n    where { attr_d.attrs.lhs_batching_dimensions == [] && attr_d.attrs.rhs_batching_dimensions == []\n         && attr_d.attrs.lhs_contracting_dimensions == [1]\n         && attr_d.attrs.rhs_contracting_dimensions == [0] }\n    derive {\n        attr_out.attrs = { lhs_batching_dimensions: [], rhs_batching_dimensions: [],\n            lhs_contracting_dimensions: [0], rhs_contracting_dimensions: [1] };\n        attr_p.attrs = { permutation: [1, 0] };\n    }\n}\n",
+      "inferred_source": "// Canonical axis-only evaluation task; no descriptor or non-axis inference.\nfrom \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{dot, transpose};\n\nrule dot_swap_operands {\n    X: [M, K]\n    Y: [K, N]\n    (attr_d: dot X Y) => ( transpose ( dot Y X))\n    where { attr_d.attrs.lhs_batching_dimensions == [] && attr_d.attrs.rhs_batching_dimensions == []\n         && attr_d.attrs.lhs_contracting_dimensions == [1]\n         && attr_d.attrs.rhs_contracting_dimensions == [0] }\n    \n\n}\n",
+      "explicit_sha256": "8719f49b6a3a89a0ec4a569541beaf7937df54227346ac1e6da8fd981d1fb0d4",
+      "inferred_sha256": "e42d785554ab4d292de15f1bdce2beb2f12036b9c6ece93c591f103993fda166",
+      "explicit_parts": {
+        "management": 5,
+        "legality": 54,
+        "matching": 7,
+        "construction": 12,
+        "attributes": 45
+      },
+      "inferred_parts": {
+        "management": 5,
+        "legality": 54,
+        "matching": 7,
+        "construction": 8
+      },
+      "historical_explicit_accepted": true,
+      "historical_compact_accepted": true,
+      "normalizations": []
+    },
+    {
+      "case": "dot_transpose_output",
+      "explicit_source": "from \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{add, mul, negate, subtract, zero_like, transpose, broadcast,\n        reduce_sum, reverse, slice, dot};\n\nrule dot_transpose_output {\n    X: [M, K]\n    Y: [K, N]\n    (attr_p: transpose (attr_d: dot X Y)) => (attr_out: dot Y X)\n    where { attr_p.attrs.permutation == [1, 0]\n         && attr_d.attrs.lhs_batching_dimensions == [] && attr_d.attrs.rhs_batching_dimensions == []\n         && attr_d.attrs.lhs_contracting_dimensions == [1]\n         && attr_d.attrs.rhs_contracting_dimensions == [0] }\n    derive { attr_out.attrs = { lhs_batching_dimensions: [], rhs_batching_dimensions: [],\n        lhs_contracting_dimensions: [0], rhs_contracting_dimensions: [1] }; }\n}\n",
+      "inferred_source": "// Canonical axis-only evaluation task; no descriptor or non-axis inference.\nfrom \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{add, mul, negate, subtract, zero_like, transpose, broadcast,\n        reduce_sum, reverse, slice, dot};\n\nrule dot_transpose_output {\n    X: [M, K]\n    Y: [K, N]\n    (attr_p: transpose (attr_d: dot X Y)) => ( dot Y X)\n    where { attr_p.attrs.permutation == [1, 0]\n         && attr_d.attrs.lhs_batching_dimensions == [] && attr_d.attrs.rhs_batching_dimensions == []\n         && attr_d.attrs.lhs_contracting_dimensions == [1]\n         && attr_d.attrs.rhs_contracting_dimensions == [0] }\n    \n\n}\n",
+      "explicit_sha256": "f06ac980577dc734b1353e9e2b4f9ceb62b82804c7ad804762fe928166ed55a7",
+      "inferred_sha256": "c55b87db3d9c11ab3b1436477aabc0c1651aa454d277437e56566060df4e0c6a",
+      "explicit_parts": {
+        "management": 5,
+        "legality": 66,
+        "matching": 12,
+        "construction": 7,
+        "attributes": 31
+      },
+      "inferred_parts": {
+        "management": 5,
+        "legality": 66,
+        "matching": 12,
+        "construction": 5
+      },
+      "historical_explicit_accepted": true,
+      "historical_compact_accepted": true,
+      "normalizations": []
+    },
+    {
+      "case": "expr_reverse_compose_general",
+      "explicit_source": "from \"dialects/hlo.tepl\" import HLO as hlo;\n\n// Expression check under the source conditions recorded in the catalog.\nrule expr_reverse_compose_general {\n    (attr_outer: hlo.reverse (attr_inner: hlo.reverse X)) => (attr_out: hlo.reverse X) derive { attr_out.attrs = { dimensions: concat(exclude(attr_inner.attrs.dimensions, attr_outer.attrs.dimensions), exclude(attr_outer.attrs.dimensions, attr_inner.attrs.dimensions)) }; }\n}\n",
+      "inferred_source": "// Canonical axis-only evaluation task; no descriptor or non-axis inference.\nfrom \"dialects/hlo.tepl\" import HLO as hlo;\n\n// Expression check under the source conditions recorded in the catalog.\nrule expr_reverse_compose_general {\n    ( hlo.reverse ( hlo.reverse X)) => ( hlo.reverse X) \n\n}\n",
+      "explicit_sha256": "3d971904f70680ecef41f27eec5a40f87c039d87a2d991e7db847cd8af3f5014",
+      "inferred_sha256": "63b138c0b8a751b42d0fed062bbae8b5356703af64c339cbc6dfb4c8233f040e",
+      "explicit_parts": {
+        "management": 5,
+        "matching": 15,
+        "construction": 8,
+        "attributes": 44
+      },
+      "inferred_parts": {
+        "management": 5,
+        "matching": 11,
+        "construction": 6
+      },
+      "historical_explicit_accepted": true,
+      "historical_compact_accepted": true,
+      "normalizations": []
+    },
+    {
+      "case": "reduce_compose",
+      "explicit_source": "from \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{add, mul, negate, subtract, zero_like, transpose, broadcast,\n        reduce_sum, reverse, slice, dot};\n\nrule reduce_compose {\n    X: [I, J, K]\n    (attr_outer: reduce_sum (attr_inner: reduce_sum X)) => (attr_out: reduce_sum X)\n    where { attr_inner.attrs.dimensions == [1] && attr_outer.attrs.dimensions == [1] }\n    derive { attr_out.attrs = { dimensions: [1, 2] }; }\n}\n",
+      "inferred_source": "// Canonical axis-only evaluation task; no descriptor or non-axis inference.\nfrom \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{add, mul, negate, subtract, zero_like, transpose, broadcast,\n        reduce_sum, reverse, slice, dot};\n\nrule reduce_compose {\n    X: [I, J, K]\n    (attr_outer: reduce_sum (attr_inner: reduce_sum X)) => ( reduce_sum X)\n    where { attr_inner.attrs.dimensions == [1] && attr_outer.attrs.dimensions == [1] }\n    \n\n}\n",
+      "explicit_sha256": "f2ecac700c11aab94eac36514bb0cd3357ac92539886bac3e6001238d3641add",
+      "inferred_sha256": "8282eeafb49ab7e76ce3ddef9291bd54a8648e184a9556941b56a54b01b2e106",
+      "explicit_parts": {
+        "management": 5,
+        "legality": 31,
+        "matching": 11,
+        "construction": 6,
+        "attributes": 17
+      },
+      "inferred_parts": {
+        "management": 5,
+        "legality": 31,
+        "matching": 11,
+        "construction": 4
+      },
+      "historical_explicit_accepted": true,
+      "historical_compact_accepted": true,
+      "normalizations": []
+    },
+    {
+      "case": "reduce_compose_leading",
+      "explicit_source": "from \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{reduce_sum};\n\nrule reduce_compose_leading {\n    X: [I, J, K]\n    (attr_outer: reduce_sum (attr_inner: reduce_sum X)) => (attr_out: reduce_sum X)\n    where { attr_inner.attrs.dimensions == [0] && attr_outer.attrs.dimensions == [0] }\n    derive { attr_out.attrs = { dimensions: [0, 1] }; }\n}\n",
+      "inferred_source": "// Canonical axis-only evaluation task; no descriptor or non-axis inference.\nfrom \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{reduce_sum};\n\nrule reduce_compose_leading {\n    X: [I, J, K]\n    (attr_outer: reduce_sum (attr_inner: reduce_sum X)) => ( reduce_sum X)\n    where { attr_inner.attrs.dimensions == [0] && attr_outer.attrs.dimensions == [0] }\n    \n\n}\n",
+      "explicit_sha256": "9ba866415c0e7424a4580b52038f74cb68ead2a62484927efa5ef553fae8e46c",
+      "inferred_sha256": "31e554769e39ef82f50a61c1cd3be9adba129b08c6e461f754f28ba74c9d1166",
+      "explicit_parts": {
+        "management": 5,
+        "legality": 31,
+        "matching": 11,
+        "construction": 6,
+        "attributes": 17
+      },
+      "inferred_parts": {
+        "management": 5,
+        "legality": 31,
+        "matching": 11,
+        "construction": 4
+      },
+      "historical_explicit_accepted": true,
+      "historical_compact_accepted": true,
+      "normalizations": []
+    },
+    {
+      "case": "reduce_negate",
+      "explicit_source": "from \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{add, mul, negate, subtract, zero_like, transpose, broadcast,\n        reduce_sum, reverse, slice, dot};\n\nrule reduce_negate {\n    (attr_r: reduce_sum (negate X)) => (negate (reduce_sum[attr_r.attrs] X))\n}\n",
+      "inferred_source": "// Canonical axis-only evaluation task; no descriptor or non-axis inference.\nfrom \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{add, mul, negate, subtract, zero_like, transpose, broadcast,\n        reduce_sum, reverse, slice, dot};\n\nrule reduce_negate {\n    ( reduce_sum (negate X)) => (negate ( reduce_sum X))\n\n}\n",
+      "explicit_sha256": "03253e862ab0a4a200e8edf03b9028f2de3afbeb9654b05343fe54c63400804d",
+      "inferred_sha256": "29b28e034f53e62dc7a529521365b5543e1d28f02957ab88c6a5a286a7af7c3f",
+      "explicit_parts": {
+        "management": 5,
+        "matching": 9,
+        "construction": 7,
+        "attributes": 5
+      },
+      "inferred_parts": {
+        "management": 5,
+        "matching": 7,
+        "construction": 7
+      },
+      "historical_explicit_accepted": true,
+      "historical_compact_accepted": true,
+      "normalizations": []
+    },
+    {
+      "case": "reduce_transpose",
+      "explicit_source": "from \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{add, mul, negate, subtract, zero_like, transpose, broadcast,\n        reduce_sum, reverse, slice, dot};\n\nrule reduce_transpose {\n    X: [I, J]\n    (attr_r: reduce_sum (attr_p: transpose X)) => (attr_out: reduce_sum X)\n    where { attr_p.attrs.permutation == [1, 0] && attr_r.attrs.dimensions == [0] }\n    derive { attr_out.attrs = { dimensions: [1] }; }\n}\n",
+      "inferred_source": "// Canonical axis-only evaluation task; no descriptor or non-axis inference.\nfrom \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{add, mul, negate, subtract, zero_like, transpose, broadcast,\n        reduce_sum, reverse, slice, dot};\n\nrule reduce_transpose {\n    X: [I, J]\n    (attr_r: reduce_sum (attr_p: transpose X)) => ( reduce_sum X)\n    where { attr_p.attrs.permutation == [1, 0] && attr_r.attrs.dimensions == [0] }\n    \n\n}\n",
+      "explicit_sha256": "0595fc2091d697876b15400eba2b0afe4876a736e2ee76a8444c6f5f71133416",
+      "inferred_sha256": "dbb9761fcc9f30dc037cdbb02ed96d3b6d06bb86fd1f1e262130153d8b47fcbc",
+      "explicit_parts": {
+        "management": 5,
+        "legality": 31,
+        "matching": 11,
+        "construction": 6,
+        "attributes": 15
+      },
+      "inferred_parts": {
+        "management": 5,
+        "legality": 31,
+        "matching": 11,
+        "construction": 4
+      },
+      "historical_explicit_accepted": true,
+      "historical_compact_accepted": true,
+      "normalizations": []
+    },
+    {
+      "case": "reverse_add_scalar",
+      "explicit_source": "from \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{add, mul, negate, subtract, zero_like, transpose, broadcast,\n        reduce_sum, reverse, slice, dot};\n\nrule reverse_add_scalar {\n    (attr_r: reverse (add X (attr_b: broadcast C)))\n    => (add (reverse[attr_r.attrs] X) (broadcast[attr_b.attrs] C))\n    where { attr_b.attrs.dimensions == [] }\n}\n",
+      "inferred_source": "// Canonical axis-only evaluation task; no descriptor or non-axis inference.\nfrom \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{add, mul, negate, subtract, zero_like, transpose, broadcast,\n        reduce_sum, reverse, slice, dot};\n\nrule reverse_add_scalar {\n    ( reverse (add X (attr_b: broadcast C))) => (add ( reverse X) (axis_eval_1: broadcast C))\n    where { attr_b.attrs.dimensions == [] }\nderive {\n \n axis_eval_1.attrs = {new_extents: attr_b.attrs.new_extents};\n}\n}\n",
+      "explicit_sha256": "c2f620797b08a8abdd2ac1e9b66fcdbab2cfcf4506333ab409698d6b10213fc0",
+      "inferred_sha256": "4f8deafed442d5e09baf04e114450301fe7eaa488b2e3cf83621910f451edb59",
+      "explicit_parts": {
+        "management": 5,
+        "matching": 15,
+        "construction": 11,
+        "attributes": 10,
+        "legality": 11
+      },
+      "inferred_parts": {
+        "management": 5,
+        "matching": 13,
+        "construction": 13,
+        "legality": 11,
+        "attributes": 17
+      },
+      "historical_explicit_accepted": true,
+      "historical_compact_accepted": true,
+      "normalizations": []
+    },
+    {
+      "case": "reverse_compose_disjoint",
+      "explicit_source": "from \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{add, mul, negate, subtract, zero_like, transpose, broadcast,\n        reduce_sum, reverse, slice, dot};\n\nrule reverse_compose_disjoint {\n    X: [I, J]\n    (attr_outer: reverse (attr_inner: reverse X)) => (attr_out: reverse X)\n    where { attr_inner.attrs.dimensions == [0] && attr_outer.attrs.dimensions == [1] }\n    derive { attr_out.attrs = { dimensions: [0, 1] }; }\n}\n",
+      "inferred_source": "// Canonical axis-only evaluation task; no descriptor or non-axis inference.\nfrom \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{add, mul, negate, subtract, zero_like, transpose, broadcast,\n        reduce_sum, reverse, slice, dot};\n\nrule reverse_compose_disjoint {\n    X: [I, J]\n    (attr_outer: reverse (attr_inner: reverse X)) => ( reverse X)\n    where { attr_inner.attrs.dimensions == [0] && attr_outer.attrs.dimensions == [1] }\n    \n\n}\n",
+      "explicit_sha256": "dc5860223177950c6fe59ffaad6b6e7240c12f000bf3ff651737f049c9b6bc1a",
+      "inferred_sha256": "74d14d374c13d14fd32eb87b23742c55bbb12485c60792fbd58520da003d528e",
+      "explicit_parts": {
+        "management": 5,
+        "legality": 29,
+        "matching": 11,
+        "construction": 6,
+        "attributes": 17
+      },
+      "inferred_parts": {
+        "management": 5,
+        "legality": 29,
+        "matching": 11,
+        "construction": 4
+      },
+      "historical_explicit_accepted": true,
+      "historical_compact_accepted": true,
+      "normalizations": []
+    },
+    {
+      "case": "scalar_broadcast_reverse",
+      "explicit_source": "from \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{add, mul, negate, subtract, zero_like, transpose, broadcast,\n        reduce_sum, reverse, slice, dot};\n\nrule scalar_broadcast_reverse {\n    (attr_r: reverse (attr_b: broadcast C)) => (broadcast[attr_b.attrs] C)\n    where { attr_b.attrs.dimensions == [] }\n}\n",
+      "inferred_source": "// Canonical axis-only evaluation task; no descriptor or non-axis inference.\nfrom \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{add, mul, negate, subtract, zero_like, transpose, broadcast,\n        reduce_sum, reverse, slice, dot};\n\nrule scalar_broadcast_reverse {\n    ( reverse (attr_b: broadcast C)) => (axis_eval_0: broadcast C)\n    where { attr_b.attrs.dimensions == [] }\nderive {\n axis_eval_0.attrs = {new_extents: attr_b.attrs.new_extents};\n}\n}\n",
+      "explicit_sha256": "9dc905e3dc2f3677c0eeda933658006547c4009ddf747fc0775e45449683640c",
+      "inferred_sha256": "1947b0786714215bfb2ee76b2394f30022372d3e741abcf84b32aa17388c71a0",
+      "explicit_parts": {
+        "management": 5,
+        "matching": 11,
+        "construction": 4,
+        "attributes": 5,
+        "legality": 11
+      },
+      "inferred_parts": {
+        "management": 5,
+        "matching": 9,
+        "construction": 6,
+        "legality": 11,
+        "attributes": 17
+      },
+      "historical_explicit_accepted": true,
+      "historical_compact_accepted": true,
+      "normalizations": []
+    },
+    {
+      "case": "scalar_broadcast_transpose",
+      "explicit_source": "from \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{add, mul, negate, subtract, zero_like, transpose, broadcast,\n        reduce_sum, reverse, slice, dot};\n\nrule scalar_broadcast_transpose {\n    (attr_p: transpose (attr_b: broadcast C)) => (attr_out: broadcast C)\n    where { attr_b.attrs.dimensions == [] && len(attr_b.attrs.new_extents) == 2\n         && attr_p.attrs.permutation == [1, 0] }\n    derive { attr_out.attrs = { ..attr_b.attrs, new_extents: gather(attr_b.attrs.new_extents, [1, 0]) }; }\n}\n",
+      "inferred_source": "// Canonical axis-only evaluation task; no descriptor or non-axis inference.\nfrom \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{add, mul, negate, subtract, zero_like, transpose, broadcast,\n        reduce_sum, reverse, slice, dot};\n\nrule scalar_broadcast_transpose {\n    (attr_p: transpose (attr_b: broadcast C)) => (attr_out: broadcast C)\n    where { attr_b.attrs.dimensions == [] && len(attr_b.attrs.new_extents) == 2\n         && attr_p.attrs.permutation == [1, 0] }\n    \nderive {\n attr_out.attrs = {new_extents: gather(attr_b.attrs.new_extents, [1, 0])};\n}\n}\n",
+      "explicit_sha256": "c56c3b0fc434290162b4610b5f7fdd3ad0565c0cbef6aee424406e345b9c4b7a",
+      "inferred_sha256": "9fb803c638e36d0cf15f880cde0ffe411133d5d37fc9ff3c7c3dea99524281f8",
+      "explicit_parts": {
+        "management": 5,
+        "matching": 11,
+        "construction": 6,
+        "legality": 34,
+        "attributes": 31
+      },
+      "inferred_parts": {
+        "management": 5,
+        "matching": 11,
+        "construction": 6,
+        "legality": 34,
+        "attributes": 26
+      },
+      "historical_explicit_accepted": true,
+      "historical_compact_accepted": true,
+      "normalizations": []
+    },
+    {
+      "case": "transpose_compose",
+      "explicit_source": "from \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{add, mul, negate, subtract, zero_like, transpose, broadcast,\n        reduce_sum, reverse, slice, dot};\n\nrule transpose_compose {\n    (attr_outer: transpose (attr_inner: transpose X)) => (attr_combined: transpose X)\n    derive {\n        attr_combined.attrs = { ..attr_outer.attrs,\n            permutation: gather(attr_inner.attrs.permutation, attr_outer.attrs.permutation) };\n    }\n}\n",
+      "inferred_source": "// Canonical axis-only evaluation task; no descriptor or non-axis inference.\nfrom \"dialects/hlo.tepl\" import HLO as hlo;\nuse hlo::{add, mul, negate, subtract, zero_like, transpose, broadcast,\n        reduce_sum, reverse, slice, dot};\n\nrule transpose_compose {\n    ( transpose ( transpose X)) => ( transpose X)\n    \n\n}\n",
+      "explicit_sha256": "369e9afaa47599809cd7c31f13b8be1e39b91612faee38156bd173cde857bbe5",
+      "inferred_sha256": "5f9ebf916a2eb170e6dc3dd6c36d1a59db5d45a0963930b6ab369ae86e4c718c",
+      "explicit_parts": {
+        "management": 5,
+        "matching": 11,
+        "construction": 6,
+        "attributes": 31
+      },
+      "inferred_parts": {
+        "management": 5,
+        "matching": 7,
+        "construction": 4
+      },
+      "historical_explicit_accepted": true,
+      "historical_compact_accepted": true,
+      "normalizations": []
+    }
+  ]
+}

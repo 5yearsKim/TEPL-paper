@@ -38,15 +38,15 @@ TEPL pursues this goal by using operation semantics and symbolic axis mapping
 to infer RHS axis attributes under explicit conditions.
 Figure~\ref{fig:why-tepl} illustrates the idea with a dot reassociation example.
 TEPL lets users write rewrite rules in simple algebraic form and provides tools for
-explicitly deriving attribute transformations. For eligible axis fields,
-the compiler can infer these transformations automatically.
+explicitly deriving attribute transformations. For supported rewrite patterns,
+the compiler can infer RHS axis transformations automatically.
 
 \paperfigure{1}{figures/Why TEPL_ From Algebraic Rules to Practical Tensor Rewrites.pdf}{Four ways to express the same dot reassociation rewrite.
 (a) A concise algebraic pattern specifies the RHS graph but leaves its
 attributes unspecified. (b) A custom implementation computes these attributes
 but requires complex handwritten logic. (c) TEPL preserves readable algebraic
 rewrite rules and provides a \code{derive} section with tools for explicitly
-computing replacement attributes. (d) When eligible RHS axis fields are omitted,
+computing replacement attributes. (d) When RHS axis fields are omitted in supported patterns,
 TEPL infers their transformation logic from reusable
 operation semantics and match metadata.}{fig:why-tepl}{Four panels compare an algebraic pattern, custom implementation logic,
 explicit TEPL attribute expressions, and inferred TEPL axis attributes for the
@@ -60,7 +60,8 @@ rewrite rules concisely and intuitively.
 For supported rewrites, the compiler constructs reusable functions that
 compute missing RHS axis fields from match metadata while preserving
 supplied extent and coordinate attributes. Mixed explicit/inferred axis
-fields use validation or certified schemas, with no completeness guarantee.
+fields are validated rather than synthesized
+(Section~\ref{sec:scope-limitations}).
 \item \textbf{Symbolic axis mapping for composed operations.}
 We propose an algorithm that maps symbolic axis groups across composed
 operations using operation semantics, enabling attribute matching for
@@ -71,7 +72,7 @@ fields in read-once contraction, permutation, and unary summation, with a
 restricted additive extension, exact arithmetic, and input extents at least
 two. A shared symbolic metadata program realizes this constructor; a sufficient guard
 checker establishes the end-to-end acceptance guarantee in
-Theorem~\ref{thm:accepted-core}. Sound view/reindexing schemas add
+Section~\ref{sec:compilation-scope}. Sound view/reindexing schemas add
 broadcast and reverse; core validation also covers supplied fields.
 Table~\ref{tab:guarantee-map} collects the guarantees and their scope.
 These are paper proofs, not mechanized verification. We trust

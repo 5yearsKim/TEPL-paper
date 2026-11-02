@@ -15,12 +15,12 @@ requirements:
 - Use commas, plus signs, or line breaks as separators; do not use middle dots.
 - Use a matrix-dot example with rank-2 inputs and no batch axes; absorbing a transpose preserves the order of the
   single free axis from each operand.
-- 'm denotes all match metadata: shapes and captured attributes. The transpose permutation π and dot descriptor δ are parts of this metadata.'
+- 'm denotes all match metadata: shapes and captured attributes. The transpose permutation φ and dot descriptor δ are parts of this metadata.'
 - The function signature is explanatory notation, not a user-written derive clause or a complete function body.
 - Synthesis and verification happen inside the compiler; runtime applies the exported function.
 - Concrete numbers appear only at runtime; show only the changing left contraction axis, keeping the other dot fields
   implicit.
-- For the runtime instance use A of shape [a, k], B of shape [k, b], π = [1, 0], and δ with left and right contraction
+- For the runtime instance use A of shape [a, k], B of shape [k, b], φ = [1, 0], and δ with left and right contraction
   axes both 0.
 - The result has left contraction axis 1 and unchanged right contraction axis 0; both graphs produce shape [a, b].
 - Use a 342 px compile-time band, an 18 px phase divider, and a 258 px runtime band. Use 8 px gaps within the phase
@@ -175,7 +175,7 @@ children:
     - 0.473
     content: 'Captured attrs
 
-      π = [1, 0]
+      φ = [1, 0]
 
       δ: left axis = 0'
   - name: function_application

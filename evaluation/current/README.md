@@ -1,10 +1,18 @@
 # Specification-size evidence for the current paper
 
-`specification_size/results/` retains the complete measurement and responsibility
-records; `specification_size/reports/` contains the generated tables. These support
-Section 9.3, Table 6, Appendix C and Supplement S2: 32 attempted cases, 28 expanded
-explicit/automatic pairs and 25 audited common XLA/TEPL cases. The common cohort
-has 9,188 XLA tokens, 2,224 explicit TEPL tokens and 1,829 inferred TEPL tokens.
+`specification_size/results/all_31_source_footprint.json` and
+`specification_size/reports/all_31_source_footprint.md` contain the current
+31-rule static source comparison: 3,014 original explicit versus 2,559
+inferred tokens (15.1% fewer). This recount includes all inference-successful
+rule identities regardless of the historical explicit-baseline outcome.
+Normalization and compaction are included; it is not a new compiler run.
+Regenerate it with `python3 tools/summarize_all_31_source_footprint.py`.
+`specification_size/results/` retains the complete historical measurement and
+responsibility records used to recount the 31 source pairs. The earlier
+reports in `specification_size/reports/` preserve their original cohorts;
+the current paper uses `all_31_source_footprint` for the 31-rule comparison.
+Table 6 separately restores the historical audited 25-case XLA comparison
+from `responsibility.json`, including its original numbers and percentage colors.
 
 `provenance.json` and `implementation.patch` retain the original compiler identity
 and source changes. The specification-size compiler hash differs from the current

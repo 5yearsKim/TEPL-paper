@@ -1,9 +1,9 @@
 \subsection{Scope and Limitations}
 \label{sec:scope-limitations}
-Mixed explicit/inferred axis fields have no completeness guarantee;
-validation and the certified schemas provide soundness only within their
-stated domains. Extent and
-coordinate parameters remain supplied or defaulted. Slice, padding, reshape,
+Mixed explicit/inferred axis fields get soundness only, within the stated
+domains of validation and the sound schemas
+(Section~\ref{sec:formal-scope}).
+Extent and coordinate parameters remain supplied or defaulted. Slice, padding, reshape,
 and convolution are outside the direct synthesis and validation theorems;
 their implementation support is limited. Tensor-valued indexing and richer
 reshape, padding, and reduction semantics remain unsupported.

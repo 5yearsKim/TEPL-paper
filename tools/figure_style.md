@@ -55,9 +55,12 @@ Check the same group across chips, table labels, and inline expressions in neigh
 ## Formal-model notation
 
 Use `M_U` for mandatory axes and `I_T` for the symbolic ordered interface of
-tensor T (typeset as sans-serif I in the paper). Reserve P for input ports and
-P_v for canonical live sets. Use H for the example's final free-axis group,
+tensor T (typeset as sans-serif I in the paper). Use `\mathcal D` for input dimensions and
+`S_v` for canonical live sets. Use H for the example's final free-axis group,
 D for its outer contraction group, and F for the full target output order.
 Use `pos(I, G)` for ordered position lookup and `ι(G)` for `range(|G|)`.
 The constructor reads `m = (s, α)`; individual captured descriptors are parts
 of α. Language code still uses its actual builtins and `++` syntax.
+
+Use `p_G` for a logical-axis group's position list and `φ` for transpose
+permutations. Reserve `m` for match metadata.

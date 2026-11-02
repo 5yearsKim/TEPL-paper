@@ -11,28 +11,29 @@ Appendix~\ref{app:current-evaluation} records protocols and provenance.
 {XLA case coverage and attribute synthesis result. 31 out of 38 cases with RHS axis field are inferred}
 {fig:xla-rewrite-cases}
 {The inventory separates modeled and unmodeled cases and reports
-acceptance for axis-inference and verification-only tasks.}
+acceptance for axis-inference and verification-only cases.}
 
 \subsection{Inference Coverage}
 We evaluate attribute synthesis on 209 concrete rewrite cases representing
-199 XLA rewrite schemas~\cite{xla-evaluation-source}. Of these, 123 cases
-have the operation semantics required by the verifier; the remaining 86
-require semantics that are not currently supported. Among the modeled
-cases, 38 contain RHS axis attributes to synthesize. The other 85 require
+199 XLA rewrite schemas~\cite{xla-evaluation-source}. A case is
+\emph{modeled} when TEPL's verifier supports the operation semantics it
+requires. This covers 123 cases; the remaining 86 require unsupported
+semantics. Of the modeled cases, 38 request RHS axis attributes to
+synthesize; we call these \emph{axis-inference cases}. The other 85 require
 no axis inference: replacements use supplied attributes, attribute-free
 operations such as elementwise addition, or directly return a matched
 value, as in $\operatorname{add}(X,0)\to X$.
 Figure~\ref{fig:xla-rewrite-cases} summarizes the results.
 
 
-With original guards and non-axis fields unchanged, acceptance requires
-semantic proof, compilation, and validation. TEPL accepts 98 of 123
-modeled cases (79.7\%), including 67 of 85 verification-only tasks.
-Attribute synthesis succeeds on 31 of 38 eligible cases (81.6\%),
+A case is \emph{accepted} when semantic proof, compilation, and validation
+succeed with the original guards and non-axis fields unchanged.
+TEPL accepts 98 of 123
+modeled cases (79.7\%), including 67 of 85 verification-only cases.
+Attribute synthesis succeeds on 31 of 38 axis-inference cases (81.6\%),
 inferring all requested RHS axis attributes while preserving the written
-rewrite conditions. All 31 inference successes also pass certified
-compilation. These include ten cases handled by the complete constructor
-within its stated domain and 21 handled by sound extensions.
+rewrite conditions. These include ten cases handled by the complete constructor
+within its stated domain and 21 handled by sound schemas.
 
 \subsection{Integration into an Existing XLA Pass}
 \label{sec:evaluation-xla-integration}
@@ -43,27 +44,26 @@ This reuses TEPL's code-generation infrastructure while allowing
 fine-grained control over how the generated code is embedded in XLA.
 
 All rewrite rules in the integrated pass are expressed in TEPL, including
-rules outside its current semantic support. TEPL can express rules without
+unmodeled rules. TEPL can express rules without
 operation semantics, although semantic verification and attribute inference
 are unavailable for those rules. In this experiment, RHS attributes are
-inferred for semantically supported rules; attribute transformations for
-unsupported rules are written explicitly in TEPL.
+inferred for modeled rules; attribute transformations for
+unmodeled rules are written explicitly in TEPL.
 
 We evaluate four representative workloads. For each workload, we count
 the distinct XLA rewrite rules applied, their total firings, and how many
-of the applied rules are semantically supported by TEPL
+of the applied rules are modeled
 (Table~\ref{tab:algebraic-simplifier-workloads}). The integrated rewrite
 logic passes all 28 related XLA test cases. For all four workloads, the
 final compiled graphs have the same structure as those produced by the
 unmodified XLA pass, and the output values agree.
 
 \begin{table}[!htbp]
-\caption{Rewrite applications in four representative workloads.
-Semantic coverage counts applied rules with TEPL operation semantics.}
+\caption{Rewrite applications in four representative workloads.}
 \label{tab:algebraic-simplifier-workloads}
 \small
 \begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lrrrc@{}}\toprule
-Workload & Applied rules & Total firings & Semantic coverage & Final graph match\\\midrule
+Workload & Applied rules & Total firings & Modeled rules & Final graph match\\\midrule
 DLRM training & 32 & 201 & 20/32 & Yes\\
 GPT-2 Small & 14 & 1,693 & 6/14 & Yes\\
 ViT & 17 & 1,850 & 9/17 & Yes\\
@@ -73,13 +73,15 @@ ResNet-50 & 10 & 1,027 & 5/10 & Yes\\\bottomrule
 
 \subsection{Shorter Rewrite Rules}
 \label{sec:evaluation-size}
-We examine how attribute inference reduces the code needed to express
-the 31 successfully synthesized rewrite rules from Section~9.1.
-We compare explicit RHS metadata formulas with inferred axis attributes,
-preserving the rewrite equations and written conditions. Code size is
-measured in lexical tokens, excluding comments, whitespace, imports,
-and shared declarations. Table~\ref{tab:xla-specification-size} reports
-the available comparison for 25 audited cases with corresponding XLA code.
+We compare the source footprints of explicit and inferred forms for all
+31 successfully synthesized rewrite rules from Section~9.1. Code size is
+measured in lexical tokens, excluding comments, whitespace, imports, and
+shared declarations. The 31-rule comparison includes every inference-successful
+identity regardless of its historical explicit-baseline outcome.
+The inferred forms include normalization and cleanup of unused labels and
+empty blocks; this is a source-footprint comparison rather than a new
+compiler-validation experiment. Table~\ref{tab:xla-specification-size}
+separately reports the earlier comparison with XLA over 25 audited cases.
 
 \begin{table}[!htbp]
 \caption{Specification footprint over 25 common, audited cases.
@@ -107,48 +109,17 @@ Total & 9,188 & \explicitreduction{-75.8}\,2,224 & \inferredreduction{-17.8}\,1,
 \end{minipage}
 \end{table}
 
-Compared with explicit TEPL, inference and its permitted cleanup remove
-395 tokens (17.8\%) in this comparison. Attribute reasoning contributes
-the largest reduction: 363 tokens (65.5\%), while legality checks remain
-unchanged. The XLA implementation matches patterns, transforms attributes, and builds
-replacement graphs. TEPL expresses this work through declarative rules and
-attribute inference, reducing the code authors must write. Some XLA
-excerpts also cover extra cases and policies, which contribute to their
-larger size.
-
-\sidefigure[0.6]{figures/scalability.pdf}
-{Certified compilation scalability. (a) Compilation time per phase grows approximately linearly with dot-chain depth. (b) Compilation time remains stable across the tested tensor ranks.}
-{fig:scalability}
-{Two horizontally aligned panels show certified dot-chain compilation with stacked mean phase costs and overlaid median total latency, and transpose-rank compilation. Whiskers show minimum and maximum total latency. All fifteen automatic configurations succeed in every measured round.}
+Across these 31 rules, inferred specifications contain 455 fewer tokens
+(15.1\%) than the original explicit forms. Attribute reasoning accounts for
+467 fewer tokens, while normalization in two cases adds 48 legality tokens.
+The net source difference therefore includes both attribute inference and
+associated representation changes.
 
 \subsection{Compilation Scalability}
 \label{sec:evaluation-cost}
-
-We evaluate the scalability of the core algorithm as rewrite depth and
-tensor rank increase. Figure~\ref{fig:scalability} shows compilation time
-for dot-chain reassociation and transpose composition, including the
-dot-chain cost by compilation phase.
-
-The experiment uses 1--10 dots per side at input rank three with fixed
-source axis lists, and three source transposes composed into one replacement
-at ranks 2, 4, 8, 16, and 32 with symbolic permutations. All RHS axis fields
-are inferred. We run the optimized compiler with guard certification under
-algebraic semantics, using one warmup and ten measured rounds per
-configuration. Timing covers compilation through executable validation;
-parsing and import loading are excluded. Supplement~\cite{tepl-supplement},
-Section~S3, gives the complete protocol, phase boundaries, and timing table.
-
-All 15 configurations compile and validate in every measured round.
-Dot-chain compilation time increases approximately linearly with chain
-depth, from a median of 1.49 ms for one dot per side to 6.06 ms for ten
-(Figure~\ref{fig:scalability}(a)). Tensor rank has little effect on
-transpose compilation time over the tested range: medians remain between
-1.16 and 1.32 ms, with no systematic increase from rank 2 to rank 32
-(Figure~\ref{fig:scalability}(b)).
-
-
-
-These results indicate that the core algorithm scales well over the
-evaluated rewrite depths and tensor ranks, maintaining millisecond
-compilation costs as chain depth grows and little sensitivity to rank
-for transpose composition.
+Compilation takes milliseconds in the tested configurations, with median
+dot-chain latency growing approximately linearly from 1.49 to 6.06 ms
+for 1--10 dots per side.
+Transpose composition remains stable across ranks 2--32, with median
+latency of 1.16--1.32 ms; Appendix~\ref{app:current-evaluation} provides
+the figure, protocol, and detailed results.

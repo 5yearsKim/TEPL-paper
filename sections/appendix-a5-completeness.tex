@@ -46,7 +46,7 @@ Assume the checks pass. By structural induction on the RHS, we maintain:
 \begin{enumerate}
 \item The constructed attributes and intermediate operations are legal.
 \item The output axes are $S_v$ and satisfy $Req_v$.
-\item The input-port partition equals the LHS partition restricted to
+\item The partition of input dimensions equals the LHS partition restricted to
 the subtree's inputs, including classes removed from the output.
 \end{enumerate}
 The second invariant is Equation~\eqref{eq:order-invariant}.
@@ -63,9 +63,9 @@ the same LHS class. Batch and contraction sets are disjoint. Thus all
 constructed attributes are legal.
 By D4, the node assignments combine without conflicting choices.
 
-For the third invariant, consider the input ports from $U_v$.
+For the third invariant, consider the input dimensions from $U_v$.
 At an input, distinct axes belong to distinct classes. Permutation and
-unary summation do not merge ports. At a contraction, any LHS class with
+unary summation do not merge input dimensions. At a contraction, any LHS class with
 support in both child subtrees is mandatory in both children, so it appears
 in both live sets. The contraction connects these two occurrences and never
 connects distinct LHS classes. The combined partition is therefore exactly
@@ -73,7 +73,7 @@ the LHS partition restricted to the current subtree.
 
 A class is removed only when it is absent from the final output and all its
 support is already inside the subtree. The partition invariant ensures that
-its supporting ports have been connected, so no later connection is lost.
+its supporting input dimensions have been connected, so no later connection is lost.
 At the root, the full input partition consequently agrees with the LHS.
 
 Finally, $S_{\mathrm{root}}=\operatorname{set}(F)$ and
@@ -123,8 +123,7 @@ output shape. LHS expansion preserves shape, so all these shapes agree
 with the overall LHS, making the RHS additions legal.
 
 Each component has its own axis partition. Inputs may appear in several
-terms, but addition only aligns output coordinates; it does not merge input
-port classes across terms.
+terms, but addition only aligns output coordinates; it does not merge classes of input dimensions across terms.
 
 The restrictions are necessary for this argument. Terms with the same
 input set cannot be separated by the scaling variables. D4 ensures that

@@ -4,10 +4,10 @@
 Source legality makes $b_X,k_X,i_X$ a partition of the positions of $X$,
 and similarly for $Y$. The guard aligns the same ordered batch group $\vec B$
 in all three inputs. Since the outer contraction is disjoint from that
-batch prefix, every entry of $d_\ell$ lies in exactly one of $q_I,q_J$.
-Thus $u_I,u_J$ partition the slots of $d_\ell$. Selecting the same slots
-in its injective partner list $d_r$ gives disjoint $z_I,z_J$ covering
-$d_r$. Matching and gather composition establish the actual coordinate
+batch prefix, every entry of $c_L$ lies in exactly one of $p_I,p_J$.
+Thus $u_I,u_J$ partition the slots of $c_L$. Selecting the same slots
+in its injective partner list $c_R$ gives disjoint $z_I,z_J$ covering
+$c_R$. Matching and gather composition establish the actual coordinate
 pairings $\Isel,\Jsel$; equal extents alone are never used to identify axes.
 
 \emph{Prove definedness and legality.}

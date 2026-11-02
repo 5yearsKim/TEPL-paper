@@ -1,11 +1,11 @@
 title: XLA rewrite case results
-concept: A left-to-right tree partitions 209 XLA rewrite cases by semantic support, RHS axis fields, and evaluation
+concept: A left-to-right tree partitions 209 XLA rewrite cases by modeled operation semantics, RHS axis fields, and evaluation
   outcome.
 purpose: Show semantic coverage and distinguish successful structural theorem candidates from unresolved cases and
   verification-only results.
 requirements:
 - Match the current editable Figma frame at https://www.figma.com/design/YQJMjTL8UuRL05QHkQr1Ge/TEPL?node-id=150-2.
-  This storyboard corresponds to figures/XLA rewrite case results.pdf.
+  This storyboard corresponds to figures/XLA_rewritie_cases.pdf.
 - Use an exact 500 × 380 px white frame. The title is metadata only. Preserve all node labels and parenthesized
   percentages.
 - Arrange four columns from left to right. Connect root to supported and unsupported; supported to axis_fields and
@@ -82,8 +82,8 @@ children:
     - 0.3884
     - 0.7098
     content: |-
-      Semantically
-      supported
+      Modeled
+      cases
   - name: percentage
     type: text
     pos:
@@ -118,9 +118,8 @@ children:
     - 0.3827
     - 0.9337
     content: |-
-      Semantic
-      support not
-      yet available
+      Unmodeled
+      cases
 - name: axis_fields
   type: image
   pos:

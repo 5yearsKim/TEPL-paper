@@ -7,13 +7,13 @@ LATEX_FLAGS := -interaction=nonstopmode -halt-on-error -file-line-error
 
 all: $(PAPER).pdf supplement.pdf
 
-$(PAPER).pdf: $(PAPER).tex $(wildcard sections/*.tex) figures/*.pdf acmart.cls ACM-Reference-Format.bst references.bib
+$(PAPER).pdf: $(PAPER).tex paper-style.tex $(wildcard sections/*.tex) figures/*.pdf acmart.cls ACM-Reference-Format.bst references.bib
 	$(LATEX) $(LATEX_FLAGS) $(PAPER).tex
 	@if grep -q '\\citation{' $(PAPER).aux; then $(BIBTEX) $(PAPER); fi
 	$(LATEX) $(LATEX_FLAGS) $(PAPER).tex
 	$(LATEX) $(LATEX_FLAGS) $(PAPER).tex
 
-supplement.pdf: $(PAPER).pdf supplement.tex $(wildcard supplement/*.tex)
+supplement.pdf: $(PAPER).pdf supplement.tex paper-style.tex $(wildcard supplement/*.tex)
 	$(LATEX) $(LATEX_FLAGS) supplement.tex
 	$(LATEX) $(LATEX_FLAGS) supplement.tex
 

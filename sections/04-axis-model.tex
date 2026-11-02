@@ -11,19 +11,19 @@ class of input dimensions that use the same coordinate. For example, in
 \code{einsum('ik,kj->ij', A, B)}~\cite{numpy-einsum}, the dimensions marked
 \code{k} share a coordinate: the second dimension of $A$ and the first dimension of
 $B$. Since \code{k} is absent from the output \code{ij}, it is summed out.
-We record this relation using input \emph{ports}. Port $(X,d)$ is dimension
-$d$ of input $X$, with positions starting at zero. For a component with input
+We identify each input dimension by a pair $(X,d)$, where $d$ is its
+position in input tensor $X$, starting at zero. For a component with input
 set $\mathcal X$, let
 \begin{equation}
- P=\{(X,d)\mid X\in\mathcal X,\ 0\le d<\operatorname{rank}(X)\}.
+ \mathcal D=\{(X,d)\mid X\in\mathcal X,\ 0\le d<\operatorname{rank}(X)\}.
 \end{equation}
-We write $u\sim v$ when ports $u$ and $v$ use the same coordinate.
+We write $u\sim v$ when input dimensions $u$ and $v$ use the same coordinate.
 Each logical axis is one equivalence class. For the LHS expression $L$, the
 set of all logical axes is
 \begin{equation}
- \Axes(L)=P/{\sim}.
+ \Axes(L)=\mathcal D/{\sim}.
 \end{equation}
-Here $P/{\sim}$ groups connected ports into one class each, including
+Here $\mathcal D/{\sim}$ groups connected input dimensions into one class each, including
 classes removed by summation.
 Equal extents do not establish axis identity. We also retain the classes of
 axes removed by summation: they still record how input coordinates connect.
@@ -49,13 +49,13 @@ produces output order $\vec I\Vert\vec J$.
 \label{sec:axis-representation}
 For an expression $T$ with assigned attributes, define
 \begin{equation}
- N(T)=(P,\sim,F),
+ N(T)=(\mathcal D,\sim,F),
  \label{eq:axis-representation}
 \end{equation}
-where $P$ is the set of input ports, $\sim$ records their coordinate
+where $\mathcal D$ is the set of input dimensions, $\sim$ records their coordinate
 connections, and $F$ lists the output classes in dimension order. This representation
 specifies the value at each output coordinate: use the same index at
-connected input ports, multiply the selected input entries, and sum over
+connected input dimensions, multiply the selected input entries, and sum over
 all classes absent from $F$. Classes in $F$ remain as output coordinates.
 
 For matrix multiplication $T=AB$, contraction identifies
@@ -79,13 +79,8 @@ with every input dimension having extent at least two,
  \label{eq:axis-exactness}
 \end{equation}
 \end{lemma}
-That is, within the defined scope, two computations produce the same output
-shape and values for every input exactly when their input-dimension connections
-and output-axis order agree. The names assigned to logical axes do not matter.
-
-For TEPL, this gives attribute synthesis a concrete target: choose legal RHS
-axis fields that reproduce the LHS axis representation. The lemma establishes
-that matching this representation is both necessary and sufficient for
-equivalence, providing the basis for the synthesis algorithm in
-Section~\ref{sec:mathematical-synthesis}. Appendix~\ref{app:axis-exactness}
-gives the proof and a concrete example.
+Axis names do not matter: two computations agree on every input exactly when
+their input-dimension connections and output-axis order agree. Attribute
+synthesis therefore reduces to choosing legal RHS axis fields that reproduce
+the LHS representation (Section~\ref{sec:mathematical-synthesis}).
+Appendix~\ref{app:axis-exactness} gives the proof and a concrete example.
