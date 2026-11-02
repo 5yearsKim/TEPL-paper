@@ -1,7 +1,7 @@
 \subsection{Validation Contract and Scope}
 \label{sec:validation-boundary}
 The validator receives a rewrite $L\Rightarrow R$, its written guard
-$C$, and a completed attribute program $f$. The program reads source
+$C$, and a completed attribute program $f$. The program reads match
 metadata and supplies the RHS attributes. Supplied fields must be
 preserved, and no attribute holes may remain.
 
@@ -65,14 +65,14 @@ For the operations and metadata calculus of
 Section~\ref{sec:validation-boundary}, if
 $\operatorname{Validate}(L,R,C,f,\mathcal G)=\mathrm{Proved}$, then
 \begin{equation}
- \forall p.\quad \operatorname{Legal}_L(p)\land C(p)
- \Longrightarrow\exists\beta.\quad f\Downarrow_p\beta
- \land\operatorname{Valid}(p,\beta).
+ \forall m.\quad \operatorname{Legal}_L(m)\land C(m)
+ \Longrightarrow\exists\beta.\quad f\Downarrow_m\beta
+ \land\operatorname{Valid}(m,\beta).
  \label{eq:acceptance-soundness}
 \end{equation}
-Here $\mathcal G$ contains the candidate obligations, and $C(p)$
-means successful evaluation to true. The notation $f\Downarrow_p\beta$
-means that $f$ evaluates to attributes $\beta$ on metadata $p$.
+Here $\mathcal G$ contains the candidate obligations, and $C(m)$
+means successful evaluation to true. The notation $f\Downarrow_m\beta$
+means that $f$ evaluates to attributes $\beta$ on metadata $m$.
 Evaluation abstracts from resource exhaustion; it includes bounds,
 types, and integer representability.
 \end{theorem}

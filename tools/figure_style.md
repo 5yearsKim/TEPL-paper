@@ -59,5 +59,5 @@ tensor T (typeset as sans-serif I in the paper). Reserve P for input ports and
 P_v for canonical live sets. Use H for the example's final free-axis group,
 D for its outer contraction group, and F for the full target output order.
 Use `pos(I, G)` for ordered position lookup and `ι(G)` for `range(|G|)`.
-The constructor reads `p = (s, α)`; individual captured descriptors are parts
+The constructor reads `m = (s, α)`; individual captured descriptors are parts
 of α. Language code still uses its actual builtins and `++` syntax.

@@ -21,7 +21,7 @@ reduction coordinates.
 More explicitly, the typed core expression grammar is
 \begin{equation}
 \begin{aligned}
- e::={}&\operatorname{src}(k)\mid c\mid[e_1,\ldots,e_m]
+ e::={}&\operatorname{src}(k)\mid c\mid[e_1,\ldots,e_\ell]
        \mid e_1\Vert e_2\mid |e|\mid\operatorname{range}(e)\\
       &\mid\gath(e,e)\mid\ocomp(e,e)\mid\pos(e,e)
        \mid\operatorname{inverse}(e)\\
@@ -36,7 +36,7 @@ combinations are the $b$ expressions. Sequence member-set operations in
 the reasoning rules are ordered filter/union views, with the member-set
 interpretations below; they introduce no new axis identities.
 
-Write $e\Downarrow_p v$ for successful evaluation at valuation $p$.
+Write $e\Downarrow_m v$ for successful evaluation at valuation $m$.
 Literals and captures are defined; lists, concatenation, and length are strict.
 $\operatorname{range}(n)=[0,\ldots,n-1]$ requires $n\ge0$ and representable
 length. Complement and paired matching require finite, distinct arguments;
@@ -203,10 +203,10 @@ addition; a proved bound on the total therefore bounds each such offset.
 
 \begin{lemma}[Sound metadata derivations]
 \label{lem:metadata-soundness}
-For every valuation $p$ satisfying $\Gamma$, a derivation
-$\Gamma\vdash e\downarrow$ implies successful evaluation of $e$ at $p$.
+For every valuation $m$ satisfying $\Gamma$, a derivation
+$\Gamma\vdash e\downarrow$ implies successful evaluation of $e$ at $m$.
 A derivation $\Gamma\vdash\phi$ implies successful evaluation of $\phi$
-to true at $p$.
+to true at $m$.
 \end{lemma}
 \begin{proof}
 Induct on the derivation. Premises and propositional consequences hold
@@ -277,8 +277,8 @@ work limits return \code{Unknown}, which does not establish infeasibility.
 For the canonical program of Theorem~\ref{thm:symbolic-compilation},
 acceptance instead requires guard certification:
 \begin{equation}
- \forall p.\quad \operatorname{Legal}_L(p)\land C(p)
- \Rightarrow\operatorname{check}(p).
+ \forall m.\quad \operatorname{Legal}_L(m)\land C(m)
+ \Rightarrow\operatorname{check}(m).
  \label{eq:guard-feasibility}
 \end{equation}
 This obligation uses that theorem's domain assumptions. Candidate
@@ -296,8 +296,8 @@ partition covers its interface exactly once.
 \end{lemma}
 \begin{proof}
 For selection and composition, use Table~\ref{tab:core-sequence-laws}.
-For reconstruction, concatenate groups as $\vec G=\vec G_1\Vert\cdots\Vert \vec G_m$
-and their position lists as $q=q_1\Vert\cdots\Vert q_m$. Require $q$ to
+For reconstruction, concatenate groups as $\vec G=\vec G_1\Vert\cdots\Vert \vec G_\ell$
+and their position lists as $q=q_1\Vert\cdots\Vert q_\ell$. Require $q$ to
 be a permutation and $|\vec G_i|=|q_i|$. With
 $Q=\gath(\vec G,\operatorname{inverse}(q))$, inverse composition gives
 $\gath(Q,q)=\vec G$, whose corresponding blocks give
@@ -329,9 +329,9 @@ not every backend implementation of its primitives.
 \subsubsection{Lowering, Normalization, and Comparison}
 Lowered expressions use constants, indexed reads, addition, multiplication,
 and finite summation. Normalization produces sums of terms
-$(c,[r_1,\ldots,r_m],\vec D)$ with interpretation
+$(c,[r_1,\ldots,r_\ell],\vec D)$ with interpretation
 \begin{equation}
- \sum_{\rho\in\operatorname{Coords}(\vec D)}c\prod_{i=1}^{m}r_i(\rho).
+ \sum_{\rho\in\operatorname{Coords}(\vec D)}c\prod_{i=1}^{\ell}r_i(\rho).
  \label{eq:validator-term}
 \end{equation}
 Read lists preserve multiplicity. Comparison requires equal coefficients,
@@ -408,7 +408,7 @@ claim about normal forms or proof search.
 \end{proof}
 
 \begin{proof}[Proof of Theorem~\ref{thm:validator-soundness}]
-Fix legal source metadata $p$ for which the written guard $C$ evaluates to
+Fix legal match metadata $m$ for which the written guard $C$ evaluates to
 true. A \code{Proved} result means that every required check has a
 derivation. By Lemma~\ref{lem:metadata-soundness}, the attribute expressions
 are defined, supplied fields are preserved, and every RHS operation is
@@ -421,9 +421,9 @@ Lemma~\ref{lem:core-normalization}, normalization preserves these values
 under exact arithmetic, and successful term comparison establishes equal
 values for all compatible tensor inputs. The proved ordered-shape checks
 and result-dtype checks give the remaining parts of
-$\operatorname{Valid}(p,\beta)$. Thus
-$f\Downarrow_p\beta\land\operatorname{Valid}(p,\beta)$.
-Since $p$ was arbitrary, the theorem follows independently of how the
+$\operatorname{Valid}(m,\beta)$. Thus
+$f\Downarrow_m\beta\land\operatorname{Valid}(m,\beta)$.
+Since $m$ was arbitrary, the theorem follows independently of how the
 candidate was generated.
 \end{proof}
 A new implementation rule must be justified by this calculus or receive

@@ -10,7 +10,7 @@ and the restricted additive fragment separates into independent components.
 \begin{lemma}[Necessity]
 \label{lem:necessity}
 For one component,
-$\exists\beta:\operatorname{Valid}(p,\beta)\Rightarrow\operatorname{check}(p)$.
+$\exists\beta:\operatorname{Valid}(m,\beta)\Rightarrow\operatorname{check}(m)$.
 \end{lemma}
 \begin{proof}
 Suppose $\beta$ is valid. Lemma~\ref{lem:canonicalization} gives a valid
@@ -31,15 +31,15 @@ These are exactly the propagation rules of
 Appendix~\ref{app:operation-construction-rules}. At an input, the propagated
 requirement must be a subsequence of its actual order, $Req_v\preceq I_v$.
 Thus $C_v$ is true at every node. Together with the root live-set check,
-this gives $\operatorname{check}(p)=\mathrm{true}$.
+this gives $\operatorname{check}(m)=\mathrm{true}$.
 \end{proof}
 
 \subsubsection{Sufficiency}
 \begin{lemma}[Sufficiency]
 \label{lem:sufficiency}
 For one component,
-$\operatorname{check}(p)\Rightarrow
-\operatorname{Valid}(p,\operatorname{build}(p))$.
+$\operatorname{check}(m)\Rightarrow
+\operatorname{Valid}(m,\operatorname{build}(m))$.
 \end{lemma}
 \begin{proof}
 Assume the checks pass. By structural induction on the RHS, we maintain:
@@ -81,7 +81,7 @@ $F\preceq\operatorname{Ord}_{\mathrm{root}}$. The output has exactly these
 axes, each once, so $\operatorname{Ord}_{\mathrm{root}}=F$. Hence
 $N(L)=N(R)$. Lemma~\ref{lem:axis-exactness} gives equality for all input
 values. Together with legality, this proves
-$\operatorname{Valid}(p,\operatorname{build}(p))$.
+$\operatorname{Valid}(m,\operatorname{build}(m))$.
 \end{proof}
 
 \subsubsection{Extension to Multiple Terms}
@@ -112,9 +112,9 @@ coefficients therefore gives, for legal expressions with equal output shape,
 \end{equation}
 Apply the component algorithm independently and combine the results:
 \begin{equation}
- \operatorname{check}(p)=\bigwedge_{t\in J}\operatorname{check}_t(p),
+ \operatorname{check}(m)=\bigwedge_{t\in J}\operatorname{check}_t(m),
  \qquad
- \operatorname{build}(p)=\bigcup_{t\in J}\operatorname{build}_t(p).
+ \operatorname{build}(m)=\bigcup_{t\in J}\operatorname{build}_t(m).
  \label{eq:additive-construction}
 \end{equation}
 The RHS components use disjoint attribute identifiers, so the assignments

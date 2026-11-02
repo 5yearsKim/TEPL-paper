@@ -57,7 +57,7 @@ $Req_v$ with its batch/left-free/right-free parts in that order. The root
 check compares $S_{\mathrm{root}}$ with $\operatorname{set}(F)$.
 These total tests use only source information and the retained sets,
 never attribute builders. Their conjunction is
-$\operatorname{check}(p)$, proving Equation~\eqref{eq:emitted-check} even
+$\operatorname{check}(m)$, proving Equation~\eqref{eq:emitted-check} even
 when construction is infeasible.
 
 \noindent\textbf{3. Successful checks give the same attributes.}
@@ -73,7 +73,7 @@ $\tau$.
 The role sets and checks ensure that every queried axis has a unique
 position in its operand; source legality supplies paired extent equality.
 Thus the position lookups are defined and produce the same attributes as
-$\operatorname{build}_{\tau}(p)$. Each output contains exactly $S_v$ and
+$\operatorname{build}_{\tau}(m)$. Each output contains exactly $S_v$ and
 satisfies $Req_v$; the root therefore has order $F$. Independent additive
 components combine as in Appendix~\ref{sec:addition-proof}. This proves
 Equation~\eqref{eq:emitted-build} without reproving Section~\ref{sec:formal-correctness}'s

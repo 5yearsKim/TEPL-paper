@@ -48,7 +48,7 @@ but requires complex handwritten logic. (c) TEPL preserves readable algebraic
 rewrite rules and provides a \code{derive} section with tools for explicitly
 computing replacement attributes. (d) When eligible RHS axis fields are omitted,
 TEPL infers their transformation logic from reusable
-operation semantics and source metadata.}{fig:why-tepl}{Four panels compare an algebraic pattern, custom implementation logic,
+operation semantics and match metadata.}{fig:why-tepl}{Four panels compare an algebraic pattern, custom implementation logic,
 explicit TEPL attribute expressions, and inferred TEPL axis attributes for the
 same nested-dot replacement graph.}
 \subsection{Contributions}
@@ -58,7 +58,7 @@ TEPL provides syntactic structures and tools for expressing tensor
 rewrite rules concisely and intuitively.
 \item \textbf{Automatic attribute inference.}
 For supported rewrites, the compiler constructs reusable functions that
-compute missing RHS axis fields from source metadata while preserving
+compute missing RHS axis fields from match metadata while preserving
 supplied extent and coordinate attributes. Mixed explicit/inferred axis
 fields use validation or certified schemas, with no completeness guarantee.
 \item \textbf{Symbolic axis mapping for composed operations.}

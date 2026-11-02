@@ -13,7 +13,7 @@ the same program; they do not implement separate canonical constructors.
 \label{sec:symbolic-axis-mapping}
 Section~\ref{sec:mathematical-synthesis} chooses logical axes for each RHS
 operation, but operation attributes require zero-based dimension positions.
-Compilation must express those positions using source metadata, before a
+Compilation must express those positions using match metadata, before a
 match supplies concrete ranks and axis lists. Symbolic mappings track where
 variable-length groups occur and compose their position expressions into
 RHS attributes.
@@ -103,7 +103,7 @@ metadata intermediate representation (IR).
 At compile time, TEPL lowers this symbolic metadata program into expressions
 over source attributes, using axis mappings, partitioning, and simplification. For example, the selected subgroup $\gath(\vec J,v_J)$ has
 positions $\gath(q_J,v_J)$ in $T$. The mapping for $\vec J$ yields this position
-expression. At matching time, source metadata
+expression. At matching time, match metadata
 supplies the lists: $q_J=[2,3]$ and $v_J=[1]$ give the position list $[3]$.
 Thus compilation derives the formula; matching evaluates it to obtain the
 RHS attribute. These computations operate on axis metadata, not tensor values.
@@ -120,13 +120,13 @@ Section~\ref{sec:implementation-scope}.
 \label{thm:symbolic-compilation}
 For every admitted semantic plan in Section~\ref{sec:formal-scope}, compilation
 constructs a finite metadata program $(E_q,E_f)$ independently of concrete
-ranks and the written guard. For every legal metadata instance $p$ in that
+ranks and the written guard. For every legal metadata instance $m$ in that
 section's completeness domain,
 \begin{align}
- \lbrack\!\lbrack E_q\rbrack\!\rbrack_p&=\operatorname{check}(p),
+ \lbrack\!\lbrack E_q\rbrack\!\rbrack_m&=\operatorname{check}(m),
  \label{eq:emitted-check}\\
- \operatorname{check}(p)&\Rightarrow
- \lbrack\!\lbrack E_f\rbrack\!\rbrack_p=\operatorname{build}_{\tau}(p).
+ \operatorname{check}(m)&\Rightarrow
+ \lbrack\!\lbrack E_f\rbrack\!\rbrack_m=\operatorname{build}_{\tau}(m).
  \label{eq:emitted-build}
 \end{align}
 Here $\tau$ fixes unconstrained paired orders using the left operand's

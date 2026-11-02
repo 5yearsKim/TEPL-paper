@@ -342,7 +342,7 @@ children:
     - 0.437143
     content: |-
       RHS axis fields are
-      inferred from source
+      inferred from match
       metadata.
   - name: reusable_semantics
     type: text

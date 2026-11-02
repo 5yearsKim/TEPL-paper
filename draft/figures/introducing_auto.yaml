@@ -1,5 +1,5 @@
 title: Automatic Attribute Inference
-concept: The compiler synthesizes omitted RHS attributes as an attribute function; each runtime match supplies captured metadata to f(p) and receives replacement dot attributes.
+concept: The compiler synthesizes omitted RHS attributes as an attribute function; each runtime match supplies captured metadata to f(m) and receives replacement dot attributes.
 purpose: Introduce compile-time function generation and runtime application through transpose absorption into dot.
 requirements:
 - Apply tools/figure_style.md for editable text, literal underscore notation, neutral tensor edges, and the figure's
@@ -15,14 +15,14 @@ requirements:
 - Use commas, plus signs, or line breaks as separators; do not use middle dots.
 - Use a matrix-dot example with rank-2 inputs and no batch axes; absorbing a transpose preserves the order of the
   single free axis from each operand.
-- 'p denotes all source metadata: shapes and captured attributes. The transpose permutation π and dot descriptor δ are parts of this metadata.'
+- 'm denotes all match metadata: shapes and captured attributes. The transpose permutation π and dot descriptor δ are parts of this metadata.'
 - The function signature is explanatory notation, not a user-written derive clause or a complete function body.
 - Synthesis and verification happen inside the compiler; runtime applies the exported function.
 - Concrete numbers appear only at runtime; show only the changing left contraction axis, keeping the other dot fields
   implicit.
-- For the runtime instance use A of shape [m, k], B of shape [k, n], π = [1, 0], and δ with left and right contraction
+- For the runtime instance use A of shape [a, k], B of shape [k, b], π = [1, 0], and δ with left and right contraction
   axes both 0.
-- The result has left contraction axis 1 and unchanged right contraction axis 0; both graphs produce shape [m, n].
+- The result has left contraction axis 1 and unchanged right contraction axis 0; both graphs produce shape [a, b].
 - Use a 342 px compile-time band, an 18 px phase divider, and a 258 px runtime band. Use 8 px gaps within the phase
   bands.
 - Put Compile time and Generated once per rule on one 26 px header row. Put Runtime and Evaluate on each match on
@@ -122,7 +122,7 @@ children:
         - 0.976
         - 0.413
         - 0.625
-        content: f(p) → replacement dot attrs
+        content: f(m) → replacement dot attrs
       - name: parameters
         type: text
         pos:
@@ -130,7 +130,7 @@ children:
         - 0.976
         - 0.663
         - 0.875
-        content: 'p: shapes and captured attrs'
+        content: 'm: shapes and captured attrs'
 - name: phase_boundary
   type: image
   pos:
@@ -140,7 +140,7 @@ children:
   - 0.5785
   requirements:
   - Draw a thin horizontal divider between Compile time and Runtime.
-  - Carry the compiled function from generated_function across the divider into the runtime f(p) box.
+  - Carry the compiled function from generated_function across the divider into the runtime f(m) box.
   - Route this handoff vertically between the runtime heading and its right-aligned frequency note, clear of all
     text.
 - name: runtime
@@ -153,7 +153,7 @@ children:
   requirements:
   - Put Runtime at the left of one header row and Evaluate on each match right aligned on that same row.
   - Arrange captured_inputs, function_application, and generated_attributes in one row, connected by right arrows.
-  - Use a neutral input card and green application and result cards; make the f(p) invocation explicit.
+  - Use a neutral input card and green application and result cards; make the f(m) invocation explicit.
   - Below this row, draw a small replacement graph with A and B feeding one dot node.
   - Connect generated_attributes downward to an out.attrs badge attached to that dot.
   - Tensor edges are neutral and attribute edges are green; the transpose is absent from the replacement graph.
@@ -187,7 +187,7 @@ children:
     - 0.473
     content: 'Apply f
 
-      f(p)'
+      f(m)'
   - name: generated_attributes
     type: text
     pos:

@@ -20,16 +20,16 @@ constructs the unknown RHS axis fields. We use the following notation throughout
 \begin{aligned}
  s&=(s_1,\ldots,s_n) &&\text{input shapes},\\
  \alpha&=\text{LHS attributes},\\
- p&=(s,\alpha) &&\text{source metadata},\\
+ m&=(s,\alpha) &&\text{match metadata},\\
  \beta&=\text{completed RHS attributes}.
 \end{aligned}
 \label{eq:metadata}
 \end{equation}
-Metadata $p$ is concrete at a match and makes every LHS operation legal.
+Match metadata $m$ is concrete at a match and makes every LHS operation legal.
 Scalar types are fixed in the exact-real fragment; for typed validation,
-$p$ also carries captured dtypes.
+$m$ also carries captured dtypes.
 Writing $X=(X_1,\ldots,X_n)$ for the input values, the two computations are
-$L_p(X)$ and $R_{p,\beta}(X)$. An attribute program reads $p$, never the
+$L_m(X)$ and $R_{m,\beta}(X)$. An attribute program reads $m$, never the
 entries of $X$.
 
 \subsection{Valid Attribute Assignments}
@@ -38,13 +38,13 @@ We define what counts as a correct synthesis result.
 Let $\beta$ denote the completed RHS attributes.
 $\operatorname{Legal}_R$ includes the legality of every intermediate
 operation, $\operatorname{Shape}$ is an ordered shape vector, and $X$ ranges
-over all tensor values with the input shapes specified by $p$. We define
+over all tensor values with the input shapes specified by $m$. We define
 \begin{equation}
 \begin{aligned}
- \operatorname{Valid}(p,\beta)\iff{}&
- \operatorname{Legal}_R(p,\beta)\\
- &\land\operatorname{Shape}_L(p)=\operatorname{Shape}_R(p,\beta)\\
- &\land\forall X,\; L_p(X)=R_{p,\beta}(X).
+ \operatorname{Valid}(m,\beta)\iff{}&
+ \operatorname{Legal}_R(m,\beta)\\
+ &\land\operatorname{Shape}_L(m)=\operatorname{Shape}_R(m,\beta)\\
+ &\land\forall X,\; L_m(X)=R_{m,\beta}(X).
 \end{aligned}
 \label{eq:valid}
 \end{equation}
@@ -53,7 +53,7 @@ output shape and the values for every compatible input. In typed validation,
 $\operatorname{Legal}_R$ also requires the declared dtype contracts and
 agreement with the source result dtype.
 
-Synthesis fills unknown axis fields from metadata $p$ and preserves supplied
+Synthesis fills unknown axis fields from metadata $m$ and preserves supplied
 fields. This language contract does not imply mixed-mode completeness.
 Supplied expressions must be defined.
 The resulting $\beta$ must be correct for every compatible input value,
@@ -63,18 +63,18 @@ so the quantifier order is $\exists\beta\,\forall X$.
 \label{sec:find}
 For fully automatic axis fields in Section~\ref{sec:formal-scope}'s fragment,
 we synthesize reusable programs \code{check} and \code{build}.
-Given source metadata $p$,
+Given match metadata $m$,
 \code{check} decides whether a valid RHS completion exists, and \code{build}
 constructs one whenever \code{check} succeeds. The programs
 must satisfy:
 \begin{align}
- \operatorname{check}(p)&\iff\exists\beta:\operatorname{Valid}(p,\beta),
+ \operatorname{check}(m)&\iff\exists\beta:\operatorname{Valid}(m,\beta),
  \label{eq:check-goal}\\
- \operatorname{check}(p)&\Rightarrow
- \operatorname{Valid}(p,\operatorname{build}(p)).
+ \operatorname{check}(m)&\Rightarrow
+ \operatorname{Valid}(m,\operatorname{build}(m)).
  \label{eq:build-goal}
 \end{align}
-Both programs depend only on source metadata and must satisfy these
+Both programs depend only on match metadata and must satisfy these
 requirements for every legal instance in the defined fragment, across
 varying ranks and shapes.
 
@@ -157,11 +157,11 @@ from completeness. Section~\ref{sec:scope-limitations} details broader operation
 Whenever a legal computation matches the LHS and satisfies \code{where},
 the rule's attribute program must successfully compute RHS attributes that
 produce a legal, equivalent replacement. This applies whether the program
-is written explicitly or inferred. Writing $C(p)$ for the condition and $f$
+is written explicitly or inferred. Writing $C(m)$ for the condition and $f$
 for the attribute program, TEPL seeks to establish
 \begin{equation}
- \forall p.\quad \operatorname{Legal}_L(p)\land C(p)
- \Longrightarrow p\in\operatorname{dom}(f)
- \land\operatorname{Valid}(p,f(p)).
+ \forall m.\quad \operatorname{Legal}_L(m)\land C(m)
+ \Longrightarrow m\in\operatorname{dom}(f)
+ \land\operatorname{Valid}(m,f(m)).
 \label{eq:contract}
 \end{equation}

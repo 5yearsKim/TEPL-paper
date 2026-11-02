@@ -1,25 +1,23 @@
 \section{Attribute Synthesis: Algorithm and Guarantees}
 \label{sec:mathematical-synthesis}
-We now construct RHS attributes from the LHS axis representation. Logical
-axes and the target output order $F$ always come from the LHS. The algorithm
-has three passes: find the axes that survive at each node, check whether
-the required orders are possible, and construct attributes. It does not
-enumerate possible attribute assignments.
+We now synthesize RHS attributes from the LHS axis representation in three
+passes: determine surviving axes, check ordering feasibility, and construct
+attributes.
 
 \subsection{Canonical Intermediate Axes}
 \label{sec:canonical-axes}
-This stage determines which axes remain in each intermediate RHS result.
-Its output is a set $S_v$ for each node $v$. We first identify the axes that
-must survive, then construct $S_v$ using the operation's rules. Axis ordering
-and attribute construction are handled in the following stages.
+The RHS may have a different graph structure from the LHS, so its
+intermediate tensors may retain different logical axes. To infer RHS axis
+attributes, we first identify the axes that must survive at each node.
+We then construct a retained-axis set $S_v$ using the operation's rules.
+Axis ordering and attribute construction are handled in the following stages.
 
-We first identify the axes that must be kept, called the \emph{mandatory
-axes}. For a node $v$, let $U_v$ be the inputs in its subtree, and let
-$\sigma(a)$ be the inputs that contain logical axis $a$. The mandatory
-set $M_v$ contains axes used in this subtree that are also needed in the
+For a node $v$, let $U_v$ be the inputs in its subtree, and let
+$\sigma(a)$ be the inputs that contain logical axis $a$. The set $M_v$ of
+\emph{mandatory axes} contains axes used in this subtree that are also needed in the
 final output $F$ or in an input outside the subtree:
 \begin{equation}
- M_v=\left\{a\in\mathcal A\;\middle|\;
+ M_v=\left\{a\in\Axes(L)\;\middle|\;
  \sigma(a)\cap U_v\ne\varnothing
  \land (a\in\operatorname{set}(F)\lor\sigma(a)\nsubseteq U_v)
  \right\}.
@@ -36,10 +34,8 @@ Here $M_v$ specifies what must be preserved, while $S_v$ is the constructed
 result. The inclusion alone does not determine $S_v$.
 We call it the \emph{canonical live set} because the algorithm follows one
 fixed rule: remove each unneeded axis at the first operation that can
-legally remove it.
-
-We construct $S_v$ from the inputs toward the root using the operation-specific
-rules in Appendix~\ref{app:operation-construction-rules}.
+legally remove it. We provide operation-specific rules for constructing
+$S_v$ in Appendix~\ref{app:operation-construction-rules}.
 
 For example, consider the intermediate node $v=\operatorname{dot}(A,B)$ in
 $\operatorname{dot}(\operatorname{dot}(A,B),C)$, with the LHS axis connections
@@ -98,21 +94,31 @@ The lemma guarantees that whenever a valid assignment exists, one also
 exists that keeps exactly $S_v$ at each node while preserving the relative
 order of retained axes.
 
-For example, let $A,B$ have shape $[2]$ and consider the RHS
-$\operatorname{sum}(\operatorname{dot}(A,B))$. A valid assignment can keep
-the shared axis as batch and sum it later. The canonical assignment contracts
-it immediately:
+For example, let $A,B$ be batched tensors with dimension orders $(b,i,k)$
+and $(b,k,j)$, respectively. Suppose the source computes batched matrix
+multiplication followed by a sum over batches:
+\[
+ T_{ij}=\sum_b(A_bB_b)_{ij}=\sum_{b,k}A_{bik}B_{bkj}.
+\]
+The same RHS graph, $\operatorname{sum}(\operatorname{dot}(A,B))$, can
+compute this matrix under two different attribute assignments:
 \begin{table}[!htbp]
-\caption{Two ways to compute the scalar $A_0B_0+A_1B_1$.}
+\caption{Two RHS attribute assignments for batched matrix multiplication followed by a sum over batches.}
 \label{tab:canonical-example}
 \centering
-\begin{tabular}{@{}llll@{}}\toprule
-Assignment & Dot $(b_\ell,b_r,k_\ell,k_r)$ & Dot shape & Sum axes\\\midrule
-$\beta$ & $([0],[0],[],[])$ & $[2]$ & $[0]$\\
-$\beta'$ & $([],[],[0],[0])$ & $[]$ & $[]$\\\bottomrule
+\small
+\begin{tabular}{@{}lllll@{}}\toprule
+Assignment & Dot $(b_\ell,b_r,k_\ell,k_r)$ & $\operatorname{Ord}_v$ & $S_v$ & Sum axes\\\midrule
+$\beta$ & $([0],[0],[2],[1])$ & $(b,i,j)$ & $\{i,j\}$ & $[0]$\\
+$\beta'$ & $([],[],[0,2],[0,1])$ & $(i,j)$ & $\{i,j\}$ & $[]$\\\bottomrule
 \end{tabular}
 \end{table}
-Summation over an empty list leaves its input unchanged.
+Here $v$ is the inner dot node; $b_\ell,b_r$ and $k_\ell,k_r$ list its
+batch and contracting axes. Assignment $\beta$ contracts $k$ in the dot
+and sums over $b$ afterward. The canonical assignment $\beta'$ contracts
+both immediately, so the outer sum reduces no axes. Both produce the same
+matrix, but $\beta'$ retains exactly $S_v=\{i,j\}$, satisfying
+$\operatorname{Ord}_v(\beta')=\operatorname{Ord}_v(\beta)|_{S_v}$.
 
 For TEPL, this means that synthesis can fix the intermediate axis sets
 before determining their order and attributes, without losing feasible
@@ -120,7 +126,7 @@ rewrites within the defined fragment.
 
 The proof is given in Appendix~\ref{app:canonicalization-proof}.
 
-\subsection{Ordering Feasibility}
+\subsection{Checking Axis Order}
 \label{sec:ordering-feasibility}
 Choosing axis sets is not enough. Each operation also restricts output
 order. Let $Req_v$ be an ordered subsequence that the output at $v$ must
@@ -131,12 +137,10 @@ not adjacency: $(i_1,x,i_2)$ satisfies the requirement $(i_1,i_2)$.
 Following D3, each node computes a Boolean ordering check $C_v$ and passes
 ordering requirements to its children. At an input, the check is
 $C_v=[Req_v\preceq I_v]$, since its axis order is fixed.
-Appendix~\ref{app:operation-construction-rules} gives the operation-specific checks and
-propagation rules.
 
 Combining the local checks with the root live-set check gives
 \begin{equation}
- \operatorname{check}(p)
+ \operatorname{check}(m)
  =[S_{\mathrm{root}}=\operatorname{set}(F)]
  \land\bigwedge_{v\in V_R}C_v.
 \label{eq:feasibility}
@@ -144,23 +148,23 @@ Combining the local checks with the root live-set check gives
 Here $V_R$ contains all RHS nodes, including inputs. The check succeeds
 when the root retains exactly the target axes and every node satisfies
 its ordering constraints.
-These checks depend only on source metadata, which determines the LHS
+These checks depend only on match metadata, which determines the LHS
 classes, input orders, and target output order.
 
 In TEPL, the rule's \code{where} condition (Section~\ref{sec:where}) must
-imply $\operatorname{check}(p)$ for every legal LHS match within this
+imply $\operatorname{check}(m)$ for every legal LHS match within this
 fragment. Sections~\ref{sec:compilation-scope} and~\ref{sec:candidate-validation}
 describe the acceptance paths; Appendix~\ref{app:condition-suggestions}
 gives the condition-suggestion procedure.
 
-\subsection{Constructing Attributes}
+\subsection{Constructing Axis Attributes}
 \label{sec:formal-construction}
-Once $\operatorname{check}(p)$ succeeds, the remaining task is to turn
+Once $\operatorname{check}(m)$ succeeds, the remaining task is to turn
 the selected axes and ordering requirements into RHS axis attributes.
 The $\operatorname{build}$ program processes the RHS from inputs to root
 in three steps.
 
-\noindent\textbf{Construct an output order.}
+\noindent\textbf{Step 1: Construct an output order.}
 At each node $v$, we construct an output order $\operatorname{Ord}_v$
 that contains exactly the axes in $S_v$ and satisfies the required
 relative order $Req_v$:
@@ -170,10 +174,9 @@ relative order $Req_v$:
  \label{eq:order-invariant}
 \end{equation}
 The construction follows the child output orders and the operation's
-rules under D2--D3. Appendix~\ref{app:operation-construction-rules}
-gives the operation-specific constructions.
+rules under D2--D3. 
 
-\noindent\textbf{Convert axes to positions.}
+\noindent\textbf{Step 2: Convert axes to positions.}
 The notation $\operatorname{pos}(S,\vec G)$ lists the zero-based positions
 of the axes in $\vec G$ within $S$, preserving the group order.
 For example, if $\operatorname{Ord}_u=(i_1,k_1,i_2,k_2)$ and
@@ -181,9 +184,11 @@ $\vec K=(k_1,k_2)$, then
 $\operatorname{pos}(\operatorname{Ord}_u,\vec K)=[1,3]$.
 These positions form the axis-list attribute selecting $\vec K$.
 
-\noindent\textbf{Combine node assignments.}
+\noindent\textbf{Step 3: Combine node assignments.}
 By D4, the independently constructed node assignments can be combined
-into $\beta=\operatorname{build}(p)$.
+into $\beta=\operatorname{build}(m)$. For a single component, this completes
+the construction. For multiple terms, we combine the component checks and
+assignments as in Appendix~\ref{sec:addition-proof}.
 
 The rewrite tree is fixed, but the
 attribute lists may vary in length, so the same program handles different

@@ -18,23 +18,32 @@ set $\mathcal X$, let
  P=\{(X,d)\mid X\in\mathcal X,\ 0\le d<\operatorname{rank}(X)\}.
 \end{equation}
 We write $u\sim v$ when ports $u$ and $v$ use the same coordinate.
-Each logical axis is one equivalence class, and the set of logical axes is
+Each logical axis is one equivalence class. For the LHS expression $L$, the
+set of all logical axes is
 \begin{equation}
- \mathcal A=P/{\sim}.
+ \Axes(L)=P/{\sim}.
 \end{equation}
-Here $P/{\sim}$ groups connected ports into one class each.
+Here $P/{\sim}$ groups connected ports into one class each, including
+classes removed by summation.
 Equal extents do not establish axis identity. We also retain the classes of
 axes removed by summation: they still record how input coordinates connect.
 
-\noindent\textbf{Symbolic axis groups.}
-An ordered list of logical axes is a \emph{symbolic axis group}, written
-$\vec I$, $\vec J$, or $\vec K$; for example, $\vec K=(k_1,k_2)$ contains
-two distinct axes. Shared groups pair axes in corresponding positions;
-variable-length groups describe arbitrary ranks. Arrows mark named groups,
-and $\operatorname{set}(\vec G)$ forgets order. We write
-$\operatorname{Ord}_t$ for tensor $t$'s full logical-axis list in dimension
-order, represented symbolically during compilation;
-$\operatorname{Ord}_v(\beta)$ makes the attribute assignment explicit.
+\subsection{Symbolic Axis Groups}
+\label{sec:symbolic-axis-groups}
+A \emph{symbolic axis group} represents an ordered sequence of distinct
+logical axes whose length need not be known at compile time. We write groups
+as $\vec I$, $\vec J$, or $\vec K$. For example,
+$\vec K=(k_1,\ldots,k_r)$ represents $r$ axes, where $r$ may vary across
+matches. This allows one symbolic description to cover tensors of different
+ranks.
+
+Group order matters because operation attributes refer to dimension
+positions. We write $\vec I\Vert\vec K$ for concatenation and
+$\operatorname{set}(\vec I)$ for the corresponding unordered set. When a
+group appears in both operands, corresponding entries denote the same
+logical axes. For example, an unbatched contraction with operand orders
+$\vec I\Vert\vec K$ and $\vec K\Vert\vec J$ sums over $\vec K$ and
+produces output order $\vec I\Vert\vec J$.
 
 \subsection{Axis Representation}
 \label{sec:axis-representation}
@@ -49,7 +58,8 @@ specifies the value at each output coordinate: use the same index at
 connected input ports, multiply the selected input entries, and sum over
 all classes absent from $F$. Classes in $F$ remain as output coordinates.
 
-For matrix multiplication $T=AB$, the classes are
+For matrix multiplication $T=AB$, contraction identifies
+$(A,1)\sim(B,0)$, giving the classes:
 \begin{equation}
  i=\{(A,0)\},\qquad k=\{(A,1),(B,0)\},\qquad j=\{(B,1)\}.
 \end{equation}
@@ -59,21 +69,10 @@ Thus
 \end{equation}
 The class $k$ is absent from the output, giving $T_{ij}=\sum_k A_{ik}B_{kj}$.
 
-The same representation applies to groups of axes. For example, if $A$ has
-axis order $\vec I\Vert\vec K$ and $B$ has axis order $\vec K\Vert\vec J$,
-corresponding axes in $\vec K$ are paired and summed out. The output order is
-$F=\vec I\Vert\vec J$.
-Here $\Vert$ concatenates ordered axis groups.
-
-Singleton axes can make different axis representations equivalent:
-swapping the axes of a shape-$[1,1]$ input preserves its shape and values.
-The present axis-exactness and completeness results therefore exclude
-singleton and zero extents.
-
 \subsection{Equivalence of Axis Representations}
 \begin{lemma}[Axis exactness]
 \label{lem:axis-exactness}
-For two legal components $L,R$ over the same inputs at fixed source metadata,
+For two legal components $L,R$ over the same inputs at fixed match metadata,
 with every input dimension having extent at least two,
 \begin{equation}
  \forall X,\quad L(X)=R(X)\quad\iff\quad N(L)=N(R).
