@@ -1,20 +1,12 @@
 # TEPL Paper
 
-The active expanded draft starts in `main.tex`, using the ACM `acmsmall`
-review layout. The original 38-page draft is a standalone project in
-`main_backup/`, with its own `main.tex` and all supporting files.
-
-## Restore the original draft
-
-Copy all contents of `main_backup/` into the project folder, replacing existing
-files. From the project root, the equivalent command is:
-
-```bash
-cp -a main_backup/. .
-```
-
-This restores `main.tex` and its dependencies together. You can also open
-`main_backup/` as a separate project and run `make` there. The expanded draft remains active at the root until you restore.
+The active manuscript starts in `main.tex`, using the ACM `acmsmall` review
+layout. Files in `sections/` follow the current section numbering (01–11).
+Letter suffixes identify additional fragments belonging to the same section,
+such as `05a-correctness-completeness.tex` and `08a-limitations.tex`.
+Appendix files use `appendix-a`, `appendix-b`, and `appendix-c` prefixes;
+numbered suffixes match their subsection order. Only appendices included in
+the current paper are retained in `sections/`.
 
 The `nonacm` class option suppresses publication metadata while drafting.
 For submission, remove it and add the required venue metadata, CCS concepts,
@@ -86,29 +78,31 @@ The active paper keeps the full mathematical development in the main text,
 before symbolic axis mapping and program generation. It adopts the notation
 of `draft/complete_attribute_synthesis_proof_kr.md`.
 
-- `sections/04-problem.tex`: definitions, fragment, and the TEPL contract.
-- `sections/04a-axis-model.tex`: axis representation and exactness.
-- `sections/04b-mathematical-synthesis.tex`: canonical axes, ordering, construction.
-- `sections/04c-formal-correctness.tex`: full correctness and completeness proofs.
-- `sections/05-method.tex`: symbolic mapping and metadata programs.
-- `sections/05e-tepl-integration.tex`: core semantic validation and condition suggestions.
-- `sections/05d-correctness.tex`: metadata logic, definedness, validation algorithm, and core soundness theorem.
+- `sections/03-problem.tex`: definitions, fragment, and the TEPL contract.
+- `sections/04-axis-model.tex`: axis representation and exactness.
+- `sections/05-attribute-synthesis.tex`: canonical axes, ordering, construction.
+- `sections/05a-correctness-completeness.tex`: full correctness and completeness proofs.
+- `sections/06-symbolic-compilation.tex`: symbolic mapping and metadata programs.
+- `sections/07-candidate-validation.tex`: compile-time validation of completed attribute programs.
+- `sections/07a-validation-details.tex`: validation contract, algorithm and soundness theorem.
 - `draft/proof_integration_map.json`: content-preservation and notation checklist.
 
 The appendices follow the main paper's progression and use the same notation:
 
 - **A. Mathematical Foundations: Examples and Proofs**
-  (`sections/appendix-foundations.tex`): axis exactness, the mandatory and
+  (`sections/appendix-a-foundations.tex`): axis exactness, the mandatory and
   retained axes example, canonicalization, and correctness and completeness.
 - **B. Symbolic Compilation Details**
-  (`sections/appendix-compilation.tex`): Axes IR, mapping and synthesis
-  derivations and algorithms, operation declaration adapters, and the core
-  validation calculus and supporting proofs (`sections/appendix-validation.tex`).
+  (`sections/appendix-b-compilation.tex`): Axes IR, mapping and synthesis
+  invariants, operation declaration adapters, and the core
+  validation calculus and supporting proofs (`sections/appendix-b4-validation.tex`).
 - **C. Current Evaluation Protocol and Evidence**
-  (`sections/appendix-current-evaluation.tex`): coverage, specification-size
+  (`sections/appendix-c-evaluation.tex`): coverage, specification-size
   accounting and implementation checks.
 
-The active draft consolidates repeated guarantee explanations and reassociation derivations; detailed protocols and module correspondence remain in the appendix. The historical selected-results appendix is retained on disk and in the artifact but omitted from the PDF.
+The active draft consolidates repeated guarantee explanations and reassociation
+derivations; detailed protocols and module correspondence remain in the appendix.
+Unused appendix source files have been removed from `sections/`.
 `draft/paper_outline.md` records the older shortened structure and is not the
 outline of the expanded draft.
 

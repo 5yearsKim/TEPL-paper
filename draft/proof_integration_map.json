@@ -6,7 +6,7 @@
     {
       "source_section": "2.1",
       "concept": "Tensor expressions",
-      "destination": "sections/04-problem.tex",
+      "destination": "sections/03-problem.tex",
       "label": "sec:problem",
       "preserved_details": [
         "input names and symbolic shapes",
@@ -16,7 +16,7 @@
     {
       "source_section": "2.2",
       "concept": "Tensor rewrite",
-      "destination": "sections/04-problem.tex",
+      "destination": "sections/03-problem.tex",
       "label": "eq:metadata",
       "preserved_details": [
         "L and R",
@@ -27,7 +27,7 @@
     {
       "source_section": "2.3",
       "concept": "Valid assignment",
-      "destination": "sections/04-problem.tex",
+      "destination": "sections/03-problem.tex",
       "label": "eq:valid",
       "preserved_details": [
         "intermediate legality",
@@ -38,7 +38,7 @@
     {
       "source_section": "2.4",
       "concept": "Synthesis problem",
-      "destination": "sections/04-problem.tex",
+      "destination": "sections/03-problem.tex",
       "label": "sec:find",
       "preserved_details": [
         "exact feasibility",
@@ -49,7 +49,7 @@
     {
       "source_section": "2.5",
       "concept": "Scope and assumptions",
-      "destination": "sections/04-problem.tex",
+      "destination": "sections/03-problem.tex",
       "label": "sec:formal-scope",
       "preserved_details": [
         "complete operation contracts",
@@ -68,7 +68,7 @@
     {
       "source_section": "3.1",
       "concept": "Logical axes",
-      "destination": "sections/04a-axis-model.tex",
+      "destination": "sections/04-axis-model.tex",
       "label": "sec:axis-model",
       "preserved_details": [
         "einsum interpretation",
@@ -80,7 +80,7 @@
     {
       "source_section": "3.2",
       "concept": "Axis representation",
-      "destination": "sections/04a-axis-model.tex",
+      "destination": "sections/04-axis-model.tex",
       "label": "eq:axis-representation",
       "preserved_details": [
         "P, relation, F",
@@ -91,7 +91,7 @@
     {
       "source_section": "3.3",
       "concept": "Axis exactness",
-      "destination": "sections/04a-axis-model.tex",
+      "destination": "sections/04-axis-model.tex",
       "label": "lem:axis-exactness",
       "preserved_details": [
         "both proof directions",
@@ -105,7 +105,7 @@
     {
       "source_section": "4.1",
       "concept": "Canonical intermediate axes",
-      "destination": "sections/04b-mathematical-synthesis.tex",
+      "destination": "sections/05-attribute-synthesis.tex",
       "label": "sec:canonical-axes",
       "preserved_details": [
         "support and subtree sets",
@@ -119,7 +119,7 @@
     {
       "source_section": "4.2",
       "concept": "Canonicalization",
-      "destination": "sections/04b-mathematical-synthesis.tex",
+      "destination": "sections/05-attribute-synthesis.tex",
       "label": "lem:canonicalization",
       "preserved_details": [
         "order filtering",
@@ -134,7 +134,7 @@
     {
       "source_section": "4.3",
       "concept": "Ordering feasibility",
-      "destination": "sections/04b-mathematical-synthesis.tex",
+      "destination": "sections/05-attribute-synthesis.tex",
       "label": "sec:ordering-feasibility",
       "preserved_details": [
         "subsequence and filter notation",
@@ -148,7 +148,7 @@
     {
       "source_section": "4.4",
       "concept": "Construction",
-      "destination": "sections/04b-mathematical-synthesis.tex",
+      "destination": "sections/05-attribute-synthesis.tex",
       "label": "sec:formal-construction",
       "preserved_details": [
         "live-set/order invariant",
@@ -163,7 +163,7 @@
     {
       "source_section": "5",
       "concept": "Main theorem",
-      "destination": "sections/04c-formal-correctness.tex",
+      "destination": "sections/05a-correctness-completeness.tex",
       "label": "thm:complete-synthesis",
       "preserved_details": [
         "exact feasibility",
@@ -174,7 +174,7 @@
     {
       "source_section": "5.1",
       "concept": "Necessity",
-      "destination": "sections/04c-formal-correctness.tex",
+      "destination": "sections/05a-correctness-completeness.tex",
       "label": "lem:necessity",
       "preserved_details": [
         "canonicalization",
@@ -186,7 +186,7 @@
     {
       "source_section": "5.2",
       "concept": "Sufficiency",
-      "destination": "sections/04c-formal-correctness.tex",
+      "destination": "sections/05a-correctness-completeness.tex",
       "label": "lem:sufficiency",
       "preserved_details": [
         "structural induction",
@@ -198,7 +198,7 @@
     {
       "source_section": "5.3",
       "concept": "Addition",
-      "destination": "sections/04c-formal-correctness.tex",
+      "destination": "sections/05a-correctness-completeness.tex",
       "label": "sec:addition-proof",
       "preserved_details": [
         "shape-preserving LHS expansion",
@@ -216,7 +216,7 @@
     {
       "source_section": "6.1",
       "concept": "Declaration adapters",
-      "destination": "sections/05e-tepl-integration.tex",
+      "destination": "sections/07-candidate-validation.tex",
       "label": "sec:declaration-adapters",
       "preserved_details": [
         "structural recognition",
@@ -230,7 +230,7 @@
     {
       "source_section": "6.2",
       "concept": "Guards and suggestions",
-      "destination": "sections/05e-tepl-integration.tex",
+      "destination": "sections/07-candidate-validation.tex",
       "label": "sec:condition-suggestions",
       "preserved_details": [
         "C(p) and f(p)",
@@ -248,7 +248,7 @@
     {
       "source_section": "6.3",
       "concept": "Reassociation example",
-      "destination": "sections/05e-tepl-integration.tex",
+      "destination": "sections/07-candidate-validation.tex",
       "label": "sec:suggested-reassociation",
       "preserved_details": [
         "named-node rule",
@@ -263,7 +263,7 @@
     {
       "source_section": "6.4",
       "concept": "Broader operators",
-      "destination": "sections/05e-tepl-integration.tex",
+      "destination": "sections/07-candidate-validation.tex",
       "label": "sec:broader-operators",
       "preserved_details": [
         "broadcast/slice/convolution/reverse/negate/subtract/zero_like",

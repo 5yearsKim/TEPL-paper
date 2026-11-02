@@ -1,0 +1,26 @@
+\subsection{Mandatory and Retained Axes: A Worked Example}
+\label{app:canonical-axes-example}
+Consider
+$\operatorname{dot}(\operatorname{sum}_i(A),B)\Rightarrow
+\operatorname{sum}_i(\operatorname{dot}(A,B))$,
+with input frames $I_A=(b,i,k)$, $I_B=(b,k,j)$ and output $F=(b,j)$.
+All extents are at least two. The RHS dot $T$ retains batch axis $b$,
+contracts $k$, and keeps free axes $i,j$; the root $Y$ removes $i$.
+Table~\ref{tab:row-sum-mandatory-retained-axes} applies the rules above.
+\begin{table}[!htbp]
+\caption{Mandatory and retained axes in row-sum movement. At $T$, roles
+are $B_T=\{b\}$, $K_T=\{k\}$, $LF_T=\{i\}$, and $RF_T=\{j\}$.}
+\label{tab:row-sum-mandatory-retained-axes}
+\small
+\begin{tabularx}{\linewidth}{@{}lYll@{}}\toprule
+Node & Inputs in subtree & Mandatory $M_v$ & Retained $S_v$\\\midrule
+$A$ & $\{A\}$ & $\{b,k\}$ & $\{b,i,k\}$\\
+$B$ & $\{B\}$ & $\{b,k,j\}$ & $\{b,k,j\}$\\
+$T=\operatorname{dot}(A,B)$ & $\{A,B\}$ & $\{b,j\}$ & $\{b,i,j\}$\\
+$Y=\operatorname{sum}_i(T)$ & $\{A,B\}$ & $\{b,j\}$ & $\{b,j\}$\\\bottomrule
+\end{tabularx}
+\end{table}
+The strict inclusion $M_T\subsetneq S_T$ is essential: $i$ is not needed
+outside $T$, but a contraction cannot remove an axis occurring in only one
+operand. Summation removes it at the root. Thus mandatory and retained sets
+cannot be identified even when the rewrite is feasible.
