@@ -24,7 +24,10 @@ If $p=p_1\Vert\cdots\Vert p_\ell$ is a permutation, then
 restores tensor dimension order, including interleaved groups.
 Paired overlap matching refines partitions; gather composition
 (Equation~\eqref{eq:gather-composition}) derives further selections.
-Lemma~\ref{lem:validated-mappings} proves preservation of these invariants.
+These steps preserve the mapping equations: inverse selection restores
+each group's entries at its recorded positions, and paired matching selects
+the same entries on both sides. A permutation covers each position once,
+so reconstruction also preserves complete partitions.
 
 \paperparagraph{From mappings to attribute programs.}
 \label{app:mappings-to-attribute-programs}
@@ -36,8 +39,7 @@ make lowering unsuccessful, leaving the residual program available for
 native interpretation. Supplied extent and coordinate expressions are
 preserved, and completed candidates require independent validation.
 Appendix~\ref{app:batched-reassociation-program} gives the complete
-reassociation case study. Traversal pseudocode and expanded tutorials are
-archived in \nolinkurl{evaluation/supplementary-materials/}.
+reassociation case study.
 
 
 \paperparagraph{Checked symbolic lowering.}
@@ -50,7 +52,9 @@ values, and output order are preserved by reindexing the finite sum.
 This semantic preservation is distinct from the exact builder correspondence
 proved in Appendix~\ref{app:symbolic-compilation-proof}.
 The independent validator checks the completed candidate, including
-expression definedness and rewrite obligations, under the written guard
-(Theorem~\ref{thm:validator-soundness}). Unproved construction goals are
-never assumptions. Failed lowering leaves the shared program intact;
-neither lowering nor guard proof search is claimed complete.
+source scope and definedness of the generated feasibility checks. Under
+the written condition and successful checks, it validates attribute
+expressions and rewrite obligations (Theorem~\ref{thm:validator-soundness}).
+Other unproved construction goals are never assumptions. Failed lowering
+leaves the shared program intact; neither lowering nor conditional
+validation is claimed complete.

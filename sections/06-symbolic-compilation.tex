@@ -159,41 +159,43 @@ without concrete metadata, the written guard, or successful simplification.
 
 Together with Theorem~\ref{thm:complete-synthesis}, this establishes
 completeness of the generated feasibility/builder program on the stated
-domain. Guard certification and checked symbolic lowering have separate
-acceptance obligations.
-Appendix~\ref{app:batched-reassociation-program} gives the complete generated
-attribute program for guarded batched reassociation.
+domain. Conditional validation checks its use in an executable rewrite.
+Appendix~\ref{app:batched-reassociation-program} gives a complete attribute
+program for reassociation under explicit sufficient conditions.
 
-\subsection{Guard Certification and Acceptance}
+\subsection{Implicit Applicability and Acceptance}
 \label{sec:compilation-scope}
-Constructing an attribute program does not establish that it succeeds on
-all matches allowed by a rule. Acceptance must show that the written guard
-$C$ implies $\operatorname{check}(m)$ for every legal source match $m$.
-This ensures that inference preserves the rule's original applicability
-conditions.
+TEPL compiles the written condition $C$, generated feasibility check $E_q$,
+and RHS attribute program $E_f$ once per rule. A legal match first evaluates
+$C$, then $E_q$. If either is false, the rule does not apply. The program
+$E_f$ runs only after both succeed. Runtime evaluates metadata programs;
+it does not repeat synthesis or symbolic proof search.
 
-\paperparagraph{Guard certification.}
-The checker establishes this implication using structural feasibility
-arguments or a fixed axis layout determined by the guard and captures.
-Appendix~\ref{app:accepted-core-proof} gives the sufficient cases and their
-justification. These checks are not complete: unresolved obligations return
-\code{Unknown}, without establishing infeasibility or adding a new guard.
-We call a rule \emph{certified} when admission, guard certification, and
-operation-contract checks succeed.
+\paperparagraph{Conditional validation.}
+The compiler establishes that $E_q$ reads only source metadata and is a
+defined Boolean whenever evaluation reaches it. It then validates $E_f$
+under source legality, $C$, and a true result from $E_q$. The obligations
+are attribute definedness, replacement legality, and equality of values
+and ordered shape. Other construction obligations remain goals to prove.
+The compiler does not require $C$ to imply $E_q$. Unresolved validation
+returns \code{Unknown}; a false runtime check is ordinary non-application.
 
 \paperparagraph{Acceptance guarantee.}
-Under the stated operation and execution contracts
-(Section~\ref{sec:implementation-scope}), an accepted certified rule produces
-a legal replacement preserving values and ordered shape for every legal
-match satisfying its written guard. This soundness guarantee allows
-nonnegative extents; Appendix~\ref{app:accepted-core-proof} gives the argument.
+Under the operation and execution assumptions in
+Section~\ref{sec:implementation-scope}, an accepted rule produces a legal,
+equivalent replacement on every legal match passing both conditions.
+Section~\ref{sec:candidate-validation} and
+Appendix~\ref{app:validation-proofs} give the validation argument.
+Soundness allows nonnegative extents. Only within the completeness domain
+does a false $E_q$ establish that no valid RHS axis assignment exists.
 
-A \emph{sound schema} is a specific rewrite pattern with a separately proved
-attribute construction (Appendix~\ref{app:axis-extensions}). Certification
-establishes its conditions and equality of any supplied fields with the
-generated fields. Other completed attribute
-programs use the independent validator in Section~\ref{sec:candidate-validation}.
-Table~\ref{tab:guarantee-map} summarizes the guarantees and their domains.
+A \emph{sound schema} is a rewrite pattern with a separately proved
+attribute construction (Appendix~\ref{app:axis-extensions}). Its conditions
+and agreement of supplied fields with constructed fields must hold under
+the effective applicability condition. Outside the complete constructor's
+fragment, a generated check need only be sufficient; it is not claimed to
+accept every feasible match. Table~\ref{tab:guarantee-map} summarizes the
+guarantees and their domains.
 
 \begin{table}[!htbp]
 \caption{Guarantees and their scope.}
@@ -202,10 +204,10 @@ Table~\ref{tab:guarantee-map} summarizes the guarantees and their domains.
 \begin{tabularx}{\linewidth}{@{}lY@{}}\toprule
 Result & Guarantee\\\midrule
 Constructor (Theorem~\ref{thm:complete-synthesis}) & Complete under D1--D4, read-once components, exact arithmetic, and extents $\ge2$; all RHS axis fields unknown.\\
-Compilation (Theorem~\ref{thm:symbolic-compilation}) & Shared metadata IR realizes the constructor for admitted plans; compilation does not discharge guards.\\
-Certified acceptance (Section~\ref{sec:compilation-scope}) & Sound native portable execution under a certified guard; extents $\ge0$. Guard certification is sufficient, not complete.\\
-Validation (Theorem~\ref{thm:validator-soundness}) & Sound completed candidates, including supplied fields, within the calculus; extents $\ge0$.\\
-Sound schemas (Lemma~\ref{lem:certified-extensions}) & Sound broadcast/reverse, product, negation, and unit-view schemas, including certified supplied fields.\\
+Compilation (Theorem~\ref{thm:symbolic-compilation}) & Shared metadata IR realizes the constructor for admitted plans: $E_q$ implements \code{check}, and $E_f$ implements \code{build} when feasible.\\
+Runtime application (Section~\ref{sec:compilation-scope}) & Evaluate $C$ and $E_q$ before $E_f$; false conditions skip the match. Accepted rules preserve values and ordered shape under the execution assumptions.\\
+Validation (Theorem~\ref{thm:validator-soundness}) & Establishes safe evaluation of $E_q$ and sound completed candidates under $C$ and $E_q$, including supplied fields; extents $\ge0$.\\
+Sound schemas (Lemma~\ref{lem:certified-extensions}) & Sound broadcast/reverse, product, negation, and unit-view schemas under their conditions, including checked supplied fields.\\
 Other extensions & Broader reasoning outside the proved fragments has empirical support only.\\\bottomrule
 \end{tabularx}
 \end{table}

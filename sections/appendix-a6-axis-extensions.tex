@@ -170,8 +170,9 @@ the declared batch and free-axis order.
 
 Views preserve dtype, and the numeric operations preserve the compatible
 dtypes required by the source contracts. Thus source legality establishes
-the replacement's dtype requirements. A supplied field certified equal to
-the constructed field gives the same attributes.
+the replacement's dtype requirements. A supplied field proved equal to
+the constructed field under the effective applicability condition gives
+the same attributes.
 For a zero extent, there are no coordinates to read on that dimension,
 and reduction over it is an empty sum. For extent one, reversal is the
 identity and the singleton-axis construction reads coordinate zero.
@@ -179,6 +180,3 @@ The arguments therefore apply to nonnegative extents without the
 completeness theorem's minimum-extent assumption. This proves soundness
 of the listed schemas while leaving that theorem's fragment unchanged.
 \end{proof}
-
-Implementation checks for these schemas are described in
-Appendix~\ref{app:extension-schema-implementation}.

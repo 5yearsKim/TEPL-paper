@@ -32,8 +32,8 @@ them with `\cite{key}`. The build runs BibTeX once citations are present.
 Use `make -B` to force a rebuild, `make clean` to remove auxiliary files,
 or `make clean-all` to also remove the generated paper PDF.
 
-`make` also builds `supplement.pdf`, cited by the paper. It contains declaration
-sketches, a worked token-counting procedure, and the complete 15-row certified scalability table.
+The paper is self-contained and builds as a single PDF, including its
+appendices. There is no separate supplement.
 
 ## Code and figure layout
 
@@ -65,7 +65,7 @@ This uses `wrapstuff`, included in the `texlive-latex-extra` dependency above.
 
 Use `\paperparagraph{Heading.}` for paragraph-level headings, including numbered
 steps. The shared `paper-style.tex` makes these headings bold italic,
-unindented and run-in in both documents. Avoid manual
+unindented and run-in throughout the paper. Avoid manual
 `\noindent\textbf{...}` or bare `\paragraph` headings so spacing and styling stay
 consistent. The shared command preserves the class's built-in `\paragraph`,
 which `acmart` prohibits redefining.
@@ -102,7 +102,11 @@ The appendices follow the main paper's progression and use the same notation:
 - **B. Symbolic Compilation Details**
   (`sections/appendix-b-compilation.tex`): Axes IR, mapping and synthesis
   invariants, operation declaration adapters, and the core
-  validation calculus and supporting proofs (`sections/appendix-b4-validation.tex`).
+  validation summary and soundness argument (`sections/appendix-b4-validation.tex`).
+  B.4 states the supported reasoning rules and gives a concise conditional
+  soundness proof: feasibility is checked before attribute construction.
+  B.7 summarizes operation coverage; guard certification and condition
+  suggestions are not part of the current design.
 - **C. Current Evaluation Protocol and Evidence**
   (`sections/appendix-c-evaluation.tex`): coverage, specification-size
   accounting and implementation checks.
@@ -115,8 +119,7 @@ outline of the expanded draft.
 
 ## Current evaluation artifacts
 
-`evaluation/README.md` maps the retained evidence to the active paper and
-supplement. Experiments omitted from the current paper have been removed,
+`evaluation/README.md` maps the retained evidence to the active paper. Experiments omitted from the current paper have been removed,
 including superseded coverage runs, the explicit/automatic outcome study,
 external TASO tests, target screening, the old transpose-folding integration,
 and historical default-backend scalability and native metadata timing.
@@ -126,10 +129,10 @@ and historical default-backend scalability and native metadata timing.
   the four workload counts in Table 5 and their semantic review.
 - `evaluation/current/specification_size/`: Section 9.3 and Table 6 token accounting.
 - `evaluation/certified-scalability/`: Section 9.4 summary, Figure 7 and details
-  in Appendix C, and Supplement S3.
+  in Appendix C.
 - `evaluation/reassociation/`: Appendix B's recorded implementation example.
 - `evaluation/source-line-count/`: the introduction's 269-line XLA example.
-- `evaluation/supplementary-materials/`: explanatory source snapshots cited by the appendix.
+- `evaluation/supplementary-materials/`: historical source snapshots, outside the paper build.
 
 `evaluation/recorded-results.json` retains the frozen 123-case input inventory
 needed by the coverage runner. Shared scalability rule inputs and the dialect

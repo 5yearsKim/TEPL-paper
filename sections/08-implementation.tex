@@ -4,10 +4,13 @@
 The compiler uses ANTLR~\cite{antlr}, resolves imports and names, and checks
 types. Its identity, ordered, and general construction strategies submit
 candidates to fresh verifier contexts. The verifier checks original
-metadata expressions, constructor obligations, and completed replacements;
+source scope and definedness of generated feasibility checks, then
+metadata expressions, constructor obligations, and completed replacements
+under the written condition and successful feasibility checks;
 \code{require} records an unmet goal as \code{Unknown}. Work, recursion,
 term-count, and time limits bound proof attempts.
-Appendix~\ref{app:validation-proofs} specifies the formal validation calculus.
+Appendix~\ref{app:validation-proofs} states the core validation rules
+and their soundness argument.
 
 \paperparagraph{Shared program construction and execution.}
 For admitted plans, \code{inference::emit} constructs the shared metadata
@@ -16,22 +19,30 @@ and ordinary ordered synthesis use this constructor. Program construction
 does not require symbolic lowering to succeed. Symbolic lowering
 uses source axis mappings and partitions; paired contraction lists may
 be reordered together. A fresh verifier checks the lowered expressions,
-their definedness, and the rewrite obligations under the written guard. Failed
+their definedness, and the rewrite obligations under both the written
+condition and generated feasibility predicate. Failed
 lowering leaves the original program intact. The portable runtime
 interprets that program, reuses shared intermediate values, and checks
 feasibility before computing positional attributes. Additive components
 keep separate axis identities.
 
-Rust/C++ export requires successful symbolic lowering.
-Appendix~\ref{app:accepted-core-proof} details portable loading and runtime
-checks. Sound execution also allows zero and singleton extents, where a
-false feasibility predicate does not establish impossibility.
+The runtime evaluates the written condition before generated feasibility
+checks, and constructs RHS attributes only after both succeed. False
+feasibility skips a match. Invalid metadata, arithmetic errors, and resource
+exhaustion remain distinct outcomes. Compiled programs preserve the
+feasibility predicates through loading. Rust/C++ export requires successful
+symbolic lowering and emits the same checks before attribute construction;
+unsupported residual-DAG exports report an error.
+
+The execution guarantee assumes the declared algebraic semantics,
+sufficient resources, and representable metadata calculations. It also
+assumes dtype compatibility; the compiler does not check dtype contracts.
 
 \paperparagraph{Trusted components.}
 Table~\ref{tab:guarantee-map} states the formal guarantees. The C++ checker
 also supports reversal, broadcast, calculated indices, scalar functions,
 and metadata comprehensions beyond the validation calculus. Declarations,
-frontend lowering, the C++ realization of admission, certification, loading,
+frontend lowering, the C++ realization of admission, conditional validation, loading,
 and primitive reasoning/evaluation, and backend agreement with declared
 algebraic semantics remain trusted. The results are paper proofs with
 handwritten implementation correspondence, not mechanized verification
@@ -44,5 +55,6 @@ execution limit is reached. TEPL also generates Rust for
 \emph{egg}~\cite{egg}, using e-class shape and dtype analysis for equality
 saturation~\cite{equality-saturation}.
 The XLA prototype (Section~\ref{sec:evaluation-xla-integration}) invokes
-generated attribute programs through a C ABI. XLA retains candidate discovery,
-backend eligibility checks, and graph updates.
+generated applicability checks and attribute programs through a C ABI.
+A false generated check leaves the candidate unchanged. XLA retains
+candidate discovery, backend eligibility checks, and graph updates.

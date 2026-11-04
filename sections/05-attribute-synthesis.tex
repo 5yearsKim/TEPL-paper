@@ -153,11 +153,11 @@ its ordering constraints.
 These checks depend only on match metadata, which determines the LHS
 classes, input orders, and target output order.
 
-In TEPL, the rule's \code{where} condition (Section~\ref{sec:where}) must
-imply $\operatorname{check}(m)$ for every legal LHS match within this
-fragment. Sections~\ref{sec:compilation-scope} and~\ref{sec:candidate-validation}
-describe the acceptance paths; Appendix~\ref{app:condition-suggestions}
-gives the condition-suggestion procedure.
+TEPL compiles these checks into the implicit applicability predicate
+$E_q$. At match time, a false result skips the rule before attribute
+construction. Sections~\ref{sec:compilation-scope} and~\ref{sec:candidate-validation}
+explain how compilation validates construction under the written condition
+and a successful generated check.
 
 \subsection{Constructing Axis Attributes}
 \label{sec:formal-construction}

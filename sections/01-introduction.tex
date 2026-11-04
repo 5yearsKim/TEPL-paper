@@ -35,7 +35,9 @@ Our research question is: \emph{What if we could design a language that makes
 tensor rewriting as easy and intuitive as writing its algebraic form, while
 leaving complex attribute transformation to the compiler?}
 TEPL pursues this goal by using operation semantics and symbolic axis mapping
-to infer RHS axis attributes under explicit conditions.
+to infer RHS axis attributes and generate a feasibility check. A match
+must satisfy both the written conditions and this check before TEPL
+constructs the replacement.
 Figure~\ref{fig:why-tepl} illustrates the idea with a dot reassociation example.
 TEPL lets users write rewrite rules in simple algebraic form and provides tools for
 explicitly deriving attribute transformations. For supported rewrite patterns,
@@ -57,9 +59,10 @@ same nested-dot replacement graph.}
 TEPL provides syntactic structures and tools for expressing tensor
 rewrite rules concisely and intuitively.
 \item \textbf{Automatic attribute inference.}
-For supported rewrites, the compiler constructs reusable functions that
-compute missing RHS axis fields from match metadata while preserving
-supplied extent and coordinate attributes. Mixed explicit/inferred axis
+For supported rewrites, the compiler constructs a reusable feasibility
+check and a function that computes missing RHS axis fields from match
+metadata. Attribute construction runs only after the check succeeds,
+while supplied extent and coordinate attributes are preserved. Mixed explicit/inferred axis
 fields are validated rather than synthesized
 (Section~\ref{sec:scope-limitations}).
 \item \textbf{Symbolic axis mapping for composed operations.}
@@ -70,9 +73,10 @@ input tensors of arbitrary rank.
 We prove constructive completeness for independent, fully unknown RHS axis
 fields in read-once contraction, permutation, and unary summation, with a
 restricted additive extension, exact arithmetic, and input extents at least
-two. A shared symbolic metadata program realizes this constructor; a sufficient guard
-checker establishes the end-to-end acceptance guarantee in
-Section~\ref{sec:compilation-scope}. Sound view/reindexing schemas add
+two. A shared symbolic metadata program realizes this constructor.
+Compilation validates attribute definedness, legality, and equivalence
+under the written condition and generated feasibility check
+(Section~\ref{sec:compilation-scope}). Sound view/reindexing schemas add
 broadcast and reverse; core validation also covers supplied fields.
 Table~\ref{tab:guarantee-map} collects the guarantees and their scope.
 These are paper proofs, not mechanized verification. We trust

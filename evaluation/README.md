@@ -6,14 +6,13 @@
 | `xla-rewrite-count/` | Section 9.2, Table 5: DLRM native XLA rewrite counts and counter source. |
 | `xla-rewrite-count-models/` | Section 9.2, Table 5: reviewed GPT-2, ViT and ResNet counts, plus the reviewed DLRM classification. |
 | `current/specification_size/` | Section 9.3 and Appendix C: source footprints of all 31 inference-successful rules; Table 6 restores the earlier audited 25-case XLA comparison. |
-| `certified-scalability/` | Section 9.4 summary, Figure 7 and details in Appendix C, and Supplement S3: all 15 configurations and saved phase measurements. |
+| `certified-scalability/` | Section 9.4 summary, Figure 7 and details in Appendix C: all 15 configurations and saved phase measurements. |
 | `reassociation/` | Appendix B: recorded semantic check, compilation and portable validation of the displayed program. |
 | `source-line-count/` | Introduction: 269 nonblank C++ code lines in the pinned XLA routine. |
-| `supplementary-materials/` | Explanatory snapshots, module correspondence and guard details referenced by the appendix. |
+| `supplementary-materials/` | Historical explanatory snapshots and module correspondence; not required by the paper. |
 | `recorded-results.json` | Frozen task sources, original outcomes and source hashes consumed by the retained coverage runner. |
 
-The paper includes its appendices and the separately built supplement for this
-inventory. Historical compiler comparisons, TASO, paired-axis outcome tests,
+The paper includes its appendices in a single PDF and has no separate supplement. Historical compiler comparisons, TASO, paired-axis outcome tests,
 target screening, emission/acceptance timing, native metadata timing, old default
 scalability, the TransformerLM workload count and the older transpose-folding
 workflow/integration experiment are omitted.

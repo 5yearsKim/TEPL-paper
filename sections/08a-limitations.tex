@@ -12,9 +12,13 @@ distinguishes operation support from theorem scope. The 86 catalog cases
 without an established model remain unvalidated; structural extensibility
 alone supplies no semantic guarantee.
 
-The core certificates are sufficient checks for specified templates, and
-general guard reasoning remains incomplete. The independent validator can
-also accept supplied attributes when inference fails. The XLA integration
+Conditional validation can remain unresolved even when a feasibility
+program has been generated. Its proof search is not complete. Outside the
+complete synthesis fragment, generated applicability checks may reject
+feasible matches. Even within that fragment, the completeness theorem does
+not cover zero or singleton extents. Successful compilation alone does not
+establish that a rule has an applicable match. The independent validator
+can also accept supplied attributes when inference fails. The XLA integration
 covers default dense-f32 dot metadata, retaining convolution and a custom
 policy by hand. Production opportunity frequency, cache hit rates, and
 developer productivity remain unassessed.

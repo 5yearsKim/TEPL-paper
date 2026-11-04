@@ -1,6 +1,5 @@
 # Built documents. Figure PDFs are source assets and must remain versioned.
 /main.pdf
-/supplement.pdf
 
 # LaTeX auxiliary files (including builds of other document entry points).
 *.aux
@@ -22,8 +21,6 @@
 *.bcf
 /main.log
 /main.out
-/supplement.log
-/supplement.out
 /indent.log
 
 # Local Python environments and caches.

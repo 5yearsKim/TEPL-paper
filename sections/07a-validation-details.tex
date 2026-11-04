@@ -1,52 +1,65 @@
 \subsection{Validation Checks}
 \label{sec:validation-boundary}
 \label{sec:validation-algorithm}
-Given a rewrite $L\Rightarrow R$, guard $C$, and completed attribute
-program $f$, the validator establishes three properties:
+Given a rewrite $L\Rightarrow R$, written condition $C$, feasibility
+program $E_q$, and completed attribute program $f$, the validator first
+establishes that $E_q$ uses only source metadata and evaluates to a Boolean
+on every legal match satisfying $C$. For a sequence of short-circuit
+checks, each check is proved defined after its predecessors succeed.
+Only then may their truth be used to validate the builder.
+
+Under source legality, $C$, and a true result from $E_q$, validation
+establishes three properties:
 \begin{enumerate}
 \item \emph{Defined attributes.}
 The original attribute expressions have valid types, index accesses,
 and integer calculations. Supplied fields are preserved, and no holes remain.
 \item \emph{Legal replacement.}
-The attributes satisfy every RHS operation's axis, extent, and dtype
-requirements.
+The attributes satisfy every RHS operation's axis and extent requirements.
 \item \emph{Equivalent result.}
-The RHS preserves values, ordered output shape, and result dtype.
+The RHS preserves values and ordered output shape.
 \end{enumerate}
-
-The proof uses only source legality and the written guard as assumptions;
-relationships proposed during construction must be proved.
-For value comparison, TEPL expresses both graphs as indexed input reads,
-products, and finite sums, then establishes equality using checked
-algebraic laws. It returns \code{Proved} only when all checks succeed;
-otherwise, \code{Unknown} means that correctness remains unproved.
+Construction relationships other than the validated applicability predicate
+remain obligations to prove. For value comparison, TEPL expresses both
+graphs as indexed input reads, products, and finite sums, then establishes
+equality using checked algebraic laws. It returns \code{Proved} only when
+all checks succeed; \code{Unknown} means that correctness remains unproved.
+Neither proof search nor attribute synthesis is repeated at match time.
 
 \subsection{Soundness}
 \label{sec:acceptance-soundness}
 The formal guarantee covers contraction, permutation, unary summation,
 and elementwise addition without broadcasting, under exact real arithmetic
-and Appendix~\ref{app:validation-proofs}'s metadata calculus. It allows
-arbitrary finite ranks and nonnegative extents.
-\begin{theorem}[Candidate validation soundness]
+and the metadata operations and reasoning rules in
+Appendix~\ref{app:validation-proofs}. It allows arbitrary finite ranks and
+nonnegative extents.
+\begin{theorem}[Conditional validation soundness]
 \label{thm:validator-soundness}
-If $\operatorname{Validate}(L,R,C,f,\mathcal G)$ returns \code{Proved}
-within this calculus, then
+If $\operatorname{Validate}(L,R,C,E_q,f,\mathcal G)$ returns \code{Proved}
+using these rules, then $E_q$ evaluates to a Boolean for every legal source
+match satisfying $C$, and
 \begin{equation}
- \forall m.\quad \operatorname{Legal}_L(m)\land C(m)
- \Longrightarrow\exists\beta.\quad f\Downarrow_m\beta
- \land\operatorname{Valid}(m,\beta).
+\begin{aligned}
+ &\operatorname{Legal}_L(m)\land C(m)
+       \land(E_q\Downarrow_m\mathsf{true})\\
+ &\qquad\Longrightarrow\exists\beta.\quad f\Downarrow_m\beta
+       \land\operatorname{Valid}(m,\beta).
+\end{aligned}
  \label{eq:acceptance-soundness}
 \end{equation}
-Here $\mathcal G$ contains the candidate obligations, and $C(m)$
-means successful evaluation to true. The notation $f\Downarrow_m\beta$
-means that $f$ evaluates to attributes $\beta$ on metadata $m$.
+Here $m$ is arbitrary legal match metadata, $\mathcal G$ contains candidate
+obligations, and $C(m)$ means successful evaluation to true. The notation
+$e\Downarrow_m v$ means that $e$ evaluates to $v$ on metadata $m$.
 Evaluation abstracts from resource exhaustion; it includes bounds,
 types, and integer representability.
 \end{theorem}
 
 \begin{proof}[Proof sketch]
-Metadata reasoning proves defined attributes and RHS legality;
-lowering and normalization establish value equality. Ordered-shape and
-dtype checks complete validity.
-Appendix~\ref{app:validation-proofs} gives the full proof.
+Source scope and metadata reasoning establish safe Boolean evaluation of
+$E_q$ before its result is assumed. Under a true result and $C$, metadata
+reasoning proves attribute definedness and RHS legality. Lowering and
+normalization establish value equality; ordered-shape checks complete
+validity under the stated dtype-compatibility assumption.
+Appendix~\ref{app:validation-proofs} gives the reasoning rules and
+soundness argument.
 \end{proof}

@@ -63,11 +63,12 @@ TEPL tokens. These historical measurements are retained in
 Some selected XLA branches cover additional cases and policies, so this
 comparison does not establish equal implementation scope.
 
-Lexical tokens exclude comments and whitespace; imports and shared
-operation declarations are excluded. The five responsibilities partition
-each included token exactly once. Shared dialect and compiler costs remain
-real reusable costs outside these per-rule counts. Supplement S2 gives the
-worked transpose example.
+The lexical scanner counts each identifier, literal, and recognized
+multi-character operator as one token; other punctuation counts
+individually. Comments and whitespace count zero. Counts cover complete
+rules, excluding imports and shared operation declarations. The five
+responsibilities partition each included token exactly once. Shared
+dialect and compiler costs remain outside these per-rule counts.
 
 \FloatBarrier
 \sidefigure[0.6]{figures/scalability.pdf}
@@ -86,9 +87,29 @@ source axis lists, and three source transposes composed into one replacement
 at ranks 2, 4, 8, 16, and 32 with symbolic permutations. All RHS axis fields
 are inferred. We run the optimized compiler with guard certification under
 algebraic semantics, using one warmup and ten measured rounds per
-configuration. Timing covers compilation through executable validation;
-parsing and import loading are excluded. Supplement~\cite{tepl-supplement},
-Section~S3, gives the complete protocol, phase boundaries, and timing table.
+configuration on an Intel Core Ultra 7 155H. Runs are serial, with case
+order shuffled using seed 20261026 and unchanged compiler work budgets.
+Each call starts from loaded syntax without reusing a proof or compiled
+program. The original rule bodies and guards are preserved. Dot chains
+use the fixed-layout certificate; transpose chains use the unary-chain
+certificate.
+
+Preparation includes resolution and type checking. Certification and
+construction include semantic-plan preparation, admission, guard
+certification, and metadata materialization. Lowering and validation
+include executable lowering, metadata emission, and final validation.
+Other cost covers dispatch and intermediate-object cleanup. These are API
+phase boundaries; individual tasks may span phases. Parsing, import loading,
+serialization, portable loading, graph rewriting, and numerical reference
+execution are outside timing.
+
+Outside timing, the driver checks agreement with public compilation and a
+portable roundtrip for each configuration. The curves show medians with
+minimum--maximum whiskers; phase bars use means so their segments sum to
+mean total latency. One machine and ten rounds describe the tested
+workloads, not an asymptotic bound or production throughput. All 165 calls,
+including warmups, source and compiler provenance, and validation logs are
+recorded in \nolinkurl{evaluation/certified-scalability/}.
 
 All 15 configurations compile and validate in every measured round.
 Dot-chain compilation time increases approximately linearly with chain

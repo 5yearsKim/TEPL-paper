@@ -1,7 +1,7 @@
 # Certified scalability rerun
 
-Section 9.4 presents these results and the two-panel figure. Supplement S3
-and this artifact record the protocol and complete timing table.
+Section 9.4 summarizes these results. Appendix C contains the two-panel
+figure and timing protocol. This artifact retains the complete timing table.
 It measures automatic dot reassociation at depths 1–10, transpose composition
 at ranks 2, 4, 8, 16, 32, and compile costs per API phase. Two panels share one
 horizontal row: dot-chain phase bars with median total latency, and transpose

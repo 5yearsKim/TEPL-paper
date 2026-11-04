@@ -6,9 +6,9 @@ specifies both output order and scalar semantics. The generalized dot below
 pairs batch and contraction positions in list order; free axes preserve
 operand order. Paired groups require matching extents, distinct in-range
 selectors, and disjoint roles, including when groups are empty.
-Transpose and slice declaration sketches illustrating the attribute roles
-in Table~\ref{tab:attribute-roles} appear in Supplement~\cite{tepl-supplement},
-Section~S1.
+The attribute roles in Table~\ref{tab:attribute-roles} determine the field
+types: transpose declares \code{permutation: axis[]}; a unit-stride slice
+declares \code{starts: coordinate[]} and \code{sizes: extent[]}.
 
 \begin{lstlisting}[language=TEPL,
   caption={Axes IR representation of generalized dot, with explicit attributes, axis bindings, and value semantics.},

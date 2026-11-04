@@ -2,9 +2,9 @@
 \label{sec:problem}
 This section defines the attribute synthesis problem and the correctness
 requirements for its solutions. Given a rewrite's LHS metadata, the goal is
-to construct RHS attributes that make the replacement legal and preserve
-its result under the declared conditions. We also specify the mathematical
-fragment for which we establish correctness and completeness.
+to decide whether valid RHS attributes exist and construct them when
+feasible. Application also respects the user-written conditions. We also
+specify the mathematical fragment for which we establish correctness and completeness.
 
 \subsection{Tensor Expressions and Rewrites}
 Let $\mathcal X=\{X_1,\ldots,X_n\}$ be the input tensor names. Each $X_i$ has
@@ -26,8 +26,7 @@ constructs the unknown RHS axis fields. We use the following notation throughout
 \label{eq:metadata}
 \end{equation}
 Match metadata $m$ is concrete at a match and makes every LHS operation legal.
-Scalar types are fixed in the exact-real fragment; for typed validation,
-$m$ also carries captured dtypes.
+Scalar types are fixed in the exact-real fragment.
 Writing $X=(X_1,\ldots,X_n)$ for the input values, the two computations are
 $L_m(X)$ and $R_{m,\beta}(X)$. An attribute program reads $m$, never the
 entries of $X$.
@@ -49,12 +48,12 @@ over all tensor values with the input shapes specified by $m$. We define
 \label{eq:valid}
 \end{equation}
 Thus, valid attributes make the RHS legal and preserve both the ordered
-output shape and the values for every compatible input. In typed validation,
-$\operatorname{Legal}_R$ also requires the declared dtype contracts and
-agreement with the source result dtype.
+output shape and the values for every compatible input. Dtype compatibility
+is assumed; axis synthesis and validation do not check dtype contracts.
 
 Synthesis fills unknown axis fields from metadata $m$ and preserves supplied
-fields. Supplied expressions must be defined.
+fields. Supplied expressions must be defined whenever the RHS attribute
+program runs.
 The resulting $\beta$ must be correct for every compatible input value,
 so the quantifier order is $\exists\beta\,\forall X$.
 
@@ -76,8 +75,19 @@ must satisfy:
 Both programs depend only on match metadata and must satisfy these
 requirements for every legal instance in the defined fragment, across
 varying ranks and shapes.
-For a rule with a \code{where} condition $C$, these requirements need only
-hold for matches satisfying $C$.
+The compiler realizes these functions as a feasibility program $E_q$ and
+an attribute program $E_f$ (Section~\ref{sec:method}). For a legal match,
+the effective applicability condition is
+\begin{equation}
+ A(m)=C(m)\land\lbrack\!\lbrack E_q\rbrack\!\rbrack_m,
+ \label{eq:effective-applicability}
+\end{equation}
+where $C$ is the written \code{where} condition, or true when absent.
+Evaluation short-circuits: a false $C$ skips $E_q$, and a false $E_q$
+skips $E_f$. Thus attribute construction occurs only on feasible matches.
+The completeness claim concerns the mathematical functions on the stated
+fragment; acceptance of their compiled realization also requires
+conditional validation.
 
 \subsection{Scope and Assumptions of the Completeness Theorem}
 \label{sec:formal-scope}

@@ -126,8 +126,9 @@ from operation semantics. We prove constructive completeness for a restricted cl
 rewrites: under the stated assumptions, our synthesis algorithm constructs
 valid RHS axis assignments whenever they exist. To support attribute
 synthesis in the compiler, we introduce Axes IR and symbolic axis mapping to
-handle tensors of arbitrary rank and track axis relationships. This enables attribute programs to be synthesized once per rule and
-evaluated per match without repeating inference.
+handle tensors of arbitrary rank and track axis relationships. TEPL compiles
+a feasibility check and an attribute program once per rule. Each match
+checks feasibility before constructing attributes, without repeating inference.
 TEPL models 123 of 209 concrete XLA rewrite
 cases, with RHS axis inference and verification succeeding in 31 of the
 38 axis-inference cases (81.6\%). Across all 31 successful rules, TEPL rules with

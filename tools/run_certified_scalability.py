@@ -115,7 +115,7 @@ def report(data, output):
     (output / 'performance.md').write_text('\n'.join(lines))
     table = [r'\section{Complete Certified Scalability Configurations}',
              r'All 15 automatic configurations use the certified backend. The historical default-backend results remain in the artifact.',
-             r'\input{supplement/03-scalability-protocol}',
+             r'\input{evaluation/certified-scalability/source/03-scalability-protocol}',
              r'\begin{table}[!htbp]',
              r'\caption{Certified compilation: median milliseconds over ten measured rounds. Parsing and import loading are excluded. Phase medians need not sum to the median total.}',
              r'\label{supp-tab:scalability-results}', r'\small',

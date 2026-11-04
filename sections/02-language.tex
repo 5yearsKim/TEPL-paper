@@ -81,19 +81,22 @@ rule compose_transposes_explicit {
 \label{sec:where}
 
 
-Some rewrite rules are applicable only under specific conditions. A
-\code{where} block expresses these conditions as predicates combined with
-\code{&&} and \code{||}.
+A \code{where} block expresses user restrictions as predicates combined
+with \code{&&} and \code{||}. These may constrain axis lists, dimension
+sizes, or backend requirements. A missing block means \code{true}.
 
-For operations with declared semantics, acceptance establishes that the
+TEPL also generates a feasibility check from the rewrite and operation
+semantics. A match must pass both the written condition and this check.
+If either is false, the rule does not apply. Only then does TEPL evaluate
+the RHS attribute program. The written condition therefore restricts
+applicability but need not guarantee that attribute construction is
+feasible. No additional syntax is required for the generated check.
+
+For operations with declared semantics, compilation establishes that the
 attribute program is defined and produces a legal, equivalent replacement
-whenever the condition holds. A condition can, for example, restrict a captured transpose permutation
-to the identity. Appendix~\ref{app:condition-suggestions} gives the
-batch-routing condition for generalized dot reassociation.
-
-When verification fails, TEPL can suggest an additional sufficient condition
-to add to \code{where}. The user adds the condition and checks the rule again
-(Appendix~\ref{app:condition-suggestions}).
+whenever both conditions hold. The batch-preservation condition in
+Appendix~\ref{app:batched-reassociation-program} illustrates an explicit
+restriction for a worked reassociation program.
 
 \subsection{Automatic Attribute Inference}
 \label{sec:auto}
@@ -105,11 +108,13 @@ rule compose_transposes_auto {
   (transpose (transpose X)) => (transpose X)
 }
 \end{lstlisting}
-\sidefigure[0.5]{figures/Automatic Attribute Inference.pdf}{Omitted RHS axis fields trigger inference of a reusable attribute function at compile time. Runtime evaluates this function on the metadata captured for each match.}{fig:introducing-auto}{A vertical flow separates the user rule and operation semantics, compiler
+\sidefigure[0.5]{figures/Automatic Attribute Inference.pdf}{Omitted RHS axis fields trigger inference of a reusable feasibility check and attribute function at compile time. Runtime constructs attributes only after the written condition and generated check succeed.}{fig:introducing-auto}{A vertical flow separates the user rule and operation semantics, compiler
 synthesis and verification, and runtime application of the generated function.}
-The compiler infers the explicit permutation transformation above once;
-runtime evaluates it on each match's captured metadata
-(Figure~\ref{fig:introducing-auto}). Unsupported inference produces a
-diagnostic. Section~\ref{sec:problem} formalizes the contract across ranks
+The compiler infers the explicit permutation transformation above once.
+Transpose composition is feasible for every legal pair of source
+permutations, so its generated check adds no restriction. Runtime evaluates
+the attribute function on each applicable match's captured metadata
+(Figure~\ref{fig:introducing-auto}). Unsupported inference or unresolved
+conditional validation produces a diagnostic. Section~\ref{sec:problem} formalizes the contract across ranks
 and shapes.
 \FloatBarrier

@@ -1,10 +1,11 @@
 \section{Candidate Validation}
 \label{sec:candidate-validation}
-A completed RHS attribute program may be supplied by a user or produced
-by a construction strategy outside the proved constructor. TEPL must
-establish that the program computes legal attributes and preserves the
-rewrite's result for every legal match satisfying the written guard.
-Candidate validation checks this at compile time, independently of how
-the attributes were generated.
+TEPL validates completed attribute programs at compile time, independently
+of how their attributes were obtained. It first checks that the generated
+feasibility predicate can be evaluated safely. Under the written condition
+and a true feasibility result, it then establishes that the attribute
+program is defined and produces a legal replacement with the same result.
+This applies to inferred and user-supplied attributes; when no generated
+restriction is needed, $E_q$ is true.
 
 \input{sections/07a-validation-details}
