@@ -1,47 +1,85 @@
 \section{Introduction}
 \label{sec:introduction}
-\subsection{Motivation}
-Algebraic tensor rewrites are widely used to improve execution efficiency in tensor
-compilers. Production systems such as XLA and TVM use graph transformations
+The same tensor operation can be more efficient depending on how it is expressed.
+Consider dot reassociation, $(AB)C \Rightarrow A(BC)$. The two expressions are
+algebraically equivalent but have different hardware costs. Suppose
+$A\in\mathbb R^{100\times1}$, $B\in\mathbb R^{1\times100}$, and
+$C\in\mathbb R^{100\times1}$.
+Then $(AB)C$ requires 100 times as many scalar multiplications as $A(BC)$
+($100\cdot1\cdot100+100\cdot100\cdot1=20{,}000$ versus
+$1\cdot100\cdot1+100\cdot1\cdot1=200$).
+
+This is why algebraic tensor rewrites are widely used to improve efficiency in tensor
+compilers. For example, XLA, TVM, use graph transformations
 to simplify computations and enable efficient execution~\cite{xla-hlo-passes,tvm}.
-Prior work uses algebraic transformations for graph
-optimization~\cite{taso,tensat,spores}, distributed training~\cite{unity},
-operator fusion~\cite{dnnfusion,neptune}, and optimization across
-execution levels~\cite{mirage,trinity}.
+Other tensor compiler frameworks also highly rely on algebraic tensor rewrites for
+graph optimization~\cite{taso,tensat,spores,pytorch2}, distributed
+training~\cite{unity}, operator fusion~\cite{dnnfusion,neptune},
+and optimization across execution levels~\cite{mirage,trinity}.
 
-Although tensor rewrite rules can be simple in algebraic form, they can
-require substantial implementation logic. For example,
-consider the dot reassociation rule, $(XY)Z \Rightarrow X(YZ)$. The equation shows how to
-rearrange the computation, but general tensor dot operations also need
-attributes specifying their batch and contraction dimensions. The rewrite
-must compute how these attributes are transformed from the left-hand side (LHS)
-to the right-hand side (RHS). For example, in XLA, this single transformation is implemented by the
-\code{AssociativeReorderNestedDot} routine in 269 nonblank lines of C++ code
-(excluding comments)~\cite{xla-simplifier}, including logic for attribute transformation and
-checking applicability. This illustrates the substantial implementation complexity
-hidden behind a seemingly simple algebraic rewrite rule.
+Although tensor rewrites are simple in algebraic form, their implementations
+can be much more complex. For the simple dot reassociation rule above, XLA
+implements this single transformation in the
+\code{AssociativeReorderNestedDot} routine using 269 nonblank lines of C++
+code (excluding comments)~\cite{xla-simplifier}.
+How come a simple rule such as $(AB)C \Rightarrow A(BC)$ becomes this complex?
 
-A key difficulty is that matching the LHS does not determine the
-attributes needed on the RHS. Users must therefore write
-additional expressions or custom code to compute them. This requires
-tracking how dimension positions, operand pairings,
-and output order change across composed operations. Two dimensions with the same
-extent can still represent different coordinates, so extents alone are not enough
-to determine their correspondence. The transformation must also work for
-tensors of arbitrary rank; checking a few fixed-rank examples does not
-establish that it works in general.
+Many tensor operations carry attributes that specify operation metadata.
+For the rank-two tensor example above, the dot operation on $A$ and $B$
+maps tensors with axes $[i,k]$ and $[k,j]$ to a tensor with axes $[i,j]$.
+Here, $k$ is contracted in both operands, requiring
+\code{lhs_contract_dim=[1]} and \code{rhs_contract_dim=[0]}.
+For a general dot operation on tensors of arbitrary rank, the contraction
+dimensions can be multiple and noncontiguous. For example, given
+$A\in\mathbb{R}^{i_1\times k_1\times k_2\times i_2}$ and
+$B\in\mathbb{R}^{k_1\times j_1\times k_2}$, contracting $k_1$ and $k_2$
+requires \code{lhs_contract_dim=[1,2]} and
+\code{rhs_contract_dim=[0,2]}, producing
+$AB\in\mathbb{R}^{i_1\times i_2\times j_1}$.
+Dot operations can also specify batch dimensions. Thus, a general dot
+operation has four axis attributes:
+\code{lhs_contract_dim}, \code{rhs_contract_dim},
+\code{lhs_batch_dim}, and \code{rhs_batch_dim},
+each represented as a list of integers.
+
+Much of the complexity of tensor rewriting comes from transforming these
+attributes. Consider dot reassociation again. The left-hand side (LHS)
+contains two dot operations, each with its own attributes.
+Can the right-hand side (RHS) operations simply copy the LHS attributes?
+No, this doesn't work in general.
+
+Consider the dot reassociation rule $(AB)C \Rightarrow A(BC)$, where each
+multiplication denotes a general dot operation. Let $A$, $B$, and $C$ have
+shapes $[2,3]$, $[4,3]$, and $[4,5]$, respectively.
+On the LHS, the first dot contracts dimension 1 of both $A$
+and $B$, requiring \code{lhs_contract_dim=[1]} and
+\code{rhs_contract_dim=[1]}. After reassociation, however, the first dot
+operates on $B$ and $C$ and must contract dimension 0 of both operands.
+Its contraction attributes must therefore change to \code{[0]} and
+\code{[0]}. Even a simple algebraic reassociation cannot generally reuse
+the original operation attributes. The compiler must explicitly derive new
+contraction dimensions from the axis correspondence between the original
+and rewritten expressions.
+
+The example above uses rank-two tensors, but general dot operations must
+also handle tensors of arbitrary rank, with multiple contraction and batch
+dimensions. To implement the rewrite, users must track how these dimensions
+move and pair across operations, then compute the RHS attributes.
+Dimension sizes alone cannot guide this process: two dimensions can have
+the same size but play different roles in the computation.
+The attribute transformation must therefore follow the correspondence
+between axes and remain valid across all supported ranks and dimension
+configurations.
 
 Our research question is: \emph{What if we could design a language that makes
 tensor rewriting as easy and intuitive as writing its algebraic form, while
 leaving complex attribute transformation to the compiler?}
-TEPL pursues this goal by using operation semantics and symbolic axis mapping
-to infer RHS axis attributes and generate a feasibility check. A match
-must satisfy both the written conditions and this check before TEPL
-constructs the replacement.
-Figure~\ref{fig:why-tepl} illustrates the idea with a dot reassociation example.
-TEPL lets users write rewrite rules in simple algebraic form and provides tools for
-explicitly deriving attribute transformations. For supported rewrite patterns,
-the compiler can infer RHS axis transformations automatically.
+We introduce TEPL, a language dedicated to intuitive tensor rewriting,
+with tools for explicitly deriving attribute transformations.
+For supported rewrite patterns, users can instead leave RHS axis
+attributes unspecified and let the compiler infer them automatically.
+Figure~\ref{fig:why-tepl} illustrates these two ways of expressing dot
+reassociation and compares them with a handwritten implementation.
 
 \paperfigure{1}{figures/Why TEPL_ From Algebraic Rules to Practical Tensor Rewrites.pdf}{Four ways to express the same dot reassociation rewrite.
 (a) A concise algebraic pattern specifies the RHS graph but leaves its
@@ -53,34 +91,36 @@ TEPL infers their transformation logic from reusable
 operation semantics and match metadata.}{fig:why-tepl}{Four panels compare an algebraic pattern, custom implementation logic,
 explicit TEPL attribute expressions, and inferred TEPL axis attributes for the
 same nested-dot replacement graph.}
-\subsection{Contributions}
+
+This paper makes the following contributions:
+\begingroup
+% Compact spacing applies only to this contribution list.
+\setlength{\leftmargini}{2em}
+\makeatletter
+\let\contributionlistdefaults\@listi
+\def\@listi{\contributionlistdefaults
+  \topsep2pt\relax
+  \itemsep2pt\relax
+  \parsep0pt\relax
+  \partopsep0pt\relax}
+\makeatother
 \begin{enumerate}
 \item \textbf{A practical language design for tensor rewriting.}
-TEPL provides syntactic structures and tools for expressing tensor
-rewrite rules concisely and intuitively.
+TEPL combines algebraic rewrite rules, applicability conditions, and
+explicit attribute transformations in one language.
 \item \textbf{Automatic attribute inference.}
-For supported rewrites, the compiler constructs a reusable feasibility
-check and a function that computes missing RHS axis fields from match
-metadata. Attribute construction runs only after the check succeeds,
-while supplied extent and coordinate attributes are preserved. Mixed explicit/inferred axis
-fields are validated rather than synthesized
-(Section~\ref{sec:scope-limitations}).
+For supported rewrite patterns, TEPL derives missing RHS axis attributes
+from operation semantics and match metadata, reducing the need for
+handwritten attribute transformations.
 \item \textbf{Symbolic axis mapping for composed operations.}
-We propose an algorithm that maps symbolic axis groups across composed
-operations using operation semantics, enabling attribute matching for
-input tensors of arbitrary rank.
+We introduce Axes IR and an algorithm that tracks symbolic axis groups
+across composed operations. The compiler uses these mappings to generate
+reusable feasibility checks and attribute builders for tensors of
+arbitrary rank.
 \item \textbf{Correctness and completeness guarantees for a defined fragment.}
-We prove constructive completeness for independent, fully unknown RHS axis
-fields in read-once contraction, permutation, and unary summation, with a
-restricted additive extension, exact arithmetic, and input extents at least
-two. A shared symbolic metadata program realizes this constructor.
-Compilation validates attribute definedness, legality, and equivalence
-under the written condition and feasibility check
-(Section~\ref{sec:compilation-scope}). Sound view/reindexing schemas add
-broadcast and reverse; core validation also covers supplied fields.
-Table~\ref{tab:guarantee-map} collects the guarantees and their scope.
-These are paper proofs, not mechanized verification. We trust
-operation declarations, frontend lowering, the C++ implementation of
-checking/loading and primitive reasoning/evaluation, and backend agreement
-with declared algebraic semantics.
+Under the stated assumptions and exact arithmetic, we prove that attribute
+synthesis constructs valid RHS axis assignments whenever they exist
+within the defined fragment. Table~\ref{tab:guarantee-map} summarizes the
+scope and assumptions of these guarantees.
 \end{enumerate}
+\endgroup
