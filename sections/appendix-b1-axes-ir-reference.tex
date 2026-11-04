@@ -1,46 +1,28 @@
-\subsection{Axes IR Declaration and Primitive Reference}
-\label{app:axes-ir-declarations-primitives}
-\label{app:language-declarations}
-An Axes IR declaration binds ordered groups to operand positions and
-specifies both output order and scalar semantics. The generalized dot below
-pairs batch and contraction positions in list order; free axes preserve
-operand order. Paired groups require matching extents, distinct in-range
-selectors, and disjoint roles, including when groups are empty.
-The attribute roles in Table~\ref{tab:attribute-roles} determine the field
-types: transpose declares \code{permutation: axis[]}; a unit-stride slice
-declares \code{starts: coordinate[]} and \code{sizes: extent[]}.
+\subsection{Operation Semantics}
+\label{app:operation-semantics}
+The \code{semantics} block defines the value at each output coordinate.
+Its \code{yield} expression combines operand reads, scalar arithmetic,
+and summation. An operand name reads an element using the coordinates
+assigned by the \code{axes} bindings. For example, nonbroadcasting
+addition binds corresponding operand axes to one group and uses
+\code{yield Add(lhs, rhs)} to add elements at the same coordinates.
 
-\begin{lstlisting}[language=TEPL,
-  caption={Axes IR representation of generalized dot, with explicit attributes, axis bindings, and value semantics.},
-  label={lst:dot-declaration}]
-op dot(lhs: tensor, rhs: tensor) -> tensor {
-  attrs {
-    lb, lc, rb, rc: axis[];
-  }
-  axes {
-    let lf = ordered_complement(all_axes(lhs), attrs.lb ++ attrs.lc);
-    let rf = ordered_complement(all_axes(rhs), attrs.rb ++ attrs.rc);
-    bind B { lhs: attrs.lb, rhs: attrs.rb };
-    bind K { lhs: attrs.lc, rhs: attrs.rc };
-    bind I { lhs: lf };
-    bind J { rhs: rf };
-    yield B ++ I ++ J;
-  }
-  semantics {
-    yield Reduce(K, Product(lhs, rhs));
-  }
-}
-\end{lstlisting}
+The expression \code{Reduce(G, e)} sums \code{e} over all coordinates
+of group \code{G}, holding the other coordinates fixed. In
+Listing~\ref{lst:dot-declaration}, \code{Product(lhs, rhs)} multiplies
+operand elements, and \code{Reduce(K, ...)} sums these products over
+the contraction axes. Reducing an empty group leaves the expression
+unchanged.
 
-\paperparagraph{Value and index expressions.}
-\label{app:value-index-expressions}
-The value primitives below compose operation semantics. Nonbroadcasting
-addition binds corresponding operand axes and preserves their shared
-order. Calculated reads use coordinate sequences, with one entry per
-accessed axis. For example, a static slice reads at
-\code{starts + strides * output_indices}. These coordinate calculations
-are supported only for the modeled contracts and are outside the direct
-whole-axis completeness theorem.
+Explicit reads use \code{Read(input, indices)}, where \code{indices}
+provides one coordinate per input dimension. The expression \code{Coords(G)}
+returns the current coordinates in group order. Index expressions can
+scale or offset these coordinates before reading an input. For example,
+a static slice reads at \code{starts + strides * output_indices}.
+These calculated accesses extend the operation semantics beyond the
+direct whole-axis completeness theorem.
+Table~\ref{tab:axes-ir-value-index-primitives} summarizes the value and
+index primitives.
 \begin{table}[!htbp]
 \caption{Axes IR value and index primitives.}
 \label{tab:axes-ir-value-index-primitives}

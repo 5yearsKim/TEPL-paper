@@ -102,7 +102,7 @@ The appendices follow the main paper's progression and use the same notation:
 - **B. Symbolic Compilation Details**
   (`sections/appendix-b-compilation.tex`): Axes IR, mapping and synthesis
   invariants, operation declaration adapters, and the core
-  validation summary and soundness argument (`sections/appendix-b4-validation.tex`).
+  validation summary and soundness argument (`sections/appendix-b3-candidate-validation-soundness.tex`).
   B.4 states the supported reasoning rules and gives a concise conditional
   soundness proof: feasibility is checked before attribute construction.
   B.7 summarizes operation coverage.

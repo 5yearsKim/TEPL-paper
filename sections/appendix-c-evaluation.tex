@@ -1,6 +1,7 @@
-\section{Current Evaluation Protocol and Evidence}
+\section{Evaluation Details}
 \label{app:current-evaluation}
-\paperparagraph{Coverage and acceptance.}
+\subsection{Coverage and Acceptance}
+\label{app:evaluation-coverage}
 We evaluate all 123 modeled cases with one optimized compiler under
 algebraic semantics and a 30-second per-command limit. Acceptance requires
 semantic checking, successful compilation, and portable-program validation
@@ -37,73 +38,35 @@ contraction reindexing. Detailed
 inventories accompany the artifacts; these development tests and corpus
 reruns do not constitute a new held-out evaluation.
 
-\paperparagraph{Specification accounting.}
-The source-footprint comparison uses exactly the 31 rule identities whose
-axis inference succeeds in the coverage run, matching
-Table~\ref{tab:specification-size} and the abstract. We count the saved
-explicit and inferred source forms for each identity and verify their
-source hashes. Selection depends only on inference success, not on the
-explicit variant's validation outcome. Five explicit forms and one inferred
-form did not validate in the original source measurements; all 31 identities
-remain in this static comparison. No new compiler experiment is performed,
-and the coverage result does not establish acceptance of every counted
-source variant.
-
-The explicit forms contain 3,014 tokens and the inferred forms contain
-2,559, a difference of 455 tokens (15.1\%). Exact counted sources, per-rule
-responsibility counts, recorded validation outcomes, and source hashes
-are retained in
-\nolinkurl{evaluation/current/specification_size/results/all_31_source_footprint.json}.
-
-The lexical scanner counts each identifier, literal, and recognized
-multi-character operator as one token; other punctuation counts
-individually. Comments and whitespace count zero. Counts cover complete
-rules, excluding imports and shared operation declarations. The five
-responsibilities partition each included token exactly once. Shared
-dialect and compiler costs remain outside these per-rule counts.
-
 \FloatBarrier
-\sidefigure[0.6]{figures/scalability.pdf}
-{Compilation scalability. (a) Compilation time per phase grows approximately linearly with dot-chain depth. (b) Compilation time remains stable across the tested tensor ranks.}
+\subsection{Automatic Attribute-Inference Scalability}
+\label{app:evaluation-scalability}
+\paperfigure{1}{figures/scalability.pdf}
+{Automatic attribute-inference scalability. Compilation time by phase for
+(a) dot-chain length and (b) additive-term count, and (c) runtime metadata
+execution time by phase as tensor rank increases. Markers show mean total
+time; whiskers show the minimum and maximum.}
 {fig:scalability}
-{Two horizontally aligned panels show dot-chain compilation with stacked mean phase costs and overlaid median total latency, and transpose-rank compilation. Whiskers show minimum and maximum total latency. All fifteen automatic configurations succeed in every measured round.}
+{Three panels show compilation costs for dot chains and additive terms up
+to 64, and runtime feasibility-checking and attribute-construction costs
+for tensor ranks up to 128. Stacked bars show mean phase costs.}
 
-\paperparagraph{Compilation scalability.}
-We evaluate the scalability of the core algorithm as rewrite depth and
-tensor rank increase. Figure~\ref{fig:scalability} shows compilation time
-for dot-chain reassociation and transpose composition, including the
-dot-chain cost by compilation phase.
-
-The experiment uses 1--10 dots per side at input rank three with fixed
-source axis lists, and three source transposes composed into one replacement
-at ranks 2, 4, 8, 16, and 32 with symbolic permutations. All RHS axis fields
-are inferred. We run the optimized compiler under algebraic semantics, using one warmup and ten measured rounds per
-configuration on an Intel Core Ultra 7 155H. Runs are serial, with case
-order shuffled using seed 20261026 and unchanged compiler work budgets.
-Each call starts from loaded syntax without reusing a proof or compiled
-program. The original rule bodies and written conditions are preserved.
-
-Preparation includes resolution and type checking. Rule checking and
-construction include semantic-plan preparation, checking written
-conditions, and metadata materialization. Lowering and validation
-include executable lowering, metadata emission, and final validation.
-Other cost covers dispatch and intermediate-object cleanup. These are API
-phase boundaries; individual tasks may span phases. Parsing, import loading,
-serialization, portable loading, graph rewriting, and numerical reference
-execution are outside timing.
-
-Outside timing, the driver checks agreement with public compilation and a
-portable roundtrip for each configuration. The curves show medians with
-minimum--maximum whiskers; phase bars use means so their segments sum to
-mean total latency. One machine and ten rounds describe the tested
-workloads, not an asymptotic bound or production throughput. All 165 calls,
-including warmups, source and compiler provenance, and validation logs are
-recorded in \nolinkurl{evaluation/certified-scalability/}.
-
-All 15 configurations compile and validate in every measured round.
-Dot-chain compilation time increases approximately linearly with chain
-depth, from a median of 1.49 ms for one dot per side to 6.06 ms for ten
-(Figure~\ref{fig:scalability}(a)). Tensor rank has little effect on
-transpose compilation time over the tested range: medians remain between
-1.16 and 1.32 ms, with no systematic increase from rank 2 to rank 32
-(Figure~\ref{fig:scalability}(b)).
+We evaluate automatic attribute-inference scalability by separating
+compilation of the feasibility check $q$ and attribute program $f$ from
+their runtime execution (Figure~\ref{fig:scalability}). All runs use an
+Intel Core Ultra 7 155H CPU, with CPU-only, single-threaded execution.
+Panels (a) and (b) use chains of arbitrary-rank dot operations with all RHS
+attributes inferred automatically. Panel (a) reassociates a left-associated
+chain into a right-associated chain, increasing dots per side through
+1, 2, 4, 8, 16, 32, and 64. Panel (b) varies the number of independent
+additive terms over the same sizes, with two dots per term and balanced
+addition trees. All tested sizes compile successfully. Mean compilation
+time grows approximately linearly, reaching about 39\,ms for 64 dots per
+side and 60\,ms for 64 additive terms. Panel (c) compiles one rank-independent
+two-dot rule once, then varies the concrete tensor rank. Feasibility
+checking and attribute construction are directly timed within the same
+execution. Total runtime metadata execution grows with rank, reaching
+about 451\,$\mu$s at rank 128; rank 256 exceeds the metadata work budget.
+Thus, TEPL compiles the tested rank-polymorphic rules in tens of
+milliseconds at the largest sizes, and a single compilation handles
+varying tensor ranks without rank-specific recompilation.

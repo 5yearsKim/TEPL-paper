@@ -73,7 +73,7 @@ ResNet-50 & 10 & 1,027 & 5/10 & Yes\\\bottomrule
 
 \subsection{Shorter Rewrite Rules}
 \label{sec:evaluation-size}
-We compare explicit and inferred source forms for the same 31 rule
+We compare XLA, explicit TEPL, and axis-inferred TEPL source forms for the same 31 rule
 identities whose axis inference succeeds in Section~\ref{sec:evaluation}.
 Every inference-successful identity is included. Code size is measured in
 lexical tokens, excluding comments, whitespace, imports, and shared
@@ -85,28 +85,34 @@ this single cohort.
 Counts exclude comments, whitespace, imports, and shared declarations.}
 \label{tab:specification-size}
 \small
-\begin{tabularx}{\linewidth}{@{}Yrr@{}}\toprule
-Responsibility & Explicit TEPL & Inferred TEPL\\\midrule
-Matching (LHS) & 407 & 391\\
-Legality checks (\code{where} block) & 1,159 & 1,207\\
-Attribute reasoning (\code{derive} block) & 985 & 518\\
-Replacement construction (RHS) & 308 & 288\\
-Other syntax & 155 & 155\\\midrule
-Total & 3,014 & 2,559\\\bottomrule
+\definecolor{specificationBlue}{HTML}{3F608A}
+\definecolor{specificationGreen}{HTML}{396F59}
+\setlength{\tabcolsep}{4pt}
+\begin{tabularx}{\linewidth}{@{}Yrrr@{}}\toprule
+Section & XLA & Explicit TEPL\textsuperscript{a} & Axis inferred TEPL\textsuperscript{b}\\\midrule
+Matching (LHS) & 1,291 & \textcolor{specificationBlue}{(-70.2\%)}385 & \textcolor{specificationGreen}{(-4.2\%)}369\\
+Legality checks (\code{where} block) & 1,226 & \textcolor{specificationBlue}{(-25.0\%)}920 & \textcolor{specificationGreen}{(-0.0\%)}920\\
+Attribute reasoning (\code{derive} block) & 4,915 & \textcolor{specificationBlue}{(-75.1\%)}1,225 & \textcolor{specificationGreen}{(-62.3\%)}462\\
+Replacement construction (RHS) & 1,668 & \textcolor{specificationBlue}{(-80.8\%)}320 & \textcolor{specificationGreen}{(-16.2\%)}268\\
+Other syntax & 922 & \textcolor{specificationBlue}{(-61.5\%)}355 & \textcolor{specificationGreen}{(-0.0\%)}355\\\midrule
+Total & 10,022 & \textcolor{specificationBlue}{(-68.0\%)}3,205 & \textcolor{specificationGreen}{(-25.9\%)}2,374\\\bottomrule
 \end{tabularx}
+\par\smallskip
+{\footnotesize\raggedright
+\textsuperscript{a}\textcolor{specificationBlue}{Blue percentages} show the decrease from XLA to Explicit TEPL.
+\textsuperscript{b}\textcolor{specificationGreen}{Green percentages} show the decrease from Explicit to Inferred TEPL.\par}
 \end{table}
 
-Across these 31 rules, inferred source forms contain 455 fewer tokens
-(15.1\%) than the explicit forms. This is a static comparison of saved
+Across these 31 rules, inferred source forms contain 831 fewer tokens
+(25.9\%) than the explicit forms. This is a static comparison of saved
 sources; it does not establish acceptance of every explicit and inferred
-source variant. Appendix~\ref{app:current-evaluation} details the accounting
-procedure and source provenance.
+source variant.
 
-\subsection{Compilation Scalability}
+\subsection{Inference Scalability}
 \label{sec:evaluation-cost}
-Compilation takes milliseconds in the tested configurations, with median
-dot-chain latency growing approximately linearly from 1.49 to 6.06 ms
-for 1--10 dots per side.
-Transpose composition remains stable across ranks 2--32, with median
-latency of 1.16--1.32 ms; Appendix~\ref{app:current-evaluation} provides
-the figure, protocol, and detailed results.
+Mean compilation time grows approximately linearly and stays below 100\,ms
+for both 1--64 dots per side and 1--64 additive terms. One compiled rule
+handles varying tensor ranks without recompilation. Mean runtime metadata
+program execution time grows with rank and stays below 1\,ms at rank 128.
+Appendix~\ref{app:evaluation-scalability} gives the experimental setup and
+detailed results.

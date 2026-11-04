@@ -1,13 +1,73 @@
 \section{From Axis Mappings to Attribute Builders}
 \label{sec:method}
 
-Section~\ref{sec:mathematical-synthesis} defines the complete constructor.
-This section compiles that same constructor into a symbolic metadata
-program, before a match supplies concrete ranks or axis lists. Axis
-mappings locate groups; partitioning separates their roles. The generated
-program retains any group computations that are not simplified during
-compilation. Native execution and checked symbolic lowering consume
-the same program; they do not implement separate complete constructors.
+In this section, we explain how TEPL compiles the complete constructor from
+Section~\ref{sec:mathematical-synthesis} into a reusable metadata program.
+We first introduce Axes IR, which represents operations using symbolic
+axis groups, operand bindings, and value semantics. We then explain how
+TEPL constructs the metadata program through symbolic axis mapping
+and partitioning.
+
+\subsection{Axes IR}
+\label{sec:axes-ir}
+To reason about an operation across different tensor ranks, TEPL must
+describe which input axes share coordinates, which axes appear in the
+output, and how output values are computed. Axes IR expresses these
+relationships using symbolic axis groups.
+
+Axis attributes are declared in the \code{attrs} block. Each
+\code{axis[]} attribute stores an ordered list of dimension positions.
+The \code{axes} block uses these attributes with \code{bind} to assign
+a symbolic name to a group of input axes. It then uses \code{yield}
+to specify the output axis order. The \code{semantics} block describes
+how to compute each output element using these axis groups.
+Listing~\ref{lst:dot-declaration} illustrates this structure with
+generalized dot.
+
+\begin{lstlisting}[language=TEPL,
+  caption={Axes IR declaration for generalized dot.},
+  label={lst:dot-declaration}]
+op dot(lhs: tensor, rhs: tensor) -> tensor {
+  attrs {
+    lb: axis[]; rb: axis[];
+    lc: axis[]; rc: axis[];
+  }
+  axes {
+    let lf = ordered_complement(all_axes(lhs), attrs.lb ++ attrs.lc);
+    let rf = ordered_complement(all_axes(rhs), attrs.rb ++ attrs.rc);
+    bind B { lhs: attrs.lb, rhs: attrs.rb };
+    bind K { lhs: attrs.lc, rhs: attrs.rc };
+    bind I { lhs: lf };
+    bind J { rhs: rf };
+    yield B ++ I ++ J;
+  }
+  semantics {
+    yield Reduce(K, Product(lhs, rhs));
+  }
+}
+\end{lstlisting}
+
+For Listing~\ref{lst:dot-declaration}, consider operand axis orders
+$(i,k_0,b,k_1)$ and $(k_1,j,k_0,b)$.
+With \code{lb=[2]}, \code{rb=[3]}, \code{lc=[1,3]}, and \code{rc=[2,0]},
+the bindings give $\vec B=(b)$ and $\vec K=(k_0,k_1)$.
+Each binding pairs operand positions in list order; paired axes share
+a coordinate and must have equal extents.
+Removing these positions with \code{ordered_complement} leaves the
+free groups $\vec I=(i)$ and $\vec J=(j)$.
+Group lengths may vary across matches, including zero.
+
+The statement \code{yield B ++ I ++ J} sets output order $(b,i,j)$.
+The \code{semantics} block multiplies input elements and sums over
+\code{K}:
+\begin{equation}
+ T_{b i j}=\sum_{k_0,k_1}
+ \mathrm{lhs}_{i k_0 b k_1}\,\mathrm{rhs}_{k_1 j k_0 b}.
+\end{equation}
+
+Appendix~\ref{app:operation-semantics} explains how the \code{semantics}
+block expresses operation values and input accesses.
+The bindings provide the initial axis mappings used below.
 
 \subsection{Symbolic Axis Mapping}
 \label{sec:symbolic-axis-mapping}
