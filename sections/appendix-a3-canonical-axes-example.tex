@@ -3,7 +3,7 @@
 Consider
 $\operatorname{dot}(\operatorname{sum}_i(A),B)\Rightarrow
 \operatorname{sum}_i(\operatorname{dot}(A,B))$,
-with input frames $I_A=(b,i,k)$, $I_B=(b,k,j)$ and output $F=(b,j)$.
+with input frames $I_A=(b,i,k)$, $I_B=(b,k,j)$ and output $\operatorname{Ord}_{\mathrm{out}}=(b,j)$.
 All extents are at least two. The RHS dot $T$ retains batch axis $b$,
 contracts $k$, and keeps free axes $i,j$; the root $Y$ removes $i$.
 Table~\ref{tab:row-sum-mandatory-retained-axes} applies the rules above.

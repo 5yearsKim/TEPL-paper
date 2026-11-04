@@ -108,7 +108,7 @@
 \BeforeBeginEnvironment{table*}{\par\wrapstuffclear}
 \BeforeBeginEnvironment{figure*}{\par\wrapstuffclear}
 
-\title[TEPL]{TEPL: Synthesizing Attribute Programs from Tensor Rewrite Semantics}
+\title[TEPL]{TEPL: Synthesizing Attribute Builders from Tensor Rewrite Semantics}
 \author{Author Name}
 \affiliation{\institution{Institution}\city{City}\country{Country}}
 
@@ -127,13 +127,12 @@ rewrites: under the stated assumptions, our synthesis algorithm constructs
 valid RHS axis assignments whenever they exist. To support attribute
 synthesis in the compiler, we introduce Axes IR and symbolic axis mapping to
 handle tensors of arbitrary rank and track axis relationships. TEPL compiles
-a feasibility check and an attribute program once per rule. Each match
+a feasibility check and an attribute builder once per rule. Each match
 checks feasibility before constructing attributes, without repeating inference.
 TEPL models 123 of 209 concrete XLA rewrite
 cases, with RHS axis inference and verification succeeding in 31 of the
-38 axis-inference cases (81.6\%). Across all 31 successful rules, TEPL rules with
-inferred RHS attributes use 15.1\% fewer lexical tokens than those with
-explicitly derived RHS attributes.
+38 axis-inference cases (81.6\%). For these same 31 rule identities,
+inferred source forms use 15.1\% fewer lexical tokens than explicit forms.
 \end{abstract}
 \keywords{tensor rewrites, attribute synthesis, symbolic axis mapping}
 \maketitle
@@ -153,9 +152,16 @@ explicitly derived RHS attributes.
 \input{sections/11-conclusion}
 \label{main-text-end}
 \clearpage
+% Keep review line numbers out of copied reference text and DOI links.
+\begingroup
+\makeatletter
+\let\ACM@linecountL\@empty
+\let\ACM@linecountR\@empty
+\makeatother
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{references}
 \clearpage
+\endgroup
 \appendix
 \input{sections/appendix-a-foundations}
 \clearpage

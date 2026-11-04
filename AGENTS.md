@@ -1,0 +1,5 @@
+- Answer questions briefly, using simple words.
+- Write paper text only when I explicitly ask you to.
+- When writing paper text, use short, clear sentences and simple words while keeping an academic tone.
+- Do not include supplementary material or references to it in the paper; no supplement will be submitted.
+- Answer objectively. Do not agree just to please me; explain when the evidence disagrees.

@@ -28,7 +28,7 @@ constructs the unknown RHS axis fields. We use the following notation throughout
 Match metadata $m$ is concrete at a match and makes every LHS operation legal.
 Scalar types are fixed in the exact-real fragment.
 Writing $X=(X_1,\ldots,X_n)$ for the input values, the two computations are
-$L_m(X)$ and $R_{m,\beta}(X)$. An attribute program reads $m$, never the
+$L_m(X)$ and $R_{m,\beta}(X)$. An attribute builder reads $m$, never the
 entries of $X$.
 
 \subsection{Valid Attribute Assignments}
@@ -53,18 +53,18 @@ is assumed; axis synthesis and validation do not check dtype contracts.
 
 Synthesis fills unknown axis fields from metadata $m$ and preserves supplied
 fields. Supplied expressions must be defined whenever the RHS attribute
-program runs.
+builder runs.
 The resulting $\beta$ must be correct for every compatible input value,
 so the quantifier order is $\exists\beta\,\forall X$.
 
-\subsection{What Must Synthesis Produce?}
+\subsection{Synthesis and Execution Contract}
 \label{sec:find}
 For fully automatic axis fields in Section~\ref{sec:formal-scope}'s fragment,
-we synthesize reusable programs \code{check} and \code{build}.
-Given match metadata $m$,
-\code{check} decides whether a valid RHS completion exists, and \code{build}
-constructs one whenever \code{check} succeeds. The programs
-must satisfy:
+we seek two metadata functions: the \emph{feasibility check}
+\code{check} and the attribute builder \code{build}. Given match metadata
+$m$, $\operatorname{check}(m)$ decides whether a valid RHS completion
+exists, and $\operatorname{build}(m)$ constructs one when the feasibility
+check succeeds. These functions must satisfy:
 \begin{align}
  \operatorname{check}(m)&\iff\exists\beta:\operatorname{Valid}(m,\beta),
  \label{eq:check-goal}\\
@@ -72,24 +72,33 @@ must satisfy:
  \operatorname{Valid}(m,\operatorname{build}(m)).
  \label{eq:build-goal}
 \end{align}
-Both programs depend only on match metadata and must satisfy these
+Both functions depend only on match metadata and must satisfy these
 requirements for every legal instance in the defined fragment, across
 varying ranks and shapes.
-The compiler realizes these functions as a feasibility program $E_q$ and
-an attribute program $E_f$ (Section~\ref{sec:method}). For a legal match,
-the effective applicability condition is
-\begin{equation}
- A(m)=C(m)\land\lbrack\!\lbrack E_q\rbrack\!\rbrack_m,
- \label{eq:effective-applicability}
-\end{equation}
-where $C$ is the written \code{where} condition, or true when absent.
-Evaluation short-circuits: a false $C$ skips $E_q$, and a false $E_q$
-skips $E_f$. Thus attribute construction occurs only on feasible matches.
-The completeness claim concerns the mathematical functions on the stated
-fragment; acceptance of their compiled realization also requires
-conditional validation.
+For a legal match in this fragment, the \emph{applicability condition}
+requires both the written condition $C(m)$ and the feasibility check
+$\operatorname{check}(m)$ to hold. Here $C$ is the written \code{where}
+condition, or true when absent.
 
-\subsection{Scope and Assumptions of the Completeness Theorem}
+\paperparagraph{Execution contract.}
+TEPL compiles the written condition, feasibility check, and attribute
+builder once per rule. A legal match evaluates the written condition first,
+then the feasibility check, and runs the builder only if both succeed.
+A false condition skips the match without evaluating the remaining steps.
+Matching evaluates metadata programs without repeating synthesis or proof
+search. This execution order also applies outside the complete synthesis
+fragment.
+
+Within the domains in Table~\ref{tab:guarantee-map}, an accepted rule
+produces defined attributes and a legal, equivalent replacement on every
+legal match that passes both conditions. This guarantee assumes the
+operation semantics and execution assumptions in
+Section~\ref{sec:implementation-scope}.
+Section~\ref{sec:method} establishes compilation correspondence, and
+Section~\ref{sec:candidate-validation} establishes conditional validation
+soundness.
+
+\subsection{Formal Scope and Guarantees}
 \label{sec:formal-scope}
 The completeness theorem covers \emph{axis-structural multilinear}
 computations: operations connect, reorder, and sum whole axes, while values
@@ -156,7 +165,43 @@ different terms have different input sets, which may overlap.
 Captured LHS attributes retain their values when expressions are expanded;
 a shared RHS unknown must not be split into independent choices.
 
-Two cases fall outside the theorem: mixed explicit/inferred RHS axis fields,
-and zero or singleton extents. For both, Theorem~\ref{thm:validator-soundness}
-gives soundness of accepted completed programs, but no completeness.
-Section~\ref{sec:scope-limitations} details broader operation support.
+\paperparagraph{Guarantees and their boundaries.}
+Table~\ref{tab:guarantee-map} summarizes the results and their assumptions.
+A \emph{sound schema} is a rewrite pattern with a separately proved
+attribute construction (Appendix~\ref{app:axis-extensions}). Its conditions
+and agreement of supplied fields with constructed fields must hold under
+the applicability condition.
+
+\begin{table}[!htbp]
+\caption{Formal guarantees and their scope. Extents are dimension sizes;
+all rows require legal source instances and the stated operation semantics.}
+\label{tab:guarantee-map}
+\small
+\begin{tabularx}{\linewidth}{@{}p{0.14\linewidth}Y>{\raggedright\arraybackslash}p{0.12\linewidth}Y@{}}\toprule
+Result & Guarantee & Extents & Other assumptions and reference\\\midrule
+Synthesis & Finds valid RHS axis assignments whenever they exist.
+& $\ge2$ & D1--D4, read-once components, and exact arithmetic
+(Theorem~\ref{thm:complete-synthesis}).\\
+\addlinespace
+Compilation & Compiled check and builder implement the mathematical functions.
+& $\ge2$ & Admitted plans in the synthesis fragment
+(Theorem~\ref{thm:symbolic-compilation}).\\
+\addlinespace
+Validation & Safe check evaluation and valid completed attributes under the applicability condition; supplied fields are allowed.
+& $\ge0$ & Supported validation rules, exact arithmetic, and execution assumptions
+(Theorem~\ref{thm:validator-soundness}; Section~\ref{sec:implementation-scope}).\\
+\addlinespace
+Sound schemas & Constructed replacements preserve legality, values, and ordered shape.
+& $\ge0$, subject to schema conditions & Stated operation contracts and conditions for each schema
+(Lemma~\ref{lem:certified-extensions}).\\\bottomrule
+\end{tabularx}
+\end{table}
+
+Mixed explicit/inferred axis fields and zero or singleton extents have
+soundness guarantees within the validation and schema domains, but no
+completeness guarantee. Outside the complete synthesis fragment, a
+feasibility check may reject feasible matches. Validation is sound but
+incomplete: it can remain unresolved for a correct candidate. Successful
+compilation does not establish that a rule has an applicable match.
+Broader implementation support does not extend these formal guarantees;
+Section~\ref{sec:scope-limitations} describes practical limitations.

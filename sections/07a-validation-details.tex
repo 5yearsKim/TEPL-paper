@@ -1,14 +1,17 @@
 \subsection{Validation Checks}
 \label{sec:validation-boundary}
 \label{sec:validation-algorithm}
-Given a rewrite $L\Rightarrow R$, written condition $C$, feasibility
-program $E_q$, and completed attribute program $f$, the validator first
-establishes that $E_q$ uses only source metadata and evaluates to a Boolean
+Write $f$ for a candidate attribute builder whose attributes are inferred,
+user-supplied, or a combination of both. All attribute fields are filled
+before validation. The compiled builder $E_{\mathrm{build}}$ is one such candidate.
+Given a rewrite $L\Rightarrow R$, written condition $C$, compiled
+feasibility check $E_{\mathrm{check}}$, and candidate builder $f$, the validator first
+establishes that $E_{\mathrm{check}}$ uses only source metadata and evaluates to a Boolean
 on every legal match satisfying $C$. For a sequence of short-circuit
 checks, each check is proved defined after its predecessors succeed.
 Only then may their truth be used to validate the builder.
 
-Under source legality, $C$, and a true result from $E_q$, validation
+Under source legality, $C$, and a true result from $E_{\mathrm{check}}$, validation
 establishes three properties:
 \begin{enumerate}
 \item \emph{Defined attributes.}
@@ -19,12 +22,11 @@ The attributes satisfy every RHS operation's axis and extent requirements.
 \item \emph{Equivalent result.}
 The RHS preserves values and ordered output shape.
 \end{enumerate}
-Construction relationships other than the validated applicability predicate
-remain obligations to prove. For value comparison, TEPL expresses both
+Other construction relationships remain obligations to prove; only
+successful feasibility checks are added as assumptions. For value comparison, TEPL expresses both
 graphs as indexed input reads, products, and finite sums, then establishes
 equality using checked algebraic laws. It returns \code{Proved} only when
 all checks succeed; \code{Unknown} means that correctness remains unproved.
-Neither proof search nor attribute synthesis is repeated at match time.
 
 \subsection{Soundness}
 \label{sec:acceptance-soundness}
@@ -35,13 +37,13 @@ Appendix~\ref{app:validation-proofs}. It allows arbitrary finite ranks and
 nonnegative extents.
 \begin{theorem}[Conditional validation soundness]
 \label{thm:validator-soundness}
-If $\operatorname{Validate}(L,R,C,E_q,f,\mathcal G)$ returns \code{Proved}
-using these rules, then $E_q$ evaluates to a Boolean for every legal source
+If $\operatorname{Validate}(L,R,C,E_{\mathrm{check}},f,\mathcal G)$ returns \code{Proved}
+using these rules, then $E_{\mathrm{check}}$ evaluates to a Boolean for every legal source
 match satisfying $C$, and
 \begin{equation}
 \begin{aligned}
  &\operatorname{Legal}_L(m)\land C(m)
-       \land(E_q\Downarrow_m\mathsf{true})\\
+       \land(E_{\mathrm{check}}\Downarrow_m\mathsf{true})\\
  &\qquad\Longrightarrow\exists\beta.\quad f\Downarrow_m\beta
        \land\operatorname{Valid}(m,\beta).
 \end{aligned}
@@ -56,7 +58,7 @@ types, and integer representability.
 
 \begin{proof}[Proof sketch]
 Source scope and metadata reasoning establish safe Boolean evaluation of
-$E_q$ before its result is assumed. Under a true result and $C$, metadata
+$E_{\mathrm{check}}$ before its result is assumed. Under a true result and $C$, metadata
 reasoning proves attribute definedness and RHS legality. Lowering and
 normalization establish value equality; ordered-shape checks complete
 validity under the stated dtype-compatibility assumption.

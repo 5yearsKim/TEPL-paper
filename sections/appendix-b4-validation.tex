@@ -1,6 +1,6 @@
 \subsection{Candidate Validation and Soundness}
 \label{app:validation-proofs}
-This appendix summarizes how TEPL validates a completed attribute program
+This appendix summarizes how TEPL validates a completed attribute builder
 and why acceptance implies correctness. The guarantee covers the core
 operations and exact arithmetic specified in
 Section~\ref{sec:acceptance-soundness}; it does not claim
@@ -9,14 +9,14 @@ completeness of validation or verification of the compiler implementation.
 \paperparagraph{Validation procedure.}
 \label{app:validation-procedure}
 The inputs are a rewrite $L\Rightarrow R$, its written condition $C$, a
-source-metadata feasibility program $E_q$, a completed attribute program
+compiled feasibility check $E_{\mathrm{check}}$, a completed attribute builder
 $f$, and candidate obligations $\mathcal G$. Starting from source legality
-and successful evaluation of $C$, the validator establishes that $E_q$
+and successful evaluation of $C$, the validator establishes that $E_{\mathrm{check}}$
 evaluates to a Boolean. Each short-circuit check is proved defined under
 the preceding successful checks. The predicate cannot justify its own
 initial definedness.
 
-The validator then assumes a true result from $E_q$ and checks the
+The validator then assumes a true result from $E_{\mathrm{check}}$ and checks the
 following properties. Other construction choices, candidate obligations,
 and RHS legality remain goals to prove, not additional assumptions:
 \begin{enumerate}
@@ -37,8 +37,8 @@ ordered output shapes.
 \end{enumerate}
 The validator returns \code{Proved} only when all checks have derivations.
 An unresolved obligation or exhausted work limit returns \code{Unknown},
-not a counterexample. At runtime, false feasibility is a normal reason to
-skip a match; the builder is never evaluated on that path.
+not a counterexample. At runtime, a false result from the feasibility
+check skips the match; the builder is never evaluated on that path.
 
 \paperparagraph{Metadata operations.}
 The calculus interprets axis lists as finite ordered sequences.
@@ -57,7 +57,8 @@ operators follow their short-circuit evaluation order.
 
 \paperparagraph{Core reasoning rules.}
 The validator uses facts from source legality, successfully evaluated
-written conditions, and previously checked feasibility predicates. It
+written conditions, and successful feasibility checks whose definedness
+has been established. It
 applies Boolean consequences and equality substitution on defined
 expressions. A true disjunction does not establish either disjunct alone.
 Sequence reasoning uses length and concatenation laws, gather composition,
@@ -82,11 +83,11 @@ Suppose validation returns \code{Proved}, and fix a legal source match
 $m$ satisfying $C$. The metadata rules preserve definedness and truth:
 sequence laws preserve entries and order, selector premises justify
 accesses, and integer bounds establish representability. Induction on
-these derivations first proves Boolean evaluation of $E_q$. In a sequence
+these derivations first proves Boolean evaluation of $E_{\mathrm{check}}$. In a sequence
 of checks, a false result stops evaluation; a true result establishes the
 premise for the next check. No unexecuted branch is assumed defined.
 
-If $E_q$ is false, runtime skips the match. If it is true, the same metadata
+If $E_{\mathrm{check}}$ returns false, runtime skips the match. If it returns true, the same metadata
 argument under the additional true predicates proves that $f$ is defined
 and its attributes satisfy RHS legality. Executable expressions preserve
 operator meanings and evaluation order, so $f\Downarrow_m\beta$ for the

@@ -4,20 +4,19 @@ TEPL is a DSL for writing readable tensor rewrite rules and applying them in
 practice. Using Axes IR and symbolic axis mapping, it generates programs at
 compile time to check feasibility and compute RHS attributes, reducing
 manual attribute transformation logic. Each match evaluates the written
-condition and generated check before constructing a replacement. We prove constructive completeness for a restricted
+condition and feasibility check before constructing a replacement. We prove constructive completeness for a restricted
 set of operations and rewrite structures: under the stated assumptions,
 synthesis finds correct attributes whenever they exist.
 
 The implementation also supports rewrites outside this fragment, checking
 synthesized candidates with an independent verifier under the declared
-algebraic semantics, written conditions, and generated feasibility checks.
+algebraic semantics, written conditions, and feasibility checks.
 Coverage remains limited, particularly for general indexing and richer reductions.
 
 In our XLA evaluation, TEPL models the operation semantics required by 123
 of 209 cases and synthesizes attributes for 31 of 38 axis-inference cases (81.6\%).
 Integration into XLA's existing simplifier demonstrates practical
-application. Across all 31 inference-successful rules, inferred specifications
-contain 15.1\% fewer tokens than the original explicit forms, including
-associated normalization and cleanup.
+application. Across all 31 inference-successful rules, inferred source
+forms contain 15.1\% fewer tokens than the explicit forms.
 These results show how declarative tensor rewrites can delegate attribute
 construction to the compiler.

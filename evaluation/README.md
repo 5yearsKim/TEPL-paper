@@ -5,7 +5,7 @@
 | `unified-construction/` | Section 9.1, Figure 6 and Appendix C: 123 modeled cases, 38 inference tasks, backend outcomes and validation checks. |
 | `xla-rewrite-count/` | Section 9.2, Table 5: DLRM native XLA rewrite counts and counter source. |
 | `xla-rewrite-count-models/` | Section 9.2, Table 5: reviewed GPT-2, ViT and ResNet counts, plus the reviewed DLRM classification. |
-| `current/specification_size/` | Section 9.3 and Appendix C: source footprints of all 31 inference-successful rules; Table 6 restores the earlier audited 25-case XLA comparison. |
+| `current/specification_size/` | Section 9.3, Table 6 and Appendix C: explicit and inferred source footprints of the same 31 inference-successful rules (3,014 versus 2,559 tokens; 15.1% reduction). |
 | `certified-scalability/` | Section 9.4 summary, Figure 7 and details in Appendix C: all 15 configurations and saved phase measurements. |
 | `reassociation/` | Appendix B: recorded semantic check, compilation and portable validation of the displayed program. |
 | `source-line-count/` | Introduction: 269 nonblank C++ code lines in the pinned XLA routine. |

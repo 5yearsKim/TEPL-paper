@@ -1,4 +1,4 @@
-\section{From Axis Mappings to Attribute Programs}
+\section{From Axis Mappings to Attribute Builders}
 \label{sec:method}
 
 Section~\ref{sec:mathematical-synthesis} defines the complete constructor.
@@ -110,7 +110,7 @@ position $2$ in $Z$, the partner of $j_1$, not of $i_0$. Using $u_G$ gives the
 correct partners, so the replacement attributes preserve the original
 contraction pairings.
 
-\subsection{Symbolic Attribute-Program Construction}
+\subsection{Symbolic Attribute Builder Construction}
 \label{sec:symbolic-program-construction}
 Using the mappings and partitions from
 Sections~\ref{sec:symbolic-axis-mapping}--\ref{sec:symbolic-axis-partitioning},
@@ -119,6 +119,9 @@ passes into one metadata program. Its expressions determine retained axes,
 check ordering constraints, and compute RHS axis attributes. Shared
 axis-group computations are represented once and reused across attributes.
 This program forms the compiler's metadata intermediate representation (IR).
+A \emph{metadata program} computes only on match metadata. This general
+term covers both the compiled feasibility check and the compiled attribute
+builder.
 
 Compilation generates these expressions without requiring concrete ranks
 or axis lists. For example, the selected subgroup $\gath(\vec J,v_J)$ has
@@ -127,27 +130,30 @@ evaluate this expression to $[3]$. Each match therefore evaluates the
 generated program rather than repeating symbolic inference. The program
 operates on match metadata, not tensor values.
 
-The following theorem establishes that the generated feasibility checks
-and attribute computations implement Section~\ref{sec:mathematical-synthesis}'s
-$\operatorname{check}$ and $\operatorname{build}$ functions within the stated
-fragment.
+Write $E_{\mathrm{check}}$ for the compiled program implementing the feasibility check,
+and $E_{\mathrm{build}}$ for the compiled attribute builder. The functions
+$\operatorname{check}(m)$ and $\operatorname{build}(m)$ describe the
+mathematical decision and attribute construction. Their compiled programs
+evaluate to $\lbrack\!\lbrack E_{\mathrm{check}}\rbrack\!\rbrack_m$ and
+$\lbrack\!\lbrack E_{\mathrm{build}}\rbrack\!\rbrack_m$, respectively. The following
+theorem relates these results within the stated fragment.
 
 \begin{theorem}[Symbolic compilation correspondence]
 \label{thm:symbolic-compilation}
 For every admitted semantic plan in Section~\ref{sec:formal-scope}, compilation
-constructs a finite metadata program $(E_q,E_f)$ independently of concrete
+constructs a finite metadata program $(E_{\mathrm{check}},E_{\mathrm{build}})$ independently of concrete
 ranks and the written guard. For every legal metadata instance $m$ in that
 section's completeness domain,
 \begin{align}
- \lbrack\!\lbrack E_q\rbrack\!\rbrack_m&=\operatorname{check}(m),
+ \lbrack\!\lbrack E_{\mathrm{check}}\rbrack\!\rbrack_m&=\operatorname{check}(m),
  \label{eq:emitted-check}\\
  \operatorname{check}(m)&\Rightarrow
- \lbrack\!\lbrack E_f\rbrack\!\rbrack_m=\operatorname{build}_{\tau}(m).
+ \lbrack\!\lbrack E_{\mathrm{build}}\rbrack\!\rbrack_m=\operatorname{build}_{\tau}(m).
  \label{eq:emitted-build}
 \end{align}
 Here $\tau$ fixes unconstrained paired orders using the left operand's
 order. The check returns boolean for every legal match in the stated domain.
-If it succeeds, the attribute program computes the RHS attributes.
+If it succeeds, the attribute builder computes the RHS attributes.
 \end{theorem}
 \begin{proof}[Proof sketch]
 The compiler translates each step of Section~\ref{sec:mathematical-synthesis}
@@ -158,56 +164,22 @@ without concrete metadata, the written guard, or successful simplification.
 \end{proof}
 
 Together with Theorem~\ref{thm:complete-synthesis}, this establishes
-completeness of the generated feasibility/builder program on the stated
+completeness of the compiled feasibility check and builder on the stated
 domain. Conditional validation checks its use in an executable rewrite.
 Appendix~\ref{app:batched-reassociation-program} gives a complete attribute
-program for reassociation under explicit sufficient conditions.
+builder for reassociation under explicit sufficient conditions.
 
-\subsection{Implicit Applicability and Acceptance}
+\subsection{Compilation and Validation}
 \label{sec:compilation-scope}
-TEPL compiles the written condition $C$, generated feasibility check $E_q$,
-and RHS attribute program $E_f$ once per rule. A legal match first evaluates
-$C$, then $E_q$. If either is false, the rule does not apply. The program
-$E_f$ runs only after both succeed. Runtime evaluates metadata programs;
-it does not repeat synthesis or symbolic proof search.
+The compiled programs implement Section~\ref{sec:find}'s execution
+contract. Before accepting them, the compiler submits the feasibility
+check and completed attribute builder to conditional validation
+(Section~\ref{sec:candidate-validation}). Validation establishes that the
+check is defined using source metadata, then proves the builder's
+obligations under the applicability condition. Other construction
+obligations remain goals to prove.
 
-\paperparagraph{Conditional validation.}
-The compiler establishes that $E_q$ reads only source metadata and is a
-defined Boolean whenever evaluation reaches it. It then validates $E_f$
-under source legality, $C$, and a true result from $E_q$. The obligations
-are attribute definedness, replacement legality, and equality of values
-and ordered shape. Other construction obligations remain goals to prove.
-The compiler does not require $C$ to imply $E_q$. Unresolved validation
-returns \code{Unknown}; a false runtime check is ordinary non-application.
-
-\paperparagraph{Acceptance guarantee.}
-Under the operation and execution assumptions in
-Section~\ref{sec:implementation-scope}, an accepted rule produces a legal,
-equivalent replacement on every legal match passing both conditions.
-Section~\ref{sec:candidate-validation} and
-Appendix~\ref{app:validation-proofs} give the validation argument.
-Soundness allows nonnegative extents. Only within the completeness domain
-does a false $E_q$ establish that no valid RHS axis assignment exists.
-
-A \emph{sound schema} is a rewrite pattern with a separately proved
-attribute construction (Appendix~\ref{app:axis-extensions}). Its conditions
-and agreement of supplied fields with constructed fields must hold under
-the effective applicability condition. Outside the complete constructor's
-fragment, a generated check need only be sufficient; it is not claimed to
-accept every feasible match. Table~\ref{tab:guarantee-map} summarizes the
-guarantees and their domains.
-
-\begin{table}[!htbp]
-\caption{Guarantees and their scope.}
-\label{tab:guarantee-map}
-\small
-\begin{tabularx}{\linewidth}{@{}lY@{}}\toprule
-Result & Guarantee\\\midrule
-Constructor (Theorem~\ref{thm:complete-synthesis}) & Complete under D1--D4, read-once components, exact arithmetic, and extents $\ge2$; all RHS axis fields unknown.\\
-Compilation (Theorem~\ref{thm:symbolic-compilation}) & Shared metadata IR realizes the constructor for admitted plans: $E_q$ implements \code{check}, and $E_f$ implements \code{build} when feasible.\\
-Runtime application (Section~\ref{sec:compilation-scope}) & Evaluate $C$ and $E_q$ before $E_f$; false conditions skip the match. Accepted rules preserve values and ordered shape under the execution assumptions.\\
-Validation (Theorem~\ref{thm:validator-soundness}) & Establishes safe evaluation of $E_q$ and sound completed candidates under $C$ and $E_q$, including supplied fields; extents $\ge0$.\\
-Sound schemas (Lemma~\ref{lem:certified-extensions}) & Sound broadcast/reverse, product, negation, and unit-view schemas under their conditions, including checked supplied fields.\\
-Other extensions & Broader reasoning outside the proved fragments has empirical support only.\\\bottomrule
-\end{tabularx}
-\end{table}
+For sound schemas, validation also checks the schema conditions and
+agreement of supplied fields with constructed fields. Table~\ref{tab:guarantee-map}
+distinguishes this soundness result from complete synthesis and compilation
+correspondence.

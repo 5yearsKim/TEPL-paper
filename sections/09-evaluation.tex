@@ -73,47 +73,34 @@ ResNet-50 & 10 & 1,027 & 5/10 & Yes\\\bottomrule
 
 \subsection{Shorter Rewrite Rules}
 \label{sec:evaluation-size}
-We compare the source footprints of explicit and inferred forms for all
-31 successfully synthesized rewrite rules from Section~9.1. Code size is
-measured in lexical tokens, excluding comments, whitespace, imports, and
-shared declarations. The 31-rule comparison includes every inference-successful
-identity regardless of its historical explicit-baseline outcome.
-The inferred forms include normalization and cleanup of unused labels and
-empty blocks; this is a source-footprint comparison rather than a new
-compiler-validation experiment. Table~\ref{tab:xla-specification-size}
-separately reports the earlier comparison with XLA over 25 audited cases.
+We compare explicit and inferred source forms for the same 31 rule
+identities whose axis inference succeeds in Section~\ref{sec:evaluation}.
+Every inference-successful identity is included. Code size is measured in
+lexical tokens, excluding comments, whitespace, imports, and shared
+declarations. Table~\ref{tab:specification-size} reports the counts for
+this single cohort.
 
 \begin{table}[!htbp]
-\caption{Specification footprint over 25 common, audited cases.
-Comments, imports, and shared dialect/compiler definitions are excluded.}
-\label{tab:xla-specification-size}
+\caption{Source footprint of all 31 inference-successful rules.
+Counts exclude comments, whitespace, imports, and shared declarations.}
+\label{tab:specification-size}
 \small
-\definecolor{explicitReduction}{HTML}{3F608A}
-\definecolor{inferredReduction}{HTML}{396F59}
-\newcommand{\explicitreduction}[1]{\textcolor{explicitReduction}{(#1\%)}}
-\newcommand{\inferredreduction}[1]{\textcolor{inferredReduction}{(#1\%)}}
-\begin{tabularx}{\linewidth}{@{}Yrrr@{}}\toprule
-Responsibility & XLA & Explicit TEPL\textsuperscript{a} & Inferred TEPL\textsuperscript{b}\\\midrule
-Matching (LHS) & 1,259 & \explicitreduction{-74.3}\,324 & \inferredreduction{-4.3}\,310\\
-Legality checks (\code{where} block) & 1,055 & \explicitreduction{-6.6}\,985 & \inferredreduction{0.0}\,985\\
-Attribute reasoning (\code{derive} block) & 4,583 & \explicitreduction{-87.9}\,554 & \inferredreduction{-65.5}\,191\\
-Replacement construction (RHS) & 1,538 & \explicitreduction{-84.7}\,236 & \inferredreduction{-7.6}\,218\\
-Others  & 753 & \explicitreduction{-83.4}\,125 & \inferredreduction{0.0}\,125\\\midrule
-Total & 9,188 & \explicitreduction{-75.8}\,2,224 & \inferredreduction{-17.8}\,1,829\\\bottomrule
+\begin{tabularx}{\linewidth}{@{}Yrr@{}}\toprule
+Responsibility & Explicit TEPL & Inferred TEPL\\\midrule
+Matching (LHS) & 407 & 391\\
+Legality checks (\code{where} block) & 1,159 & 1,207\\
+Attribute reasoning (\code{derive} block) & 985 & 518\\
+Replacement construction (RHS) & 308 & 288\\
+Other syntax & 155 & 155\\\midrule
+Total & 3,014 & 2,559\\\bottomrule
 \end{tabularx}
-\par\smallskip
-\begin{minipage}{\linewidth}
-\footnotesize
-\textsuperscript{a}\textcolor{explicitReduction}{Blue percentages} show the decrease from XLA to Explicit TEPL.
-\textsuperscript{b}\textcolor{inferredReduction}{Green percentages} show the decrease from Explicit to Inferred TEPL.
-\end{minipage}
 \end{table}
 
-Across these 31 rules, inferred specifications contain 455 fewer tokens
-(15.1\%) than the original explicit forms. Attribute reasoning accounts for
-467 fewer tokens, while normalization in two cases adds 48 legality tokens.
-The net source difference therefore includes both attribute inference and
-associated representation changes.
+Across these 31 rules, inferred source forms contain 455 fewer tokens
+(15.1\%) than the explicit forms. This is a static comparison of saved
+sources; it does not establish acceptance of every explicit and inferred
+source variant. Appendix~\ref{app:current-evaluation} details the accounting
+procedure and source provenance.
 
 \subsection{Compilation Scalability}
 \label{sec:evaluation-cost}

@@ -29,14 +29,14 @@ each group's entries at its recorded positions, and paired matching selects
 the same entries on both sides. A permutation covers each position once,
 so reconstruction also preserves complete partitions.
 
-\paperparagraph{From mappings to attribute programs.}
+\paperparagraph{From mappings to attribute builders.}
 \label{app:mappings-to-attribute-programs}
 For admitted plans, the symbolic adapter interprets the shared metadata IR
 of Theorem~\ref{thm:symbolic-compilation} through these mappings. Source-read
 correspondence supplies logical axes; restricted additive components are
 matched independently. Unresolved reductions or ambiguous read assignments
-make lowering unsuccessful, leaving the residual program available for
-native interpretation. Supplied extent and coordinate expressions are
+make lowering unsuccessful, leaving the compiled metadata program available
+for native interpretation. Supplied extent and coordinate expressions are
 preserved, and completed candidates require independent validation.
 Appendix~\ref{app:batched-reassociation-program} gives the complete
 reassociation case study.
@@ -52,7 +52,7 @@ values, and output order are preserved by reindexing the finite sum.
 This semantic preservation is distinct from the exact builder correspondence
 proved in Appendix~\ref{app:symbolic-compilation-proof}.
 The independent validator checks the completed candidate, including
-source scope and definedness of the generated feasibility checks. Under
+source scope and definedness of the feasibility checks. Under
 the written condition and successful checks, it validates attribute
 expressions and rewrite obligations (Theorem~\ref{thm:validator-soundness}).
 Other unproved construction goals are never assumptions. Failed lowering

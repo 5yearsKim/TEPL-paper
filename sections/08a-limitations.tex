@@ -1,8 +1,6 @@
-\subsection{Scope and Limitations}
+\subsection{Practical Limitations}
 \label{sec:scope-limitations}
-Mixed explicit/inferred axis fields get soundness only, within the stated
-domains of validation and the sound schemas
-(Section~\ref{sec:formal-scope}).
+Table~\ref{tab:guarantee-map} summarizes the mathematical boundaries.
 Extent and coordinate parameters remain supplied or defaulted. Slice, padding, reshape,
 and convolution are outside the direct synthesis and validation theorems;
 their implementation support is limited. Tensor-valued indexing and richer
@@ -12,13 +10,7 @@ distinguishes operation support from theorem scope. The 86 catalog cases
 without an established model remain unvalidated; structural extensibility
 alone supplies no semantic guarantee.
 
-Conditional validation can remain unresolved even when a feasibility
-program has been generated. Its proof search is not complete. Outside the
-complete synthesis fragment, generated applicability checks may reject
-feasible matches. Even within that fragment, the completeness theorem does
-not cover zero or singleton extents. Successful compilation alone does not
-establish that a rule has an applicable match. The independent validator
-can also accept supplied attributes when inference fails. The XLA integration
+The XLA integration
 covers default dense-f32 dot metadata, retaining convolution and a custom
 policy by hand. Production opportunity frequency, cache hit rates, and
 developer productivity remain unassessed.

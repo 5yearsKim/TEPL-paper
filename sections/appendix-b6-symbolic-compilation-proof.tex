@@ -10,8 +10,8 @@ proved in Section~\ref{sec:formal-correctness}.
 Fix an admitted plan satisfying Section~\ref{sec:formal-scope}, and let $m$
 be arbitrary legal match metadata in that domain. The frontend has already
 identified the operation templates, captured source fields, and independent
-RHS axis unknowns. Write $E_q$ for the generated feasibility check and $E_f$
-for the generated attribute computation.
+RHS axis unknowns. As in Section~\ref{sec:symbolic-program-construction},
+$E_{\mathrm{check}}$ is the compiled feasibility check and $E_{\mathrm{build}}$ is the compiled builder.
 
 \paperparagraph{Step 1: Preserve logical axes and their connections.}
 The generated expressions must first describe the same axes as the
@@ -35,14 +35,14 @@ are recorded explicitly. Thus subsequent passes use the same axes and
 pairings as the mathematical construction, for every finite group length.
 
 \paperparagraph{Step 2: Produce the same feasibility result.}
-The next task is to determine whether the generated check makes exactly
+The next task is to determine whether the compiled feasibility check makes exactly
 the same decision as $\operatorname{check}(m)$. The inputs $U_v$ inside each
 RHS subtree are known at compile time. The generated expressions identify
 an axis as mandatory when it occurs inside that subtree and is needed in the final
 output or by an outside input:
 \begin{equation}
  M_v=\left(\bigcup_{X\in U_v}\operatorname{set}(I_X)\right)
- \cap\left(\operatorname{set}(F)\cup
+ \cap\left(\operatorname{set}(\operatorname{Ord}_{\mathrm{out}})\cup
              \bigcup_{X\notin U_v}\operatorname{set}(I_X)\right).
  \label{eq:emitted-mandatory}
 \end{equation}
@@ -52,11 +52,11 @@ their axes, permutations keep the child's set, sums intersect it with
 $M_v$, and contractions use Equation~\eqref{eq:canonical-roles}. Induction
 from inputs to root therefore gives the same $S_v$ at every node.
 
-Starting with $F$, the reverse pass computes the same requirements $Req_v$
+Starting with $\operatorname{Ord}_{\mathrm{out}}$, the reverse pass computes the same requirements $Req_v$
 and local ordering checks as Section~\ref{sec:ordering-feasibility}.
 The checks require distinct available axes, the input subsequence condition,
 and the declared batch/left-free/right-free order at contractions.
-The root check requires $S_{\mathrm{root}}=\operatorname{set}(F)$.
+The root check requires $S_{\mathrm{root}}=\operatorname{set}(\operatorname{Ord}_{\mathrm{out}})$.
 Set enumeration cannot affect these results: membership tests ignore order,
 while ordered filters preserve their input order.
 
@@ -64,7 +64,7 @@ These checks use only finite set and list operations, with no partial
 position lookup. They are evaluated before the attribute computation, so
 a failed check does not require evaluating a builder. Their conjunction
 is exactly Equation~\eqref{eq:feasibility}. For multiple terms, the component
-checks are combined as in Appendix~\ref{sec:addition-proof}. Hence $E_q$
+checks are combined as in Appendix~\ref{sec:addition-proof}. Hence $E_{\mathrm{check}}$
 returns the same Boolean result as $\operatorname{check}(m)$, including
 when construction is infeasible. This proves Equation~\eqref{eq:emitted-check}.
 
@@ -89,7 +89,7 @@ source legality supplies equality of paired extents. Since the generated
 program uses the same axis sets, output orders, and position queries as the
 mathematical construction, it produces the same attributes. Each node's
 output contains exactly $S_v$ and satisfies $Req_v$, and the root has order
-$F$. Independent component assignments combine as in
+$\operatorname{Ord}_{\mathrm{out}}$. Independent component assignments combine as in
 Appendix~\ref{sec:addition-proof}. This proves Equation~\eqref{eq:emitted-build}.
 
 \paperparagraph{Step 4: Construct a finite program without concrete ranks.}

@@ -16,9 +16,9 @@ $\exists\beta:\operatorname{Valid}(m,\beta)\Rightarrow\operatorname{check}(m)$.
 Suppose $\beta$ is valid. Lemma~\ref{lem:canonicalization} gives a valid
 canonical assignment $\beta'$ with live set $S_v$ at every node. Its final
 output agrees with the LHS, so
-$S_{\mathrm{root}}=\operatorname{set}(F)$.
+$S_{\mathrm{root}}=\operatorname{set}(\operatorname{Ord}_{\mathrm{out}})$.
 
-Starting with the root requirement $F$, prove from parents to children that
+Starting with the root requirement $\operatorname{Ord}_{\mathrm{out}}$, prove from parents to children that
 each canonical output contains $Req_v$ as a subsequence. A contraction's
 output consists of batch, left-free, and right-free blocks in that order.
 Any subsequence of that output must follow the same block order, giving
@@ -76,9 +76,9 @@ support is already inside the subtree. The partition invariant ensures that
 its supporting input dimensions have been connected, so no later connection is lost.
 At the root, the full input partition consequently agrees with the LHS.
 
-Finally, $S_{\mathrm{root}}=\operatorname{set}(F)$ and
-$F\preceq\operatorname{Ord}_{\mathrm{root}}$. The output has exactly these
-axes, each once, so $\operatorname{Ord}_{\mathrm{root}}=F$. Hence
+Finally, $S_{\mathrm{root}}=\operatorname{set}(\operatorname{Ord}_{\mathrm{out}})$ and
+$\operatorname{Ord}_{\mathrm{out}}\preceq\operatorname{Ord}_{\mathrm{root}}$. The output has exactly these
+axes, each once, so $\operatorname{Ord}_{\mathrm{root}}=\operatorname{Ord}_{\mathrm{out}}$. Hence
 $N(L)=N(R)$. Lemma~\ref{lem:axis-exactness} gives equality for all input
 values. Together with legality, this proves
 $\operatorname{Valid}(m,\operatorname{build}(m))$.

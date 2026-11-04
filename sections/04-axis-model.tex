@@ -49,14 +49,14 @@ produces output order $\vec I\Vert\vec J$.
 \label{sec:axis-representation}
 For an expression $T$ with assigned attributes, define
 \begin{equation}
- N(T)=(\mathcal D,\sim,F),
+ N(T)=(\mathcal D,\sim,\operatorname{Ord}_{\mathrm{out}}),
  \label{eq:axis-representation}
 \end{equation}
 where $\mathcal D$ is the set of input dimensions, $\sim$ records their coordinate
-connections, and $F$ lists the output classes in dimension order. This representation
+connections, and $\operatorname{Ord}_{\mathrm{out}}$ lists the output classes in dimension order. This representation
 specifies the value at each output coordinate: use the same index at
 connected input dimensions, multiply the selected input entries, and sum over
-all classes absent from $F$. Classes in $F$ remain as output coordinates.
+all classes absent from $\operatorname{Ord}_{\mathrm{out}}$. Classes in $\operatorname{Ord}_{\mathrm{out}}$ remain as output coordinates.
 
 For matrix multiplication $T=AB$, contraction identifies
 $(A,1)\sim(B,0)$, giving the classes:

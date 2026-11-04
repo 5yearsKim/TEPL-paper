@@ -105,8 +105,7 @@ The appendices follow the main paper's progression and use the same notation:
   validation summary and soundness argument (`sections/appendix-b4-validation.tex`).
   B.4 states the supported reasoning rules and gives a concise conditional
   soundness proof: feasibility is checked before attribute construction.
-  B.7 summarizes operation coverage; guard certification and condition
-  suggestions are not part of the current design.
+  B.7 summarizes operation coverage.
 - **C. Current Evaluation Protocol and Evidence**
   (`sections/appendix-c-evaluation.tex`): coverage, specification-size
   accounting and implementation checks.

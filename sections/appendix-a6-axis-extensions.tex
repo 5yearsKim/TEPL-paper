@@ -1,76 +1,61 @@
 \subsection{Soundness of Additional Rewrite Schemas}
 \label{app:axis-extensions}
-This appendix proves soundness of specific rewrite schemas beyond the
-complete constructor's fragment. Each schema has explicit conditions under
-which its generated attributes preserve the written rewrite. Supplied RHS
-fields are preserved only when they are certified equal to the constructed
-fields. The result covers the listed schemas, not arbitrary compositions
-or completeness of inference and guard checking.
+This appendix proves additional tensor rewrites correct under explicit conditions.
 
-\paperparagraph{Coordinate interpretation.}
-We compare the input entries read at each output coordinate. Write
-$B_{d,e}X$ for insertion-only broadcast: the distinct positions $d$ locate the original
-input dimensions, and $e$ lists inserted extents in output order. Thus
-$(B_{d,e}X)[z]=X[z[d]]$. A transpose $T_\phi X$ has shape
-$\gath(\operatorname{shape}(X),\phi)$ and reads $X[z[\phi^{-1}]]$.
-A reversal $R_AX$ replaces coordinate $z_i$ by $n_i-1-z_i$ for $i\in A$,
-where $n_i$ is that dimension's extent. A reduction $\Sigma_AX$ sums over
-positions $A$ and preserves the order of the other dimensions. All source
-selectors below are distinct and in range.
+\paperparagraph{Notation and assumptions.}
+All source selectors are distinct and in range.
+\begin{itemize}
+\item \textbf{Broadcast} $B_{d,e}X$ reads $X[z[d]]$:
+$d$ gives the original dimensions' output positions, and $e$
+lists inserted extents in output order.
+\item \textbf{Transpose} $T_\phi X$ reads $X[z[\phi^{-1}]]$.
+\item \textbf{Reversal} $R_AX$ replaces $z_i$ with $n_i-1-z_i$
+for $i\in A$, where $n_i$ is the axis extent.
+\item \textbf{Reduction} $\Sigma_AX$ sums over $A$,
+preserving the remaining axis order.
+\end{itemize}
 
-\begin{lemma}[Sound rewrite schemas]
+\begin{lemma}[Soundness of additional rewrites]
 \label{lem:certified-extensions}
-Under the canonical declaration and dtype contracts, each constructor
-below produces a legal replacement with identical ordered shape and values
-whenever its stated source condition holds. This holds for arbitrary finite
-ranks and nonnegative extents under exact algebraic semantics, sufficient
-resources, and representable metadata.
+For each rewrite below, the stated conditions ensure that the
+constructed replacement is legal and preserves the output shape,
+axis order, and values. This holds for arbitrary finite ranks and
+nonnegative extents under exact algebraic semantics, assuming
+the stated operation contracts.
 \end{lemma}
 \begin{proof}
-We group the schemas by the argument needed to establish their correctness.
-For each group, we give the construction, its conditions, and the reason
-it preserves input reads or finite sums. We then collect the legality,
-shape, and dtype arguments.
+We show that each replacement reads the same input entries or computes
+the same finite sum, grouping rewrites by operation.
 
-\paperparagraph{Step 1: Simplify views without changing input reads.}
-The first task is to remove redundant view operations while preserving
-which input entry each output coordinate reads.
+\paperparagraph{View simplification.}
 A chain of reversals becomes one reversal on the symmetric difference
-of its axis sets. Reversing a coordinate twice restores it, and reversals
-on different coordinates commute. The remaining reversal can be removed
-only when its axis set is empty.
+of its axis sets: reversing twice cancels, and reversals on different
+axes commute. An empty reversal can be removed.
 
 For nested broadcasts $B_{b,f}(B_{d,e}X)$, require
-$b=[0,\ldots,r+|e|-1]$, where $r$ is the input rank. The outer broadcast
-then appends its inserted dimensions. The replacement embedding is
-$\gath(b,d)$, and its inserted extents are $e\catseq f$. This preserves
-both the original input coordinates and the order of inserted dimensions.
+$b=[0,\ldots,r+|e|-1]$, where $r$ is the input rank, so the outer broadcast
+only appends dimensions. The replacement $B_{\gath(b,d),e\catseq f}X$
+preserves the input reads and output shape.
 
 For the singleton-axis view, require
 $\operatorname{shape}(X)=[1]\catseq t$ and $d=[0,\ldots,r-1]$,
 where $r=\operatorname{rank}(X)$.
 Remove input dimension zero and broadcast the remaining tensor with
 embedding $[1,\ldots,r-1]$ and inserted extents $[1]\catseq e$.
-Both results have shape $[1]\catseq t\catseq e$ and read the same entry:
-the removed input coordinate can only be zero. This argument also applies
-to nonnumeric elements; it does not provide a general reshape rule.
+Both results have shape $[1]\catseq t\catseq e$ and read the same entry
+because the removed coordinate is always zero.
 
-\paperparagraph{Step 2: Translate operations through broadcast.}
-Broadcast introduces output coordinates that do not affect the input read.
-We must distinguish these inserted dimensions from the embedded original
-dimensions when moving another operation across broadcast.
-
+\paperparagraph{Operations through broadcast.}
 For $\star\in\{+,\times\}$, matching embeddings and inserted extents give
 $(B_{d,e}X)\star(B_{d,e}Y)=B_{d,e}(X\star Y)$.
-Source pointwise legality and the common injective embedding imply equal
-input shapes. At coordinate $z$, both sides compute
+Source legality implies equal input shapes, and both sides compute
 $X[z[d]]\star Y[z[d]]$.
 
 For reversal, set $Q=\{j\mid d_j\in A\}$. Then
 $R_A(B_{d,e}X)=B_{d,e}(R_QX)$: reversing an inserted dimension cannot
-change the input read, while reversing an embedded dimension reverses its
-corresponding input coordinate. The input reversal can be omitted only
-when $Q=\varnothing$; this includes scalar broadcast with $d=[]$.
+change the input read; the other reversals act on the corresponding input
+axes. If $Q=\varnothing$, including scalar broadcast with $d=[]$, omit
+the input reversal.
 
 For transpose, let $t=\operatorname{shape}(B_{d,e}X)$ and $n=|t|$.
 Construct
@@ -78,69 +63,56 @@ Construct
  d'=\gath(\phi^{-1},d),\qquad
  e'=\gath(\gath(t,\phi),\ocomp([0,\ldots,n-1],d')).
 \]
-Original input dimension $j$ moves from position $d_j$ to
-$\phi^{-1}[d_j]$. The list $d'$ records those positions, and $e'$ records
-the other extents in the transposed output order. Hence $B_{d',e'}X$
-has the same shape and reads the same input coordinates as
-$T_\phi(B_{d,e}X)$. For scalar broadcast, this reduces to $d'=[]$ and
+Here $d'$ gives the original dimensions' transposed positions, and $e'$
+lists the remaining extents in output order. Thus $B_{d',e'}X$ preserves
+the shape and reads of $T_\phi(B_{d,e}X)$.
+For scalar broadcast, $d'=[]$ and
 $e'=\gath(e,\phi)$. A broadcast inserting no dimensions is itself the
 transpose $T_{d^{-1}}X$.
 
-For reduction, require $A\subseteq\operatorname{im}(d)$: only embedded
-original dimensions may be reduced. Set $Q=\{j\mid d_j\in A\}$ and, for
+For reduction, require $A\subseteq\operatorname{im}(d)$, so only original
+dimensions are reduced. Set $Q=\{j\mid d_j\in A\}$ and, for
 each $j\notin Q$, retain the embedding entry
 $d_j-|\{a\in A\mid a<d_j\}|$. These entries form $d'$ in input order,
 giving $\Sigma_A(B_{d,e}X)=B_{d',e}(\Sigma_QX)$.
-Both sides sum over the same input coordinates. The subtraction shifts
-surviving positions after the reduced dimensions are removed. Reducing an
-inserted dimension is excluded because it would add a multiplicity factor.
+The subtraction shifts positions past removed dimensions, and both sides
+sum over the same input coordinates. Reducing an inserted dimension is
+excluded because it would add a multiplicity factor.
 
-\paperparagraph{Step 3: Preserve scalar algebra at each coordinate.}
-These schemas move scalar operations without changing which values are
-combined. Reversal distributes over addition because both sides add the
-same two reversed input entries. A broadcast scalar is constant under
-reversal and can be copied unchanged. A chain of numeric negations depends
-only on its parity, and negation commutes with finite summation, including
-an empty sum.
+\paperparagraph{Scalar identities.}
+Reversal distributes over addition because both sides add the same
+reversed entries; a broadcast scalar is unchanged by reversal.
+Repeated negation depends only on parity, and negation commutes with
+finite summation, including an empty sum.
 
 For scalar $c$, bilinearity gives
 $\operatorname{dot}(cX,Y)=c\operatorname{dot}(X,Y)$, and similarly on the
-right. Copy the dot's axis fields and broadcast $c$ to the original dot's
-output shape, computed from its ordered batch and free positions.
+right. Copy the dot's axis fields and broadcast $c$ to its output shape.
 For nested products, the identity
 \[
  (X\cdot B_{[],\operatorname{shape}(X)}c)\cdot B_{d,e}Y
  =X\cdot B_{d,e}(Y\cdot B_{[],\operatorname{shape}(Y)}c)
 \]
-uses source pointwise legality to equate the outer shapes. At each
-coordinate, it is associativity and commutativity of the same three scalar
-factors. Identical operation trees can also copy their source attributes:
-induction over their matching nodes preserves each operation and result.
+follows from associativity and commutativity at each coordinate;
+source legality ensures matching shapes.
 
-\paperparagraph{Step 4: Preserve contraction partners.}
-When moving an operation between dot operands, the important requirement
-is to keep the same paired coordinates.
+\paperparagraph{Dot rewrites.}
 To move reversal from one operand to the other, require every reversed
 position in $A$ to belong to that operand's contracting list $k$.
 If $h$ is the other contracting list, reverse positions
 $\gath(h,\{j\mid k_j\in A\})$ there and copy all dot axis fields.
-Source legality gives equal extents for each pair. Replacing a selected
-summation index $t$ by $n-1-t$ is a bijection, so the finite sum is unchanged;
-batch and free coordinates are unaffected.
+Paired extents are equal, so changing each selected summation index
+from $t$ to $n-1-t$ preserves the sum and leaves output coordinates unchanged.
 
-Two dot conversions follow directly from the same pairing interpretation.
 With no batch axes and both contracting lists equal to their full input
-position ranges, the operands have identical ordered shapes. The dot is
-therefore their pointwise product followed by reduction of all dimensions.
-With all four axis lists empty, the dot is instead an outer product.
+position ranges, dot is the pointwise product of equal-shaped operands
+followed by reduction over all dimensions.
+With all four axis lists empty, dot is an outer product.
 Broadcast the left operand into the output prefix and the right operand
 into the output suffix, inserting the other operand's shape in each case,
 then multiply. This preserves the dot's left-free/right-free output order.
 
-\paperparagraph{Step 5: Move broadcast-created contractions into a reduction.}
-Here an inserted broadcast dimension participates in a dot contraction.
-We must preserve its summation even though the original unbroadcast input
-does not contain that dimension.
+\paperparagraph{Broadcast-created contractions.}
 Let $d$ embed $X$ into the left operand, and let $I$ be the inserted
 positions. Require every position in $I$ to belong to the left contracting
 list. Reduce $Y$ over the right contracting positions paired with $I$,
@@ -151,32 +123,22 @@ to account for the preceding dimensions removed by the reduction.
 Require left batch positions to be embedded original positions and the
 mapped left free positions to preserve the source's free output order.
 The removed right positions are distinct and disjoint from retained batch
-and contracting positions. These conditions make the new reduction and
-dot legal and preserve batch/left-free/right-free output order.
-At each fixed output coordinate, the value identity is
+and contracting positions. The replacement therefore preserves legality
+and output order. At each output coordinate,
 \[
  \sum_{a,b}X[a]Y[a,b]=\sum_a X[a]\left(\sum_bY[a,b]\right),
 \]
-where $b$ ranges over only the broadcast-created contracting dimensions.
-Finite-sum distribution proves equality, including empty summation domains.
+where $b$ ranges over the broadcast-created contracting dimensions.
+This is finite-sum distribution, including empty summation domains.
 
-\paperparagraph{Step 6: Establish the full replacement guarantee.}
-The preceding arguments identify the same input reads or equal finite
-sums for each schema. Their stated conditions also ensure distinct,
-in-range selectors, disjoint batch and contracting roles, and the required
-output order. Broadcast constructors preserve the ordered output shape;
-reductions remove exactly the specified dimensions; dot constructors keep
-the declared batch and free-axis order.
-
-Views preserve dtype, and the numeric operations preserve the compatible
-dtypes required by the source contracts. Thus source legality establishes
-the replacement's dtype requirements. A supplied field proved equal to
-the constructed field under the effective applicability condition gives
-the same attributes.
-For a zero extent, there are no coordinates to read on that dimension,
-and reduction over it is an empty sum. For extent one, reversal is the
-identity and the singleton-axis construction reads coordinate zero.
-The arguments therefore apply to nonnegative extents without the
-completeness theorem's minimum-extent assumption. This proves soundness
-of the listed schemas while leaving that theorem's fragment unchanged.
+\paperparagraph{Legality and boundary cases.}
+The stated conditions keep selectors distinct and in range, batch and
+contracting roles disjoint, and output shapes and axis orders unchanged.
+Identical operation trees may copy source attributes: induction over
+matching nodes preserves legality and results. Supplied fields proved
+equal to constructed fields under the effective applicability condition
+also give the same replacement.
+Zero extents give no output coordinates or empty sums; on singleton axes,
+reversal is the identity and the only coordinate is zero.
+Thus the listed rewrites remain sound for all nonnegative extents.
 \end{proof}

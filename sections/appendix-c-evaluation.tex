@@ -32,36 +32,28 @@ The public compile/load/rewrite suite passes 685 independent dense-value
 and ordered-shape checks and 142 rejection checks across eight test targets.
 It exercises degenerate extents, varying ranks, axis ordering, and malformed
 programs. Shared-IR regressions additionally check native/symbolic agreement,
-residual-program retention, and paired contraction reindexing. Detailed
+retention of the compiled metadata program when lowering fails, and paired
+contraction reindexing. Detailed
 inventories accompany the artifacts; these development tests and corpus
 reruns do not constitute a new held-out evaluation.
 
 \paperparagraph{Specification accounting.}
-The source-footprint comparison includes all 31 rule identities
-whose axis inference succeeds in the current coverage run. We recount the
-saved original explicit and compact inferred sources from the earlier
-32-case size protocol, checking their source hashes and recorded token
-counts. No new compiler experiment is performed. Five original explicit
-forms and one compact form did not validate in that historical size run;
-all 31 identities remain included in this static source comparison.
-The current coverage result concerns the axis-inference cases and does not
-establish acceptance of every counted source variant.
+The source-footprint comparison uses exactly the 31 rule identities whose
+axis inference succeeds in the coverage run, matching
+Table~\ref{tab:specification-size} and the abstract. We count the saved
+explicit and inferred source forms for each identity and verify their
+source hashes. Selection depends only on inference success, not on the
+explicit variant's validation outcome. Five explicit forms and one inferred
+form did not validate in the original source measurements; all 31 identities
+remain in this static comparison. No new compiler experiment is performed,
+and the coverage result does not establish acceptance of every counted
+source variant.
 
-The original explicit forms contain 3,014 tokens and the compact inferred
-forms contain 2,559, a difference of 455 tokens (15.1\%). Saved inferred
-forms include unit-axis normalization and unused-label/empty-block cleanup.
-Two normalized cases add 48 legality tokens relative to the originals, so
-the overall difference is not attributed solely to inference. Exact counted
-sources, per-rule responsibility counts, historical outcomes, and source
-hashes are retained in
+The explicit forms contain 3,014 tokens and the inferred forms contain
+2,559, a difference of 455 tokens (15.1\%). Exact counted sources, per-rule
+responsibility counts, recorded validation outcomes, and source hashes
+are retained in
 \nolinkurl{evaluation/current/specification_size/results/all_31_source_footprint.json}.
-
-Table~\ref{tab:xla-specification-size}'s separate XLA comparison covers
-25 audited cases, with 9,188 XLA, 2,224 explicit TEPL, and 1,829 inferred
-TEPL tokens. These historical measurements are retained in
-\nolinkurl{evaluation/current/specification_size/results/responsibility.json}.
-Some selected XLA branches cover additional cases and policies, so this
-comparison does not establish equal implementation scope.
 
 The lexical scanner counts each identifier, literal, and recognized
 multi-character operator as one token; other punctuation counts
@@ -72,9 +64,9 @@ dialect and compiler costs remain outside these per-rule counts.
 
 \FloatBarrier
 \sidefigure[0.6]{figures/scalability.pdf}
-{Certified compilation scalability. (a) Compilation time per phase grows approximately linearly with dot-chain depth. (b) Compilation time remains stable across the tested tensor ranks.}
+{Compilation scalability. (a) Compilation time per phase grows approximately linearly with dot-chain depth. (b) Compilation time remains stable across the tested tensor ranks.}
 {fig:scalability}
-{Two horizontally aligned panels show certified dot-chain compilation with stacked mean phase costs and overlaid median total latency, and transpose-rank compilation. Whiskers show minimum and maximum total latency. All fifteen automatic configurations succeed in every measured round.}
+{Two horizontally aligned panels show dot-chain compilation with stacked mean phase costs and overlaid median total latency, and transpose-rank compilation. Whiskers show minimum and maximum total latency. All fifteen automatic configurations succeed in every measured round.}
 
 \paperparagraph{Compilation scalability.}
 We evaluate the scalability of the core algorithm as rewrite depth and
@@ -85,18 +77,15 @@ dot-chain cost by compilation phase.
 The experiment uses 1--10 dots per side at input rank three with fixed
 source axis lists, and three source transposes composed into one replacement
 at ranks 2, 4, 8, 16, and 32 with symbolic permutations. All RHS axis fields
-are inferred. We run the optimized compiler with guard certification under
-algebraic semantics, using one warmup and ten measured rounds per
+are inferred. We run the optimized compiler under algebraic semantics, using one warmup and ten measured rounds per
 configuration on an Intel Core Ultra 7 155H. Runs are serial, with case
 order shuffled using seed 20261026 and unchanged compiler work budgets.
 Each call starts from loaded syntax without reusing a proof or compiled
-program. The original rule bodies and guards are preserved. Dot chains
-use the fixed-layout certificate; transpose chains use the unary-chain
-certificate.
+program. The original rule bodies and written conditions are preserved.
 
-Preparation includes resolution and type checking. Certification and
-construction include semantic-plan preparation, admission, guard
-certification, and metadata materialization. Lowering and validation
+Preparation includes resolution and type checking. Rule checking and
+construction include semantic-plan preparation, checking written
+conditions, and metadata materialization. Lowering and validation
 include executable lowering, metadata emission, and final validation.
 Other cost covers dispatch and intermediate-object cleanup. These are API
 phase boundaries; individual tasks may span phases. Parsing, import loading,
