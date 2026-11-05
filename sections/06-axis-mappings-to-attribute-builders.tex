@@ -1,8 +1,8 @@
 \section{From Axis Mappings to Attribute Builders}
-\label{sec:method}
+\label{sec:axis-mappings-to-attribute-builders}
 
 In this section, we explain how TEPL compiles the complete constructor from
-Section~\ref{sec:mathematical-synthesis} into a reusable metadata program.
+Section~\ref{sec:attribute-synthesis-algorithm-and-guarantees} into a reusable metadata program.
 We first introduce Axes IR, which represents operations using symbolic
 axis groups, operand bindings, and value semantics. We then explain how
 TEPL constructs the metadata program through symbolic axis mapping
@@ -71,7 +71,7 @@ The bindings provide the initial axis mappings used below.
 
 \subsection{Symbolic Axis Mapping}
 \label{sec:symbolic-axis-mapping}
-Section~\ref{sec:mathematical-synthesis} determines which logical axes each
+Section~\ref{sec:attribute-synthesis-algorithm-and-guarantees} determines which logical axes each
 RHS operation uses. Compilation translates these choices into expressions
 for dimension positions, evaluated on each match's metadata to obtain
 concrete RHS axis attributes.
@@ -85,7 +85,7 @@ $p_G$ in tensor $t$:
 Here $\gath$ selects entries from the logical-axis list
 $\operatorname{Ord}_t$ at positions $p_G$. TEPL derives mappings from
 the LHS operation declarations and captured axis fields. Intermediate
-RHS axis orders follow Section~\ref{sec:mathematical-synthesis}'s construction.
+RHS axis orders follow Section~\ref{sec:attribute-synthesis-algorithm-and-guarantees}'s construction.
 
 For example, if $\operatorname{Ord}_T=[i_0,i_1,j_0,j_1]$, then
 $\vec I=[i_0,i_1]$ has positions $p_I=[0,1]$, and
@@ -141,7 +141,7 @@ positions in $A$ of the entries that also occur in $B$, and $v$ lists the
 positions of those same entries in $B$, so $A_{u_k}=B_{v_k}$. For instance,
 $\mpo([3,0],[0,1])=([1],[0])$: the only common entry, $0$, sits at position
 $1$ of the first list and position $0$ of the second (full definition in
-Appendix~\ref{app:validation-proofs}).
+Appendix~\ref{app:candidate-validation-and-soundness}).
 The compiler computes
 \begin{equation}
  (u_G,v_G)=\mpo(c_L,p_G),\qquad z_G=\gath(c_R,u_G).
@@ -171,10 +171,10 @@ correct partners, so the replacement attributes preserve the original
 contraction pairings.
 
 \subsection{Symbolic Attribute Builder Construction}
-\label{sec:symbolic-program-construction}
+\label{sec:symbolic-attribute-builder-construction}
 Using the mappings and partitions from
 Sections~\ref{sec:symbolic-axis-mapping}--\ref{sec:symbolic-axis-partitioning},
-the compiler translates Section~\ref{sec:mathematical-synthesis}'s three
+the compiler translates Section~\ref{sec:attribute-synthesis-algorithm-and-guarantees}'s three
 passes into one metadata program. Its expressions determine retained axes,
 check ordering constraints, and compute RHS axis attributes. Shared
 axis-group computations are represented once and reused across attributes.
@@ -201,7 +201,7 @@ theorem relates these results within the stated fragment.
 \begin{theorem}[Symbolic compilation correspondence]
 \label{thm:symbolic-compilation}
 For every rewrite rule satisfying the synthesis restrictions in
-Section~\ref{sec:formal-scope}, compilation
+Section~\ref{sec:formal-scope-and-guarantees}, compilation
 constructs a finite metadata program $(E_{\mathrm{check}},E_{\mathrm{build}})$ independently of concrete
 ranks and the written guard. For every legal metadata instance $m$ in that
 section's completeness domain,
@@ -217,9 +217,9 @@ order. The check returns boolean for every legal match in the stated domain.
 If it succeeds, the attribute builder computes the RHS attributes.
 \end{theorem}
 \begin{proof}[Proof sketch]
-The compiler translates each step of Section~\ref{sec:mathematical-synthesis}
+The compiler translates each step of Section~\ref{sec:attribute-synthesis-algorithm-and-guarantees}
 into metadata operations that compute the same axis sets, ordering checks,
-and positional attributes. Appendix~\ref{app:symbolic-compilation-proof}
+and positional attributes. Appendix~\ref{app:symbolic-program-construction-and-correspondence}
 proves this correspondence and shows that program construction terminates
 without concrete metadata, the written guard, or successful simplification.
 \end{proof}
@@ -227,12 +227,12 @@ without concrete metadata, the written guard, or successful simplification.
 Together with Theorem~\ref{thm:complete-synthesis}, this establishes
 completeness of the compiled feasibility check and builder on the stated
 domain. Conditional validation checks its use in an executable rewrite.
-Appendix~\ref{app:batched-reassociation-program} gives a complete attribute
+Appendix~\ref{app:batched-reassociation} gives a complete attribute
 builder for reassociation under explicit sufficient conditions.
 
 \subsection{Compilation and Validation}
-\label{sec:compilation-scope}
-The compiled programs implement Section~\ref{sec:find}'s execution
+\label{sec:compilation-and-validation}
+The compiled programs implement Section~\ref{sec:synthesis-and-execution-contract}'s execution
 contract. Before accepting them, the compiler submits the feasibility
 check and completed attribute builder to conditional validation
 (Section~\ref{sec:candidate-validation}). Validation establishes that the

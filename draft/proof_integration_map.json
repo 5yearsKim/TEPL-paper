@@ -6,8 +6,8 @@
     {
       "source_section": "2.1",
       "concept": "Tensor expressions",
-      "destination": "sections/03-problem.tex",
-      "label": "sec:problem",
+      "destination": "sections/03-problem-definition.tex",
+      "label": "sec:problem-definition",
       "preserved_details": [
         "input names and symbolic shapes",
         "operation grammar"
@@ -16,7 +16,7 @@
     {
       "source_section": "2.2",
       "concept": "Tensor rewrite",
-      "destination": "sections/03-problem.tex",
+      "destination": "sections/03-problem-definition.tex",
       "label": "eq:metadata",
       "preserved_details": [
         "L and R",
@@ -27,7 +27,7 @@
     {
       "source_section": "2.3",
       "concept": "Valid assignment",
-      "destination": "sections/03-problem.tex",
+      "destination": "sections/03-problem-definition.tex",
       "label": "eq:valid",
       "preserved_details": [
         "intermediate legality",
@@ -38,8 +38,8 @@
     {
       "source_section": "2.4",
       "concept": "Synthesis problem",
-      "destination": "sections/03-problem.tex",
-      "label": "sec:find",
+      "destination": "sections/03-problem-definition.tex",
+      "label": "sec:synthesis-and-execution-contract",
       "preserved_details": [
         "exact feasibility",
         "constructive soundness",
@@ -49,8 +49,8 @@
     {
       "source_section": "2.5",
       "concept": "Scope and assumptions",
-      "destination": "sections/03-problem.tex",
-      "label": "sec:formal-scope",
+      "destination": "sections/03-problem-definition.tex",
+      "label": "sec:formal-scope-and-guarantees",
       "preserved_details": [
         "complete operation contracts",
         "empty lists",
@@ -68,8 +68,8 @@
     {
       "source_section": "3.1",
       "concept": "Logical axes",
-      "destination": "sections/04-axis-model.tex",
-      "label": "sec:axis-model",
+      "destination": "sections/04-axis-based-representation.tex",
+      "label": "sec:axis-based-representation",
       "preserved_details": [
         "einsum interpretation",
         "ports and equivalence classes",
@@ -80,7 +80,7 @@
     {
       "source_section": "3.2",
       "concept": "Axis representation",
-      "destination": "sections/04-axis-model.tex",
+      "destination": "sections/04-axis-based-representation.tex",
       "label": "eq:axis-representation",
       "preserved_details": [
         "P, relation, F",
@@ -91,7 +91,7 @@
     {
       "source_section": "3.3",
       "concept": "Axis exactness",
-      "destination": "sections/04-axis-model.tex",
+      "destination": "sections/04-axis-based-representation.tex",
       "label": "lem:axis-exactness",
       "preserved_details": [
         "both proof directions",
@@ -105,8 +105,8 @@
     {
       "source_section": "4.1",
       "concept": "Canonical intermediate axes",
-      "destination": "sections/05-attribute-synthesis.tex",
-      "label": "sec:canonical-axes",
+      "destination": "sections/05-attribute-synthesis-algorithm-and-guarantees.tex",
+      "label": "sec:canonical-intermediate-axes",
       "preserved_details": [
         "support and subtree sets",
         "mandatory versus live axes",
@@ -119,7 +119,7 @@
     {
       "source_section": "4.2",
       "concept": "Canonicalization",
-      "destination": "sections/05-attribute-synthesis.tex",
+      "destination": "sections/05-attribute-synthesis-algorithm-and-guarantees.tex",
       "label": "lem:canonicalization",
       "preserved_details": [
         "order filtering",
@@ -134,8 +134,8 @@
     {
       "source_section": "4.3",
       "concept": "Ordering feasibility",
-      "destination": "sections/05-attribute-synthesis.tex",
-      "label": "sec:ordering-feasibility",
+      "destination": "sections/05-attribute-synthesis-algorithm-and-guarantees.tex",
+      "label": "sec:checking-axis-order",
       "preserved_details": [
         "subsequence and filter notation",
         "root/permutation/sum/contraction propagation",
@@ -148,8 +148,8 @@
     {
       "source_section": "4.4",
       "concept": "Construction",
-      "destination": "sections/05-attribute-synthesis.tex",
-      "label": "sec:formal-construction",
+      "destination": "sections/05-attribute-synthesis-algorithm-and-guarantees.tex",
+      "label": "sec:constructing-axis-attributes",
       "preserved_details": [
         "live-set/order invariant",
         "input/permutation/sum/contraction constructors",
@@ -163,7 +163,7 @@
     {
       "source_section": "5",
       "concept": "Main theorem",
-      "destination": "sections/05a-correctness-completeness.tex",
+      "destination": "sections/05a-correctness-and-completeness.tex",
       "label": "thm:complete-synthesis",
       "preserved_details": [
         "exact feasibility",
@@ -174,7 +174,7 @@
     {
       "source_section": "5.1",
       "concept": "Necessity",
-      "destination": "sections/05a-correctness-completeness.tex",
+      "destination": "sections/05a-correctness-and-completeness.tex",
       "label": "lem:necessity",
       "preserved_details": [
         "canonicalization",
@@ -186,7 +186,7 @@
     {
       "source_section": "5.2",
       "concept": "Sufficiency",
-      "destination": "sections/05a-correctness-completeness.tex",
+      "destination": "sections/05a-correctness-and-completeness.tex",
       "label": "lem:sufficiency",
       "preserved_details": [
         "structural induction",
@@ -198,8 +198,8 @@
     {
       "source_section": "5.3",
       "concept": "Addition",
-      "destination": "sections/05a-correctness-completeness.tex",
-      "label": "sec:addition-proof",
+      "destination": "sections/05a-correctness-and-completeness.tex",
+      "label": "app:extension-to-multiple-terms",
       "preserved_details": [
         "shape-preserving LHS expansion",
         "independent scalar scaling",

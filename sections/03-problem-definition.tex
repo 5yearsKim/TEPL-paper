@@ -1,5 +1,5 @@
 \section{Problem Definition}
-\label{sec:problem}
+\label{sec:problem-definition}
 This section defines the attribute synthesis problem and the correctness
 requirements for its solutions. Given a rewrite's LHS metadata, the goal is
 to decide whether valid RHS attributes exist and construct them when
@@ -7,6 +7,7 @@ feasible. Application also respects the user-written conditions. We also
 specify the mathematical fragment for which we establish correctness and completeness.
 
 \subsection{Tensor Expressions and Rewrites}
+\label{sec:tensor-expressions-and-rewrites}
 Let $\mathcal X=\{X_1,\ldots,X_n\}$ be the input tensor names. Each $X_i$ has
 symbolic shape $s_i$; a match supplies its concrete shape. Let $\mathcal O$
 be the operations. An operation $o\in\mathcal O$ has $k$ inputs and an
@@ -32,7 +33,7 @@ $L_m(X)$ and $R_{m,\beta}(X)$. An attribute builder reads $m$, never the
 entries of $X$.
 
 \subsection{Valid Attribute Assignments}
-\label{sec:valid}
+\label{sec:valid-attribute-assignments}
 We define what counts as a correct synthesis result.
 Let $\beta$ denote the completed RHS attributes.
 $\operatorname{Legal}_R$ includes the legality of every intermediate
@@ -57,8 +58,8 @@ The resulting $\beta$ must be correct for every compatible input value,
 so the quantifier order is $\exists\beta\,\forall X$.
 
 \subsection{Synthesis and Execution Contract}
-\label{sec:find}
-For fully automatic axis fields in Section~\ref{sec:formal-scope}'s fragment,
+\label{sec:synthesis-and-execution-contract}
+For fully automatic axis fields in Section~\ref{sec:formal-scope-and-guarantees}'s fragment,
 we seek two metadata functions: the \emph{feasibility check}
 \code{check} and the attribute builder \code{build}. Given match metadata
 $m$, $\operatorname{check}(m)$ decides whether a valid RHS completion
@@ -89,7 +90,7 @@ search. This execution order also applies outside the complete synthesis
 fragment.
 
 \subsection{Formal Scope and Guarantees}
-\label{sec:formal-scope}
+\label{sec:formal-scope-and-guarantees}
 Our completeness result covers \emph{axis-structural multilinear}
 computations. Operations only connect, reorder, and sum whole axes, and
 output values are sums of products of independent input entries. In this
@@ -146,7 +147,7 @@ identity for $A$ and swap for $B$. One shared permutation cannot do both.\\\bott
 \paperparagraph{Guarantees.}
 Table~\ref{tab:guarantee-map} lists the results. A \emph{sound schema} is a
 rewrite pattern with a separately proved attribute construction
-(Appendix~\ref{app:axis-extensions}). Its conditions, and the agreement of
+(Appendix~\ref{app:soundness-of-additional-rewrite-schemas}). Its conditions, and the agreement of
 supplied fields with constructed fields, must hold under the applicability
 condition.
 
@@ -161,13 +162,13 @@ Synthesis & Finds a valid RHS axis assignment whenever one exists.
 & The fragment above, D1--D4 (Theorem~\ref{thm:complete-synthesis}).\\
 \addlinespace
 Compilation & The compiled check and builder implement the mathematical functions.
-& Rewrite rules satisfying the synthesis restrictions in Section~\ref{sec:formal-scope}
+& Rewrite rules satisfying the synthesis restrictions in Section~\ref{sec:formal-scope-and-guarantees}
 (Theorem~\ref{thm:symbolic-compilation}).\\
 \addlinespace
 Validation & Checks run safely, and completed attributes are valid under the
 applicability condition.
 & Supported rules and exact arithmetic; any extent
-(Theorem~\ref{thm:validator-soundness}; Section~\ref{sec:implementation-scope}).\\
+(Theorem~\ref{thm:validator-soundness}; Section~\ref{sec:implementation}).\\
 \addlinespace
 Sound schemas & Replacements preserve legality, values, and ordered shape.
 & Stated operation contracts and each schema's conditions
@@ -181,4 +182,4 @@ singleton extents, are sound but not complete. Outside the fragment, the
 feasibility check may reject feasible matches. Validation may stay
 unresolved for a correct candidate. A compiled rule may have no applicable
 match. Broader implementation support does not extend these guarantees;
-Section~\ref{sec:scope-limitations} lists practical limits.
+Section~\ref{sec:limitations} lists practical limits.

@@ -1,7 +1,7 @@
 \section{Axis-Based Representation}
-\label{sec:axis-model}
+\label{sec:axis-based-representation}
 How can we tell whether two tensor expressions perform the same computation?
-Within the scope defined in Section~\ref{sec:formal-scope}, we answer this
+Within the scope defined in Section~\ref{sec:formal-scope-and-guarantees}, we answer this
 by tracking how input dimensions are connected and how output axes are ordered.
 
 \subsection{Logical Axes}
@@ -77,9 +77,10 @@ Thus
 The class $k$ is absent from the output, giving $T_{ij}=\sum_k A_{ik}B_{kj}$.
 
 \subsection{Equivalence of Axis Representations}
+\label{sec:equivalence-of-axis-representations}
 \begin{lemma}[Axis exactness]
 \label{lem:axis-exactness}
-Under the assumptions in Section~\ref{sec:formal-scope}, for two legal
+Under the assumptions in Section~\ref{sec:formal-scope-and-guarantees}, for two legal
 components $L,R$ over the same inputs at fixed match metadata,
 \begin{equation}
  \forall X,\quad L(X)=R(X)\quad\iff\quad N(L)=N(R).
@@ -89,5 +90,5 @@ components $L,R$ over the same inputs at fixed match metadata,
 Axis names do not matter: two computations agree on every input exactly when
 their input-dimension connections and output-axis order agree. Attribute
 synthesis therefore reduces to choosing legal RHS axis fields that reproduce
-the LHS representation (Section~\ref{sec:mathematical-synthesis}).
+the LHS representation (Section~\ref{sec:attribute-synthesis-algorithm-and-guarantees}).
 Appendix~\ref{app:axis-exactness} gives the proof and a concrete example.

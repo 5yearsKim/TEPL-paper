@@ -1,16 +1,16 @@
 \subsection{Symbolic Program Construction and Correspondence}
-\label{app:symbolic-compilation-proof}
+\label{app:symbolic-program-construction-and-correspondence}
 We prove Theorem~\ref{thm:symbolic-compilation}: the generated program gives
-Section~\ref{sec:mathematical-synthesis}'s feasibility result and, when
+Section~\ref{sec:attribute-synthesis-algorithm-and-guarantees}'s feasibility result and, when
 feasible, the same RHS attributes. We establish this correspondence in
 four steps. Correctness of the mathematical construction itself is already
-proved in Section~\ref{sec:formal-correctness}.
+proved in Section~\ref{sec:correctness-and-completeness}.
 
 \begin{proof}[Proof of Theorem~\ref{thm:symbolic-compilation}]
-Fix an admitted plan satisfying Section~\ref{sec:formal-scope}, and let $m$
+Fix an admitted plan satisfying Section~\ref{sec:formal-scope-and-guarantees}, and let $m$
 be arbitrary legal match metadata in that domain. The frontend has already
 identified the operation templates, captured source fields, and independent
-RHS axis unknowns. As in Section~\ref{sec:symbolic-program-construction},
+RHS axis unknowns. As in Section~\ref{sec:symbolic-attribute-builder-construction},
 $E_{\mathrm{check}}$ is the compiled feasibility check and $E_{\mathrm{build}}$ is the compiled builder.
 
 \paperparagraph{Step 1: Preserve logical axes and their connections.}
@@ -21,7 +21,7 @@ axes from the output, and a contraction connects its declared batch and
 contracting partners. Removing an axis from the output preserves its
 recorded connections. Each operation also records its declared output
 order. Induction over the LHS therefore gives the same logical-axis
-classes and ordered input and output lists as Section~\ref{sec:axis-model}.
+classes and ordered input and output lists as Section~\ref{sec:axis-based-representation}.
 Equal extents do not create connections, and additive components retain
 separate axis identities.
 
@@ -53,7 +53,7 @@ $M_v$, and contractions use Equation~\eqref{eq:canonical-roles}. Induction
 from inputs to root therefore gives the same $S_v$ at every node.
 
 Starting with $\operatorname{Ord}_{\mathrm{out}}$, the reverse pass computes the same requirements $Req_v$
-and local ordering checks as Section~\ref{sec:ordering-feasibility}.
+and local ordering checks as Section~\ref{sec:checking-axis-order}.
 The checks require distinct available axes, the input subsequence condition,
 and the declared batch/left-free/right-free order at contractions.
 The root check requires $S_{\mathrm{root}}=\operatorname{set}(\operatorname{Ord}_{\mathrm{out}})$.
@@ -64,7 +64,7 @@ These checks use only finite set and list operations, with no partial
 position lookup. They are evaluated before the attribute computation, so
 a failed check does not require evaluating a builder. Their conjunction
 is exactly Equation~\eqref{eq:feasibility}. For multiple terms, the component
-checks are combined as in Appendix~\ref{sec:addition-proof}. Hence $E_{\mathrm{check}}$
+checks are combined as in Appendix~\ref{app:extension-to-multiple-terms}. Hence $E_{\mathrm{check}}$
 returns the same Boolean result as $\operatorname{check}(m)$, including
 when construction is infeasible. This proves Equation~\eqref{eq:emitted-check}.
 
@@ -90,7 +90,7 @@ program uses the same axis sets, output orders, and position queries as the
 mathematical construction, it produces the same attributes. Each node's
 output contains exactly $S_v$ and satisfies $Req_v$, and the root has order
 $\operatorname{Ord}_{\mathrm{out}}$. Independent component assignments combine as in
-Appendix~\ref{sec:addition-proof}. This proves Equation~\eqref{eq:emitted-build}.
+Appendix~\ref{app:extension-to-multiple-terms}. This proves Equation~\eqref{eq:emitted-build}.
 
 \paperparagraph{Step 4: Construct a finite program without concrete ranks.}
 Finally, the compiler must construct this program before match metadata

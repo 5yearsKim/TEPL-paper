@@ -1,5 +1,5 @@
 \section{High-Level Language Design}
-\label{sec:language}
+\label{sec:high-level-language-design}
 
 \sidefigure[0.45]{figures/Dialect definitions and a rewrite rule.pdf}
   {A rule file imports operation definitions from a dialect file.}
@@ -7,12 +7,12 @@
   {The file my_dialect.tepl defines MyDialect with transpose and dot operations. An import arrow connects it to my_rule.tepl, which imports the dialect and defines a rewrite from dot with transpose to dot.}
 
 \subsection{Dialects, Operations, and Rewrite Rules}
-\label{sec:dialects}
+\label{sec:dialects-operations-and-rewrite-rules}
 TEPL separates operation definitions from rewrite rules.
 In Figure~\ref{fig:dialect-rule}, \code{my_dialect.tepl} defines
 \emph{MyDialect}, which groups the \code{transpose} and \code{dot}
 operations. Each operation declares its operands, result, attributes,
-and semantics. Section~\ref{sec:attribute-roles} explains the attribute roles.
+and semantics. Section~\ref{sec:axis-extent-and-coordinate-attributes} explains the attribute roles.
 
 The file \code{my_rule.tepl} imports this dialect and defines a
 \emph{rewrite rule} using \code{LHS => RHS}.
@@ -28,7 +28,7 @@ the node's attributes, express conditions, and compute replacement
 attributes, as explained below.
 
 \subsection{Axis, Extent, and Coordinate Attributes}
-\label{sec:attribute-roles}
+\label{sec:axis-extent-and-coordinate-attributes}
 
 TEPL requires a type when declaring an operation attribute and distinguishes
 three roles for integer attributes: axes, extents, and coordinates
@@ -67,7 +67,7 @@ Role & Meaning & Example field\\\midrule
 bindings connect the rule to a table with two captured rows and one derived row.}
 
 \subsection{Conditions with \texorpdfstring{\code{where}}{where}}
-\label{sec:where}
+\label{sec:conditions-with-where}
 
 A \code{where} block adds conditions that a match must satisfy before
 a rule can apply. Users can combine conditions with \code{&&} and
@@ -76,7 +76,7 @@ Omitting the block adds no user-defined restriction.
 
 
 \subsection{Attribute Binding and Explicit Derivation}
-\label{sec:binding}
+\label{sec:attribute-binding-and-explicit-derivation}
 
 When a rule matches, TEPL captures the attributes of its LHS operations.
 A named node exposes these attributes through \code{node.attrs}.
@@ -110,7 +110,7 @@ rule compose_transposes_explicit {
 \begin{minipage}[t]{0.46\linewidth}
 \vspace{0pt}
 \subsection{Automatic Attribute Inference}
-\label{sec:auto}
+\label{sec:automatic-attribute-inference}
 When RHS axis fields are omitted and no derivation is provided for them, TEPL asks the
 compiler to infer their transformation logic. The same transpose rewrite
 can therefore be written without a \code{derive} block:
@@ -131,7 +131,7 @@ non-axis attributes, users supply the non-axis fields explicitly in a
 TEPL also generates a feasibility check to determine whether it can
 construct valid RHS attributes. A rule applies only when both the
 written conditions and this check pass.
-Section~\ref{sec:find} explains how these checks govern rule application.
+Section~\ref{sec:synthesis-and-execution-contract} explains how these checks govern rule application.
 
 \end{minipage}\hfill
 \begin{minipage}[t]{0.5\linewidth}

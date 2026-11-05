@@ -1,6 +1,5 @@
 \subsection{Validation Checks}
-\label{sec:validation-boundary}
-\label{sec:validation-algorithm}
+\label{sec:validation-checks}
 Write $f$ for a candidate attribute builder whose attributes are inferred,
 user-supplied, or a combination of both. All attribute fields are filled
 before validation. The compiled builder $E_{\mathrm{build}}$ is one such candidate.
@@ -29,11 +28,11 @@ equality using checked algebraic laws. It returns \code{Proved} only when
 all checks succeed; \code{Unknown} means that correctness remains unproved.
 
 \subsection{Soundness}
-\label{sec:acceptance-soundness}
+\label{sec:validation-soundness}
 The formal guarantee covers contraction, permutation, unary summation,
 and elementwise addition without broadcasting, under exact real arithmetic
 and the metadata operations and reasoning rules in
-Appendix~\ref{app:validation-proofs}. It allows arbitrary finite ranks and
+Appendix~\ref{app:candidate-validation-and-soundness}. It allows arbitrary finite ranks and
 nonnegative extents.
 \begin{theorem}[Conditional validation soundness]
 \label{thm:validator-soundness}
@@ -62,6 +61,6 @@ $E_{\mathrm{check}}$ before its result is assumed. Under a true result and $C$, 
 reasoning proves attribute definedness and RHS legality. Lowering and
 normalization establish value equality; ordered-shape checks complete
 validity under the stated dtype-compatibility assumption.
-Appendix~\ref{app:validation-proofs} gives the reasoning rules and
+Appendix~\ref{app:candidate-validation-and-soundness} gives the reasoning rules and
 soundness argument.
 \end{proof}

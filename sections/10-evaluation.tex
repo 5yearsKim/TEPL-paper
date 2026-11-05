@@ -5,7 +5,7 @@ specification size, and compilation and execution costs. Coverage results
 use one frozen optimized compiler; size, cost, and XLA integration
 experiments retain their separate snapshots. TEPL proofs
 use algebraic semantics rather than strict floating-point laws.
-Appendix~\ref{app:current-evaluation} records protocols and provenance.
+Appendix~\ref{app:evaluation-details} records protocols and provenance.
 
 \sidefigure[0.4]{figures/XLA_rewritie_cases.pdf}
 {XLA case coverage and attribute synthesis result. 31 out of 38 cases with RHS axis field are inferred}
@@ -14,6 +14,7 @@ Appendix~\ref{app:current-evaluation} records protocols and provenance.
 acceptance for axis-inference and verification-only cases.}
 
 \subsection{Inference Coverage}
+\label{sec:inference-coverage}
 We evaluate attribute synthesis on 209 concrete XLA rewrite
 cases~\cite{xla-evaluation-source}. A case is \emph{modeled} when
 TEPL's verifier supports the semantics of all operations it requires.
@@ -36,10 +37,11 @@ unchanged. TEPL accepts 98 of 123 modeled cases (79.7\%),
 including 67 of 85 verification-only cases.
 Attribute synthesis succeeds on 31 of 38 axis-inference cases
 (81.6\%), inferring all requested RHS axis attributes while preserving
-the written rewrite conditions.
+the written rewrite conditions. Of these 31 cases, 14 fall within the
+scope of the completeness theorem (Section~\ref{sec:formal-scope-and-guarantees}).
 
 \subsection{Integration into an Existing XLA Pass}
-\label{sec:evaluation-xla-integration}
+\label{sec:integration-into-an-existing-xla-pass}
 We integrate TEPL into XLA's existing \code{AlgebraicSimplifier}
 pass~\cite{xla-evaluation-source}. From compiled TEPL rules, we generate
 adapter code and C++ pattern-matching and attribute-transformation logic.
@@ -74,7 +76,7 @@ ResNet-50 & 10 & 1,027 & 5/10 & Yes\\\bottomrule
 \end{table}
 
 \subsection{Shorter Rewrite Rules}
-\label{sec:evaluation-size}
+\label{sec:shorter-rewrite-rules}
 We compare code length across three implementations of the 31 rules
 for which axis inference succeeds: XLA, TEPL with explicit attribute
 derivations, and TEPL with inferred axis attributes.
@@ -116,10 +118,10 @@ automatic inference can reduce the code needed for manual attribute
 reasoning.
 
 \subsection{Inference Scalability}
-\label{sec:evaluation-cost}
+\label{sec:inference-scalability}
 Mean compilation time grows approximately linearly and stays below 100\,ms
 for both 1--64 dots per side and 1--64 additive terms. One compiled rule
 handles varying tensor ranks without recompilation. Mean runtime metadata
 program execution time grows with rank and stays below 1\,ms at rank 128.
-Appendix~\ref{app:evaluation-scalability} gives the experimental setup and
+Appendix~\ref{app:automatic-attribute-inference-scalability} gives the experimental setup and
 detailed results.

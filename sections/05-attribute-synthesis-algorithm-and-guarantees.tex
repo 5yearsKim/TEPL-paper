@@ -1,13 +1,13 @@
 \section{Attribute Synthesis: Algorithm and Guarantees}
-\label{sec:mathematical-synthesis}
+\label{sec:attribute-synthesis-algorithm-and-guarantees}
 We now synthesize RHS attributes from the LHS axis representation in three
 passes: determine surviving axes, check ordering feasibility, and construct
 attributes. We call this algorithm the \emph{complete constructor}: within
-Section~\ref{sec:formal-scope}'s domain, it finds valid RHS axis attributes
+Section~\ref{sec:formal-scope-and-guarantees}'s domain, it finds valid RHS axis attributes
 whenever they exist.
 
 \subsection{Canonical Intermediate Axes}
-\label{sec:canonical-axes}
+\label{sec:canonical-intermediate-axes}
 The RHS may have a different graph structure from the LHS, so its
 intermediate tensors may retain different logical axes. To infer RHS axis
 attributes, we first identify the axes that must survive at each node.
@@ -65,12 +65,12 @@ the remaining axes must be exactly those required by the LHS output:
  \label{eq:root-live}
 \end{equation}
 Extra axes may survive intermediate nodes, but none may remain in the final
-output. Appendix~\ref{app:canonical-axes-example} provides a concrete example
+output. Appendix~\ref{app:mandatory-and-retained-axes-example} provides a concrete example
 of how these axis sets are computed for batched matrix multiplication
 followed by a row sum, including a case where $M_v\subsetneq S_v$.
 
 \subsection{Why the Canonical Choice Does Not Lose Solutions}
-\label{sec:canonicalization}
+\label{sec:canonical-choice-preserves-solutions}
 We now show that choosing canonical intermediate axes does not lose valid
 solutions. This step relies on the unrestricted RHS axis choices in D2.
 
@@ -83,7 +83,7 @@ intermediate axes can be named using LHS classes.
 
 \begin{lemma}[Canonicalization preserves feasibility]
 \label{lem:canonicalization}
-Under Section~\ref{sec:formal-scope}'s assumptions, with every input dimension
+Under Section~\ref{sec:formal-scope-and-guarantees}'s assumptions, with every input dimension
 having extent at least two, if a valid assignment $\beta$ exists, a valid
 assignment $\beta'$ exists with
 \begin{equation}
@@ -126,10 +126,10 @@ For TEPL, this means that synthesis can fix the intermediate axis sets
 before determining their order and attributes, without losing feasible
 rewrites within the defined fragment.
 
-The proof is given in Appendix~\ref{app:canonicalization-proof}.
+The proof is given in Appendix~\ref{app:canonicalization-preserves-feasibility}.
 
 \subsection{Checking Axis Order}
-\label{sec:ordering-feasibility}
+\label{sec:checking-axis-order}
 Choosing axis sets is not enough. Each operation also restricts output
 order. Let $Req_v$ be an ordered subsequence that the output at $v$ must
 contain, starting with $Req_{\mathrm{root}}=\operatorname{Ord}_{\mathrm{out}}$. Write $A\preceq B$ when
@@ -155,12 +155,12 @@ classes, input orders, and target output order.
 
 Together, these constraints form the feasibility check
 $\operatorname{check}(m)$. TEPL compiles this function once per rule.
-Sections~\ref{sec:compilation-scope} and~\ref{sec:candidate-validation}
+Sections~\ref{sec:compilation-and-validation} and~\ref{sec:candidate-validation}
 explain how compilation validates construction under the written condition
 and a successful feasibility check.
 
 \subsection{Constructing Axis Attributes}
-\label{sec:formal-construction}
+\label{sec:constructing-axis-attributes}
 Once $\operatorname{check}(m)$ succeeds, the remaining task is to turn
 the selected axes and ordering requirements into RHS axis attributes.
 The attribute builder $\operatorname{build}$ processes the RHS from inputs to root
@@ -190,11 +190,11 @@ These positions form the axis-list attribute selecting $\vec K$.
 By D4, the independently constructed node assignments can be combined
 into $\beta=\operatorname{build}(m)$. For a single component, this completes
 the construction. For multiple terms, we combine the component checks and
-assignments as in Appendix~\ref{sec:addition-proof}.
+assignments as in Appendix~\ref{app:extension-to-multiple-terms}.
 
 The rewrite tree is fixed, but the
 attribute lists may vary in length, so the same builder handles different
 input ranks and shapes within the defined fragment. Both $\operatorname{check}$
 and $\operatorname{build}$ operate on finite metadata lists.
-This defines the mathematical functions; Section~\ref{sec:method}
+This defines the mathematical functions; Section~\ref{sec:axis-mappings-to-attribute-builders}
 describes TEPL's symbolic groups and expression generation.

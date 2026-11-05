@@ -1,9 +1,10 @@
 # TEPL Paper
 
 The active manuscript starts in `main.tex`, using the ACM `acmsmall` review
-layout. Files in `sections/` follow the current section numbering (01–11).
+layout. Files in `sections/` follow the current section numbering (01–12).
 Letter suffixes identify additional fragments belonging to the same section,
-such as `05a-correctness-completeness.tex` and `08a-limitations.tex`.
+such as `05a-correctness-and-completeness.tex` and `07a-validation-details.tex`.
+Limitations is a standalone section in `09-limitations.tex`.
 Appendix files use `appendix-a`, `appendix-b`, and `appendix-c` prefixes;
 numbered suffixes match their subsection order. Only appendices included in
 the current paper are retained in `sections/`.
@@ -85,11 +86,11 @@ The active paper keeps the full mathematical development in the main text,
 before symbolic axis mapping and program generation. It adopts the notation
 of `draft/complete_attribute_synthesis_proof_kr.md`.
 
-- `sections/03-problem.tex`: definitions, fragment, and the TEPL contract.
-- `sections/04-axis-model.tex`: axis representation and exactness.
-- `sections/05-attribute-synthesis.tex`: canonical axes, ordering, construction.
-- `sections/05a-correctness-completeness.tex`: full correctness and completeness proofs.
-- `sections/06-symbolic-compilation.tex`: symbolic mapping and metadata programs.
+- `sections/03-problem-definition.tex`: definitions, fragment, and the TEPL contract.
+- `sections/04-axis-based-representation.tex`: axis representation and exactness.
+- `sections/05-attribute-synthesis-algorithm-and-guarantees.tex`: canonical axes, ordering, construction.
+- `sections/05a-correctness-and-completeness.tex`: full correctness and completeness proofs.
+- `sections/06-axis-mappings-to-attribute-builders.tex`: symbolic mapping and metadata programs.
 - `sections/07-candidate-validation.tex`: compile-time validation of completed attribute programs.
 - `sections/07a-validation-details.tex`: validation contract, algorithm and soundness theorem.
 - `draft/proof_integration_map.json`: content-preservation and notation checklist.
@@ -97,17 +98,17 @@ of `draft/complete_attribute_synthesis_proof_kr.md`.
 The appendices follow the main paper's progression and use the same notation:
 
 - **A. Mathematical Foundations: Examples and Proofs**
-  (`sections/appendix-a-foundations.tex`): axis exactness, the mandatory and
+  (`sections/appendix-a-mathematical-foundations.tex`): axis exactness, the mandatory and
   retained axes example, canonicalization, and correctness and completeness.
 - **B. Symbolic Compilation Details**
-  (`sections/appendix-b-compilation.tex`): Axes IR, mapping and synthesis
+  (`sections/appendix-b-symbolic-compilation-details.tex`): Axes IR, mapping and synthesis
   invariants, operation declaration adapters, and the core
   validation summary and soundness argument (`sections/appendix-b3-candidate-validation-soundness.tex`).
   B.4 states the supported reasoning rules and gives a concise conditional
   soundness proof: feasibility is checked before attribute construction.
   B.7 summarizes operation coverage.
 - **C. Current Evaluation Protocol and Evidence**
-  (`sections/appendix-c-evaluation.tex`): coverage, specification-size
+  (`sections/appendix-c-evaluation-details.tex`): coverage, specification-size
   accounting and implementation checks.
 
 The active draft consolidates repeated guarantee explanations and reassociation

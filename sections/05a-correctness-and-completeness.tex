@@ -1,12 +1,12 @@
 \subsection{Correctness and Completeness}
-\label{sec:formal-correctness}
+\label{sec:correctness-and-completeness}
 We show that the algorithm decides whether a valid assignment
 exists and constructs one whenever it does.
 
 \begin{theorem}[Complete constructive attribute synthesis]
 \label{thm:complete-synthesis}
 For a symbolic rewrite and metadata $m$ satisfying
-Section~\ref{sec:formal-scope}, including the requirement that every input
+Section~\ref{sec:formal-scope-and-guarantees}, including the requirement that every input
 axis have extent at least two,
 
 \begin{align}
@@ -20,6 +20,6 @@ axis have extent at least two,
 A failed \code{check} therefore means no valid assignment exists in the
 stated domain. TEPL combines the feasibility check with the written
 condition to determine applicability
-(Section~\ref{sec:compilation-scope}).
-Appendix~\ref{app:completeness-proof} gives the proofs and the extension to
+(Section~\ref{sec:compilation-and-validation}).
+Appendix~\ref{app:correctness-and-completeness} gives the proofs and the extension to
 multiple terms.
