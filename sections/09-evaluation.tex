@@ -14,26 +14,29 @@ Appendix~\ref{app:current-evaluation} records protocols and provenance.
 acceptance for axis-inference and verification-only cases.}
 
 \subsection{Inference Coverage}
-We evaluate attribute synthesis on 209 concrete rewrite cases representing
-199 XLA rewrite schemas~\cite{xla-evaluation-source}. A case is
-\emph{modeled} when TEPL's verifier supports the operation semantics it
-requires. This covers 123 cases; the remaining 86 require unsupported
-semantics. Of the modeled cases, 38 request RHS axis attributes to
-synthesize; we call these \emph{axis-inference cases}. The other 85 require
-no axis inference: replacements use supplied attributes, attribute-free
-operations such as elementwise addition, or directly return a matched
-value, as in $\operatorname{add}(X,0)\to X$.
+We evaluate attribute synthesis on 209 concrete XLA rewrite
+cases~\cite{xla-evaluation-source}. A case is \emph{modeled} when
+TEPL's verifier supports the semantics of all operations it requires.
+Of the 209 cases, 123 are modeled and 86 are unmodeled.
+Unmodeled does not mean that a rewrite is inapplicable.
+These rules can still be expressed and applied with explicitly supplied
+attributes, but TEPL cannot verify them or infer their axis attributes
+with its current semantic support.
+
+Of the modeled cases, 38 are \emph{axis-inference cases}, which require
+RHS axis attributes to be inferred. The other 85 are
+\emph{verification-only cases}: their replacements use supplied attributes,
+attribute-free operations such as elementwise addition, or directly
+return a matched value, as in $\operatorname{add}(X,0)\to X$.
 Figure~\ref{fig:xla-rewrite-cases} summarizes the results.
 
-
-A case is \emph{accepted} when semantic proof, compilation, and validation
-succeed with the original guards and non-axis fields unchanged.
-TEPL accepts 98 of 123
-modeled cases (79.7\%), including 67 of 85 verification-only cases.
-Attribute synthesis succeeds on 31 of 38 axis-inference cases (81.6\%),
-inferring all requested RHS axis attributes while preserving the written
-rewrite conditions. These include ten cases handled by the complete constructor
-within its stated domain and 21 handled by sound schemas.
+A case is \emph{accepted} when semantic proof, compilation, and
+validation succeed with the original guards and non-axis fields
+unchanged. TEPL accepts 98 of 123 modeled cases (79.7\%),
+including 67 of 85 verification-only cases.
+Attribute synthesis succeeds on 31 of 38 axis-inference cases
+(81.6\%), inferring all requested RHS axis attributes while preserving
+the written rewrite conditions.
 
 \subsection{Integration into an Existing XLA Pass}
 \label{sec:evaluation-xla-integration}
@@ -41,22 +44,21 @@ We integrate TEPL into XLA's existing \code{AlgebraicSimplifier}
 pass~\cite{xla-evaluation-source}. From compiled TEPL rules, we generate
 adapter code and C++ pattern-matching and attribute-transformation logic.
 This reuses TEPL's code-generation infrastructure while allowing
-fine-grained control over how the generated code is embedded in XLA.
+control over how the generated code is embedded in XLA.
 
-All rewrite rules in the integrated pass are expressed in TEPL, including
-unmodeled rules. TEPL can express rules without
-operation semantics, although semantic verification and attribute inference
-are unavailable for those rules. In this experiment, RHS attributes are
-inferred for modeled rules; attribute transformations for
-unmodeled rules are written explicitly in TEPL.
+All rewrite rules in the integrated pass are expressed in TEPL,
+including unmodeled rules. RHS attributes are inferred where supported;
+attribute transformations for unmodeled rules are written explicitly
+in TEPL.
 
 We evaluate four representative workloads. For each workload, we count
-the distinct XLA rewrite rules applied, their total firings, and how many
-of the applied rules are modeled
-(Table~\ref{tab:algebraic-simplifier-workloads}). The integrated rewrite
-logic passes all 28 related XLA test cases. For all four workloads, the
-final compiled graphs have the same structure as those produced by the
-unmodified XLA pass, and the output values agree.
+the distinct XLA rewrite rules applied, their total applications,
+and how many applied rules are modeled
+(Table~\ref{tab:algebraic-simplifier-workloads}).
+The integrated rewrite logic passes all 28 related XLA test cases.
+For all four workloads, the final compiled graphs have the same
+structure as those produced by the unmodified XLA pass, and the
+output values agree.
 
 \begin{table}[!htbp]
 \caption{Rewrite applications in four representative workloads.}
@@ -73,12 +75,12 @@ ResNet-50 & 10 & 1,027 & 5/10 & Yes\\\bottomrule
 
 \subsection{Shorter Rewrite Rules}
 \label{sec:evaluation-size}
-We compare XLA, explicit TEPL, and axis-inferred TEPL source forms for the same 31 rule
-identities whose axis inference succeeds in Section~\ref{sec:evaluation}.
-Every inference-successful identity is included. Code size is measured in
-lexical tokens, excluding comments, whitespace, imports, and shared
-declarations. Table~\ref{tab:specification-size} reports the counts for
-this single cohort.
+We compare code length across three implementations of the 31 rules
+for which axis inference succeeds: XLA, TEPL with explicit attribute
+derivations, and TEPL with inferred axis attributes.
+We measure source size in lexical tokens, excluding comments,
+whitespace, imports, and shared declarations.
+Table~\ref{tab:specification-size} reports the results.
 
 \begin{table}[!htbp]
 \caption{Source footprint of all 31 inference-successful rules.
@@ -103,10 +105,15 @@ Total & 10,022 & \textcolor{specificationBlue}{(-68.0\%)}3,205 & \textcolor{spec
 \textsuperscript{b}\textcolor{specificationGreen}{Green percentages} show the decrease from Explicit to Inferred TEPL.\par}
 \end{table}
 
-Across these 31 rules, inferred source forms contain 831 fewer tokens
-(25.9\%) than the explicit forms. This is a static comparison of saved
-sources; it does not establish acceptance of every explicit and inferred
-source variant.
+Explicit TEPL uses 68.0\% fewer tokens than XLA.
+Axis inference reduces the TEPL token count by a further 25.9\%.
+Most of this additional reduction comes from attribute derivations,
+whose token count decreases by 62.3\%.
+The comparison with XLA is not direct, since its implementation
+also includes logic that TEPL does not support.
+However, the reduction from explicit to inferred TEPL shows how
+automatic inference can reduce the code needed for manual attribute
+reasoning.
 
 \subsection{Inference Scalability}
 \label{sec:evaluation-cost}

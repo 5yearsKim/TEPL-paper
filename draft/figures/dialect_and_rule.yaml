@@ -1,0 +1,73 @@
+title: Dialect definitions and a rewrite rule
+concept: A rule file imports a reusable dialect and uses its operations in a tensor rewrite.
+purpose: Readers distinguish operation definitions in my_dialect.tepl from a rewrite rule in my_rule.tepl.
+requirements:
+  - Use an exact 500 x 256 px frame for a compact figure in Section 2.1.
+  - Follow tools/figure_style.md. Keep all code and labels editable; use a white canvas, neutral cards, thin borders, and no shadows.
+  - Place the dialect file on the left and the rule file on the right, with a prominent blue filled right-pointing arrow in the central gap.
+  - The arrow means that definitions from the dialect file are imported into the rule file; it does not mean graph rewriting or runtime dataflow.
+  - Use filename header bands instead of a visible overall title or additional panel headings.
+  - Use 14 px monospace code with 18 px line height, and 14 px filename labels, as explicitly requested for this figure.
+  - Use dark neutral text. Highlight dialect, op, attrs, from, import, as, use, and rule keywords in restrained blue; highlight dot and transpose operation names consistently in both files. Keep tensor names, punctuation, and the rewrite arrow neutral.
+  - Preserve the displayed line breaks so code fits the two narrow panels. Keep all text at the same 14 px size and retain the requested frame dimensions.
+  - Ellipses abbreviate operation signatures, attribute declarations, and other operation-definition blocks. They are schematic omissions, not executable TEPL syntax.
+  - The right-hand side omits axis attributes to request inference. Do not imply that removing an arbitrary transpose is always valid; applicability depends on the inferred feasibility check.
+children:
+  - name: dialect_file
+    type: image
+    pos: [0.02, 0.428, 0.046875, 0.953125]
+    requirements:
+      - Draw a neutral file card with a pale header band and a thin border.
+      - Leave 6 px horizontal padding around the code and filename.
+    children:
+      - name: filename
+        type: text
+        pos: [0.028, 0.972, 0.02, 0.125]
+        content: my_dialect.tepl
+      - name: code
+        type: text
+        pos: [0.028, 0.972, 0.181034, 0.956897]
+        content: |-
+          dialect MyDialect {
+            op transpose(...) {
+              attrs { ... }
+              ...
+            }
+            op dot(...) {
+              attrs { ... }
+              ...
+            }
+          }
+
+  - name: import_arrow
+    type: image
+    pos: [0.436, 0.54, 0.261719, 0.371094]
+    requirements:
+      - 'Draw a 52 x 28 px filled block arrow, pointing right, with blue #5479A8 fill and a thin darker #3F608A outline; use rounded joins.'
+      - Align the arrow with the import statement on the right; keep its endpoints outside both file cards.
+      - The adjacent import statement supplies the meaning, so no extra arrow label is needed.
+
+  - name: rule_file
+    type: image
+    pos: [0.548, 0.98, 0.046875, 0.953125]
+    requirements:
+      - Match the left file card's header, border, and padding.
+      - The dialect import is wrapped across two lines; keep use t::{dot, transpose}; on one line to bring the operations into scope.
+    children:
+      - name: filename
+        type: text
+        pos: [0.026, 0.974, 0.02, 0.125]
+        content: my_rule.tepl
+      - name: code
+        type: text
+        pos: [0.026, 0.974, 0.181034, 0.956897]
+        content: |-
+          from "my_dialect.tepl"
+          import MyDialect as t;
+          use t::{dot, transpose};
+
+          rule fold_transpose {
+            (dot
+              (transpose A) B)
+            => (dot A B)
+          }

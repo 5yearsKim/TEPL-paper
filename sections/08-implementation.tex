@@ -1,25 +1,26 @@
-\section{Implementation and Scope}
+\section{Implementation}
 \label{sec:implementation-scope}
-\paperparagraph{Compilation.}
-TEPL compiles each rule into reusable feasibility checks and attribute
-builders using a shared metadata IR
-(Section~\ref{sec:method}). It uses bounded proof search for candidate
-validation (Section~\ref{sec:candidate-validation}).
+We implement the TEPL compiler in C++, using an ANTLR-generated
+parser~\cite{antlr}. The compiler checks types and attribute records,
+infers omitted axis fields, and validates the completed rule.
 
-\paperparagraph{Execution and integration.}
-Compiled metadata programs can be interpreted by the portable runtime or,
-when symbolic lowering succeeds, exported to Rust or C++.
-Both paths follow the execution contract in Section~\ref{sec:find}.
-TEPL integrates with a greedy rewrite engine and
-\emph{egg}~\cite{egg} for equality saturation~\cite{equality-saturation}.
-The XLA prototype (Section~\ref{sec:evaluation-xla-integration}) uses
-TEPL's feasibility checks and attribute builders while retaining XLA's
-candidate discovery, backend eligibility checks, and graph updates.
+Compiled rules are stored in an executable representation that can
+be exported as JSON. This representation contains the rule's patterns,
+conditions, and attribute computations. It separates compilation from
+execution: applying a compiled rule requires no parsing, synthesis,
+or proof search.
 
-\paperparagraph{Trust assumptions.}
-The formal guarantees in Table~\ref{tab:guarantee-map} concern the stated
-algorithms and validation rules; the compiler and runtime are not
-mechanically verified. Correct execution assumes that backend operations
-follow the declared algebraic semantics, resources are sufficient, and
-metadata calculations are representable. Dtype compatibility is also
-assumed; the compiler does not check dtype contracts.
+TEPL provides several ways to execute compiled rules. Its built-in
+rewrite engine applies rules greedily to graphs defined in TEPL.
+For equality saturation~\cite{equality-saturation}, TEPL generates
+Rust code from supported executable programs and integrates it with
+\emph{egg}~\cite{egg}. Users define dialects and rules in TEPL, and
+the generated code and shared runtime provide conditional rewrites
+and e-class analysis for shapes and dtypes. This allows users to
+express tensor rewrites without manually implementing these
+components in Rust.
+
+The XLA prototype connects compiled TEPL rules to existing compiler
+passes through a runtime adapter. XLA supplies candidate metadata,
+and TEPL checks the rewrite conditions and computes replacement
+attributes. XLA retains backend eligibility checks and graph updates.

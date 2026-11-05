@@ -48,8 +48,7 @@ over all tensor values with the input shapes specified by $m$. We define
 \label{eq:valid}
 \end{equation}
 Thus, valid attributes make the RHS legal and preserve both the ordered
-output shape and the values for every compatible input. Dtype compatibility
-is assumed; axis synthesis and validation do not check dtype contracts.
+output shape and the values for every compatible input.
 
 Synthesis fills unknown axis fields from metadata $m$ and preserves supplied
 fields. Supplied expressions must be defined whenever the RHS attribute
@@ -89,119 +88,97 @@ Matching evaluates metadata programs without repeating synthesis or proof
 search. This execution order also applies outside the complete synthesis
 fragment.
 
-Within the domains in Table~\ref{tab:guarantee-map}, an accepted rule
-produces defined attributes and a legal, equivalent replacement on every
-legal match that passes both conditions. This guarantee assumes the
-operation semantics and execution assumptions in
-Section~\ref{sec:implementation-scope}.
-Section~\ref{sec:method} establishes compilation correspondence, and
-Section~\ref{sec:candidate-validation} establishes conditional validation
-soundness.
-
 \subsection{Formal Scope and Guarantees}
 \label{sec:formal-scope}
-The completeness theorem covers \emph{axis-structural multilinear}
-computations: operations connect, reorder, and sum whole axes, while values
-are computed through products and sums of independent input entries.
-Multilinear means linear in each input when the others are fixed.
-Synthesis chooses independent RHS \code{axis} fields under the restrictions
-in Table~\ref{tab:direct-scope}. Extent and coordinate fields are not inferred.
+Our completeness result covers \emph{axis-structural multilinear}
+computations. Operations only connect, reorder, and sum whole axes, and
+output values are sums of products of independent input entries. In this
+fragment, synthesis chooses the RHS \code{axis} fields. It does not infer
+extent or coordinate fields.
+
+\paperparagraph{The fragment.}
+\begin{itemize}
+\item Inputs have finite rank (scalars are allowed). Every dimension has
+extent at least two. Entries are independent real numbers, and arithmetic
+is exact.
+\item Every LHS operation is legal.
+\item Each operation declares which input axes are connected, which are
+summed, and the output order. For contraction, paired axes kept in the
+output are \emph{batch} axes, paired axes summed out are \emph{contraction}
+axes, and the rest are \emph{free}. The output order is batch, left-free,
+then right-free.
+\item A \emph{read-once component} is a tree of contractions, permutations,
+and unary sums that uses each tensor of a nonempty input set exactly once.
+Matching LHS and RHS components use the same input set.
+\item With addition, the LHS expands by linearity into $L=\sum_t L_t$. The
+RHS must already be a sum $R=\sum_t R_t$, where $L_t$ and $R_t$ use the same
+input set. Different terms may have different, overlapping input sets. The
+RHS is not expanded, because expansion would copy one unknown into several
+terms (D4).
+\end{itemize}
 
 \begin{table}[!htbp]
-\caption{Restrictions of the direct completeness theorem and boundary examples.}
+\caption{Restrictions on RHS axis choices, with boundary examples.}
 \label{tab:direct-scope}
 \small
 \begin{tabularx}{\linewidth}{@{}p{0.18\linewidth}YY@{}}\toprule
 Condition & Restriction & Boundary example\\\midrule
-\textbf{D1. Whole-axis structure}
-& Connect, reorder, and sum whole axes in the same direction. No new axes,
-coordinate splitting or merging, or additional weights.
-& A slice taking $[a,b,c,d]$ to $[b,c]$ selects only part of an axis.\\
+\textbf{D1. Whole axes}
+& No new axes, no splitting or merging of coordinates, no extra weights.
+& A slice taking $[a,b,c,d]$ to $[b,c]$ keeps only part of an axis.\\
 \addlinespace
-\textbf{D2. Unrestricted RHS axis choices}
-& All RHS axis fields are unknown. No fixed choices, list lengths, or layout
-constraints beyond operation legality; empty lists are allowed.
-& A dot with a fixed batch axis followed by a sum may be valid. Contracting
-that axis early would violate the fixed attribute.\\
+\textbf{D2. Free choices}
+& All RHS axis fields are unknown. Empty lists are allowed.
+& If a user fixes a batch axis in a dot, the other choices are
+constrained.\\
 \addlinespace
-\textbf{D3. Output ordering}
-& Freely reorder axes, preserve their input order, or concatenate groups in
-the declared order.
-& A declaration interleaving two groups as $(i_1,j_1,i_2,j_2)$ requires an
-additional ordering rule. This is a boundary of the current rules.\\
+\textbf{D3. Output order}
+& Reorder freely, keep input order, or concatenate groups in declared order.
+& An interleaved output $(i_1,j_1,i_2,j_2)$ needs an extra ordering rule.\\
 \addlinespace
-\textbf{D4. Independent axis unknowns}
-& Different RHS fields and nodes do not share one unknown assignment.
-& To match $A+\operatorname{transpose}(B)$ for independent $2\times2$ inputs,
-two RHS transposes require identity for $A$ and swap for $B$. A shared
-permutation cannot satisfy both.\\\bottomrule
+\textbf{D4. Independent unknowns}
+& Different RHS fields and nodes never share one unknown.
+& Matching $A+\operatorname{transpose}(B)$ with two RHS transposes needs
+identity for $A$ and swap for $B$. One shared permutation cannot do both.\\\bottomrule
 \end{tabularx}
 \end{table}
 
-\paperparagraph{Operation declarations.}
-Each operation declares which input dimensions are connected, which are summed,
-and the output order. For example, contraction pairs axes of equal extent
-from two inputs and multiplies entries at matching coordinates. Paired axes
-retained in the output are \emph{batch} axes; those summed out are
-\emph{contraction} axes. Unpaired axes remain \emph{free}. The output order
-is batch, left-free, then right-free, preserving each input's free-axis
-order. Batch and contraction positions are distinct and in range within
-each operand, and the left and right lists pair axes in list order.
-
-\paperparagraph{Input and rewrite assumptions.}
-\begin{itemize}
-\item Inputs have finite ranks, and every input dimension has extent at least
-two; scalars are allowed.
-\item Input entries are independent real numbers, and all calculations are
-exact. Every LHS operation is legal.
-\item Each \emph{read-once component} is a contraction/permutation/unary-summation
-tree using each tensor in a nonempty input set exactly once. Corresponding
-LHS and RHS components use the same input set.
-\item With addition, expand the LHS into $L=\sum_t L_t$ using linearity and
-bilinearity. The RHS must already be an explicit sum $R=\sum_t R_t$ of
-matching components. Each pair $L_t,R_t$ uses the same input set $U_t$;
-different terms have different input sets, which may overlap.
-\end{itemize}
-Captured LHS attributes retain their values when expressions are expanded;
-a shared RHS unknown must not be split into independent choices.
-
-\paperparagraph{Guarantees and their boundaries.}
-Table~\ref{tab:guarantee-map} summarizes the results and their assumptions.
-A \emph{sound schema} is a rewrite pattern with a separately proved
-attribute construction (Appendix~\ref{app:axis-extensions}). Its conditions
-and agreement of supplied fields with constructed fields must hold under
-the applicability condition.
+\paperparagraph{Guarantees.}
+Table~\ref{tab:guarantee-map} lists the results. A \emph{sound schema} is a
+rewrite pattern with a separately proved attribute construction
+(Appendix~\ref{app:axis-extensions}). Its conditions, and the agreement of
+supplied fields with constructed fields, must hold under the applicability
+condition.
 
 \begin{table}[!htbp]
-\caption{Formal guarantees and their scope. Extents are dimension sizes;
-all rows require legal source instances and the stated operation semantics.}
+\caption{Formal guarantees. All rows assume legal source instances and the
+stated operation semantics.}
 \label{tab:guarantee-map}
 \small
-\begin{tabularx}{\linewidth}{@{}p{0.14\linewidth}Y>{\raggedright\arraybackslash}p{0.12\linewidth}Y@{}}\toprule
-Result & Guarantee & Extents & Other assumptions and reference\\\midrule
-Synthesis & Finds valid RHS axis assignments whenever they exist.
-& $\ge2$ & D1--D4, read-once components, and exact arithmetic
-(Theorem~\ref{thm:complete-synthesis}).\\
+\begin{tabularx}{\linewidth}{@{}p{0.14\linewidth}YY@{}}\toprule
+Result & Guarantee & Assumptions and reference\\\midrule
+Synthesis & Finds a valid RHS axis assignment whenever one exists.
+& The fragment above, D1--D4 (Theorem~\ref{thm:complete-synthesis}).\\
 \addlinespace
-Compilation & Compiled check and builder implement the mathematical functions.
-& $\ge2$ & Admitted plans in the synthesis fragment
+Compilation & The compiled check and builder implement the mathematical functions.
+& Rewrite rules satisfying the synthesis restrictions in Section~\ref{sec:formal-scope}
 (Theorem~\ref{thm:symbolic-compilation}).\\
 \addlinespace
-Validation & Safe check evaluation and valid completed attributes under the applicability condition; supplied fields are allowed.
-& $\ge0$ & Supported validation rules, exact arithmetic, and execution assumptions
+Validation & Checks run safely, and completed attributes are valid under the
+applicability condition.
+& Supported rules and exact arithmetic; any extent
 (Theorem~\ref{thm:validator-soundness}; Section~\ref{sec:implementation-scope}).\\
 \addlinespace
-Sound schemas & Constructed replacements preserve legality, values, and ordered shape.
-& $\ge0$, subject to schema conditions & Stated operation contracts and conditions for each schema
+Sound schemas & Replacements preserve legality, values, and ordered shape.
+& Stated operation contracts and each schema's conditions
 (Lemma~\ref{lem:certified-extensions}).\\\bottomrule
 \end{tabularx}
 \end{table}
 
-Mixed explicit/inferred axis fields and zero or singleton extents have
-soundness guarantees within the validation and schema domains, but no
-completeness guarantee. Outside the complete synthesis fragment, a
-feasibility check may reject feasible matches. Validation is sound but
-incomplete: it can remain unresolved for a correct candidate. Successful
-compilation does not establish that a rule has an applicable match.
-Broader implementation support does not extend these formal guarantees;
-Section~\ref{sec:scope-limitations} describes practical limitations.
+\paperparagraph{Not guaranteed.}
+Rules that mix supplied and inferred axis fields, or that use zero or
+singleton extents, are sound but not complete. Outside the fragment, the
+feasibility check may reject feasible matches. Validation may stay
+unresolved for a correct candidate. A compiled rule may have no applicable
+match. Broader implementation support does not extend these guarantees;
+Section~\ref{sec:scope-limitations} lists practical limits.

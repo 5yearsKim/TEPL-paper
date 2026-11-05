@@ -1,16 +1,21 @@
-\subsection{Practical Limitations}
+\section{Limitations}
 \label{sec:scope-limitations}
-Table~\ref{tab:guarantee-map} summarizes the mathematical boundaries.
-Extent and coordinate parameters remain supplied or defaulted. Slice, padding, reshape,
-and convolution are outside the direct synthesis and validation theorems;
-their implementation support is limited. Tensor-valued indexing and richer
-reshape, padding, and reduction semantics remain unsupported.
-Appendix~\ref{app:operation-coverage}
-distinguishes operation support from theorem scope. The 86 catalog cases
-without an established model remain unvalidated; structural extensibility
-alone supplies no semantic guarantee.
+TEPL automates axis transformations, but users still need to supply
+or provide defaults for extent and coordinate parameters. Rewrites
+that change dimension sizes or select individual coordinates therefore
+require additional work. Support for slice, padding, reshape, and
+convolution remains limited, and these operations fall outside the
+direct synthesis and validation theorems. Tensor-valued indexing
+and richer reshape, padding, and reduction semantics remain unsupported.
 
-The XLA integration
-covers default dense-f32 dot metadata, retaining convolution and a custom
-policy by hand. Production opportunity frequency, cache hit rates, and
-developer productivity remain unassessed.
+Outside the complete synthesis domain, TEPL may fail to infer
+attributes even when a valid assignment exists. Validation may also
+remain unresolved for a correct rewrite. Adding an operation declaration
+does not by itself establish that TEPL can infer or validate its
+attribute transformations.
+
+TEPL accounts for floating-point behavior through a selectable
+arithmetic policy. However, the completeness theorem assumes exact
+arithmetic and does not cover floating-point semantics.
+The formal guarantees and their assumptions are summarized in
+Table~\ref{tab:guarantee-map}.

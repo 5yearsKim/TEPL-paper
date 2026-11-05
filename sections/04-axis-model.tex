@@ -1,32 +1,39 @@
 \section{Axis-Based Representation}
 \label{sec:axis-model}
-Within the defined scope (Section~\ref{sec:formal-scope}), each computation
-component is determined by its input dimension connections and output axis order.
+How can we tell whether two tensor expressions perform the same computation?
+Within the scope defined in Section~\ref{sec:formal-scope}, we answer this
+by tracking how input dimensions are connected and how output axes are ordered.
 
 \subsection{Logical Axes}
 \label{sec:logical-axes}
-A \emph{dimension} is a physical tensor dimension, selected by a zero-based
-position in an \code{axis} attribute. A \emph{logical axis} is an equivalence
-class of input dimensions that use the same coordinate. For example, in
-\code{einsum('ik,kj->ij', A, B)}~\cite{numpy-einsum}, the dimensions marked
-\code{k} share a coordinate: the second dimension of $A$ and the first dimension of
-$B$. Since \code{k} is absent from the output \code{ij}, it is summed out.
-We identify each input dimension by a pair $(X,d)$, where $d$ is its
-position in input tensor $X$, starting at zero. For a component with input
-set $\mathcal X$, let
+Consider matrix multiplication,
+\code{einsum('ik,kj->ij', A, B)}~\cite{numpy-einsum}.
+The second dimension of $A$ and the first dimension of $B$ both
+carry the index \code{k}: they use the same coordinate during
+multiplication. We therefore treat them as one \emph{logical axis}.
+The indices \code{i} and \code{j} identify two other logical axes.
+
+A dimension's position is local to its tensor, while a logical axis
+connects dimensions that use the same coordinate.
+We identify an input dimension by $(X,d)$, where $X$ is the input
+tensor and $d$ is its zero-based dimension position.
+For an expression with input set $\mathcal X$, the input dimensions are
 \begin{equation}
  \mathcal D=\{(X,d)\mid X\in\mathcal X,\ 0\le d<\operatorname{rank}(X)\}.
 \end{equation}
-We write $u\sim v$ when input dimensions $u$ and $v$ use the same coordinate.
-Each logical axis is one equivalence class. For the LHS expression $L$, the
-set of all logical axes is
+We write $u\sim v$ when dimensions $u$ and $v$ use the same coordinate.
+Each group of such dimensions forms an equivalence class, or logical
+axis. For the LHS expression $L$, the logical axes are
 \begin{equation}
  \Axes(L)=\mathcal D/{\sim}.
 \end{equation}
-Here $\mathcal D/{\sim}$ groups connected input dimensions into one class each, including
-classes removed by summation.
-Equal extents do not establish axis identity. We also retain the classes of
-axes removed by summation: they still record how input coordinates connect.
+Here $\mathcal D/{\sim}$ denotes the set of these equivalence classes.
+
+Logical axes record coordinate connections, not just dimension sizes.
+Two dimensions with equal extents need not belong to the same logical
+axis. We also retain axes removed by summation: in the example,
+\code{k} is absent from the output but still records the connection
+between $A$ and $B$.
 
 \subsection{Symbolic Axis Groups}
 \label{sec:symbolic-axis-groups}
@@ -72,8 +79,8 @@ The class $k$ is absent from the output, giving $T_{ij}=\sum_k A_{ik}B_{kj}$.
 \subsection{Equivalence of Axis Representations}
 \begin{lemma}[Axis exactness]
 \label{lem:axis-exactness}
-For two legal components $L,R$ over the same inputs at fixed match metadata,
-with every input dimension having extent at least two,
+Under the assumptions in Section~\ref{sec:formal-scope}, for two legal
+components $L,R$ over the same inputs at fixed match metadata,
 \begin{equation}
  \forall X,\quad L(X)=R(X)\quad\iff\quad N(L)=N(R).
  \label{eq:axis-exactness}
