@@ -29,12 +29,12 @@ generalized dot.
   label={lst:dot-declaration}]
 op dot(lhs: tensor, rhs: tensor) -> tensor {
   attrs {
-    lb: axis[]; rb: axis[];
-    lc: axis[]; rc: axis[];
+    lb, rb: axis[]; // left and right batch dimensions
+    lb, rb: axis[]; // left and right contraction dimensions
   }
   axes {
-    let lf = ordered_complement(all_axes(lhs), attrs.lb ++ attrs.lc);
-    let rf = ordered_complement(all_axes(rhs), attrs.rb ++ attrs.rc);
+    let lf = ordered_complement(all_axes(lhs), attrs.lb ++ attrs.lc); // left free 
+    let rf = ordered_complement(all_axes(rhs), attrs.rb ++ attrs.rc); // right free
     bind B { lhs: attrs.lb, rhs: attrs.rb };
     bind K { lhs: attrs.lc, rhs: attrs.rc };
     bind I { lhs: lf };
@@ -71,140 +71,218 @@ The bindings provide the initial axis mappings used below.
 
 \subsection{Symbolic Axis Mapping}
 \label{sec:symbolic-axis-mapping}
-Section~\ref{sec:attribute-synthesis-algorithm-and-guarantees} determines which logical axes each
-RHS operation uses. Compilation translates these choices into expressions
-for dimension positions, evaluated on each match's metadata to obtain
-concrete RHS axis attributes.
+The symbolic groups in Section~\ref{sec:axes-ir} describe axes within
+one operation. When operations are composed, TEPL must track these
+axes across tensors and group definitions. A later operation may select
+only part of an earlier group, so positions within that group must be
+translated into positions in the tensor.
 
-A mapping associates a group $\vec G$ with a position-list expression
-$p_G$ in tensor $t$:
+Each \code{bind} statement supplies a position-list expression $p_G$
+for a group $\vec G$ in an operand $t$. This mapping satisfies
 \begin{equation}
- \gath(\operatorname{Ord}_t,p_G)=\vec G.
+ \gath(\operatorname{Ord}_t,p_G)=\vec G,
  \label{eq:mapping}
 \end{equation}
-Here $\gath$ selects entries from the logical-axis list
-$\operatorname{Ord}_t$ at positions $p_G$. TEPL derives mappings from
-the LHS operation declarations and captured axis fields. Intermediate
-RHS axis orders follow Section~\ref{sec:attribute-synthesis-algorithm-and-guarantees}'s construction.
+where $\gath$ selects entries from a list at the given positions.
+The expression $p_G$ is known from the operation declaration, although
+its concrete values may depend on captured attributes.
+The \code{yield} statement determines how these groups appear in the
+output and therefore provides their output positions.
 
-For example, if $\operatorname{Ord}_T=[i_0,i_1,j_0,j_1]$, then
-$\vec I=[i_0,i_1]$ has positions $p_I=[0,1]$, and
-$\vec J=[j_0,j_1]$ has positions $p_J=[2,3]$.
-Note that a position within an axis group differs from its position
-in the full tensor: $j_1$ is at position $1$ within $\vec J$, but
-position $3$ in $T$.
+For example, consider the dot declaration in
+Listing~\ref{lst:dot-declaration}, with operand axis orders
+$[i_0,i_1,k]$ and $[k,j_0,j_1]$. Suppose the dot contracts $k$ and
+has no batch axes. The bindings \code{bind I { lhs: lf };} and
+\code{bind J { rhs: rf };} identify the two free-axis groups.
+Here \code{lf=[0,1]} and \code{rf=[1,2]}, so the bindings identify
+$\vec I=[i_0,i_1]$ and $\vec J=[j_0,j_1]$.
+Since \code{yield B ++ I ++ J} places $\vec I$ before $\vec J$,
+the result $T$ has
+$\operatorname{Ord}_T=[i_0,i_1,j_0,j_1]$.
+The groups therefore have positions $p_I=[0,1]$ and $p_J=[2,3]$
+in $T$. These are positions in the result, rather than the operand
+positions supplied by the bindings.
 
-\paperparagraph{Composing mappings.}
-When an operation selects part of a mapped axis group, compilation must
-translate positions within the group into positions in the tensor.
-Composing mappings performs this translation. A selection $h$ within
-$\vec G$ has positions $\gath(p_G,h)$ in tensor $t$, because
+Now suppose a later operation selects $j_1$ from $\vec J$.
+Its position within $\vec J$ is $h=[1]$, but its position in $T$ is
+$\gath(p_J,h)=\gath([2,3],[1])=[3]$.
+In general, a selection $h$ within a mapped group $\vec G$ has
+tensor positions $\gath(p_G,h)$ because
 \begin{equation}
  \gath(\gath(\operatorname{Ord}_t,p_G),h)
  =\gath(\operatorname{Ord}_t,\gath(p_G,h)).
  \label{eq:gather-composition}
 \end{equation}
-Both selectors must be valid. In the example above, selecting $j_1$
-uses $h=[1]$, giving
-$\gath(p_J,h)=\gath([2,3],[1])=[3]$ in $T$.
-This is important for TEPL because composed operations may use different
-symbolic axis groups. Composing $\gath$ expressions maps positions between
-these groups, allowing TEPL to track axis positions in the full tensor.
+Both position lists must be valid for the lists they select from.
+
+TEPL composes these mappings as it tracks axes through the expression
+graph. Each selection produces a position-list expression in terms of
+the existing mappings. The compiler retains these expressions
+symbolically, allowing group lengths and positions to vary across
+matches. Evaluating them on match metadata gives the concrete positions
+needed for RHS axis attributes.
 
 \subsection{Symbolic Axis Partitioning}
 \label{sec:symbolic-axis-partitioning}
-When a consumer contracts axes drawn from two producer groups, how do we find
-each axis's partner in the other operand? Symbolic axis partitioning answers
-this by splitting each group into selected and remaining axes, preserving the
-selection order and each selected axis's partner.
-Let $c_L,c_R$ be the consumer's contraction-position lists in its left
-and right operands, respectively. Continuing the example in
-Section~\ref{sec:symbolic-axis-mapping},
-Figure~\ref{fig:axis-partitioning} shows a consumer contracting positions $c_L=[3,0]$ in $T$, paired
-with $c_R=[2,0]$ in another operand $Z$. The selected axes $[j_1,i_0]$
-cross the producer groups, so each group must be split into selected and
-remaining axes.
+Consider the dot reassociation rule
+\[
+ \operatorname{dot}(\operatorname{dot}(X,Y),Z)
+ \;\longrightarrow\;
+ \operatorname{dot}(X,\operatorname{dot}(Y,Z)).
+\]
+On the LHS, let $T=\operatorname{dot}(X,Y)$ and
+$O=\operatorname{dot}(T,Z)$. On the RHS, let
+$U=\operatorname{dot}(Y,Z)$, so the replacement computes
+$\operatorname{dot}(X,U)$.
+Changing the graph also changes which axes each dot must contract.
+We must determine which contractions can move into $U$ and which
+must remain in the final dot, while preserving the original axis pairs.
+
+For clarity, consider dots without batch axes.
+The first LHS dot contracts group $\vec K$ between $X$ and $Y$.
+Its output $T$ contains the free groups $\vec I$ from $X$ and
+$\vec J$ from $Y$, in that order.
+The second dot selects contraction axes from $T$ using the position
+list $c_L$ and pairs them with positions $c_R$ in $Z$.
+These lists pair axes entry by entry: slot $s$ pairs the axis at
+$c_L[s]$ in $T$ with the axis at $c_R[s]$ in $Z$.
+The selected axes may come from both $\vec I$ and $\vec J$.
+TEPL must separate them by producer group and retain their partners
+in $Z$.
+
+For example, let
+$\operatorname{Ord}_T=[i_0,i_1,j_0,j_1]$, with
+$p_I=[0,1]$ and $p_J=[2,3]$.
+Suppose $c_L=[3,0]$ and $c_R=[2,0]$.
+The second dot selects $[j_1,i_0]$ from $T$:
+$j_1$ is paired with position $2$ in $Z$, and $i_0$ with position $0$.
+Thus $\vec I$ splits into selected axes $[i_0]$ and remaining axes
+$[i_1]$, while $\vec J$ splits into $[j_1]$ and $[j_0]$.
+Figure~\ref{fig:axis-partitioning} shows these selections and pairings.
 
 \paperfigure{1}{figures/Symbolic Axis Partitioning (Dot Reassociation).pdf}{Symbolic axis partitioning for unbatched dot reassociation. Splitting selected axes by producer origin preserves their contraction partners. Here $L$ is the selected contraction group, and $F=[f]$ is $Z$'s free group.}{fig:axis-partitioning}{Three panels show the intermediate tensor T with axes i0, i1, j0, j1; selection of positions 3 and 0; partition into selected and remaining I and J subgroups; and preservation of partners at positions 2 and 0 of Z. A table distinguishes positions within producer groups from slots in the contraction list and corresponding partner positions.}
 
-The same selected axis has a different position in each of three lists, so
-for each producer group $\vec G\in\{\vec I,\vec J\}$ the compiler records
-three position lists:
-\begin{itemize}
-\item $v_G$: positions of selected axes within $\vec G$;
-\item $u_G$: positions of those axes in the consumer's contraction list $c_L$;
-\item $z_G$: positions of their paired axes in $Z$.
-\end{itemize}
-Finding $u_G$ and $v_G$ together is the job of $\mpo$. For lists $A,B$ without
-repeated entries, $\mpo(A,B)=(u,v)$, where $u$ lists, in $A$'s order, the
-positions in $A$ of the entries that also occur in $B$, and $v$ lists the
-positions of those same entries in $B$, so $A_{u_k}=B_{v_k}$. For instance,
-$\mpo([3,0],[0,1])=([1],[0])$: the only common entry, $0$, sits at position
-$1$ of the first list and position $0$ of the second (full definition in
-Appendix~\ref{app:candidate-validation-and-soundness}).
-The compiler computes
+Two kinds of positions are needed for each selected subgroup.
+Positions within the producer group identify which axes to select.
+Slots in the contraction lists identify their partners.
+For instance, $j_1$ is at position $1$ within $\vec J$, but it occupies
+slot $0$ in the selection $[j_1,i_0]$.
+Position $1$ selects $j_1$ from $\vec J$; slot $0$ selects its partner
+position $c_R[0]=2$ in $Z$.
+Neither position can replace the other.
+
+For each producer group $\vec G$, let $v_G$ list the selected positions
+within $\vec G$, and let $u_G$ list their slots in $c_L$.
+The mapping $p_G$ from Section~\ref{sec:symbolic-axis-mapping}
+provides the positions of all axes in $\vec G$ within $T$.
+The compiler compares $c_L$ with $p_G$:
 \begin{equation}
- (u_G,v_G)=\mpo(c_L,p_G),\qquad z_G=\gath(c_R,u_G).
+ (u_G,v_G)=\mpo(c_L,p_G),\qquad
+ z_G=\gath(c_R,u_G).
  \label{eq:symbolic-partition-selectors}
 \end{equation}
-The selected subgroup is $\gath(\vec G,v_G)$; the ordered complement of
-$v_G$ selects the remainder. These subgroups are disjoint and cover $\vec G$,
-with selected axes following contraction order and remaining axes preserving
-their order in $\vec G$. Concatenating the two subgroups therefore need not
-restore $\vec G$'s original order.
+Here $\mpo$ finds entries common to the two lists and returns their
+positions in each list, following the order of $c_L$.
+A common entry identifies one tensor axis:
+$c_L[u_G[s]]=p_G[v_G[s]]$.
+The list $z_G$ then gives its partner positions in $Z$.
+Appendix~\ref{app:candidate-validation-and-soundness} gives the formal
+definition.
 
-For the figure ($c_L=[3,0]$, $c_R=[2,0]$, $p_I=[0,1]$, $p_J=[2,3]$):
-
+For the running example, these lists are:
 \begin{center}
 \small
-\begin{tabular}{@{}lcccc@{}}\toprule
-Group & Selected axis & $v_G$ (in $\vec G$) & $u_G$ (in $c_L$) & $z_G=\gath(c_R,u_G)$ (in $Z$)\\\midrule
-$\vec I$ & $i_0$ & $[0]$ & $[1]$ & $[0]$\\
-$\vec J$ & $j_1$ & $[1]$ & $[0]$ & $[2]$\\\bottomrule
+\begin{tabular}{@{}lllll@{}}\toprule
+Group & Selected axes & $v_G$: in group & $u_G$: pairing slots
+      & $z_G$: in $Z$\\\midrule
+$\vec I$ & $[i_0]$ & $[0]$ & $[1]$ & $[0]$\\
+$\vec J$ & $[j_1]$ & $[1]$ & $[0]$ & $[2]$\\\bottomrule
 \end{tabular}
 \end{center}
+The selected subgroup is $\gath(\vec G,v_G)$.
+Its positions in $T$ are $\gath(p_G,v_G)$, and its partners occupy
+$z_G$ in $Z$. The ordered complement of $v_G$ within the group
+selects the remaining axes. Selected axes follow contraction-list
+order; remaining axes preserve their original group order.
 
-The two lists must not be confused: $i_0$ is at position $0$ in $\vec I$ but
-position $1$ in $c_L$, and $\gath(c_R,v_I)=\gath(c_R,[0])$ would select
-position $2$ in $Z$, the partner of $j_1$, not of $i_0$. Using $u_G$ gives the
-correct partners, so the replacement attributes preserve the original
-contraction pairings.
+These mappings determine how to distribute the contractions on the RHS.
+Since $\vec J$ originates in $Y$, the selected subgroup
+$\vec J_{\mathrm{sel}}$ can contract with its partners in $Z$ inside
+$U=\operatorname{dot}(Y,Z)$.
+TEPL uses $v_J$ to select these axes through the mapping of $\vec J$
+into $Y$, and $z_J$ to select their partners in $Z$.
+In the example, this contracts $j_1$ with position $2$ in $Z$.
+
+The selected axes from $\vec I$ originate in $X$, which is absent
+from $U$. Their partners in $Z$ must therefore survive in $U$.
+Group $\vec K$ from $Y$ must also survive so that it can later
+contract with $X$.
+The final dot contracts $\vec K$ and pairs
+$\vec I_{\mathrm{sel}}$ with its retained partners.
+The mappings through $U$ provide their new positions.
+The remaining groups $\vec I_{\mathrm{rem}}$,
+$\vec J_{\mathrm{rem}}$, and the free axes of $Z$ form the output.
+Partitioning therefore supplies both the axis subsets and the pairing
+information needed to construct the RHS attributes.
 
 \subsection{Symbolic Attribute Builder Construction}
 \label{sec:symbolic-attribute-builder-construction}
-Using the mappings and partitions from
-Sections~\ref{sec:symbolic-axis-mapping}--\ref{sec:symbolic-axis-partitioning},
-the compiler translates Section~\ref{sec:attribute-synthesis-algorithm-and-guarantees}'s three
-passes into one metadata program. Its expressions determine retained axes,
-check ordering constraints, and compute RHS axis attributes. Shared
-axis-group computations are represented once and reused across attributes.
-This program forms the compiler's metadata intermediate representation (IR).
-A \emph{metadata program} computes only on match metadata. This general
-term covers both the compiled feasibility check and the compiled attribute
-builder.
+The mappings and partitions from the preceding sections identify the
+axes needed by each RHS operation. The compiler turns these results
+into expressions that compute its axis attributes. Together with the
+feasibility checks, these expressions form a \emph{metadata program}:
+a program that computes on captured attributes, ranks, and shapes.
 
-Compilation generates these expressions without requiring concrete ranks
-or axis lists. For example, the selected subgroup $\gath(\vec J,v_J)$ has
-positions $\gath(p_J,v_J)$ in $T$. At a match, $p_J=[2,3]$ and $v_J=[1]$
-evaluate this expression to $[3]$. Each match therefore evaluates the
-generated program rather than repeating symbolic inference. The program
-operates on match metadata, not tensor values.
+Continuing the reassociation example, $U=\operatorname{dot}(Y,Z)$
+contracts $\vec J_{\mathrm{sel}}$ with its partners in $Z$.
+Let $p_J^Y$ map $\vec J$ to its positions in $Y$.
+The selector $v_J$ identifies the selected axes within $\vec J$,
+while $u_J$ identifies their slots in the original contraction lists.
+The two contraction attributes for $U$ are therefore
+\begin{equation}
+ c_L^U=\gath(p_J^Y,v_J),\qquad
+ c_R^U=\gath(c_R,u_J).
+ \label{eq:builder-contraction-example}
+\end{equation}
+For the operand order $\operatorname{Ord}_Y=[k,j_0,j_1]$ from
+Section~\ref{sec:symbolic-axis-mapping}, $p_J^Y=[1,2]$.
+With $v_J=[1]$, $u_J=[0]$, and $c_R=[2,0]$, the expressions give
+$c_L^U=[2]$ and $c_R^U=[2]$. These lists tell the RHS dot to contract
+$j_1$ in $Y$ with its original partner in $Z$.
 
-Write $E_{\mathrm{check}}$ for the compiled program implementing the feasibility check,
-and $E_{\mathrm{build}}$ for the compiled attribute builder. The functions
-$\operatorname{check}(m)$ and $\operatorname{build}(m)$ describe the
-mathematical decision and attribute construction. Their compiled programs
-evaluate to $\lbrack\!\lbrack E_{\mathrm{check}}\rbrack\!\rbrack_m$ and
-$\lbrack\!\lbrack E_{\mathrm{build}}\rbrack\!\rbrack_m$, respectively. The following
-theorem relates these results within the stated fragment.
+At compilation time, TEPL records these expressions and their
+dependencies on source metadata. For example, $v_J$ and $u_J$ are
+computed by the $\mpo$ expression from
+Equation~\eqref{eq:symbolic-partition-selectors}.
+Shared computations are represented once and reused across attributes.
+The compiler constructs this expression graph once per rule, without
+enumerating concrete axis lists. At each match, evaluating the graph
+supplies the current position lists and computes the RHS attributes.
+The same expressions therefore handle different ranks and group lengths.
+
+The compiler applies this approach to all three passes in
+Section~\ref{sec:attribute-synthesis-algorithm-and-guarantees}:
+determining retained axes, checking order, and constructing attributes.
+Write $E_{\mathrm{check}}$ for the generated feasibility check and
+$E_{\mathrm{build}}$ for the generated attribute builder.
+The notation $\lbrack\!\lbrack E\rbrack\!\rbrack_m$ denotes evaluating
+program $E$ on match metadata $m$.
+The check runs first; the builder is evaluated only when it succeeds.
+
+Several attribute orders may describe the same valid axis pairing.
+To state exact agreement with the mathematical builder, both use the
+same ordering convention $\tau$: unconstrained batch and contraction
+axes follow the left operand's order.
+Let $\operatorname{build}_{\tau}$ denote the builder from
+Section~\ref{sec:constructing-axis-attributes} with this convention.
 
 \begin{theorem}[Symbolic compilation correspondence]
 \label{thm:symbolic-compilation}
 For every rewrite rule satisfying the synthesis restrictions in
-Section~\ref{sec:formal-scope-and-guarantees}, compilation
-constructs a finite metadata program $(E_{\mathrm{check}},E_{\mathrm{build}})$ independently of concrete
-ranks and the written guard. For every legal metadata instance $m$ in that
-section's completeness domain,
+Section~\ref{sec:formal-scope-and-guarantees}, compilation constructs
+a finite metadata program $(E_{\mathrm{check}},E_{\mathrm{build}})$
+independently of concrete ranks and the written guard.
+For every legal metadata instance $m$ in that section's completeness domain,
 \begin{align}
  \lbrack\!\lbrack E_{\mathrm{check}}\rbrack\!\rbrack_m&=\operatorname{check}(m),
  \label{eq:emitted-check}\\
@@ -212,23 +290,19 @@ section's completeness domain,
  \lbrack\!\lbrack E_{\mathrm{build}}\rbrack\!\rbrack_m=\operatorname{build}_{\tau}(m).
  \label{eq:emitted-build}
 \end{align}
-Here $\tau$ fixes unconstrained paired orders using the left operand's
-order. The check returns boolean for every legal match in the stated domain.
-If it succeeds, the attribute builder computes the RHS attributes.
 \end{theorem}
-\begin{proof}[Proof sketch]
-The compiler translates each step of Section~\ref{sec:attribute-synthesis-algorithm-and-guarantees}
-into metadata operations that compute the same axis sets, ordering checks,
-and positional attributes. Appendix~\ref{app:symbolic-program-construction-and-correspondence}
-proves this correspondence and shows that program construction terminates
-without concrete metadata, the written guard, or successful simplification.
-\end{proof}
+The compiled check makes the same feasibility decision as the
+mathematical algorithm. When it succeeds, the compiled builder produces
+the same attributes under $\tau$.
+Together with Theorem~\ref{thm:complete-synthesis}, this gives a complete
+compiled synthesis procedure within the stated domain.
 
-Together with Theorem~\ref{thm:complete-synthesis}, this establishes
-completeness of the compiled feasibility check and builder on the stated
-domain. Conditional validation checks its use in an executable rewrite.
-Appendix~\ref{app:batched-reassociation} gives a complete attribute
-builder for reassociation under explicit sufficient conditions.
+The proof follows the three passes and shows that the generated
+expressions preserve their axis sets, ordering constraints, and position
+queries. Appendix~\ref{app:symbolic-program-construction-and-correspondence}
+gives the proof, including termination of program construction.
+Appendix~\ref{app:batched-reassociation} gives a complete reassociation
+builder under explicit sufficient conditions.
 
 \subsection{Compilation and Validation}
 \label{sec:compilation-and-validation}

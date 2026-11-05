@@ -14,14 +14,15 @@ attributes, we first identify the axes that must survive at each node.
 We then construct a retained-axis set $S_v$ using the operation's rules.
 Axis ordering and attribute construction are handled in the following stages.
 
-For a node $v$, let $U_v$ be the inputs in its subtree, and let
+For a node $v$, let $\mathrm{In}_v$ be the set of inputs in the subtree rooted at $v$,
+and let
 $\sigma(a)$ be the inputs that contain logical axis $a$. The set $M_v$ of
 \emph{mandatory axes} contains axes used in this subtree that are also needed in the
 final output $\operatorname{Ord}_{\mathrm{out}}$ or in an input outside the subtree:
 \begin{equation}
  M_v=\left\{a\in\Axes(L)\;\middle|\;
- \sigma(a)\cap U_v\ne\varnothing
- \land (a\in\operatorname{set}(\operatorname{Ord}_{\mathrm{out}})\lor\sigma(a)\nsubseteq U_v)
+ \sigma(a)\cap \mathrm{In}_v\ne\varnothing
+ \land (a\in\operatorname{set}(\operatorname{Ord}_{\mathrm{out}})\lor\sigma(a)\nsubseteq \mathrm{In}_v)
  \right\}.
  \label{eq:mandatory-axes}
 \end{equation}
@@ -72,7 +73,7 @@ followed by a row sum, including a case where $M_v\subsetneq S_v$.
 \subsection{Why the Canonical Choice Does Not Lose Solutions}
 \label{sec:canonical-choice-preserves-solutions}
 We now show that choosing canonical intermediate axes does not lose valid
-solutions. This step relies on the unrestricted RHS axis choices in D2.
+solutions.
 
 Let $\operatorname{Ord}_v(\beta)$ be the ordered list of logical axes
 in node $v$'s output when the RHS attributes are assigned by $\beta$.
@@ -96,7 +97,8 @@ The lemma guarantees that whenever a valid assignment exists, one also
 exists that keeps exactly $S_v$ at each node while preserving the relative
 order of retained axes.
 
-For example, let $A,B$ be batched tensors with dimension orders $(b,i,k)$
+\paperparagraph{Example.}
+Let $A,B$ be batched tensors with dimension orders $(b,i,k)$
 and $(b,k,j)$, respectively. Suppose the source computes batched matrix
 multiplication followed by a sum over batches:
 \[
@@ -130,34 +132,42 @@ The proof is given in Appendix~\ref{app:canonicalization-preserves-feasibility}.
 
 \subsection{Checking Axis Order}
 \label{sec:checking-axis-order}
-Choosing axis sets is not enough. Each operation also restricts output
-order. Let $Req_v$ be an ordered subsequence that the output at $v$ must
-contain, starting with $Req_{\mathrm{root}}=\operatorname{Ord}_{\mathrm{out}}$. Write $A\preceq B$ when
-$A$ is a subsequence of $B$. These requirements specify relative order,
-not adjacency: $(i_1,x,i_2)$ satisfies the requirement $(i_1,i_2)$.
+The canonical live sets determine which axes each RHS node retains.
+We now check whether the RHS graph can arrange these axes in the order
+required by the LHS output.
 
-Following D3, each node computes a Boolean ordering check $C_v$ and passes
-ordering requirements to its children. At an input, the check is
-$C_v=[Req_v\preceq I_v]$, since its axis order is fixed.
+We propagate ordering requirements from the root toward the inputs.
+Let $Req_v$ be an ordered list of axes that must appear as a subsequence
+of node $v$'s output. Write $A\preceq B$ when $A$ is a subsequence of $B$.
+This relation specifies relative order, not adjacency: $(i,x,j)$
+satisfies the requirement $(i,j)$.
+At the root, the requirement is the complete target order,
+$Req_{\mathrm{root}}=\operatorname{Ord}_{\mathrm{out}}$.
 
-Combining the local checks with the root live-set check gives
+At each node, we check whether the required order is compatible with
+the operation's output order and pass the necessary requirements to its
+children. For example, a contraction with left-free axis $i$ and
+right-free axis $j$ cannot satisfy $(j,i)$ because left-free axes precede
+right-free axes. A permutation above the contraction can satisfy this
+requirement by reordering the result. It therefore passes an empty
+requirement to the contraction. Requirements propagate to the inputs,
+where they are checked against the fixed input orders.
+Appendix~\ref{app:operation-construction-rules} gives the rules for each
+operation.
+
+Let $C_v$ denote the local ordering check at node $v$.
+The check also requires $Req_v$ to contain distinct axes from $S_v$.
+Combining all local checks with the root axis-set check gives
 \begin{equation}
  \operatorname{check}(m)
  =[S_{\mathrm{root}}=\operatorname{set}(\operatorname{Ord}_{\mathrm{out}})]
- \land\bigwedge_{v\in V_R}C_v.
+ \land\bigwedge_{v\in V_R}C_v,
 \label{eq:feasibility}
 \end{equation}
-Here $V_R$ contains all RHS nodes, including inputs. The check succeeds
-when the root retains exactly the target axes and every node satisfies
-its ordering constraints.
-These checks depend only on match metadata, which determines the LHS
-classes, input orders, and target output order.
-
-Together, these constraints form the feasibility check
-$\operatorname{check}(m)$. TEPL compiles this function once per rule.
-Sections~\ref{sec:compilation-and-validation} and~\ref{sec:candidate-validation}
-explain how compilation validates construction under the written condition
-and a successful feasibility check.
+where $V_R$ contains all RHS nodes, including inputs.
+The root axis-set check ensures that exactly the target axes survive.
+The ordering checks ensure that these axes can appear in the target order.
+Once these checks pass, the next stage constructs the axis attributes.
 
 \subsection{Constructing Axis Attributes}
 \label{sec:constructing-axis-attributes}

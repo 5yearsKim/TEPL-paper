@@ -3,56 +3,70 @@ concept: Partition a consumer's selected axes by producer origin while retaining
 purpose: Distinguish producer-group positions from contraction slots and partner positions, then explain how the refined groups support reassociation.
 requirements:
   - 'Apply the shared axis-group UI in tools/figure_style.md: canonical bordered chips, inline group colors, underscore notation, and contextual dimming. Preserve this figure''s content within the requested compact frame.'
-  - Follow tools/figure_style.md; use an exact 1000 × 500 px full-width frame with 20 px side margins, 14 px top/bottom margins, and 10 px gaps between bands.
-  - Allocate 50 px to context, 234 px to analysis, 114 px to symbolic mappings, and 44 px to the reassociation payoff. Keep all content; compact spacing rather than scaling text.
-  - Use a compact context strip, three equal-width analysis panels, one two-row symbolic mapping table, and a two-line reassociation payoff.
+  - Follow tools/figure_style.md; use an exact 1000 × 500 px full-width frame with 20 px side margins, 11 px top/bottom margins, and 4 px gaps between bands.
+  - Allocate 74 px to context, 234 px to analysis, 114 px to symbolic mappings, and 44 px to the reassociation payoff. Keep all content; compact spacing rather than scaling text.
+  - Use a three-line context strip, three equal-width analysis panels, one two-row mapping table with concrete results, and a two-line reassociation payoff.
   - Use 300 px analysis panels with 30 px gutters, 8 px vertical and 12 px horizontal panel padding, and 4 px internal gaps. Axis strips use 26 px chips, a 2 px gap, and 22 px position labels; retain the 24 px subgroup chips.
   - Use 28 px rows in the symbolic mapping table. The pairing table uses a 24 px header and two 28 px rows; keep its chip labels vertically centered.
   - Use 22 px headings, 18 px code/positions/table expressions/notes, and canonical 16 px compact axis/group chips; keep the final frame fixed rather than shrinking the whole figure.
   - Use generalized dots without batch axes, under arithmetic permitting reassociation; I and J each have two axes in this instance.
   - 'Color I and its partners green (#6A9F88), J and its partners purple (#9076AD), and K amber (#D4A65C).'
   - Use the same canonical pale fills, colored borders, and dark text for selected and remaining views; explicit sel/rem names and selection connectors distinguish them.
-  - Colors identify axis origins, not analysis stages; tensor axes stay in their original physical order.
+  - Axis-group colors identify origins, not analysis stages; tensor axes stay in their original physical order. Index highlights use a separate correspondence palette defined below.
   - Use commas, plus signs, or line breaks as separators; do not use middle dots.
   - Keep I above J in the partition panel and mapping table; the pairing panel follows contraction-slot order, which is J then I.
-  - Clearly distinguish v_G positions within a producer group, u_G slots in D, and gather(k_r, u_G) positions in Z.
-  - Use k_ℓ = [3, 0] and k_r = [2, 0], with physical Z axes [z₀, f, z₁], so contraction slots and Z positions differ.
-  - Zero-based positions are explicit beneath tensor axes; k_ℓ and k_r denote the outer dot's left and right contraction lists.
-  - Ellipses are unnecessary in this concrete instance; the symbolic mapping table applies to arbitrary-length groups.
-  - Keep matchPositions construction formulas in the paper text; the figure contains the resulting mappings.
+  - Clearly distinguish v_G positions within a producer group, u_G pairing slots, and z_G partner positions in Z.
+  - 'Use six index-highlight colors consistently on every occurrence of the corresponding position, including repeated pairing slots and Z positions: eighteen colored digits total. Keep axis labels, symbolic names, brackets, commas, headings, and group chips in their existing styles.'
+  - Index families identify the group (cool cyan/blue/indigo for I, warm orange/pink/burgundy for J); roles progress from lighter v to vivid u to dark z. Use distinct hues as well as depth.
+  - 'v_I cyan (#0891B2): color 0 in v_I=[0] and local group position 0 beneath I.'
+  - 'u_I royal blue (#2563EB): color 1 in u_I=[1] and pairing slot 1 beneath the selected axes and slot 1 in the small pairing table.'
+  - 'z_I deep indigo (#312E81): color 0 in z_I=[0] and physical Z position 0, the second entry 0 in c_R, and Z pos 0 in the small pairing table.'
+  - 'v_J orange (#EA580C): color 1 in v_J=[1] and local group position 1 beneath J.'
+  - 'u_J bright pink (#DB2777): color 0 in u_J=[0] and pairing slot 0 beneath the selected axes and slot 0 in the small pairing table.'
+  - 'z_J burgundy (#831843): color 2 in z_J=[2] and physical Z position 2, the first entry 2 in c_R, and Z pos 2 in the small pairing table.'
+  - Keep positions beneath T and values in c_L neutral: these are full-tensor positions, distinct from local group positions v_G, pairing slots u_G, and partner positions z_G. Keep unselected local group positions, physical Z position 1, and digits inside axis names neutral. Color by the position being represented, never by numeric equality alone.
+  - Use c_L = [3, 0] and c_R = [2, 0], with physical Z axes [z0, f, z1], so contraction slots and Z positions differ.
+  - Zero-based positions are explicit beneath tensor axes; c_L and c_R denote the outer dot's left and right contraction lists.
+  - Show concrete v_G, u_G, and z_G values in the mapping table; the text explains the general computation.
+  - Keep matchPositions construction formulas in the paper text; the figure contains the resulting mappings. Use plain editable text such as i0, j1, c_L, and v_I; do not use LaTeX or typographic subscripts.
 
 children:
   - name: context
     type: text
-    pos: [0.02, 0.98, 0.028, 0.128]
+    pos: [0.02, 0.98, 0.022, 0.170]
     content: |-
-      dot(dot(X, Y), Z) → dot(X, dot(Y, Z))
-      T = dot(X, Y), O = dot(T, Z). Inner dot contracts K; outer dot contracts D.
+      dot(dot(X, Y), Z) => dot(X, dot(Y, Z))
+      LHS: T = dot(X, Y), O = dot(T, Z). RHS: U = dot(Y, Z).
+      dot(X, Y) leaves I, J and contracts K.
+
+    requirements:
+      - Color I and J in the last line with their origin colors and K with its contraction-group color; keep operation names and tensor names neutral.
+      - Explicitly distinguish LHS definitions T and O from the RHS definition U.
 
   - name: select_axes
     type: image
-    pos: [0.02, 0.32, 0.148, 0.616]
+    pos: [0.02, 0.32, 0.178, 0.646]
     requirements:
       - Head this panel "1. Select axes".
       - Draw T as four axis cells with I and J group brackets above the first and last pair.
-      - Use canonical origin-colored cells for all four axes; k_ℓ, the selection connectors, and the selected/remaining view labels identify i₀ and j₁ as selected.
-      - Show the selection D below T in list order j₁ then i₀, with slot labels 0 and 1 beneath its two cells.
+      - Use canonical origin-colored cells for all four axes; c_L, the selection connectors, and the selected/remaining view labels identify i0 and j1 as selected.
+      - Label the selection row "Selected axes:" and show j1 then i0 in origin-colored cells. Under it, label "Pairing slots:" and show 0 and 1 aligned with the cells. Do not name the selected group L or D.
       - Color the selected cells consistently; the selection is a view, not a physical transpose of T.
     children:
       - name: original_tensor
         type: text
         pos: [0.00, 1.00, 0.16, 0.49]
         content: |-
-          T: [i₀, i₁ | j₀, j₁]
+          T: [i0, i1 | j0, j1]
           Positions: [0, 1 | 2, 3]
 
       - name: selection
         type: text
         pos: [0.00, 1.00, 0.51, 0.83]
         content: |-
-          k_ℓ = [3, 0]
-          D: [j₁, i₀]
-          Slots: [0, 1]
+          c_L = [3, 0]
+          Selected axes: [j1, i0]
+          Pairing slots: [0, 1]
 
       - name: order_note
         type: text
@@ -61,28 +75,28 @@ children:
 
   - name: partition_groups
     type: image
-    pos: [0.35, 0.65, 0.148, 0.616]
+    pos: [0.35, 0.65, 0.178, 0.646]
     requirements:
       - Head this panel "2. Partition by origin".
       - Use two aligned rows, with I above J; place each producer-group label above its selected and remaining view cards.
       - Selected cards are on the left and remaining cards on the right; do not concatenate them as a reconstruction of physical tensor order.
-      - Display the concrete v and u sequences below each pair of cards so their different meanings are visible.
+      - Show local group positions [0, 1] directly after each producer-group definition and before its selected/remaining cards. Highlight only I local index 0 in cyan and J local index 1 in orange, matching v_I and v_J in the mapping table. Keep the v/u results in the mapping table to avoid duplicate lists.
     children:
       - name: I_partition
         type: text
         pos: [0.00, 1.00, 0.16, 0.49]
         content: |-
-          I = [i₀, i₁]
-          I_sel [i₀]    I_rem [i₁]
-          v_I = [0], u_I = [1]
+          I = [i0, i1]
+          Group positions: [0, 1]
+          I_sel [i0]    I_rem [i1]
 
       - name: J_partition
         type: text
         pos: [0.00, 1.00, 0.51, 0.84]
         content: |-
-          J = [j₀, j₁]
-          J_sel [j₁]    J_rem [j₀]
-          v_J = [1], u_J = [0]
+          J = [j0, j1]
+          Group positions: [0, 1]
+          J_sel [j1]    J_rem [j0]
 
       - name: view_note
         type: text
@@ -91,57 +105,57 @@ children:
 
   - name: preserve_pairings
     type: image
-    pos: [0.68, 0.98, 0.148, 0.616]
+    pos: [0.68, 0.98, 0.178, 0.646]
     requirements:
       - Head this panel "3. Preserve pairings".
-      - Label the input strip "Physical Z axes" and draw z₀, f, z₁ with positions 0, 1, 2 beneath them.
-      - Color z₀ green and z₁ purple according to their I and J partners; keep f neutral and outside the paired contraction slots.
-      - Below k_r, align each left/right pair in a row indexed by its contraction slot; show its Z position in the last column.
-      - Use a short pairing connector between From T and From Z; slot 0 pairs j₁ with z₁, and slot 1 pairs i₀ with z₀.
+      - Label the input strip "Physical Z axes" and draw z0, f, z1 with positions 0, 1, 2 beneath them.
+      - Color z0 green and z1 purple according to their I and J partners; keep f neutral and outside the paired contraction slots.
+      - Below c_R, align each left/right pair in a row indexed by its contraction slot; show its Z position in the last column.
+      - Use a short pairing connector between From T and From Z; slot 0 pairs j1 with z1, and slot 1 pairs i0 with z0.
     children:
       - name: right_tensor
         type: text
         pos: [0.00, 1.00, 0.16, 0.60]
         content: |-
-          Z: [z₀, f, z₁]
+          Z: [z0, f, z1]
           Positions: [0, 1, 2]
-          k_r = [2, 0]
+          c_R = [2, 0]
 
       - name: slot_table
         type: text
         pos: [0.00, 1.00, 0.62, 0.97]
         content: |-
           Slot | From T | From Z | Z pos
-          0    | j₁     | z₁     | 2
-          1    | i₀     | z₀     | 0
+          0    | j1     | z1     | 2
+          1    | i0     | z0     | 0
 
   - name: analysis_flow
     type: image
-    pos: [0.32, 0.68, 0.372, 0.392]
+    pos: [0.32, 0.68, 0.402, 0.422]
     requirements:
       - Draw short right arrows only in the two gutters between the three panels.
       - These arrows indicate analysis progression, not graph rewriting or movement of tensor axes.
 
   - name: subgroup_mapping
     type: image
-    pos: [0.02, 0.98, 0.636, 0.864]
+    pos: [0.02, 0.98, 0.654, 0.882]
     requirements:
       - Head this band "Selected subgroup mappings" and align "Positions are zero-based" at the right.
       - Draw one full-width four-column table, with I_sel above J_sel and one centered expression per data cell.
       - Inset canonical group chips in neutral group-label cells; keep expression cells neutral.
-      - The table is symbolic; concrete examples appear in the analysis panels above.
+      - Use the exact descriptive headings and concrete values below; each column names the list in which its positions are measured. Allow wider first and second columns so headings stay on one line.
     children:
       - name: entries
         type: text
         pos: [0.00, 1.00, 0.263, 1.00]
         content: |-
-          Selected group | Producer positions | Slots in D | Partner positions in Z
-          I_sel          | v_I                | u_I        | gather(k_r, u_I)
-          J_sel          | v_J                | u_J        | gather(k_r, u_J)
+          Selected subgroup | Positions within group | Pairing slots | Partner positions in Z
+          I_sel             | v_I = [0]              | u_I = [1]     | z_I = [0]
+          J_sel             | v_J = [1]              | u_J = [0]     | z_J = [2]
 
   - name: reassociation_payoff
     type: text
-    pos: [0.02, 0.98, 0.884, 0.972]
+    pos: [0.02, 0.98, 0.890, 0.978]
     content: |-
       U = dot(Y, Z) contracts J_sel; final dot contracts I_sel + K.
-      U retains K and I_sel's partners. Output: I_rem ++ J_rem ++ H (H = [f]).
+      U retains K and I_sel's partners. Output: I_rem ++ J_rem ++ F (F = [f]).

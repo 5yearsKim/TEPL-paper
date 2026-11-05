@@ -36,14 +36,14 @@ pairings as the mathematical construction, for every finite group length.
 
 \paperparagraph{Step 2: Produce the same feasibility result.}
 The next task is to determine whether the compiled feasibility check makes exactly
-the same decision as $\operatorname{check}(m)$. The inputs $U_v$ inside each
+the same decision as $\operatorname{check}(m)$. The inputs $\mathrm{In}_v$ inside each
 RHS subtree are known at compile time. The generated expressions identify
 an axis as mandatory when it occurs inside that subtree and is needed in the final
 output or by an outside input:
 \begin{equation}
- M_v=\left(\bigcup_{X\in U_v}\operatorname{set}(I_X)\right)
+ M_v=\left(\bigcup_{X\in \mathrm{In}_v}\operatorname{set}(I_X)\right)
  \cap\left(\operatorname{set}(\operatorname{Ord}_{\mathrm{out}})\cup
-             \bigcup_{X\notin U_v}\operatorname{set}(I_X)\right).
+             \bigcup_{X\notin \mathrm{In}_v}\operatorname{set}(I_X)\right).
  \label{eq:emitted-mandatory}
 \end{equation}
 This is the mandatory-axis condition of Equation~\eqref{eq:mandatory-axes}.

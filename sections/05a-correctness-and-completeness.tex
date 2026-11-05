@@ -1,14 +1,12 @@
 \subsection{Correctness and Completeness}
 \label{sec:correctness-and-completeness}
-We show that the algorithm decides whether a valid assignment
-exists and constructs one whenever it does.
+The feasibility check and attribute builder together provide a complete
+synthesis procedure within the defined fragment.
 
 \begin{theorem}[Complete constructive attribute synthesis]
 \label{thm:complete-synthesis}
-For a symbolic rewrite and metadata $m$ satisfying
-Section~\ref{sec:formal-scope-and-guarantees}, including the requirement that every input
-axis have extent at least two,
-
+For a symbolic rewrite and metadata $m$ satisfying the assumptions of
+Section~\ref{sec:formal-scope-and-guarantees},
 \begin{align}
  \operatorname{check}(m)&\iff\exists\beta:\operatorname{Valid}(m,\beta),
  \label{eq:complete-theorem}\\
@@ -17,9 +15,14 @@ axis have extent at least two,
  \label{eq:sound-theorem}
 \end{align}
 \end{theorem}
-A failed \code{check} therefore means no valid assignment exists in the
-stated domain. TEPL combines the feasibility check with the written
-condition to determine applicability
-(Section~\ref{sec:compilation-and-validation}).
-Appendix~\ref{app:correctness-and-completeness} gives the proofs and the extension to
-multiple terms.
+The theorem connects feasibility to construction: the check succeeds
+exactly when a valid RHS assignment exists, and the builder produces
+such an assignment whenever the check succeeds.
+
+This result follows from preserving feasibility through canonicalization
+and resolving the remaining ordering constraints.
+Appendix~\ref{app:correctness-and-completeness} gives the proofs and the
+extension to multiple terms.
+
+TEPL applies the rewrite only when both $C(m)$ and $\operatorname{check}(m)$
+hold. The completeness guarantee is limited to the stated fragment.

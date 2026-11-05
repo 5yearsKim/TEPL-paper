@@ -50,28 +50,8 @@
 
 % Place a small figure beside normal paragraphs; never enclose the prose.
 % Usage: \sidefigure[width fraction]{file}{caption}{label}{description}
-% Reserve only the artwork/caption height; prose is never boxed.
-% If necessary, start the wrapped figure on the next page, never a full-width row.
+% Let wrapstuff handle placement; prose is never boxed.
 \newsavebox{\sidefigureart}
-% A soft space reservation lets TeX break before an attached heading, rather
-% than forcing a break between that heading and its first paragraph.
-\makeatletter
-\newcommand{\reservesidefigurespace}[1]{%
-  \begingroup
-    \@tempskipb\lastskip
-    \vskip-\@tempskipb
-    \dimen@=#1\relax
-    \advance\dimen@\@tempskipb
-    \vskip0pt plus\dimen@
-    \if@nobreak\penalty10000\else\penalty-100\fi
-    \vskip0pt plus-\dimen@
-    \vskip\dimen@
-    \penalty9999
-    \vskip-\dimen@
-    \vskip\@tempskipb
-  \endgroup
-}
-\makeatother
 \newcommand{\sidefigure}[5][0.45]{%
   \par\wrapstuffclear
   \sbox{\sidefigureart}{%
@@ -81,7 +61,6 @@
       \includegraphics[width=\linewidth]{#2}%
       \caption{#3}\label{#4}\Description{#5}%
     \end{minipage}}%
-  \reservesidefigurespace{\dimexpr\ht\sidefigureart+\dp\sidefigureart+2\baselineskip+\intextsep\relax}%
   \begin{wrapstuff}[r,belowsep=\intextsep]
     \usebox{\sidefigureart}%
   \end{wrapstuff}%
@@ -115,24 +94,20 @@
 \begin{document}
 \begin{abstract}
 Tensor rewrite rules are concise in algebraic form, but their implementations
-require substantial attribute-transformation logic. Rewrite rules written as
-tensor expressions describe how to change a computation graph, but matching alone
-does not compute the attributes needed by the replacement, such as permutations
-and contraction dimensions.
+require substantial attribute-transformation logic. An algebraic rewrite rule states what to match
+and what to build, but not the attribute values the new operators need, such as
+permutations and contraction dimensions.
 TEPL (Tensor Equality Pattern Language) is a domain-specific language (DSL) for
-describing tensor rewrites, explicit conditions, and attribute changes together.
-More importantly, TEPL can automatically synthesize axis attribute transformations
-from operation semantics. We prove constructive completeness for a restricted class of tensor
-rewrites: under the stated assumptions, our synthesis algorithm constructs
-valid RHS axis assignments whenever they exist. To support attribute
-synthesis in the compiler, we introduce Axes IR and symbolic axis mapping to
-handle tensors of arbitrary rank and track axis relationships. TEPL compiles
-a feasibility check and an attribute builder once per rule. Each match
-checks feasibility before constructing attributes, without repeating inference.
-TEPL models 123 of 209 concrete XLA rewrite
-cases, with RHS axis inference and verification succeeding in 31 of the
-38 axis-inference cases (81.6\%). For these same 31 rule identities,
-inferred source forms use 25.9\% fewer lexical tokens than explicit forms.
+expressing tensor rewrites with explicit conditions and attribute transformations.
+TEPL also synthesizes the axis attributes of the replacement from the semantics of the operations.
+We prove that, for a restricted class of tensor rewrites, the synthesis algorithm finds a valid replacement axis assignment whenever one exists.
+To support tensors of arbitrary rank, we introduce Axes IR and symbolic axis mapping, which track how axes relate across operations.
+For each rule, TEPL compiles a feasibility check and an attribute builder once, so matching does not repeat inference.
+We evaluate TEPL on XLA rewrite rules. TEPL
+models 123 of 209 concrete rewrite cases. Among the 38 cases requiring axis
+inference, it infers and verifies the replacement axes for 31 (81.6\%). For
+these 31 cases, inferred specifications use 25.9\% fewer lexical tokens
+than specifications with explicit attribute derivations.
 \end{abstract}
 \keywords{tensor rewrites, attribute synthesis, symbolic axis mapping}
 \maketitle

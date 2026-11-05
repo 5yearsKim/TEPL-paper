@@ -63,7 +63,7 @@ the same LHS class. Batch and contraction sets are disjoint. Thus all
 constructed attributes are legal.
 By D4, the node assignments combine without conflicting choices.
 
-For the third invariant, consider the input dimensions from $U_v$.
+For the third invariant, consider the input dimensions from $\mathrm{In}_v$.
 At an input, distinct axes belong to distinct classes. Permutation and
 unary summation do not merge input dimensions. At a contraction, any LHS class with
 support in both child subtrees is mandatory in both children, so it appears
@@ -98,11 +98,11 @@ output shape.
 To see why equality separates by component, multiply each input $X_i$ by
 an independent real scalar $z_i$. Read-once components are multilinear, so
 \begin{equation}
- L_t((z_iX_i)_i)=\left(\prod_{X_i\in U_t}z_i\right)L_t(X).
+ L_t((z_iX_i)_i)=\left(\prod_{X_i\in \mathrm{In}_t}z_i\right)L_t(X).
 \end{equation}
 The same identity holds for $R_t$. Fix tensor values and an output
 coordinate, and compare the two sides as polynomials in the $z_i$.
-Distinct input sets $U_t$ give distinct monomials. Uniqueness of polynomial
+Distinct input sets $\mathrm{In}_t$ give distinct monomials. Uniqueness of polynomial
 coefficients therefore gives, for legal expressions with equal output shape,
 \begin{equation}
  \forall X,\ L(X)=R(X)
