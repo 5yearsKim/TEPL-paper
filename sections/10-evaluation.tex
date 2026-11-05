@@ -1,11 +1,7 @@
 \section{Evaluation}
 \label{sec:evaluation}
-We evaluate inference coverage, optimizer integration,
-specification size, and compilation and execution costs. Coverage results
-use one frozen optimized compiler; size, cost, and XLA integration
-experiments retain their separate snapshots. TEPL proofs
-use algebraic semantics rather than strict floating-point laws.
-Appendix~\ref{app:evaluation-details} records protocols and provenance.
+We evaluate TEPL’s inference capabilities, integration with optimizers, specification size, and compilation and execution costs.
+
 
 \sidefigure[0.4]{figures/XLA_rewritie_cases.pdf}
 {XLA case coverage and attribute synthesis result. 31 out of 38 cases with RHS axis field are inferred}
@@ -32,13 +28,14 @@ return a matched value, as in $\operatorname{add}(X,0)\to X$.
 Figure~\ref{fig:xla-rewrite-cases} summarizes the results.
 
 A case is \emph{accepted} when semantic proof, compilation, and
-validation succeed with the original guards and non-axis fields
-unchanged. TEPL accepts 98 of 123 modeled cases (79.7\%),
+validation succeed without changing the evaluated source's guards or
+supplied non-axis fields. TEPL accepts 98 of 123 modeled cases (79.7\%),
 including 67 of 85 verification-only cases.
 Attribute synthesis succeeds on 31 of 38 axis-inference cases
 (81.6\%), inferring all requested RHS axis attributes while preserving
-the written rewrite conditions. Of these 31 cases, 14 fall within the
-scope of the completeness theorem (Section~\ref{sec:formal-scope-and-guarantees}).
+the written rewrite conditions. Of the 38 cases, 31 are structural candidates
+for the restricted completeness extension in Appendix~\ref{app:coverage-and-acceptance},
+subject to its extent, arithmetic, and supplied-metadata assumptions.
 
 \subsection{Integration into an Existing XLA Pass}
 \label{sec:integration-into-an-existing-xla-pass}

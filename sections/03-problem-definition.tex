@@ -177,8 +177,10 @@ Sound schemas & Replacements preserve legality, values, and ordered shape.
 \end{table}
 
 \paperparagraph{Not guaranteed.}
-Rules that mix supplied and inferred axis fields, or that use zero or
-singleton extents, are sound but not complete. Outside the fragment, the
+The direct completeness guarantee excludes mixed supplied and inferred axis
+fields and zero or singleton extents. Appendix~\ref{app:coverage-and-acceptance}
+gives a separate mathematical extension for restricted positive-extent cases;
+it does not establish completeness of the implemented solver. Outside the fragment, the
 feasibility check may reject feasible matches. Validation may stay
 unresolved for a correct candidate. A compiled rule may have no applicable
 match. Broader implementation support does not extend these guarantees;

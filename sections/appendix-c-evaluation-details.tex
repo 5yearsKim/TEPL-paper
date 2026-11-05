@@ -1,42 +1,130 @@
 \section{Evaluation Details}
 \label{app:evaluation-details}
-\subsection{Coverage and Acceptance}
+\subsection{Coverage, Completeness Scope, and Unresolved Cases}
 \label{app:coverage-and-acceptance}
-We evaluate all 123 modeled cases with one optimized compiler under
-algebraic semantics and a 30-second per-command limit. Acceptance requires
-semantic checking, successful compilation, and portable-program validation
-under the original guards and supplied fields. Coverage uses the compiler's
-\code{check}, \code{compile}, and \code{validate} commands in sequence.
-The 86 unmodeled catalog cases are excluded from
-semantic evaluation and counted as neither successes nor failures.
-Exact sources, command invocations, per-case outcomes, and compiler provenance are retained in
-\nolinkurl{evaluation/unified-construction/}.
+The 31/38 result concerns modeled cases with RHS axis holes, not the full
+209-case corpus. Of 123 modeled cases, 85 require verification only; the
+remaining 86 corpus cases lack established semantic support. Acceptance
+requires proof, compilation, and portable validation under the written guards
+and supplied fields. The historical total combines a 112-case run
+(31/32 axis successes) and a separate 11-case slice/convolution run
+(0/6 axis successes), with compiler hashes \code{a647eb68c4de} and
+\code{96258055f908}, respectively. The former uses a broadcast--transpose
+companion with an equivalent supplied-shape calculation; the original frozen
+result is unresolved. A later single-compiler regression
+(\code{f6437fc7366a}) reproduces the totals. These are distinct records,
+not new experiments.\footnote{\href{https://github.com/5yearsKim/TEPL-paper/blob/main/evaluation/recorded-results.json}{Historical tasks and diagnostics};
+\href{https://github.com/5yearsKim/TEPL-paper/tree/main/evaluation/unified-construction}{regression provenance};
+\href{https://github.com/5yearsKim/TEPL-paper/blob/main/evaluation/theorem-scope-audit.json}{per-case scope audit}.}
+
+\paperparagraph{Representative rewrites.}
+Write $D_a$ for generalized dot with its four batch/contraction lists,
+$T_p$ for transpose, and $?a$ for inferred fields. Under the recorded
+matrix-shape and LHS-axis conditions, representative cases are
+\begin{equation}
+\begin{aligned}
+ D_a(D_b(X,Y),Z)&\Rightarrow D_{?c}(X,D_{?d}(Y,Z)),
+ &&\text{eight dot lists},\\
+ T_p(D_a(X,Y))&\Rightarrow D_{?b}(Y,X),
+ &&\text{four dot lists},\\
+ D_a(T_pX,T_qY)&\Rightarrow T_{?r}(D_{?b}(Y,X)),
+ &&\text{four lists and a permutation},\\
+ T_p(T_qX)&\Rightarrow T_{?r}X,
+ &&\text{one permutation}.
+\end{aligned}
+\end{equation}
+The final row allows arbitrary rank. Dot is generalized contraction here;
+its inferred lists determine the input axes and output order.
+
+\paperparagraph{Restricted structural extension.}
+Theorem~\ref{thm:complete-synthesis} covers the ten case forms in the first
+row of Table~\ref{tab:xla-theorem-scope} when every input extent is at least
+two and values are independent exact reals. The extension admits positive
+extents, including singletons, and supplied-extent broadcast. Operations
+connect whole axes by identity or reflection, introduce axes of supplied
+size, and sum over full axes. They may multiply operand values and a fixed
+nonzero rational weight. Equal sizes alone never identify coordinates.
+Each connected class has at most one live axis per operand and one output
+position; connections form a forest, with no reflection cycles.
+Captures remain read-once within each component, with distinct capture sets
+across additive components and independent holes at original RHS nodes.
+Scalar factors are independent captures, not inferred weights.
+Broadcast over addition uses one shared axis choice for all components.
+Checked unit-only reshape preserves the ordered non-unit coordinates for
+\emph{every} legal completion; adapter positions stay fixed. General reshape
+does not satisfy this condition.
 
 \begin{table}[!htbp]
-\caption{Selected operation families in the coverage run.
-\textbf{Memberships overlap; do not sum rows.} Entries count all modeled cases (axis-inference cases).}
-\label{tab:current-operation-families}
+\caption{Scope of the 38 modeled axis cases. Counts partition cases, not
+full XLA domains. The first two rows total 31 structural candidates.}
+\label{tab:xla-theorem-scope}
 \small
-\begin{tabularx}{\linewidth}{@{}Yrr@{}}\toprule
-Family & Cases (axis) & Accepted (axis)\\\midrule
-Dot & 12 (12) & 11 (11)\\
-Transpose & 10 (8) & 10 (8)\\
-Reduction & 9 (9) & 9 (9)\\
-Addition & 13 (3) & 12 (2)\\
-Broadcast & 19 (19) & 15 (15)\\
-Reverse & 10 (8) & 7 (6)\\
-Slice & 10 (5) & 2 (0)\\
-Convolution & 1 (1) & 0 (0)\\\bottomrule
+\setlength{\tabcolsep}{4pt}
+\begin{tabularx}{\linewidth}{@{}p{0.46\linewidth}rY@{}}\toprule
+Case group or case & Count & Scope / recorded result or first failure\\\midrule
+Main-theorem forms: dot, transpose, sum & 10
+& All inferred; extent $\ge2$, exact reals, D1--D4.\\
+Additional structural candidates: broadcast, reverse, products, negation, unit views & 21
+& All inferred; positive extents and extension obligations below.\\
+\nolinkurl{catalog_broadcast_divide_broadcast} & 1
+& Unresolved normal-form equality; nonzero divisor not guarded.\\\midrule
+\nolinkurl{slice_reverse} & 1
+& Derived metadata not established within its attribute type.\\
+\nolinkurl{expr_slice_reverse_general} & 1
+& Comprehension outside the pointwise metadata fragment.\\
+\nolinkurl{expr_convolution_scale_filter_bias} & 1
+& Intermediate shape equality not established.\\
+\nolinkurl{catalog_broadcast_slice_broadcast_only} & 1
+& Extent inequality in supplied metadata not established.\\
+\nolinkurl{catalog_broadcast_slice_broadcast} & 1
+& Sliced input bounds not established.\\
+\nolinkurl{catalog_dot_slice_output} & 1
+& Positive extents for an attribute not established.\\\bottomrule
 \end{tabularx}
 \end{table}
-The public compile/load/rewrite suite passes 685 independent dense-value
-and ordered-shape checks and 142 rejection checks across eight test targets.
-It exercises degenerate extents, varying ranks, axis ordering, and malformed
-programs. Shared-IR regressions additionally check native/symbolic agreement,
-retention of the compiled metadata program when lowering fails, and paired
-contraction reindexing. Detailed
-inventories accompany the artifacts; these development tests and corpus
-reruns do not constitute a new held-out evaluation.
+
+\paperparagraph{Proof sketch.}
+For fixed metadata, a canonical state records the ordered shape, the signed
+partition of observable input/output ports, and a rational weight:
+\[
+ W_v=(\mathbf n_v,\Pi_v,\varepsilon_v,\lambda_v).
+\]
+Erase unit-coordinate relations while retaining shape. A summed class with
+no observable port contributes its extent to $\lambda_v$.
+The separating-input argument of Appendix~\ref{app:axis-exactness} then gives
+state exactness; positive extents and nonzero weights are essential.
+At each RHS node, enumerate all finite legal local axis choices and child
+states, preserving every supplied field, and retain one witness per state.
+Induction proves that every retained state is realizable and every legal
+assignment is represented. State equality preserves parent legality and
+meaning, so merging equal states loses no completion. Root-state equality
+therefore decides feasibility and recovers a valid assignment. For unary
+linear operations around addition, retain joint component states and one
+original-node witness to preserve shared choices. This extends the induction
+in Appendix~\ref{app:correctness-and-completeness}; the
+\href{https://github.com/5yearsKim/tepl/blob/906b6578b73c3e6c7631ede30025ad5b713c2398/research/attribute-synthesis/proofs/completeness.md#12-completeness-for-metadata-weighted-signed-wiring}{structural proof, Sections 12.1--12.7},
+gives the full contract, exactness proof, and normalization correspondence.
+
+\paperparagraph{What the count establishes.}
+The 31 candidates satisfy the structural pattern checks, including capture
+use, distinct holes, and the three checked unit-view cases. Admission still
+requires positive physical and introduced extents, defined supplied programs,
+exact-real semantics, and normalization valid for every completion. The
+recorded guards do not establish this full domain: zero extents and machine
+arithmetic remain outside the extension. Thus 31/38 is a conditional
+structural count, not 31/31 certification over the successful cases' full XLA
+domains. The exhaustive state-table algorithm is mathematical; the production
+solver does not implement it completely.
+
+The last six rows use slice windows or convolution coordinate mixtures,
+which are outside both stated contracts without a further proved adapter.
+Their recorded first failures concern metadata definedness or legality,
+not proofs of impossibility. Even slicing only broadcast-created axes would
+need a checked normalization before admission. Scalar division is the seventh
+unresolved case: reciprocal normalization requires an independent scalar
+$Y\ne0$ under exact-real arithmetic, a condition absent from the measured
+rule. Its scalar broadcast has a forced empty axis mapping. No guard is added
+and no new success is claimed; resolving a first failure may expose others.
 
 \FloatBarrier
 \subsection{Automatic Attribute-Inference Scalability}
