@@ -2,7 +2,7 @@
 \label{sec:introduction}
 The same tensor operation can be more efficient depending on how it is expressed.
 Consider dot reassociation, $(AB)C \Rightarrow A(BC)$. The two expressions are
-algebraically equivalent but have different hardware costs. Suppose
+algebraically equivalent but have different computation costs. Suppose
 $A\in\mathbb R^{100\times1}$, $B\in\mathbb R^{1\times100}$, and
 $C\in\mathbb R^{100\times1}$.
 Then $(AB)C$ requires 100 times as many scalar multiplications as $A(BC)$
@@ -83,10 +83,10 @@ The attribute transformation must therefore follow the correspondence
 between axes and remain valid across all supported ranks and dimension
 configurations.
 
-To address this problem, we introduce TEPL, a language dedicated to tensor
-rewriting. TEPL aims to provide syntax as intuitive as algebraic tensor
-expressions, along with tools for explicitly deriving attribute
-transformations.
+The core design philosophy of TEPL starts from this complexity.
+How can we design a DSL dedicated to tensor rewriting with syntax as
+intuitive as algebraic tensor expressions? How can it also help users
+explicitly derive attribute transformations?
 
 This leads to our research question: \emph{Beyond explicit attribute
 derivation, can the compiler infer complex axis attribute transformations
