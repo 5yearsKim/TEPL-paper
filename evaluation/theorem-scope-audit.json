@@ -4,7 +4,7 @@
     "recorded_results": "evaluation/recorded-results.json",
     "recorded_results_sha256": "654fc437124fec3fccd5fa850c559c7411742f838f356ff3fb7396c9007cd23c",
     "later_regression": "evaluation/unified-construction/cases.csv",
-    "proof": "https://github.com/5yearsKim/tepl/blob/906b6578b73c3e6c7631ede30025ad5b713c2398/research/attribute-synthesis/proofs/completeness.md#12-completeness-for-metadata-weighted-signed-wiring",
+    "proof": "Author-owned repository (URL omitted for anonymity), commit 906b6578b73c3e6c7631ede30025ad5b713c2398, research/attribute-synthesis/proofs/completeness.md#12-completeness-for-metadata-weighted-signed-wiring",
     "checked_normalizer": "/home/onion/Projects/tepl/labs/xla_rewrite/coverage/scripts/axis_fields.py",
     "implementation_boundary": "The production axis constructor is not the complete mathematical structural-state algorithm."
   },

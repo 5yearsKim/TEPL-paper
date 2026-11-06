@@ -2,20 +2,14 @@
 \label{app:evaluation-details}
 \subsection{Coverage, Completeness Scope, and Unresolved Cases}
 \label{app:coverage-and-acceptance}
-The 31/38 result concerns modeled cases with RHS axis holes, not the full
-209-case corpus. Of 123 modeled cases, 85 require verification only; the
-remaining 86 corpus cases lack established semantic support. Acceptance
-requires proof, compilation, and portable validation under the written guards
-and supplied fields. The historical total combines a 112-case run
-(31/32 axis successes) and a separate 11-case slice/convolution run
-(0/6 axis successes), with compiler hashes \code{a647eb68c4de} and
-\code{96258055f908}, respectively. The former uses a broadcast--transpose
-companion with an equivalent supplied-shape calculation; the original frozen
-result is unresolved. A later single-compiler regression
-(\code{f6437fc7366a}) reproduces the totals. These are distinct records,
-not new experiments.\footnote{\href{https://github.com/5yearsKim/TEPL-paper/blob/main/evaluation/recorded-results.json}{Historical tasks and diagnostics};
-\href{https://github.com/5yearsKim/TEPL-paper/tree/main/evaluation/unified-construction}{regression provenance};
-\href{https://github.com/5yearsKim/TEPL-paper/blob/main/evaluation/theorem-scope-audit.json}{per-case scope audit}.}
+Of 209 cases, 123 are modeled: 85 require verification only and 38 require
+axis inference, of which 31 succeed. The other 86 lack established semantic
+support. Acceptance requires proof, compilation, and portable validation
+under the written guards and supplied fields. The 31/38 total combines
+31/32 successes in the initial run and 0/6 in the slice/convolution run;
+a later single-compiler regression reproduces it. One broadcast--transpose
+case uses an equivalent supplied-shape calculation; its original frozen
+version remains unresolved.
 
 \paperparagraph{Representative rewrites.}
 Write $D_a$ for generalized dot with its four batch/contraction lists,
@@ -25,16 +19,11 @@ matrix-shape and LHS-axis conditions, representative cases are
 \begin{aligned}
  D_a(D_b(X,Y),Z)&\Rightarrow D_{?c}(X,D_{?d}(Y,Z)),
  &&\text{eight dot lists},\\
- T_p(D_a(X,Y))&\Rightarrow D_{?b}(Y,X),
- &&\text{four dot lists},\\
- D_a(T_pX,T_qY)&\Rightarrow T_{?r}(D_{?b}(Y,X)),
- &&\text{four lists and a permutation},\\
  T_p(T_qX)&\Rightarrow T_{?r}X,
  &&\text{one permutation}.
 \end{aligned}
 \end{equation}
-The final row allows arbitrary rank. Dot is generalized contraction here;
-its inferred lists determine the input axes and output order.
+The transpose case allows arbitrary rank.
 
 \paperparagraph{Restricted structural extension.}
 Theorem~\ref{thm:complete-synthesis} covers the ten case forms in the first
@@ -104,25 +93,20 @@ original-node witness to preserve shared choices. This extends the induction
 in Appendix~\ref{app:correctness-and-completeness}.
 
 \paperparagraph{What the count establishes.}
-The 31 candidates satisfy the structural pattern checks, including capture
-use, distinct holes, and the three checked unit-view cases. Admission still
-requires positive physical and introduced extents, defined supplied programs,
-exact-real semantics, and normalization valid for every completion. The
-recorded guards do not establish this full domain: zero extents and machine
-arithmetic remain outside the extension. Thus 31/38 is a conditional
-structural count, not 31/31 certification over the successful cases' full XLA
-domains. The exhaustive state-table algorithm is mathematical; the production
-solver does not implement it completely.
+The 31 candidates pass the structural checks, including capture use,
+distinct holes, and three unit-view cases. The theorem and extension apply
+only under their stated assumptions, with defined supplied programs and
+normalization valid for every completion. The recorded guards do not ensure
+these conditions over the full XLA domains, which may include zero extents
+and machine arithmetic. The count therefore establishes conditional
+structural coverage. The production solver does not fully implement the
+exhaustive state-table algorithm.
 
-The last six rows use slice windows or convolution coordinate mixtures,
-which are outside both stated contracts without a further proved adapter.
-Their recorded first failures concern metadata definedness or legality,
-not proofs of impossibility. Even slicing only broadcast-created axes would
-need a checked normalization before admission. Scalar division is the seventh
-unresolved case: reciprocal normalization requires an independent scalar
-$Y\ne0$ under exact-real arithmetic, a condition absent from the measured
-rule. Its scalar broadcast has a forced empty axis mapping. No guard is added
-and no new success is claimed; resolving a first failure may expose others.
+The table lists the seven unresolved cases and their first failures.
+The six slice/convolution cases need further proved adapters to enter either
+contract. Scalar division requires an independent nonzero divisor under
+exact-real arithmetic, but the measured rule lacks this guard. These failures
+do not prove impossibility, and resolving them may expose further obligations.
 
 \FloatBarrier
 \subsection{Automatic Attribute-Inference Scalability}

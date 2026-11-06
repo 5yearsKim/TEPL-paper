@@ -1,7 +1,7 @@
-\documentclass[acmsmall,review,screen,nonacm]{acmart}
+\documentclass[acmsmall,review,screen,nonacm,anonymous]{acmart}
 
 % Preserve the repository's single-column ACM review layout.
-% TODO: Replace author metadata and add venue metadata and CCS concepts.
+% TODO: Add venue metadata and CCS concepts.
 \usepackage{amsmath,booktabs,tabularx,array}
 \usepackage{listings}
 \usepackage{placeins}
@@ -88,8 +88,6 @@
 \BeforeBeginEnvironment{figure*}{\par\wrapstuffclear}
 
 \title[TEPL]{TEPL: Synthesizing Attribute Builders from Tensor Rewrite Semantics}
-\author{Author Name}
-\affiliation{\institution{Institution}\city{City}\country{Country}}
 
 \begin{document}
 \begin{abstract}
@@ -125,6 +123,11 @@ than specifications with explicit attribute derivations.
 \input{sections/10-evaluation}
 \input{sections/11-related-work}
 \input{sections/12-conclusion}
+
+\section*{AI Use}
+We used AI tools to polish sentences, assist with implementing the DSL and
+experiment code, and check proof arguments.
+
 \label{main-text-end}
 \clearpage
 % Keep review line numbers out of copied reference text and DOI links.

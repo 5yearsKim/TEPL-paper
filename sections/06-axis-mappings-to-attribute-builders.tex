@@ -30,7 +30,7 @@ generalized dot.
 op dot(lhs: tensor, rhs: tensor) -> tensor {
   attrs {
     lb, rb: axis[]; // left and right batch dimensions
-    lb, rb: axis[]; // left and right contraction dimensions
+    lc, rc: axis[]; // left and right contraction dimensions
   }
   axes {
     let lf = ordered_complement(all_axes(lhs), attrs.lb ++ attrs.lc); // left free 
