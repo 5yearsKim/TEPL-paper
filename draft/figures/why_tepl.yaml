@@ -275,9 +275,9 @@ children:
           (d3: dot Y Z))
       derive {
         d3.attrs =
-          f_U(d1, d2);
+          f_U(d1, d2)
         d4.attrs =
-          f_final(d1, d2);
+          f_final(d1, d2)
       }
   - name: attribute_flow
     type: text
@@ -406,8 +406,8 @@ authoring_reference:
         (d3: dot Y Z))
     derive {
       d3.attrs =
-        f_U(d1, d2);
+        f_U(d1, d2)
       d4.attrs =
-        f_final(d1, d2);
+        f_final(d1, d2)
     }
   tepl_inferred: "(dot (dot X Y) Z)\n=> (dot X\n     (dot Y Z))"

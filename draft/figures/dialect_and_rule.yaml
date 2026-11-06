@@ -52,7 +52,7 @@ children:
     pos: [0.548, 0.98, 0.046875, 0.953125]
     requirements:
       - Match the left file card's header, border, and padding.
-      - The dialect import is wrapped across two lines; keep use t::{dot, transpose}; on one line to bring the operations into scope.
+      - The dialect import is wrapped across two lines; keep use t::{dot, transpose} on one line to bring the operations into scope.
     children:
       - name: filename
         type: text
@@ -63,8 +63,8 @@ children:
         pos: [0.026, 0.974, 0.181034, 0.956897]
         content: |-
           from "my_dialect.tepl"
-          import MyDialect as t;
-          use t::{dot, transpose};
+          import MyDialect as t
+          use t::{dot, transpose}
 
           rule fold_transpose {
             (dot

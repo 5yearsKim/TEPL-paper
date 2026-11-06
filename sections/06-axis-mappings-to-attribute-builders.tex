@@ -29,20 +29,20 @@ generalized dot.
   label={lst:dot-declaration}]
 op dot(lhs: tensor, rhs: tensor) -> tensor {
   attrs {
-    lb, rb: axis[]; // left and right batch dimensions
-    lc, rc: axis[]; // left and right contraction dimensions
+    lb, rb: axis[] // left and right batch dimensions
+    lc, rc: axis[] // left and right contraction dimensions
   }
   axes {
-    let lf = ordered_complement(all_axes(lhs), attrs.lb ++ attrs.lc); // left free 
-    let rf = ordered_complement(all_axes(rhs), attrs.rb ++ attrs.rc); // right free
-    bind B { lhs: attrs.lb, rhs: attrs.rb };
-    bind K { lhs: attrs.lc, rhs: attrs.rc };
-    bind I { lhs: lf };
-    bind J { rhs: rf };
-    yield B ++ I ++ J;
+    let lf = ordered_complement(all_axes(lhs), attrs.lb ++ attrs.lc) // left free
+    let rf = ordered_complement(all_axes(rhs), attrs.rb ++ attrs.rc) // right free
+    bind B { lhs: attrs.lb, rhs: attrs.rb }
+    bind K { lhs: attrs.lc, rhs: attrs.rc }
+    bind I { lhs: lf }
+    bind J { rhs: rf }
+    yield B ++ I ++ J
   }
   semantics {
-    yield Reduce(K, Product(lhs, rhs));
+    yield Reduce(K, Product(lhs, rhs))
   }
 }
 \end{lstlisting}
@@ -92,8 +92,8 @@ output and therefore provides their output positions.
 For example, consider the dot declaration in
 Listing~\ref{lst:dot-declaration}, with operand axis orders
 $[i_0,i_1,k]$ and $[k,j_0,j_1]$. Suppose the dot contracts $k$ and
-has no batch axes. The bindings \code{bind I { lhs: lf };} and
-\code{bind J { rhs: rf };} identify the two free-axis groups.
+has no batch axes. The bindings \code{bind I { lhs: lf }} and
+\code{bind J { rhs: rf }} identify the two free-axis groups.
 Here \code{lf=[0,1]} and \code{rf=[1,2]}, so the bindings identify
 $\vec I=[i_0,i_1]$ and $\vec J=[j_0,j_1]$.
 Since \code{yield B ++ I ++ J} places $\vec I$ before $\vec J$,
