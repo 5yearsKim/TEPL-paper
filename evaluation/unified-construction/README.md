@@ -36,10 +36,9 @@ command durations support no performance claim.
 
 ## Compiler snapshots and earlier runs
 
-The coverage rerun uses optimized compiler SHA-256 prefix `f6437fc7366a`;
-the specification-size run retains `24d933d91076`. Both use checkout
-`494f2dac8273` with separately preserved changes. Full provenance and source
-bytes accompany the corresponding experiment artifacts.
+The coverage rerun uses optimized compiler SHA-256 prefix `f6437fc7366a`
+and checkout `494f2dac8273` with preserved changes. Full provenance and source
+bytes accompany the coverage artifacts.
 
 Every coverage acceptance and first diagnostic matches the earlier
 `352e1fadd432` snapshot; `comparison.json` retains that comparison.

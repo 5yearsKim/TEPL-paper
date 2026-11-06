@@ -1,153 +1,61 @@
 # TEPL Paper
 
-The active manuscript starts in `main.tex`, using the ACM `acmsmall` review
-layout. Files in `sections/` follow the current section numbering (01–12).
-Letter suffixes identify additional fragments belonging to the same section,
-such as `05a-correctness-and-completeness.tex` and `07a-validation-details.tex`.
-Limitations is a standalone section in `09-limitations.tex`.
-Appendix files use `appendix-a`, `appendix-b`, and `appendix-c` prefixes;
-numbered suffixes match their subsection order. Only appendices included in
-the current paper are retained in `sections/`.
-
-The `nonacm` class option suppresses publication metadata while drafting.
-For submission, remove it and add the required venue metadata, CCS concepts,
-and keywords.
+The manuscript starts in `main.tex` and uses the ACM `acmsmall` review
+layout. The main text and appendices build into a single PDF.
 
 ## Build
 
-Install TeX Live, BibTeX, and Make. On Ubuntu/Debian:
+Install Make, pdfLaTeX, and BibTeX, with the LaTeX packages and fonts used
+by `main.tex` and `acmart.cls`, including `wrapstuff`.
 
-```bash
-sudo apt install make texlive-latex-base texlive-latex-extra \
-  texlive-fonts-recommended texlive-fonts-extra
-```
+From the repository root, run:
 
-Build from the repository root:
-
-```bash
+```sh
 make
 ```
 
-The result is `main.pdf`. Add bibliography entries to `references.bib` and cite
-them with `\cite{key}`. The build runs BibTeX once citations are present.
-Use `make -B` to force a rebuild, `make clean` to remove auxiliary files,
-or `make clean-all` to also remove the generated paper PDF.
+The output is `main.pdf`.
 
-The paper is self-contained and builds as a single PDF, including its
-appendices. There is no separate supplement.
+- `make -B`: force a full rebuild.
+- `make clean`: remove LaTeX auxiliary files.
+- `make clean-all`: also remove `main.pdf`.
 
-## Code and figure layout
+## Files
 
-Write code directly in `lstlisting`; do not wrap it in a float or minipage.
-A listing can continue across pages automatically, including its existing
-caption and label.
+- [main.tex](main.tex): document setup and section order.
+- [sections/](sections/): main text and appendix sources.
+- [references.bib](references.bib): bibliography entries.
+- [paper-style.tex](paper-style.tex): shared paragraph-heading style.
+- [figures/](figures/): figure PDFs.
+- [figures/conti/](figures/conti/): figure storyboards.
+- [tools/figure_style.md](tools/figure_style.md): figure conventions.
+- `acmart.cls` and `ACM-Reference-Format.bst`: ACM class and bibliography style.
 
-For a small figure, place this command before ordinary paragraphs:
+## Layout conventions
+
+Write code directly in `lstlisting` so listings can continue across pages.
+Use `\paperparagraph{Heading.}` for run-in paragraph headings.
+
+For a small figure beside ordinary text:
 
 ```latex
 \sidefigure{figures/example.pdf}
   {Figure caption.}{fig:example}{Accessible description.}
 
-Normal prose continues here and flows around the figure.
+Normal prose follows here.
 ```
 
-The default figure width is 45% of the text width; an optional argument such
-as `\sidefigure[0.3]{...}` changes it. There is no accompanying text environment
-or manual line count. Prose continues wrapping across headings, and returns
-to full width below the figure. Code, lists, display equations, and floats
-end the wrap automatically. Side figures never become full-width floats:
-when the figure and caption cannot fit, LaTeX starts them with the following
-prose on the next page, keeping an immediately preceding heading attached.
-This can leave space at the bottom of the preceding page. A figure with too
-little accompanying prose before full-width material can also leave space
-below that prose; use `\paperfigure` for large or unsuitable artwork.
+The default width is 45% of the text width. Use an optional argument,
+such as `\sidefigure[0.3]{...}`, to change it. Code, lists, display equations,
+and floats end text wrapping. Use `\paperfigure` for a full-width figure:
 
-This uses `wrapstuff`, included in the `texlive-latex-extra` dependency above.
-
-Use `\paperparagraph{Heading.}` for paragraph-level headings, including numbered
-steps. The shared `paper-style.tex` makes these headings bold italic,
-unindented and run-in throughout the paper. Avoid manual
-`\noindent\textbf{...}` or bare `\paragraph` headings so spacing and styling stay
-consistent. The shared command preserves the class's built-in `\paragraph`,
-which `acmart` prohibits redefining.
-
-## Writing resources
-
-- `draft/paper_outline.md`: detailed paper outline.
-- `draft/figures/`: figure storyboards.
-- `figures/`: TEPL figure PDFs, ready to include as needed.
-- `tools/figure_style.md`: shared figure conventions.
-- `reference_study.md` and `distributed-monoid.md`: research notes.
-- `acmart.cls` and `ACM-Reference-Format.bst`: required ACM formatting files.
-
-## Expanded proof integration
-
-The active paper keeps the full mathematical development in the main text,
-before symbolic axis mapping and program generation. It adopts the notation
-of `draft/complete_attribute_synthesis_proof_kr.md`.
-
-- `sections/03-problem-definition.tex`: definitions, fragment, and the TEPL contract.
-- `sections/04-axis-based-representation.tex`: axis representation and exactness.
-- `sections/05-attribute-synthesis-algorithm-and-guarantees.tex`: canonical axes, ordering, construction.
-- `sections/05a-correctness-and-completeness.tex`: full correctness and completeness proofs.
-- `sections/06-axis-mappings-to-attribute-builders.tex`: symbolic mapping and metadata programs.
-- `sections/07-candidate-validation.tex`: compile-time validation of completed attribute programs.
-- `sections/07a-validation-details.tex`: validation contract, algorithm and soundness theorem.
-- `draft/proof_integration_map.json`: content-preservation and notation checklist.
-
-The appendices follow the main paper's progression and use the same notation:
-
-- **A. Mathematical Foundations: Examples and Proofs**
-  (`sections/appendix-a-mathematical-foundations.tex`): axis exactness, the mandatory and
-  retained axes example, canonicalization, and correctness and completeness.
-- **B. Symbolic Compilation Details**
-  (`sections/appendix-b-symbolic-compilation-details.tex`): Axes IR, mapping and synthesis
-  invariants, operation declaration adapters, and the core
-  validation summary and soundness argument (`sections/appendix-b3-candidate-validation-soundness.tex`).
-  B.4 states the supported reasoning rules and gives a concise conditional
-  soundness proof: feasibility is checked before attribute construction.
-  B.7 summarizes operation coverage.
-- **C. Current Evaluation Protocol and Evidence**
-  (`sections/appendix-c-evaluation-details.tex`): coverage, specification-size
-  accounting and implementation checks.
-
-The active draft consolidates repeated guarantee explanations and reassociation
-derivations; detailed protocols and module correspondence remain in the appendix.
-Unused appendix source files have been removed from `sections/`.
-`draft/paper_outline.md` records the older shortened structure and is not the
-outline of the expanded draft.
-
-## Current evaluation artifacts
-
-`evaluation/README.md` maps the retained evidence to the active paper. Experiments omitted from the current paper have been removed,
-including superseded coverage runs, the explicit/automatic outcome study,
-external TASO tests, target screening, the old transpose-folding integration,
-and historical default-backend scalability and native metadata timing.
-
-- `evaluation/unified-construction/`: Section 9.1 and Appendix C coverage and validation.
-- `evaluation/xla-rewrite-count/` and `evaluation/xla-rewrite-count-models/`:
-  the four workload counts in Table 5 and their semantic review.
-- `evaluation/current/specification_size/`: Section 9.3 and Table 6 token accounting.
-- `evaluation/certified-scalability/`: Section 9.4 summary, Figure 7 and details
-  in Appendix C.
-- `evaluation/reassociation/`: Appendix B's recorded implementation example.
-- `evaluation/source-line-count/`: the introduction's 269-line XLA example.
-- `evaluation/supplementary-materials/`: historical source snapshots, outside the paper build.
-
-`evaluation/recorded-results.json` retains the frozen 123-case input inventory
-needed by the coverage runner. Shared scalability rule inputs and the dialect
-are retained with the certified experiment. The workload-count package retains
-its ResNet baseline and original workflow provenance without the unused workflow
-experiment.
-
-Regenerate Figure 7 in Appendix C from saved measurements without rerunning compilation:
-
-```sh
-python3 tools/plot_current_scalability.py
+```latex
+\paperfigure{1}{figures/example.pdf}
+  {Figure caption.}{fig:example}{Accessible description.}
 ```
 
-Reproduction commands and measurement limits accompany each retained experiment.
-The four-workload counting artifacts record native XLA application counts and
-semantic classifications; they do not establish TEPL delegation or numerical
-output agreement. The current prose's 28-test integration and output-agreement
-claims require separate evidence beyond these count-only artifacts.
+## Evaluation artifacts
+
+[evaluation/README.md](evaluation/README.md) lists the retained evidence,
+reproduction notes, and limits. It covers inference coverage, native XLA
+workload counts, the reassociation example, and the XLA source-line count.

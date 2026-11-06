@@ -5,8 +5,6 @@
 | `unified-construction/` | Section 9.1, Figure 6 and Appendix C: 123 modeled cases, 38 inference tasks, backend outcomes and validation checks. |
 | `xla-rewrite-count/` | Section 9.2, Table 5: DLRM native XLA rewrite counts and counter source. |
 | `xla-rewrite-count-models/` | Section 9.2, Table 5: reviewed GPT-2, ViT and ResNet counts, plus the reviewed DLRM classification. |
-| `current/specification_size/` | Section 9.3, Table 6 and Appendix C: explicit and inferred source footprints of the same 31 inference-successful rules (3,014 versus 2,559 tokens; 15.1% reduction). |
-| `certified-scalability/` | Section 9.4 summary, Figure 7 and details in Appendix C: all 15 configurations and saved phase measurements. |
 | `reassociation/` | Appendix B: recorded semantic check, compilation and portable validation of the displayed program. |
 | `source-line-count/` | Introduction: 269 nonblank C++ code lines in the pinned XLA routine. |
 | `supplementary-materials/` | Historical explanatory snapshots and module correspondence; not required by the paper. |
@@ -17,10 +15,17 @@ target screening, emission/acceptance timing, native metadata timing, old defaul
 scalability, the TransformerLM workload count and the older transpose-folding
 workflow/integration experiment are omitted.
 
-Shared inputs were preserved before removing their original experiment:
-`certified-scalability/source/original-inputs/` and `source/tensor.tepl` contain
-byte-identical scalability inputs and dialect; the workload-count package's
-`reference-baselines/` contains the ResNet baseline and workflow provenance.
+Unused evaluation fragments in `sections/` and scripts for removed experiments
+have also been removed. The recorded-results importer retains the frozen
+coverage inventory without generating the unused historical results table.
+
+The saved rule-size and certified-scalability experiments and their scripts
+have been removed because their measurements did not match the current paper's
+rule-size and scalability results. Matching artifacts for those claims are not
+retained here. The active paper text and its scalability figure are unchanged.
+
+The workload-count package's `reference-baselines/` contains the ResNet baseline
+and workflow provenance from the removed workflow experiment.
 Per-case measurements and compiler/source provenance remain unchanged. The
 workload-count aggregate now contains only the four workloads in Table 5.
 
